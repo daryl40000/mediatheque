@@ -1,0 +1,38 @@
+# Dépendances PHP
+/vendor/
+
+# Données locales (base, clés API, sessions, fichiers volumineux)
+/data/moncine.db
+/data/moncine.db-journal
+/data/moncine.db-wal
+/data/moncine.db-shm
+/data/omdb_api_key.txt
+/data/tmdb_api_key.txt
+/data/sessions/*
+!/data/sessions/.gitkeep
+/data/auth_rate_limit/
+/data/media/
+/data/install_seed/
+
+# Graine d’installation : déposer CSV/ZIP ici sans les versionner
+/install_seed/*.csv
+/install_seed/*.zip
+/install_seed/*.ods
+
+# Affiches téléchargées
+/www/posters/*
+!/www/posters/.gitkeep
+
+# Outils / IDE
+/.idea/
+/.vscode/
+*.swp
+*~
+.DS_Store
+
+# Tests / cache
+/.phpunit.cache/
+/phpunit.xml
+
+# Logs
+*.log

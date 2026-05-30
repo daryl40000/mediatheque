@@ -1,0 +1,143 @@
+/**
+ * Pages imprimables (Mes films / Mes envies) — impression navigateur ou « Enregistrer en PDF ».
+ */
+
+.print-page {
+    background: #fff;
+    color: #111;
+    margin: 0;
+    padding: 0;
+}
+
+.print-page__main {
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 1rem 1.25rem 2rem;
+}
+
+.print-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+    padding: 0.75rem 1.25rem;
+    background: #f4f4f0;
+    border-bottom: 1px solid #ccc;
+    position: sticky;
+    top: 0;
+    z-index: 10;
+}
+
+.print-sheet__title {
+    margin: 0 0 0.35rem;
+    font-size: 1.5rem;
+}
+
+.print-sheet__meta {
+    margin: 0 0 1rem;
+    font-size: 0.9rem;
+    color: #444;
+}
+
+.print-sheet__empty {
+    margin: 1.5rem 0;
+    color: #555;
+}
+
+.print-sheet__warn {
+    margin: 0 0 1rem;
+    padding: 0.65rem 0.85rem;
+    font-size: 0.9rem;
+}
+
+.print-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.82rem;
+    line-height: 1.35;
+}
+
+.print-table th,
+.print-table td {
+    border: 1px solid #bbb;
+    padding: 0.35rem 0.45rem;
+    vertical-align: top;
+    text-align: left;
+}
+
+.print-table th {
+    background: #eee;
+    font-weight: 600;
+}
+
+.print-table tbody tr:nth-child(even) {
+    background: #fafafa;
+}
+
+.print-table .col-narrow {
+    white-space: nowrap;
+    width: 1%;
+}
+
+.print-table .col-poster {
+    width: 36px;
+    padding: 0.2rem;
+}
+
+.print-table__poster {
+    display: block;
+    width: 32px;
+    height: auto;
+    max-height: 48px;
+    object-fit: cover;
+}
+
+.print-page__footer {
+    max-width: 210mm;
+    margin: 0 auto;
+    padding: 0.5rem 1.25rem 1rem;
+    font-size: 0.75rem;
+    color: #666;
+    border-top: 1px solid #ddd;
+}
+
+.print-page__footer p {
+    margin: 0;
+}
+
+@media print {
+    .no-print {
+        display: none !important;
+    }
+
+    .print-page__main {
+        max-width: none;
+        padding: 0;
+    }
+
+    .print-toolbar {
+        display: none;
+    }
+
+    .print-table {
+        font-size: 9pt;
+    }
+
+    .print-table th,
+    .print-table td {
+        border-color: #999;
+    }
+
+    .print-page__footer {
+        position: fixed;
+        bottom: 0;
+        left: 0;
+        right: 0;
+        border: none;
+        padding: 0.25rem 0;
+    }
+
+    @page {
+        margin: 12mm 10mm 18mm;
+    }
+}

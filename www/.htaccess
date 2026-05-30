@@ -1,0 +1,9 @@
+# Moncine — protection du dossier data (si jamais copié par erreur dans www)
+<IfModule mod_authz_core.c>
+    Require all granted
+</IfModule>
+
+# Empêche l'accès aux fichiers sensibles
+<FilesMatch "\.(db|sql|env)$">
+    Require all denied
+</FilesMatch>

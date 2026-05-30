@@ -1,0 +1,1 @@
+<?= Moncine\View::csrfField() ?>
