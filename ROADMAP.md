@@ -246,7 +246,7 @@ Comptes, foyers, envies personnelles et de groupe, catalogue partagé, soumissio
 | Foyer | **Une collection par domaine** dans le même foyer |
 | Quiz | **Films uniquement** |
 | Couleur Films | **Gris** (distinct des autres onglets) |
-| Code Monciné | Namespace **`Moncine\`** conservé en 0.1.0 |
+| Code Monciné | Namespace **`Moncine\`**, constantes **`MONCINE_*`**, **`moncine.db`** — **ne pas renommer avant M7** → [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
 ---
 
@@ -316,5 +316,6 @@ flowchart TB
 | Sous-types films | `lib/MoncineContentKind.php` (film / série / spectacle) |
 | PDF futur | `lib/MediaStorage.php`, `lib/StoredObjectRepository.php` |
 | UI | `templates/_media_domain_tabs.php`, `templates/layout.php` |
+| **Conventions dev** | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
 *Dernière mise à jour : 0.1.0 — 2026-05-30.*

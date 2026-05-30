@@ -11,6 +11,7 @@ En **0.1.0**, l’onglet **Films** reprend toute la dvdthèque Monciné 1.0.0 ; 
 
 | Document | Contenu |
 |----------|---------|
+| [doc/conventions-techniques.md](doc/conventions-techniques.md) | **Règles de nommage** Monciné vs Médiathèque (obligatoire pour les devs) |
 | [doc/mediatheque.md](doc/mediatheque.md) | Guide du fork, travail livré en 0.1.0 |
 | [ROADMAP.md](ROADMAP.md) | Plan détaillé M0 → M7 |
 | [CHANGELOG.md](CHANGELOG.md) | Journal des versions (Médiathèque + historique Monciné) |
@@ -47,6 +48,8 @@ Détail phase par phase : [ROADMAP.md](ROADMAP.md).
 ---
 
 ## Comprendre le code (par où commencer)
+
+> **Développeurs :** lire en premier [doc/conventions-techniques.md](doc/conventions-techniques.md) (nom produit **Médiathèque** vs identifiants code **Moncine** / `MONCINE_*`).
 
 | Fichier | Rôle |
 |---------|------|
@@ -112,7 +115,7 @@ Ouvrir http://localhost:8080 — créer le **compte administrateur** sur `/premi
 | `MONCINE_TRUST_PROXY` | `1` derrière Nginx/YunoHost |
 | `MONCINE_MAIL_FROM` | Expéditeur des e-mails |
 
-*(Les noms `MONCINE_*` sont conservés pour compatibilité avec le paquet Monciné / YunoHost.)*
+*(Les noms `MONCINE_*` sont conservés volontairement — voir [doc/conventions-techniques.md](doc/conventions-techniques.md).)*
 
 ---
 
@@ -143,6 +146,6 @@ composer test
 | Version production films | **1.0.0** | — |
 | Version fork multi-médias | — | **0.1.0** (films OK) |
 | Nom affiché | Monciné | Médiathèque |
-| Code PHP | `Moncine\` | `Moncine\` (inchangé en 0.1.0) |
+| Code PHP | `Moncine\` | `Moncine\` (inchangé — voir [conventions-techniques.md](doc/conventions-techniques.md)) |
 
 L’historique complet Monciné **0.7 → 1.0.0** est dans [CHANGELOG.md](CHANGELOG.md).

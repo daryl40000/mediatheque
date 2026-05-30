@@ -1,6 +1,10 @@
 <?php
 /**
- * Configuration Moncine — application upstream.
+ * Configuration Médiathèque (fork Monciné).
+ *
+ * Nom affiché : Médiathèque (MONCINE_APP_NAME).
+ * Identifiants techniques MONCINE_* / moncine.db / namespace Moncine\ :
+ * conservés volontairement — doc/conventions-techniques.md
  *
  * Structure :
  *   www/     racine web
@@ -37,10 +41,11 @@ define('MONCINE_MEDIA_PATH', rtrim($mediaPath, '/\\'));
 define('MONCINE_INSTALL_SEED_PACKAGE_DIR', MONCINE_ROOT . '/install_seed');
 define('MONCINE_INSTALL_SEED_DATA_DIR', MONCINE_DATA . '/install_seed');
 
-// Nom de l'application (affiché dans les pages)
+// Nom de l'application (affiché dans les pages — produit « Médiathèque »)
 define('MONCINE_APP_NAME', 'Médiathèque');
 
-// Version applicative (semver) — fork multi-médias ; base films = Monciné 1.0.0
+// Version applicative (semver du fork Médiathèque)
+// Identifiants techniques MONCINE_* / namespace Moncine\ : voir doc/conventions-techniques.md
 define('MONCINE_PACKAGE_VERSION', '0.1.0');
 
 // Derrière un reverse proxy de confiance (YunoHost / Nginx) : 1 pour utiliser X-Real-IP / X-Forwarded-For.

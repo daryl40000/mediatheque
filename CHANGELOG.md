@@ -41,7 +41,7 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 ### Technique
 
 - Schéma SQL : **001 → 030** (dont `media_domain`).
-- Namespace PHP inchangé (`Moncine\`) pour compatibilité avec le code Monciné.
+- Namespace PHP **`Moncine\`** et constantes **`MONCINE_*`** conservés volontairement — voir [doc/conventions-techniques.md](doc/conventions-techniques.md).
 - Tests : `tests/Unit/MediaDomainTest.php`, `tests/Integration/MediaDomainTest.php`.
 
 ### Hors périmètre 0.1.0 (voir roadmap)

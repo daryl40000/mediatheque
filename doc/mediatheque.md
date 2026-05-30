@@ -66,6 +66,7 @@ Le code métier reste largement celui de Monciné (`FilmRepository`, TMDB, etc.)
 | `www/set-media-domain.php` | Change l’onglet puis redirige |
 | `ROADMAP.md` | Plan M0 → M7 |
 | `CHANGELOG.md` | Historique des versions |
+| `doc/conventions-techniques.md` | **Nommage Monciné vs Médiathèque — lecture obligatoire** |
 
 ---
 
@@ -91,6 +92,18 @@ Voir `.gitignore` :
 - `data/omdb_api_key.txt`, `data/tmdb_api_key.txt`  
 - `data/sessions/`, `data/auth_rate_limit/`  
 - `install_seed/*.csv`, `install_seed/*.zip` — graine d’install optionnelle  
+
+---
+
+## 8. Conventions techniques (développeurs)
+
+**Obligatoire avant tout nouveau code ou refactor :** [doc/conventions-techniques.md](conventions-techniques.md)
+
+Points essentiels :
+
+- **Médiathèque** = nom produit et version **0.1.0** ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+- **`media_domain`** (onglet Films/BD/…) ≠ **`moncine_kind`** (film/série/spectacle dans l’onglet Films).
+- Nouveau code multi-médias : `MediaDomain`, `MediaContext`, `CatalogSchema::applyMediaDomainFilter()`.
 
 ---
 
