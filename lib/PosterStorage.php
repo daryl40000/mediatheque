@@ -1,6 +1,6 @@
 <?php
 /**
- * Télécharge et stocke les affiches dans www/posters/ (chemins locaux /posters/…).
+ * Télécharge et stocke les affiches dans MONCINE_DATA/posters/ (chemins web /posters/…).
  */
 
 declare(strict_types=1);
@@ -22,6 +22,12 @@ final class PosterStorage
 
     public static function postersFilesystemDir(): string
     {
+        return MONCINE_POSTERS_DIR;
+    }
+
+    /** Ancien emplacement (www/posters/) — repli lecture / suppression après migration. */
+    public static function legacyPostersFilesystemDir(): string
+    {
         return MONCINE_WWW . '/posters';
     }
 
@@ -32,10 +38,46 @@ final class PosterStorage
             return false;
         }
 
-        return (bool) preg_match(
-            '#^' . preg_quote(self::WEB_PREFIX, '#') . '/\d+\.(jpe?g|png|webp)$#i',
-            $path
-        );
+        return self::parseLocalWebPath($path) !== null;
+    }
+
+    /**
+     * URL pour afficher une affiche locale dans le navigateur (poster.php).
+     */
+    public static function deliveryUrlFromWeb(string $webPath): string
+    {
+        $parsed = self::parseLocalWebPath($webPath);
+        if ($parsed === null) {
+            return '';
+        }
+
+        return '/poster.php?' . http_build_query($parsed, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    /**
+     * @return array{id: int, ext: string}|null
+     */
+    private static function parseLocalWebPath(string $path): ?array
+    {
+        $path = trim($path);
+        if ($path === '') {
+            return null;
+        }
+
+        if (!preg_match(
+            '#^' . preg_quote(self::WEB_PREFIX, '#') . '/(\d+)\.(jpe?g|png|webp)$#i',
+            $path,
+            $m
+        )) {
+            return null;
+        }
+
+        $ext = strtolower($m[2]);
+        if ($ext === 'jpeg') {
+            $ext = 'jpg';
+        }
+
+        return ['id' => (int) $m[1], 'ext' => $ext];
     }
 
     public static function isRemoteUrl(string $url): bool
@@ -90,7 +132,7 @@ final class PosterStorage
 
     /**
      * Enregistre une image locale pour une œuvre (import ZIP ou copie manuelle).
-     * Met à jour le fichier dans www/posters/ et retourne le chemin web (/posters/…).
+     * Met à jour le fichier sur disque et retourne le chemin web (/posters/…).
      */
     public function importBinaryForOeuvre(int $oeuvreId, string $binary): string
     {
@@ -219,18 +261,14 @@ final class PosterStorage
             return null;
         }
 
-        $path = self::postersFilesystemDir() . '/' . $name;
-        $base = realpath(self::postersFilesystemDir());
-        if ($base === false) {
-            return is_file($path) ? $path : null;
+        foreach (self::posterSearchDirs() as $dir) {
+            $resolved = self::resolveFileInDir($dir, $name);
+            if ($resolved !== null) {
+                return $resolved;
+            }
         }
 
-        $resolved = realpath($path);
-        if ($resolved !== false && str_starts_with($resolved, $base)) {
-            return $resolved;
-        }
-
-        return is_file($path) ? $path : null;
+        return null;
     }
 
     public function deleteLocalForOeuvre(int $oeuvreId): void
@@ -247,22 +285,39 @@ final class PosterStorage
         if (!is_dir($dir)) {
             @mkdir($dir, 0755, true);
         }
-        $htaccess = $dir . '/.htaccess';
-        if (!is_file($htaccess)) {
-            @file_put_contents($htaccess, "Options -Indexes\n");
+    }
+
+    /** @return list<string> */
+    private static function posterSearchDirs(): array
+    {
+        return [self::postersFilesystemDir(), self::legacyPostersFilesystemDir()];
+    }
+
+    private static function resolveFileInDir(string $dir, string $basename): ?string
+    {
+        $path = $dir . '/' . $basename;
+        $base = realpath($dir);
+        if ($base === false) {
+            return is_file($path) ? $path : null;
         }
-        $gitkeep = $dir . '/.gitkeep';
-        if (!is_file($gitkeep)) {
-            @touch($gitkeep);
+
+        $resolved = realpath($path);
+        if ($resolved !== false && str_starts_with($resolved, $base)) {
+            return $resolved;
         }
+
+        return is_file($path) ? $path : null;
     }
 
     private function removeLocalFilesForOeuvre(int $oeuvreId): void
     {
         foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
-            $path = self::postersFilesystemDir() . '/' . $oeuvreId . '.' . $ext;
-            if (is_file($path)) {
-                @unlink($path);
+            $name = $oeuvreId . '.' . $ext;
+            foreach (self::posterSearchDirs() as $dir) {
+                $path = $dir . '/' . $name;
+                if (is_file($path)) {
+                    @unlink($path);
+                }
             }
         }
     }

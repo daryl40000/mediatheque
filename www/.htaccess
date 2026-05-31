@@ -3,6 +3,13 @@
     Require all granted
 </IfModule>
 
+# Affiches : stockage dans MONCINE_DATA/posters/ — servies par poster.php si absentes de www/posters/
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteCond %{REQUEST_FILENAME} !-f
+    RewriteRule ^posters/([0-9]+)\.(jpe?g|png|webp)$ poster.php?id=$1&ext=$2 [L,NC,QSA]
+</IfModule>
+
 # Empêche l'accès aux fichiers sensibles
 <FilesMatch "\.(db|sql|env)$">
     Require all denied

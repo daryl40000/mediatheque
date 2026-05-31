@@ -1,6 +1,6 @@
 <?php
 /**
- * Télécharge les affiches TMDB (HTTPS) vers www/posters/ par lots.
+ * Télécharge les affiches TMDB (HTTPS) vers MONCINE_DATA/posters/ par lots.
  */
 
 declare(strict_types=1);

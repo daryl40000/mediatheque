@@ -47,6 +47,6 @@ final class UploadLimits
             . self::uploadMaxFilesizeLabel()
             . '). Après mise à jour du paquet Moncine, relancez : '
             . 'yunohost app upgrade moncine -u … puis systemctl restart php8.4-fpm. '
-            . 'Sinon copiez le dossier posters/ en SSH vers www/posters/.';
+            . 'Sinon copiez le dossier posters/ en SSH vers le dossier posters/ des données Moncine (à côté de moncine.db).';
     }
 }

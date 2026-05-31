@@ -273,16 +273,6 @@ final class RegistrationService
             return $userId;
         }
 
-        if (FoyerRepository::tableExists(Database::getInstance())) {
-            try {
-                (new FoyerRepository())->createDefaultForUser($userId);
-            } catch (\Throwable $e) {
-                error_log('Moncine registration createDefaultForUser: ' . $e->getMessage());
-
-                return 'Compte créé mais le groupe famille n’a pas pu être initialisé.';
-            }
-        }
-
         return $userId;
     }
 

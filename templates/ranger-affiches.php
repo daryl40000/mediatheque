@@ -7,8 +7,8 @@
 <section>
     <h1>Affiches sur le serveur</h1>
     <p class="lead">
-        Les affiches sont copiées dans <code>www/posters/</code> sur votre Moncine.
-        Les pages utilisent ensuite <code>/posters/123.jpg</code> — plus besoin de charger TMDB à chaque visite.
+        Les affiches sont copiées dans le dossier de données Moncine (<code>posters/</code>, à côté de la base).
+        Les pages affichent les images via <code>poster.php</code> — plus besoin de charger TMDB à chaque visite.
     </p>
 
     <?php if ($message !== ''): ?>

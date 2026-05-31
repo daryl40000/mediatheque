@@ -409,20 +409,19 @@ final class UtilisateurRepository
             return;
         }
 
-        $this->removeSoloFoyersForUser($userId);
+        $soloFoyerIds = $this->collectSoloFoyerIdsForUser($userId);
+
+        $this->detachUserFromSocialGraph($userId);
+
+        $this->db->prepare('UPDATE utilisateurs SET foyer_id = NULL WHERE id = ?')->execute([$userId]);
+
+        foreach ($soloFoyerIds as $foyerId) {
+            $this->purgeFoyerIfOrphaned($foyerId);
+        }
 
         if ($this->tableExists('email_change_requests')) {
             (new EmailChangeRepository())->deleteForUser($userId);
         }
-
-        if ($this->tableExists('share_links')) {
-            $this->db->prepare(
-                "UPDATE share_links SET revoked_at = datetime('now')
-                 WHERE user_id = ? AND revoked_at IS NULL"
-            )->execute([$userId]);
-        }
-
-        $this->db->prepare('UPDATE utilisateurs SET foyer_id = NULL WHERE id = ?')->execute([$userId]);
 
         if ($this->tableExists('catalog_admin_audit')) {
             $this->db->prepare('DELETE FROM catalog_admin_audit WHERE user_id = ?')->execute([$userId]);
@@ -438,11 +437,6 @@ final class UtilisateurRepository
             )->execute([$email]);
         }
 
-        if ($this->tableExists('group_members')) {
-            $this->db->prepare('UPDATE group_members SET invited_by = NULL WHERE invited_by = ?')
-                ->execute([$userId]);
-        }
-
         if ($this->tableExists('foyers')) {
             $this->db->prepare('UPDATE foyers SET created_by_user_id = NULL WHERE created_by_user_id = ?')
                 ->execute([$userId]);
@@ -452,6 +446,32 @@ final class UtilisateurRepository
             'DELETE FROM historique WHERE film_id IN (SELECT id FROM bibliotheque WHERE user_id = ?)'
         )->execute([$userId]);
         $this->db->prepare('DELETE FROM bibliotheque WHERE user_id = ?')->execute([$userId]);
+    }
+
+    /** Retire l’utilisateur des groupes, amis et partages (évite FOREIGN KEY sur DELETE utilisateurs). */
+    private function detachUserFromSocialGraph(int $userId): void
+    {
+        if ($this->tableExists('group_members')) {
+            $this->db->prepare('UPDATE group_members SET invited_by = NULL WHERE invited_by = ?')
+                ->execute([$userId]);
+            $this->db->prepare('DELETE FROM group_members WHERE user_id = ?')->execute([$userId]);
+        }
+
+        if ($this->tableExists('group_invitations')) {
+            $this->db->prepare(
+                'DELETE FROM group_invitations WHERE user_id = ? OR invited_by = ?'
+            )->execute([$userId, $userId]);
+        }
+
+        if ($this->tableExists('friendships')) {
+            $this->db->prepare(
+                'DELETE FROM friendships WHERE requester_id = ? OR addressee_id = ?'
+            )->execute([$userId, $userId]);
+        }
+
+        if ($this->tableExists('share_links')) {
+            $this->db->prepare('DELETE FROM share_links WHERE user_id = ?')->execute([$userId]);
+        }
     }
 
     private function reassignOrRemoveUserBibliotheque(int $userId): void
@@ -483,13 +503,18 @@ final class UtilisateurRepository
         }
     }
 
-    /** Supprime les foyers dont l’utilisateur est le seul membre (évite les foyers orphelins). */
-    private function removeSoloFoyersForUser(int $userId): void
+    /**
+     * Foyers où l’utilisateur est le seul membre (à purger après l’avoir retiré du groupe).
+     *
+     * @return list<int>
+     */
+    private function collectSoloFoyerIdsForUser(int $userId): array
     {
-        if (!$this->tableExists('group_members') || !$this->tableExists('foyers')) {
-            return;
+        if (!$this->tableExists('group_members')) {
+            return [];
         }
 
+        $soloIds = [];
         $stmt = $this->db->prepare('SELECT foyer_id FROM group_members WHERE user_id = ?');
         $stmt->execute([$userId]);
 
@@ -501,22 +526,45 @@ final class UtilisateurRepository
 
             $countStmt = $this->db->prepare('SELECT COUNT(*) FROM group_members WHERE foyer_id = ?');
             $countStmt->execute([$foyerId]);
-            if ((int) $countStmt->fetchColumn() !== 1) {
-                continue;
+            if ((int) $countStmt->fetchColumn() === 1) {
+                $soloIds[] = $foyerId;
             }
-
-            $this->db->prepare(
-                'DELETE FROM historique WHERE film_id IN (SELECT id FROM bibliotheque WHERE foyer_id = ?)'
-            )->execute([$foyerId]);
-            $this->db->prepare('DELETE FROM bibliotheque WHERE foyer_id = ?')->execute([$foyerId]);
-
-            if ($this->tableExists('group_invitations')) {
-                $this->db->prepare('DELETE FROM group_invitations WHERE foyer_id = ?')->execute([$foyerId]);
-            }
-
-            $this->db->prepare('DELETE FROM group_members WHERE foyer_id = ?')->execute([$foyerId]);
-            $this->db->prepare('DELETE FROM foyers WHERE id = ?')->execute([$foyerId]);
         }
+
+        return $soloIds;
+    }
+
+    /** Supprime un foyer sans membre restant (après retrait de group_members). */
+    private function purgeFoyerIfOrphaned(int $foyerId): void
+    {
+        if ($foyerId <= 0 || !$this->tableExists('foyers')) {
+            return;
+        }
+
+        if ($this->tableExists('group_members')) {
+            $countStmt = $this->db->prepare('SELECT COUNT(*) FROM group_members WHERE foyer_id = ?');
+            $countStmt->execute([$foyerId]);
+            if ((int) $countStmt->fetchColumn() > 0) {
+                return;
+            }
+        }
+
+        $this->db->prepare('UPDATE utilisateurs SET foyer_id = NULL WHERE foyer_id = ?')->execute([$foyerId]);
+
+        $this->db->prepare(
+            'DELETE FROM historique WHERE film_id IN (SELECT id FROM bibliotheque WHERE foyer_id = ?)'
+        )->execute([$foyerId]);
+        $this->db->prepare('DELETE FROM bibliotheque WHERE foyer_id = ?')->execute([$foyerId]);
+
+        if ($this->tableExists('group_invitations')) {
+            $this->db->prepare('DELETE FROM group_invitations WHERE foyer_id = ?')->execute([$foyerId]);
+        }
+
+        if ($this->tableExists('share_links')) {
+            $this->db->prepare('DELETE FROM share_links WHERE foyer_id = ?')->execute([$foyerId]);
+        }
+
+        $this->db->prepare('DELETE FROM foyers WHERE id = ?')->execute([$foyerId]);
     }
 
     private function findGroupSuccessorUserId(int $foyerId, int $excludeUserId): int

@@ -9,6 +9,34 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.1.1] — 2026-05-31
+
+**Reprise des correctifs Monciné 1.0.3 → 1.0.5** (onglet Films et fonctions communes).
+
+### Ajouté
+
+- **Gestion clé API TMDB (admin)** : remplacer ou supprimer la clé stockée ; indication si la clé vient de `MONCINE_TMDB_API_KEY`.
+- **Affiches locales** : stockage dans `{MONCINE_DATA}/posters/` (même dossier que `moncine.db`), servies par `poster.php` (compatible Nginx/YunoHost). Repli de lecture sur l’ancien `www/posters/` pendant la migration.
+- Fichiers `lib/PosterDelivery.php`, `www/poster.php`, `tests/Unit/TmdbConfigTest.php`.
+
+### Modifié
+
+- **Inscription** : plus de groupe famille créé automatiquement à la création du compte (le premier admin conserve son groupe via `createFirstAdmin`).
+
+### Corrigé
+
+- **Suppression de compte** : retrait explicite des liens sociaux (`group_members`, amis, partages…) avant suppression ; ordre de détachement puis `foyer_id = NULL` avant purge des foyers orphelins — corrige « Suppression impossible » (contraintes SQLite).
+- **Paramètres** : chargement du foyer avant la détection « membre seul dans un groupe ».
+
+### Tests
+
+- `AccountDeleteTest` — membres de groupe et foyer solo après inscription.
+- `TmdbConfigTest` — suppression du fichier clé.
+
+Aucune migration SQL. Après mise à jour : déplacer éventuellement `www/posters/*` vers `{MONCINE_DATA}/posters/`.
+
+---
+
 ## [0.1.0] — 2026-05-30
 
 **Première version Médiathèque** — socle multi-médias + onglet **Films** (= fonctionnalités Monciné 1.0.0).

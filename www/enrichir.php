@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\CatalogAdmin;
 use Moncine\Csrf;
 use Moncine\FilmEnricher;
 use Moncine\TmdbClient;
@@ -22,11 +23,30 @@ Csrf::rejectUnlessValid($_POST, '/import.php');
 $action = (string) ($_POST['action'] ?? '');
 
 if ($action === 'save_tmdb_key') {
+    if (!CatalogAdmin::canAccess()) {
+        header('Location: /import.php');
+        exit;
+    }
     $key = (string) ($_POST['tmdb_api_key'] ?? '');
     if (TmdbConfig::saveApiKey($key)) {
         header('Location: /import.php?tmdb_key_saved=1');
     } else {
         header('Location: /import.php?tmdb_key_error=1');
+    }
+    exit;
+}
+
+if ($action === 'clear_tmdb_key') {
+    if (!CatalogAdmin::canAccess()) {
+        header('Location: /import.php');
+        exit;
+    }
+    if (TmdbConfig::clearStoredApiKey()) {
+        header('Location: /import.php?tmdb_key_cleared=1');
+    } elseif (TmdbConfig::getKeySource() === TmdbConfig::SOURCE_ENVIRONMENT) {
+        header('Location: /import.php?tmdb_key_clear_env=1');
+    } else {
+        header('Location: /import.php?tmdb_key_clear_error=1');
     }
     exit;
 }

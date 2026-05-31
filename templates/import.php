@@ -171,23 +171,58 @@
             <button type="submit" class="btn btn-secondary">Enregistrer la clé TMDB</button>
         </form>
     <?php else: ?>
-        <p class="hint">✓ Clé TMDB configurée.</p>
+        <?php if (!empty($tmdbKeyFromEnvironment)): ?>
+            <p class="hint">Clé active via <code>MONCINE_TMDB_API_KEY</code> (serveur).</p>
+        <?php else: ?>
+            <p class="hint">✓ Clé TMDB enregistrée sur le serveur.</p>
+        <?php endif; ?>
+
         <?php if (!empty($canManageCatalog)): ?>
+        <form method="post" action="/enrichir.php" class="import-form enrich-actions">
+            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+            <input type="hidden" name="action" value="enrichir">
+            <p class="hint">
+                Environ <?= (int) $enrichBatchSize ?> œuvre(s) par clic
+                <?php if ((int) ($enrichPending ?? 0) > 0): ?>
+                    — <?= (int) $enrichPending ?> restante(s).
+                <?php endif; ?>
+            </p>
+            <div class="export-actions">
+                <button type="submit" class="btn btn-accent">Enrichir le catalogue</button>
+                <label class="checkbox">
+                    <input type="checkbox" name="force_all" value="1">
+                    Tout retraiter
+                </label>
+            </div>
+        </form>
         <form method="post" action="/enrichir.php" class="inline-form">
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
             <input type="hidden" name="action" value="test_tmdb">
             <button type="submit" class="btn btn-secondary btn-sm">Tester la connexion TMDB</button>
         </form>
-        <form method="post" action="/enrichir.php" class="import-form enrich-actions">
-            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
-            <input type="hidden" name="action" value="enrichir">
-            <p class="hint">Enrichit les œuvres du catalogue (environ <?= (int) $enrichBatchSize ?> par clic).</p>
-            <button type="submit" class="btn btn-accent">Enrichir le catalogue</button>
-            <label class="checkbox">
-                <input type="checkbox" name="force_all" value="1">
-                Tout retraiter
-            </label>
-        </form>
+
+        <details class="import-columns-help tmdb-key-manage">
+            <summary>Gérer la clé API TMDB</summary>
+            <?php if (!empty($tmdbKeyFromEnvironment)): ?>
+                <p class="hint">
+                    Modifiez <code>MONCINE_TMDB_API_KEY</code> dans PHP-FPM (YunoHost), puis rechargez PHP-FPM.
+                </p>
+            <?php else: ?>
+                <form method="post" action="/enrichir.php" class="import-form">
+                    <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                    <input type="hidden" name="action" value="save_tmdb_key">
+                    <label for="tmdb_api_key_replace">Nouvelle clé</label>
+                    <input type="password" name="tmdb_api_key" id="tmdb_api_key_replace" required autocomplete="off">
+                    <button type="submit" class="btn btn-secondary btn-sm">Remplacer</button>
+                </form>
+                <form method="post" action="/enrichir.php" class="inline-form tmdb-key-clear-form"
+                      onsubmit="return confirm('Supprimer la clé TMDB enregistrée ?');">
+                    <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                    <input type="hidden" name="action" value="clear_tmdb_key">
+                    <button type="submit" class="btn btn-secondary btn-sm">Supprimer la clé</button>
+                </form>
+            <?php endif; ?>
+        </details>
         <?php endif; ?>
     <?php endif; ?>
 </section>
@@ -195,7 +230,8 @@
 <section class="export-panel">
     <h2>Affiches locales</h2>
     <p class="lead">
-        Les affiches sont stockées par <strong>ID catalogue</strong> dans <code>www/posters/</code>
+        Les affiches sont stockées par <strong>ID catalogue</strong> dans le dossier
+        <code>posters/</code> à côté de <code>moncine.db</code>
         (fichiers <code>123.jpg</code> = œuvre n°123). Importez le catalogue CSV <strong>avant</strong> le ZIP.
     </p>
     <p>
@@ -211,8 +247,8 @@
             Limites PHP actuelles sur ce serveur :
             post_max_size = <strong><?= Moncine\View::escape((string) ($phpPostMaxSize ?? '?')) ?></strong>,
             upload_max_filesize = <strong><?= Moncine\View::escape((string) ($phpUploadMaxSize ?? '?')) ?></strong>
-            (il faut au moins 85M pour un gros ZIP — mettre à jour le paquet Moncine puis redémarrer PHP-FPM).
-            Vous pouvez aussi copier le dossier <code>posters/</code> en SSH vers <code>www/posters/</code>.
+            (il faut au moins 85M pour un gros ZIP — mettre à jour le paquet puis redémarrer PHP-FPM).
+            Vous pouvez aussi copier le dossier <code>posters/</code> en SSH à côté de <code>moncine.db</code>.
         </p>
         <form method="post" enctype="multipart/form-data" class="import-form">
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>

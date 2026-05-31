@@ -29,6 +29,9 @@ define('MONCINE_DATA', $dataPath);
 
 define('MONCINE_DB_FILE', MONCINE_DATA . '/moncine.db');
 
+// Affiches catalogue (même dossier de données que la base SQLite)
+define('MONCINE_POSTERS_DIR', MONCINE_DATA . '/posters');
+
 // Racine des médias volumineux (PDF magazines, livres, exports…) — hors www/.
 // Sous-dossiers créés par Moncine : objects/, magazines/, books/, exports/, tmp/, …
 $mediaPath = getenv('MONCINE_MEDIA_PATH');
@@ -46,7 +49,7 @@ define('MONCINE_APP_NAME', 'Médiathèque');
 
 // Version applicative (semver du fork Médiathèque)
 // Identifiants techniques MONCINE_* / namespace Moncine\ : voir doc/conventions-techniques.md
-define('MONCINE_PACKAGE_VERSION', '0.1.0');
+define('MONCINE_PACKAGE_VERSION', '0.1.1');
 
 // Derrière un reverse proxy de confiance (YunoHost / Nginx) : 1 pour utiliser X-Real-IP / X-Forwarded-For.
 $trustProxy = getenv('MONCINE_TRUST_PROXY');

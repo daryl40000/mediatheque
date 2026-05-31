@@ -50,7 +50,7 @@ final class ExportCatalog
         ], ExportSpreadsheet::buildFilename('moncine-catalogue', 'ods'));
     }
 
-    /** Archive ZIP des fichiers dans www/posters/ référencés par le catalogue. */
+    /** Archive ZIP des affiches locales référencées par le catalogue. */
     public function sendPostersZipDownload(): void
     {
         if (!class_exists(\ZipArchive::class)) {

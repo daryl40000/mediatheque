@@ -171,7 +171,7 @@
     <section class="catalog-maintenance-panel">
         <h2>Affiches orphelines</h2>
         <p class="hint">
-            Fichiers dans <code>www/posters/</code> non référencés par une fiche catalogue.
+            Fichiers dans le dossier <code>posters/</code> non référencés par une fiche catalogue.
         </p>
         <?php if ($orphanPosters === []): ?>
             <p class="alert alert-info">Aucune affiche orpheline.</p>

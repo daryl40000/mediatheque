@@ -167,7 +167,7 @@ final class View
         return '/utilisateur.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
     }
 
-    /** URL d’affiche pour src : chemin local /posters/… ou HTTPS distant (échappée). */
+    /** URL d’affiche pour src : poster.php (local) ou HTTPS distant (échappée). */
     public static function posterSrc(?string $url): string
     {
         $url = trim((string) $url);
@@ -178,7 +178,9 @@ final class View
         if (PosterStorage::isLocalWebPath($url)) {
             $path = PosterStorage::filesystemPathFromWeb($url);
             if ($path !== null && is_file($path)) {
-                return self::escape($url);
+                $delivery = PosterStorage::deliveryUrlFromWeb($url);
+
+                return $delivery !== '' ? self::escape($delivery) : '';
             }
 
             return '';
