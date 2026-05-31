@@ -548,4 +548,33 @@ final class View
 
         return '/personnes.php?q=' . rawurlencode($name);
     }
+
+    public static function magazinesUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string
+    {
+        $params = array_filter([
+            'q' => trim($query),
+            'sort' => $sort,
+            'dir' => $dir,
+        ], static fn (string $v): bool => $v !== '');
+
+        return $params === [] ? '/magazines.php' : '/magazines.php?' . http_build_query($params);
+    }
+
+    public static function magazineSeriesUrl(int $seriesId, string $sort = 'numero_ordre', string $dir = 'desc'): string
+    {
+        if ($seriesId <= 0) {
+            return '/magazines.php';
+        }
+
+        return '/serie-magazine.php?' . http_build_query([
+            'series_id' => $seriesId,
+            'sort' => $sort,
+            'dir' => $dir,
+        ]);
+    }
+
+    public static function magazineIssueUrl(int $bibId): string
+    {
+        return $bibId > 0 ? '/magazine-numero.php?id=' . $bibId : '/magazines.php';
+    }
 }

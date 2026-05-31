@@ -13,12 +13,19 @@ MediaDomainGuards::renderCollectionPageOrExit();
 
 use Moncine\CatalogAdmin;
 use Moncine\CollectionViewMode;
+use Moncine\MediaContext;
+use Moncine\MediaDomain;
 use Moncine\UserContext;
 use Moncine\Csrf;
 use Moncine\FilmEnricher;
 use Moncine\FilmRepository;
 use Moncine\SupportPhysique;
 use Moncine\View;
+
+if (MediaDomain::isMagazine(MediaContext::current())) {
+    header('Location: ' . MediaDomain::collectionPath(MediaDomain::MAGAZINE));
+    exit;
+}
 
 $sortBy = (string) ($_GET['sort'] ?? $_POST['sort'] ?? 'titre');
 $sortDir = (string) ($_GET['dir'] ?? $_POST['dir'] ?? 'asc');

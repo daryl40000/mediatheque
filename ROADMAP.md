@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.1.1** (2026-05-31)  
+**Version actuelle : 0.2.0** (2026-05-31)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -22,7 +22,7 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 | **M2** BD / Manga | ⏳ À faire | 0.3.x | Collection BD, séries/tomes |
 | **M3** Livres | ⏳ À faire | 0.4.x | ISBN, auteur, import CSV |
 | **M4** Jeux vidéo | ⏳ À faire | 0.5.x | Physique + plateformes |
-| **M5** Magazines | ⏳ À faire | 0.6.x | PDF, lecteur, recherche texte |
+| **M5** Magazines | 🔄 **En cours** | 0.2.0 | Séries, numéros, couvertures, PDF, sommaire |
 | **M6** Transversal | ⏳ À faire | 0.9.x | Prêts, partage, stats par domaine |
 | **M7** Identité & polish | ⏳ À faire | 1.0.0 | Branding, doc finale, déploiement |
 

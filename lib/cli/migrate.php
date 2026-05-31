@@ -1,7 +1,10 @@
 #!/usr/bin/env php
 <?php
 /**
- * Vérifie / applique les migrations paquet (sql/migrations/).
+ * Vérifie l’état des migrations paquet (sql/migrations/).
+ *
+ * Les migrations s’appliquent automatiquement au premier accès (web ou CLI)
+ * via Database::getInstance() — ce script sert uniquement au diagnostic.
  *
  * Usage :
  *   php lib/cli/migrate.php

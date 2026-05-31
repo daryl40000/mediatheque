@@ -9,6 +9,29 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.2.0] — 2026-05-31
+
+**Module Magazines (M5 — première version)** — collection par **série** puis **numéros**.
+
+### Ajouté
+
+- Tables **`series`** et **`oeuvre_magazine`** (migration `031_series_magazine.sql`).
+- **`PublicationType`** — hebdomadaire, mensuel, bimensuel, trimestriel, annuel, irrégulier ; formatage des dates de parution.
+- **`SeriesRepository`**, **`MagazineRepository`** — séries, numéros, collection, envies.
+- Pages : **`/magazines.php`** (liste des séries), **`/serie-magazine.php`**, **`/magazine-numero.php`**, ajout série/numéro.
+- **Couverture** via `PosterStorage` (même format que les affiches films).
+- **PDF** par numéro (`stored_objects` + dossier `magazines/`).
+- **Sommaire** sur la fiche numéro (à la place du synopsis).
+- Onglet **Magazines** activé dans la navigation (`MediaDomain::isCollectionImplemented`).
+
+### Tests
+
+- `MagazineTest`, `PublicationTypeTest` ; mise à jour `MediaDomainTest`.
+
+Après mise à jour : `php lib/cli/migrate.php`.
+
+---
+
 ## [0.1.1] — 2026-05-31
 
 **Reprise des correctifs Monciné 1.0.3 → 1.0.5** (onglet Films et fonctions communes).

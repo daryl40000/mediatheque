@@ -55,13 +55,26 @@ final class PosterStorage
     }
 
     /**
-     * @return array{id: int, ext: string}|null
+     * @return array{id?: int, series?: int, ext: string}|null
      */
     private static function parseLocalWebPath(string $path): ?array
     {
         $path = trim($path);
         if ($path === '') {
             return null;
+        }
+
+        if (preg_match(
+            '#^' . preg_quote(self::WEB_PREFIX, '#') . '/s(\d+)\.(jpe?g|png|webp)$#i',
+            $path,
+            $m
+        )) {
+            $ext = strtolower($m[2]);
+            if ($ext === 'jpeg') {
+                $ext = 'jpg';
+            }
+
+            return ['series' => (int) $m[1], 'ext' => $ext];
         }
 
         if (!preg_match(
@@ -83,6 +96,14 @@ final class PosterStorage
     public static function isRemoteUrl(string $url): bool
     {
         return SecureUrl::isHttpsUrl($url);
+    }
+
+    /** Chemin web local pour une série magazine (logo / couverture type). */
+    public static function webPathForSeries(int $seriesId, string $extension): string
+    {
+        $ext = strtolower(preg_replace('/[^a-z0-9]/', '', $extension) ?: 'jpg');
+
+        return self::WEB_PREFIX . '/s' . $seriesId . '.' . $ext;
     }
 
     /** Chemin web local pour une œuvre (fichier peut ne pas exister encore). */
@@ -156,6 +177,40 @@ final class PosterStorage
         $this->removeLocalFilesForOeuvre($oeuvreId);
 
         $filePath = self::postersFilesystemDir() . '/' . $oeuvreId . '.' . $ext;
+        if (@file_put_contents($filePath, $binary) === false) {
+            return '';
+        }
+
+        @chmod($filePath, 0644);
+
+        return $webPath;
+    }
+
+    /**
+     * Enregistre une image locale pour une série magazine (logo ou couverture type).
+     */
+    public function importBinaryForSeries(int $seriesId, string $binary): string
+    {
+        if ($seriesId <= 0 || $binary === '') {
+            return '';
+        }
+
+        $maxBytes = defined('MONCINE_POSTER_MAX_BYTES') ? (int) MONCINE_POSTER_MAX_BYTES : 2_097_152;
+        if (strlen($binary) > $maxBytes) {
+            return '';
+        }
+
+        $mime = $this->detectImageMime($binary);
+        if ($mime === null) {
+            return '';
+        }
+
+        self::ensureDirectory();
+        $ext = self::ALLOWED_MIME[$mime];
+        $webPath = self::webPathForSeries($seriesId, $ext);
+        $this->removeLocalFilesForSeries($seriesId);
+
+        $filePath = self::postersFilesystemDir() . '/s' . $seriesId . '.' . $ext;
         if (@file_put_contents($filePath, $binary) === false) {
             return '';
         }
@@ -257,7 +312,7 @@ final class PosterStorage
         }
 
         $name = basename($webPath);
-        if (!preg_match('/^\d+\.(jpe?g|png|webp)$/i', $name)) {
+        if (!preg_match('/^(s\d+|\d+)\.(jpe?g|png|webp)$/i', $name)) {
             return null;
         }
 
@@ -313,6 +368,19 @@ final class PosterStorage
     {
         foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
             $name = $oeuvreId . '.' . $ext;
+            foreach (self::posterSearchDirs() as $dir) {
+                $path = $dir . '/' . $name;
+                if (is_file($path)) {
+                    @unlink($path);
+                }
+            }
+        }
+    }
+
+    private function removeLocalFilesForSeries(int $seriesId): void
+    {
+        foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
+            $name = 's' . $seriesId . '.' . $ext;
             foreach (self::posterSearchDirs() as $dir) {
                 $path = $dir . '/' . $name;
                 if (is_file($path)) {

@@ -72,10 +72,35 @@ final class MediaDomain
         return self::normalize($domain) === self::FILM;
     }
 
-    /** Domaines dont la collection est utilisable (M0 : films uniquement). */
+    public static function isMagazine(string $domain): bool
+    {
+        return self::normalize($domain) === self::MAGAZINE;
+    }
+
+    /** Domaines dont la collection est utilisable. */
     public static function isCollectionImplemented(string $domain): bool
     {
-        return self::isFilm($domain);
+        $domain = self::normalize($domain);
+
+        return $domain === self::FILM || $domain === self::MAGAZINE;
+    }
+
+    /** Page principale « ma collection » selon l’onglet actif. */
+    public static function collectionPath(string $domain): string
+    {
+        return match (self::normalize($domain)) {
+            self::MAGAZINE => '/magazines.php',
+            default => '/films.php',
+        };
+    }
+
+    /** Page « mes envies » selon l’onglet actif. */
+    public static function wishlistPath(string $domain): string
+    {
+        return match (self::normalize($domain)) {
+            self::MAGAZINE => '/magazines-envies.php',
+            default => '/souhaits.php',
+        };
     }
 
     /** Couleur d’accent (thème CSS). */

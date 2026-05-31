@@ -22,6 +22,8 @@ $currentPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH
 $mediaDomain = Moncine\MediaContext::current();
 $mediaNav = Moncine\MediaContext::navLabels();
 $mediaTheme = Moncine\MediaDomain::theme($mediaDomain);
+$collectionPath = Moncine\MediaDomain::collectionPath($mediaDomain);
+$wishlistPath = Moncine\MediaDomain::wishlistPath($mediaDomain);
 $showFilmOnlyNav = Moncine\MediaDomain::hasFilmOnlyFeatures($mediaDomain);
 $mediaCssVars = implode('; ', [
     '--media-accent: ' . $mediaTheme['accent'],
@@ -106,8 +108,8 @@ $mediaCssVars = implode('; ', [
                 <?php if ($showFilmOnlyNav): ?>
                     <a href="/quiz.php"<?= $currentPath === '/quiz.php' ? ' aria-current="page"' : '' ?>>Ce soir</a>
                 <?php endif; ?>
-                <a href="/films.php"<?= $currentPath === '/films.php' ? ' aria-current="page"' : '' ?>><?= Moncine\View::escape($mediaNav['collection']) ?></a>
-                <a href="/souhaits.php"<?= $currentPath === '/souhaits.php' ? ' aria-current="page"' : '' ?>><?= Moncine\View::escape($mediaNav['wishlist']) ?></a>
+                <a href="<?= Moncine\View::escape($collectionPath) ?>"<?= $currentPath === $collectionPath ? ' aria-current="page"' : '' ?>><?= Moncine\View::escape($mediaNav['collection']) ?></a>
+                <a href="<?= Moncine\View::escape($wishlistPath) ?>"<?= $currentPath === $wishlistPath ? ' aria-current="page"' : '' ?>><?= Moncine\View::escape($mediaNav['wishlist']) ?></a>
                 <a href="/statistiques.php"<?= $currentPath === '/statistiques.php' ? ' aria-current="page"' : '' ?>><?= Moncine\View::escape($mediaNav['stats']) ?></a>
 
                 <?php

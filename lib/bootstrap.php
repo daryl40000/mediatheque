@@ -30,8 +30,11 @@ Moncine\Requirements::abortIfNeeded();
 // Session web (questionnaire + connexion)
 Moncine\QuizSession::start();
 
-// Base SQLite + migrations (avant Auth : needsSetup() interroge la table utilisateurs).
+// Base SQLite + migrations automatiques (avant Auth : needsSetup() interroge la table utilisateurs).
 Moncine\Database::getInstance();
+
+// Module magazines : vérifie le schéma et répare les séries orphelines (install solo).
+Moncine\MagazineModule::bootstrap();
 
 // Domaine média actif (onglets Films / BD / …)
 Moncine\MediaContext::bootstrap();

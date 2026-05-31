@@ -28,9 +28,11 @@ final class LibraryStatut
 
     public static function label(string $statut): string
     {
+        $nav = MediaContext::navLabels();
+
         return match ($statut) {
-            self::WISHLIST => 'Mes envies',
-            default => 'Mes films',
+            self::WISHLIST => $nav['wishlist'],
+            default => $nav['collection'],
         };
     }
 

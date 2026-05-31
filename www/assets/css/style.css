@@ -3507,3 +3507,108 @@ textarea {
     border: 1px solid var(--border);
     object-fit: cover;
 }
+
+/* Magazines — séries et numéros (format couverture A4 portrait : 210 × 297 mm) */
+.magazine-cover {
+    display: block;
+    aspect-ratio: 210 / 297;
+    object-fit: cover;
+    object-position: center top;
+    border-radius: 4px;
+    border: 1px solid var(--border);
+    background: var(--surface, #1a1a1f);
+}
+
+.magazine-cover--thumb {
+    width: 3rem;
+    max-width: 3rem;
+}
+
+.magazine-cover--header {
+    width: 8rem;
+    max-width: 8rem;
+    flex-shrink: 0;
+}
+
+.magazine-cover--empty {
+    background: var(--border);
+}
+
+.magazine-issues-table th:first-child,
+.magazine-issues-table td:first-child {
+    width: 1%;
+    white-space: nowrap;
+    vertical-align: middle;
+}
+
+.magazine-series-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(11rem, 1fr));
+    gap: 1rem;
+    margin-top: 1rem;
+}
+
+.magazine-series-card {
+    display: flex;
+    flex-direction: column;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    text-decoration: none;
+    color: inherit;
+    background: var(--surface, #1a1a1f);
+}
+
+.magazine-series-card:hover {
+    border-color: var(--media-accent, var(--accent));
+}
+
+.magazine-series-card__cover {
+    width: 100%;
+    aspect-ratio: 210 / 297;
+    object-fit: cover;
+    object-position: center top;
+}
+
+.magazine-series-card__cover--empty {
+    background: var(--border);
+    min-height: 8rem;
+}
+
+.magazine-series-card__body {
+    padding: 0.65rem 0.75rem;
+}
+
+.magazine-series-card__title {
+    font-size: 1rem;
+    margin: 0 0 0.35rem;
+}
+
+.magazine-series-header__main {
+    display: flex;
+    gap: 1.25rem;
+    align-items: flex-start;
+    margin: 1rem 0;
+}
+
+.magazine-issue-layout__cover .magazine-cover {
+    width: 100%;
+}
+
+.magazine-issue-layout {
+    display: grid;
+    grid-template-columns: minmax(8rem, 12rem) 1fr;
+    gap: 1.5rem;
+    margin-top: 1rem;
+}
+
+.magazine-sommaire__body {
+    white-space: pre-wrap;
+    line-height: 1.5;
+}
+
+@media (max-width: 640px) {
+    .magazine-issue-layout {
+        grid-template-columns: 1fr;
+    }
+}

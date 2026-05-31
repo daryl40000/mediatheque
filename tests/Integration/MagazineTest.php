@@ -1,0 +1,110 @@
+<?php
+
+declare(strict_types=1);
+
+namespace Moncine\Tests\Integration;
+
+use Moncine\LibraryStatut;
+use Moncine\MagazineRepository;
+use Moncine\MediaContext;
+use Moncine\MediaDomain;
+use Moncine\PublicationType;
+use Moncine\SchemaMigrator;
+use Moncine\SeriesRepository;
+use Moncine\Tests\Support\MoncineTestCase;
+use Moncine\UserContext;
+
+final class MagazineTest extends MoncineTestCase
+{
+    protected function setUp(): void
+    {
+        parent::setUp();
+        (new SchemaMigrator(\Moncine\Database::getInstance()))->runPendingMigrations();
+        MediaContext::set(MediaDomain::MAGAZINE);
+        $this->loginAsAdmin();
+    }
+
+    public function testCreateSeriesAndIssue(): void
+    {
+        $this->assertTrue(MagazineRepository::isAvailable());
+
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'PC Jeux Test',
+            'publication_type' => PublicationType::MENSUEL,
+            'editeur' => 'Éditeur Test',
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+
+        $bibId = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '42',
+            'numero_ordre' => 42,
+            'date_parution' => '2024-06-01',
+            'sommaire' => "Dossier : jeux indépendants\nTest matériel",
+            'pages' => 100,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        $seriesList = $repo->listSeriesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION);
+        $this->assertCount(1, $seriesList);
+        $this->assertSame('PC Jeux Test', $seriesList[0]['titre']);
+
+        $issues = $repo->listIssuesForSeries($seriesId, $userId, $foyerId, LibraryStatut::COLLECTION);
+        $this->assertCount(1, $issues);
+        $this->assertSame('42', $issues[0]['numero']);
+        $this->assertStringContainsString('jeux indépendants', (string) $issues[0]['sommaire']);
+
+        $issue = $repo->findIssueByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($issue);
+        $this->assertSame('juin 2024', PublicationType::formatParutionDate(
+            (string) $issue['date_parution'],
+            (string) $issue['publication_type']
+        ));
+    }
+
+    public function testEmptySeriesAppearsInCollection(): void
+    {
+        $this->assertTrue(MagazineRepository::isAvailable());
+
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Canard PC Test',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+        $this->assertTrue($repo->registerSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId));
+
+        $seriesList = $repo->listSeriesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION);
+        $this->assertCount(1, $seriesList);
+        $this->assertSame('Canard PC Test', $seriesList[0]['titre']);
+        $this->assertSame(0, (int) ($seriesList[0]['issue_count'] ?? -1));
+    }
+
+    public function testFilmCollectionExcludesMagazineIssues(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Joystick Test',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        (new MagazineRepository())->createIssueWithLibrary($seriesId, [
+            'numero' => '1',
+            'numero_ordre' => 1,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+
+        MediaContext::set(MediaDomain::FILM);
+        $films = (new \Moncine\FilmRepository())->findAll();
+        foreach ($films as $film) {
+            $this->assertStringNotContainsString('Joystick', (string) ($film['titre'] ?? ''));
+        }
+    }
+}

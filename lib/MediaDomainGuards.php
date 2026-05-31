@@ -44,7 +44,7 @@ final class MediaDomainGuards
             self::isFilmOnlyPath($pathOnly)
             || !MediaDomain::isCollectionImplemented(MediaDomain::normalize($targetDomain))
         ) {
-            return '/films.php';
+            return MediaDomain::collectionPath($targetDomain);
         }
 
         $target = $pathOnly;
@@ -81,7 +81,23 @@ final class MediaDomainGuards
             'Location: /set-media-domain.php?domain='
             . rawurlencode(MediaDomain::FILM)
             . '&redirect='
-            . rawurlencode('/films.php')
+            . rawurlencode(MediaDomain::collectionPath(MediaDomain::FILM))
+        );
+        exit;
+    }
+
+    /** Redirige vers l’onglet Magazines si la page magazine est ouverte depuis un autre domaine. */
+    public static function ensureMagazineContext(string $redirectPath = '/magazines.php'): void
+    {
+        if (MediaContext::current() === MediaDomain::MAGAZINE) {
+            return;
+        }
+
+        header(
+            'Location: /set-media-domain.php?domain='
+            . rawurlencode(MediaDomain::MAGAZINE)
+            . '&redirect='
+            . rawurlencode($redirectPath)
         );
         exit;
     }

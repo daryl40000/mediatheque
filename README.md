@@ -1,13 +1,13 @@
 # Médiathèque
 
-**Version : 0.1.1**
+**Version : 0.2.0**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
 
 **Médiathèque** est l’évolution de **[Monciné](CHANGELOG.md)** : une application web pour gérer **plusieurs types de médias** (films, BD/manga, livres, jeux vidéo, magazines) dans une seule interface, avec des **onglets** et une **couleur par média**.
 
-En **0.1.0**, l’onglet **Films** reprend toute la dvdthèque Monciné 1.0.0 ; les autres onglets sont préparés (affichage « Bientôt disponible »).
+En **0.2.0**, l’onglet **Films** reprend toute la dvdthèque Monciné ; l’onglet **Magazines** permet de gérer des séries et numéros. Les autres onglets affichent « Bientôt disponible ».
 
 | Document | Contenu |
 |----------|---------|
@@ -23,9 +23,10 @@ En **0.1.0**, l’onglet **Films** reprend toute la dvdthèque Monciné 1.0.0 ; 
 | Domaine | Disponible |
 |---------|------------|
 | Multi-médias | Onglets Films / BD / Livres / Jeux / Magazines + thème couleur |
+| Magazines | Séries (PC Jeux, Joystick…), numéros, couvertures, PDF, sommaire (**0.2.0**) |
 | Collection & envies | Mes films, Mes envies, sagas, statistiques, **questionnaire du soir**, **listes imprimables** |
 | Prêts | Demandes entre amis, réservation, validation et retour (`/mes-prets.php`) |
-| Stockage médias | Fichiers volumineux hors `www/` (PDF magazines prévus — phase M5) |
+| Stockage médias | Fichiers volumineux hors `www/` (PDF magazines par numéro) |
 | Foyers & famille | Collection partagée par foyer ; envies et historique personnels |
 | Catalogue partagé | Fiches œuvres, enrichissement TMDB / OMDB, affiches |
 | Comptes | Connexion, rôles admin/utilisateur, inscription publique optionnelle |

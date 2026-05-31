@@ -16,15 +16,20 @@ final class MediaDomainTest extends TestCase
         $this->assertSame(MediaDomain::FILM, MediaDomain::normalize('unknown'));
     }
 
-    public function testCollectionImplementedOnlyForFilm(): void
+    public function testCollectionImplementedForFilmAndMagazine(): void
     {
         $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::FILM));
+        $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::MAGAZINE));
         $this->assertFalse(MediaDomain::isCollectionImplemented(MediaDomain::BD));
     }
 
-    public function testTabSwitchFromQuizRedirectsToFilmsNotQuiz(): void
+    public function testTabSwitchFromQuizRedirectsToCollectionPage(): void
     {
         $this->assertTrue(MediaDomainGuards::isFilmOnlyPath('/quiz.php'));
+        $this->assertSame(
+            '/magazines.php',
+            MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::MAGAZINE, '/quiz.php', 'reset=1')
+        );
         $this->assertSame(
             '/films.php',
             MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::BD, '/quiz.php', 'reset=1')

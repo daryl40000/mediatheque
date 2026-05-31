@@ -15,11 +15,18 @@ use Moncine\Csrf;
 use Moncine\FilmRepository;
 use Moncine\GroupWishlistRepository;
 use Moncine\LibraryStatut;
+use Moncine\MediaContext;
+use Moncine\MediaDomain;
 use Moncine\SupportPhysique;
 use Moncine\UserContext;
 use Moncine\View;
 use Moncine\WishlistScope;
 use Moncine\WishlistTargetRepository;
+
+if (MediaDomain::isMagazine(MediaContext::current())) {
+    header('Location: ' . MediaDomain::wishlistPath(MediaDomain::MAGAZINE));
+    exit;
+}
 
 if (!(new FilmRepository())->usesCatalogModel()) {
     header('Location: /films.php');
