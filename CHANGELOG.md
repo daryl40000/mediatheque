@@ -9,6 +9,16 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.2.2] — 2026-05-31
+
+### Modifié
+
+- **Affiches et couvertures** : taille max. par image portée à **10 Mo** (`MONCINE_POSTER_MAX_BYTES`) ; ZIP d’affiches à l’import admin : **200 Mo** (`MONCINE_POSTERS_ZIP_MAX_BYTES`).
+- **`UploadLimits`** : contrôles et alertes PHP pour affiches et ZIP (page Import, fiche catalogue, magazines).
+- Textes d’aide mis à jour (import ZIP, formulaires couverture magazine).
+
+---
+
 ## [0.2.1] — 2026-05-31
 
 **Magazines — PDF, recherche, supports en tags, confort dev**

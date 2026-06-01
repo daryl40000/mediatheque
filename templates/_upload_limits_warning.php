@@ -1,6 +1,5 @@
 <?php
-/** Alerte si le serveur PHP n’accepte pas les PDF magazines (limites trop basses). */
-$uploadLimitsWarning = Moncine\UploadLimits::phpLimitsWarning();
-if ($uploadLimitsWarning !== ''): ?>
+/** Alertes si le serveur PHP n’accepte pas les envois (PDF magazines, affiches, ZIP). */
+foreach (Moncine\UploadLimits::phpLimitsWarnings() as $uploadLimitsWarning): ?>
     <div class="alert alert-danger"><?= $uploadLimitsWarning ?></div>
-<?php endif; ?>
+<?php endforeach; ?>

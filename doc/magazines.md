@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.2.1** · **Date : 2026-05-31**
+**Version : 0.2.2** · **Date : 2026-05-31**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche et supports (papier / PDF).
 
@@ -18,7 +18,16 @@ L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **nu
 
 ---
 
-## 2. Support : tags Papier et PDF
+## 2. Couvertures et affiches
+
+Les couvertures de numéros et les logos de séries utilisent le même stockage que les **affiches films** (`data/posters/`).
+
+- Taille max. par fichier image : **10 Mo** (`MONCINE_POSTER_MAX_BYTES` dans `lib/config.php`).
+- Formats : JPEG, PNG, WebP.
+
+---
+
+## 3. Support : tags Papier et PDF
 
 Le support n’est plus un champ texte libre.
 
@@ -33,7 +42,7 @@ Classe PHP : `lib/MagazineSupport.php`.
 
 ---
 
-## 3. Numérotation et hors-série
+## 4. Numérotation et hors-série
 
 Deux champs distincts :
 
@@ -46,7 +55,7 @@ Pour un numéro oublié au milieu de la série : modifiez **uniquement** ce num�
 
 ---
 
-## 4. Fichiers PDF
+## 5. Fichiers PDF
 
 ### Emplacement
 
@@ -72,7 +81,7 @@ Migration : `sql/migrations/033_magazine_pdf_text_preview.sql`.
 
 ---
 
-## 5. Recherche sur une série
+## 6. Recherche sur une série
 
 Sur `/serie-magazine.php`, le champ **Rechercher** (`q`) filtre sur :
 
@@ -83,7 +92,7 @@ Sur `/serie-magazine.php`, le champ **Rechercher** (`q`) filtre sur :
 
 ---
 
-## 6. Développement local (gros PDF)
+## 7. Développement local (gros PDF)
 
 Le serveur PHP intégré par défaut limite souvent les envois à 2–8 Mo.
 
@@ -101,7 +110,7 @@ Classe : `lib/UploadLimits.php` — alerte dans les formulaires si les limites P
 
 ---
 
-## 7. Fichiers PHP principaux
+## 8. Fichiers PHP principaux
 
 | Fichier | Rôle |
 |---------|------|
@@ -115,7 +124,7 @@ Classe : `lib/UploadLimits.php` — alerte dans les formulaires si les limites P
 
 ---
 
-## 8. Mise à jour depuis 0.2.0
+## 9. Mise à jour depuis 0.2.0
 
 ```bash
 php lib/cli/migrate.php
@@ -127,4 +136,6 @@ Pour le dev local avec import PDF volumineux : utilisez `./start-dev.sh` plutôt
 
 ---
 
-*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (section 0.2.1) et [ROADMAP.md](../ROADMAP.md) (phase M5).*
+*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (section 0.2.2) et [ROADMAP.md](../ROADMAP.md) (phase M5).*
+
+**Import massif d’affiches films** (plusieurs centaines) : page **Importer** → ZIP jusqu’à 200 Mo ([doc via README](../README.md)).

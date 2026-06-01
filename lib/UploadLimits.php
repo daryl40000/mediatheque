@@ -30,9 +30,29 @@ final class UploadLimits
         return defined('MONCINE_PDF_MAX_BYTES') ? (int) MONCINE_PDF_MAX_BYTES : 350 * 1024 * 1024;
     }
 
+    public static function maxPosterBytes(): int
+    {
+        return defined('MONCINE_POSTER_MAX_BYTES') ? (int) MONCINE_POSTER_MAX_BYTES : 10 * 1024 * 1024;
+    }
+
+    public static function maxPostersZipBytes(): int
+    {
+        return defined('MONCINE_POSTERS_ZIP_MAX_BYTES') ? (int) MONCINE_POSTERS_ZIP_MAX_BYTES : 200 * 1024 * 1024;
+    }
+
     public static function maxPdfBytesLabel(): string
     {
         return self::formatBytesLabel(self::maxPdfBytes());
+    }
+
+    public static function maxPosterBytesLabel(): string
+    {
+        return self::formatBytesLabel(self::maxPosterBytes());
+    }
+
+    public static function maxPostersZipBytesLabel(): string
+    {
+        return self::formatBytesLabel(self::maxPostersZipBytes());
     }
 
     public static function postMaxSizeLabel(): string
@@ -64,11 +84,19 @@ final class UploadLimits
      */
     public static function phpAllowsPdfUpload(): bool
     {
-        $needUpload = self::maxPdfBytes();
-        $needPost = $needUpload + (512 * 1024);
+        return self::phpAllowsUploadOfSize(self::maxPdfBytes(), 512 * 1024);
+    }
 
-        return self::currentUploadMaxBytes() >= $needUpload
-            && self::currentPostMaxBytes() >= $needPost;
+    /** Affiche / couverture (fichier image unique). */
+    public static function phpAllowsPosterUpload(): bool
+    {
+        return self::phpAllowsUploadOfSize(self::maxPosterBytes(), 256 * 1024);
+    }
+
+    /** Archive ZIP d’affiches (import admin). */
+    public static function phpAllowsPostersZipUpload(): bool
+    {
+        return self::phpAllowsUploadOfSize(self::maxPostersZipBytes(), 1024 * 1024);
     }
 
     /** Message d’avertissement si les limites PHP bloquent les gros PDF. */
@@ -82,11 +110,44 @@ final class UploadLimits
             . '(upload_max_filesize = ' . self::uploadMaxFilesizeLabel()
             . ', post_max_size = ' . self::postMaxSizeLabel()
             . ', maximum application = ' . self::maxPdfBytesLabel() . '). '
-            . 'En local, lancez le site avec la commande '
-            . '<code>./www/serve.sh</code> depuis le dossier du projet. '
-            . 'Sur un hébergement (Apache, Nginx), augmentez ces valeurs dans la configuration PHP '
-            . '(fichier <code>www/.user.ini</code> ou panneau d’administration). '
-            . 'Avec Nginx, vérifiez aussi <code>client_max_body_size</code>.';
+            . self::phpLimitsHintHtml();
+    }
+
+    /** Avertissement si PHP bloque les affiches ou le ZIP d’affiches. */
+    public static function posterLimitsWarning(): string
+    {
+        $parts = [];
+        if (!self::phpAllowsPosterUpload()) {
+            $parts[] = 'affiche fichier (max application ' . self::maxPosterBytesLabel() . ')';
+        }
+        if (!self::phpAllowsPostersZipUpload()) {
+            $parts[] = 'ZIP d’affiches (max application ' . self::maxPostersZipBytesLabel() . ')';
+        }
+
+        if ($parts === []) {
+            return '';
+        }
+
+        return 'Les limites PHP du serveur sont trop basses pour : '
+            . implode(', ', $parts)
+            . ' (upload_max_filesize = ' . self::uploadMaxFilesizeLabel()
+            . ', post_max_size = ' . self::postMaxSizeLabel() . '). '
+            . self::phpLimitsHintHtml();
+    }
+
+    /**
+     * @return list<string> messages HTML (alertes) non vides
+     */
+    public static function phpLimitsWarnings(): array
+    {
+        $warnings = [];
+        foreach ([self::phpLimitsWarning(), self::posterLimitsWarning()] as $message) {
+            if ($message !== '') {
+                $warnings[] = $message;
+            }
+        }
+
+        return $warnings;
     }
 
     public static function postTooLargeMessage(): string
@@ -166,6 +227,22 @@ final class UploadLimits
         $separator = str_contains($url, '?') ? '&' : '?';
         header('Location: ' . $url . $separator . 'error=' . rawurlencode($message));
         exit;
+    }
+
+    private static function phpAllowsUploadOfSize(int $maxBytes, int $postMarginBytes): bool
+    {
+        $needPost = $maxBytes + $postMarginBytes;
+
+        return self::currentUploadMaxBytes() >= $maxBytes
+            && self::currentPostMaxBytes() >= $needPost;
+    }
+
+    private static function phpLimitsHintHtml(): string
+    {
+        return 'En local, lancez le site avec <code>./start-dev.sh</code>. '
+            . 'Sur un hébergement, augmentez <code>upload_max_filesize</code> et '
+            . '<code>post_max_size</code> (<code>www/.user.ini</code> ou panneau). '
+            . 'Avec Nginx, vérifiez aussi <code>client_max_body_size</code>.';
     }
 
     private static function formatBytesLabel(int $bytes): string

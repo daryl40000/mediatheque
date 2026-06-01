@@ -35,4 +35,16 @@ final class UploadLimitsTest extends TestCase
 
         $this->assertFalse(UploadLimits::postBodyWasDiscarded());
     }
+
+    public function testMaxPosterBytesUsesApplicationConstant(): void
+    {
+        $this->assertSame(10 * 1024 * 1024, UploadLimits::maxPosterBytes());
+        $this->assertSame('10 Mo', UploadLimits::maxPosterBytesLabel());
+    }
+
+    public function testMaxPostersZipBytesUsesApplicationConstant(): void
+    {
+        $this->assertSame(200 * 1024 * 1024, UploadLimits::maxPostersZipBytes());
+        $this->assertSame('200 Mo', UploadLimits::maxPostersZipBytesLabel());
+    }
 }

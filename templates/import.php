@@ -10,6 +10,8 @@
         (si cette date ne change pas après mise à jour du paquet, le code n’est pas déployé).
     </p>
 
+    <?php require MONCINE_ROOT . '/templates/_upload_limits_warning.php'; ?>
+
     <?php if (!empty($message)): ?>
         <div class="alert alert-success"><?= Moncine\View::escape($message) ?></div>
     <?php endif; ?>
@@ -242,12 +244,13 @@
         <h3>Importer une archive ZIP</h3>
         <p class="hint">
             Format attendu : même archive que « ZIP affiches locales » (dossier <code>posters/</code>
-            ou fichiers <code>123.jpg</code> à la racine). Taille max.
-            <?= (int) (MONCINE_POSTERS_ZIP_MAX_BYTES / 1024 / 1024) ?> Mo.
-            Limites PHP actuelles sur ce serveur :
-            post_max_size = <strong><?= Moncine\View::escape((string) ($phpPostMaxSize ?? '?')) ?></strong>,
-            upload_max_filesize = <strong><?= Moncine\View::escape((string) ($phpUploadMaxSize ?? '?')) ?></strong>
-            (il faut au moins 85M pour un gros ZIP — mettre à jour le paquet puis redémarrer PHP-FPM).
+            ou fichiers <code>123.jpg</code> à la racine). Taille max. archive :
+            <strong><?= Moncine\View::escape(Moncine\UploadLimits::maxPostersZipBytesLabel()) ?></strong>
+            ; chaque image dans le ZIP :
+            <strong><?= Moncine\View::escape(Moncine\UploadLimits::maxPosterBytesLabel()) ?></strong> max.
+            Limites PHP actuelles :
+            post_max_size = <strong><?= Moncine\View::escape(Moncine\UploadLimits::postMaxSizeLabel()) ?></strong>,
+            upload_max_filesize = <strong><?= Moncine\View::escape(Moncine\UploadLimits::uploadMaxFilesizeLabel()) ?></strong>.
             Vous pouvez aussi copier le dossier <code>posters/</code> en SSH à côté de <code>moncine.db</code>.
         </p>
         <form method="post" enctype="multipart/form-data" class="import-form">

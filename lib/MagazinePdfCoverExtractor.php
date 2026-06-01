@@ -11,7 +11,7 @@ final class MagazinePdfCoverExtractor
 {
     public const COVER_PAGE = 1;
 
-    /** Résolution suffisante pour les vignettes, compatible avec la limite affiche (2 Mo). */
+    /** Résolution suffisante pour les vignettes, compatible avec MONCINE_POSTER_MAX_BYTES. */
     public const RENDER_DPI = 150;
 
     public static function isAvailable(): bool

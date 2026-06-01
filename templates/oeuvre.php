@@ -25,6 +25,8 @@
             <span><?= Moncine\View::escape((string) ($oeuvre['titre'] ?? '')) ?></span>
         </p>
 
+        <?php require MONCINE_ROOT . '/templates/_upload_limits_warning.php'; ?>
+
         <p class="hint oeuvre-catalog-page__badge">
             Fiche catalogue partagée (ID <?= $oeuvreId ?>)
             <?php if ($libraryCount > 0): ?>

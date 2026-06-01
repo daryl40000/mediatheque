@@ -1,7 +1,7 @@
 {
     "name": "mediatheque/app",
     "description": "Médiathèque — gestion multi-médias (fork Monciné, dvdthèque films en 0.1.0)",
-    "version": "0.2.1",
+    "version": "0.2.2",
     "type": "project",
     "license": "GPL-3.0-or-later",
     "authors": [

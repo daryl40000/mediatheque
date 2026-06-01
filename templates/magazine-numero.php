@@ -142,6 +142,7 @@
 
                 <label for="edit_cover">Nouvelle couverture (JPEG, PNG, WebP)</label>
                 <input type="file" name="cover_file" id="edit_cover" accept="image/jpeg,image/png,image/webp">
+                <p class="hint">Taille max. <?= Moncine\View::escape(Moncine\UploadLimits::maxPosterBytesLabel()) ?>.</p>
 
                 <label for="edit_pdf">Remplacer le PDF (max <?= Moncine\View::escape(Moncine\UploadLimits::maxPdfBytesLabel()) ?>)</label>
                 <input type="file" name="pdf_file" id="edit_pdf" accept="application/pdf,.pdf">

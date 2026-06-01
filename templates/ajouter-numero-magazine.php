@@ -64,8 +64,9 @@
         <textarea name="sommaire" id="sommaire" rows="8"
                   placeholder="Rubriques, articles principaux, pages…"></textarea>
 
-        <label for="cover_file">Couverture (JPEG, PNG, WebP — même format que les affiches films)</label>
+        <label for="cover_file">Couverture (JPEG, PNG, WebP)</label>
         <input type="file" name="cover_file" id="cover_file" accept="image/jpeg,image/png,image/webp">
+        <p class="hint">Taille max. <?= Moncine\View::escape(Moncine\UploadLimits::maxPosterBytesLabel()) ?> (comme les affiches films).</p>
 
         <label for="pdf_file">Fichier PDF du numéro (optionnel, max <?= Moncine\View::escape(Moncine\UploadLimits::maxPdfBytesLabel()) ?>)</label>
         <input type="file" name="pdf_file" id="pdf_file" accept="application/pdf,.pdf">
