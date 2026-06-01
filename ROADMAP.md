@@ -302,10 +302,10 @@ flowchart TB
 
 ## Prochaine action (équipe / développement)
 
-1. **Tagger** `v0.1.0` sur le dépôt.  
+1. **Tagger** `v0.2.1` (magazines PDF / recherche).  
 2. **Exécuter la checklist M1** (films) et corriger les anomalies.  
-3. **Publier `0.2.0`** quand M1 est vert.  
-4. **Choisir** le prochain domaine métier (souvent **M2 BD** ou **M5 magazines** selon priorité utilisateur).
+3. **Poursuivre M5** (FTS, polish magazines) ou **démarrer M2** (BD) selon priorité.  
+4. Installer **poppler-utils** sur les serveurs qui importent des PDF magazines.
 
 ---
 

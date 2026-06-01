@@ -35,5 +35,9 @@
 /.phpunit.cache/
 /phpunit.xml
 
+# Captures doc (fichiers lourds, optionnels en local)
+/doc/Screenshots/*
+!/doc/Screenshots/README.md
+
 # Logs
 *.log
