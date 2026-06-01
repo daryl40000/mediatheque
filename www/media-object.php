@@ -1,24 +1,43 @@
 <?php
 /**
- * Téléchargement / lecture d’un fichier stocké (hors www/) — admin pour l’instant.
+ * Téléchargement / lecture d’un fichier stocké (hors www/) — PDF magazines, etc.
  */
 
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\Auth;
 use Moncine\CatalogAdmin;
 use Moncine\LocalFilesystemObjectStorage;
+use Moncine\MagazineRepository;
 use Moncine\MediaStorage;
 use Moncine\StoredObjectDelivery;
 use Moncine\StoredObjectRepository;
-
-CatalogAdmin::denyUnlessAccess();
+use Moncine\UserContext;
 
 $id = (int) ($_GET['id'] ?? 0);
 if ($id <= 0) {
     http_response_code(400);
     echo 'Identifiant invalide.';
+    exit;
+}
+
+$userId = Auth::currentUserId();
+if ($userId <= 0) {
+    http_response_code(403);
+    echo 'Connexion requise.';
+    exit;
+}
+
+$foyerId = UserContext::currentFoyerId();
+$canAccess = CatalogAdmin::canAccess()
+    || (MagazineRepository::isAvailable()
+        && (new MagazineRepository())->userCanAccessStoredObject($id, $userId, $foyerId));
+
+if (!$canAccess) {
+    http_response_code(403);
+    echo 'Accès refusé à ce fichier.';
     exit;
 }
 

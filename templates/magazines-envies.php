@@ -21,7 +21,7 @@
         <ul class="magazine-series-list">
             <?php foreach ($seriesList as $series): ?>
                 <li>
-                    <a href="<?= Moncine\View::escape(Moncine\View::magazineSeriesUrl((int) ($series['id'] ?? 0), 'numero_ordre', 'desc') . '&statut=wishlist') ?>">
+                    <a href="<?= Moncine\View::escape(Moncine\View::magazineSeriesUrl((int) ($series['id'] ?? 0), 'numero_ordre', 'desc', ['statut' => 'wishlist'])) ?>">
                         <?= Moncine\View::escape((string) ($series['titre'] ?? '')) ?>
                     </a>
                     <span class="hint"> — <?= (int) ($series['issue_count'] ?? 0) ?> numéro(s) recherché(s)</span>

@@ -95,6 +95,51 @@ final class PublicationType
         return $lastOrdre + 1.0;
     }
 
+    /**
+     * Interprète une saisie pour filtrer les numéros par mois / année de parution.
+     * Ex. 2024, 06/2024, 2024-06, juin 2024.
+     *
+     * @return array{year: int, month: int|null}|null
+     */
+    public static function parseParutionDateFilter(string $input): ?array
+    {
+        $input = mb_strtolower(trim($input));
+        if ($input === '') {
+            return null;
+        }
+
+        if (preg_match('/^(19|20)\d{2}$/', $input, $m) === 1) {
+            return ['year' => (int) $m[0], 'month' => null];
+        }
+
+        if (preg_match('/^(\d{1,2})[\/\-.](19|20\d{2})$/', $input, $m) === 1) {
+            $month = (int) $m[1];
+            if ($month >= 1 && $month <= 12) {
+                return ['year' => (int) $m[2], 'month' => $month];
+            }
+        }
+
+        if (preg_match('/^(19|20\d{2})[\/\-.](\d{1,2})$/', $input, $m) === 1) {
+            $month = (int) $m[2];
+            if ($month >= 1 && $month <= 12) {
+                return ['year' => (int) $m[1], 'month' => $month];
+            }
+        }
+
+        $months = [
+            'janvier' => 1, 'fevrier' => 2, 'février' => 2, 'mars' => 3, 'avril' => 4,
+            'mai' => 5, 'juin' => 6, 'juillet' => 7, 'aout' => 8, 'août' => 8,
+            'septembre' => 9, 'octobre' => 10, 'novembre' => 11, 'decembre' => 12, 'décembre' => 12,
+        ];
+        foreach ($months as $name => $monthNum) {
+            if (preg_match('/^' . preg_quote($name, '/') . '\s+(19|20\d{2})$/', $input, $m) === 1) {
+                return ['year' => (int) $m[1], 'month' => $monthNum];
+            }
+        }
+
+        return null;
+    }
+
     private static function formatMonthYear(int $ts): string
     {
         $months = [

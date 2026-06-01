@@ -20,35 +20,9 @@ final class QuizSession
             return;
         }
 
-        // En local, le chemin système par défaut (ex. /var/lib/php/sessions) peut ne pas être
-        // accessible en écriture pour l'utilisateur qui lance `php -S ...`.
-        // On bascule donc vers un répertoire de sessions sous MONCINE_DATA si nécessaire.
-        $savePathRaw = (string) ini_get('session.save_path');
-        // Peut être de la forme "5;/var/lib/php/sessions" (préfixe = profondeur).
-        $savePath = $savePathRaw;
-        if (str_contains($savePath, ';')) {
-            $savePath = (string) substr($savePath, strrpos($savePath, ';') + 1);
-        }
-        $savePath = trim($savePath);
-
-        $savePathWritable = false;
-        if ($savePath !== '' && is_dir($savePath)) {
-            // is_writable() peut être trompeur selon l'environnement ; on tente un vrai write.
-            $probe = rtrim($savePath, '/') . '/.moncine_session_probe_' . bin2hex(random_bytes(6));
-            $savePathWritable = @file_put_contents($probe, '1') !== false;
-            if ($savePathWritable) {
-                @unlink($probe);
-            }
-        }
-
-        if ($savePath === '' || !is_dir($savePath) || !$savePathWritable) {
-            $localPath = rtrim((string) MONCINE_DATA, '/') . '/sessions';
-            if (!is_dir($localPath)) {
-                @mkdir($localPath, 0750, true);
-            }
-            if (is_dir($localPath) && is_writable($localPath)) {
-                ini_set('session.save_path', $localPath);
-            }
+        $savePath = self::resolveSessionSavePath();
+        if ($savePath !== '') {
+            session_save_path($savePath);
         }
 
         ini_set('session.use_strict_mode', '1');
@@ -61,6 +35,55 @@ final class QuizSession
             'cookie_samesite' => 'Lax',
             'cookie_secure' => self::isHttpsRequest(),
         ]);
+    }
+
+    /**
+     * Dossier de sessions inscriptible (MONCINE_SESSION_DIR ou repli temporaire).
+     */
+    private static function resolveSessionSavePath(): string
+    {
+        if (defined('MONCINE_SESSION_DIR')) {
+            $dir = (string) MONCINE_SESSION_DIR;
+            if (self::ensureWritableDirectory($dir)) {
+                return $dir;
+            }
+        }
+
+        $fallback = rtrim((string) MONCINE_DATA, '/') . '/sessions';
+        if (self::ensureWritableDirectory($fallback)) {
+            return $fallback;
+        }
+
+        $temp = rtrim(sys_get_temp_dir(), '/') . '/moncine_sessions';
+        if (self::ensureWritableDirectory($temp)) {
+            return $temp;
+        }
+
+        return '';
+    }
+
+    private static function ensureWritableDirectory(string $path): bool
+    {
+        $path = trim($path);
+        if ($path === '') {
+            return false;
+        }
+
+        if (!is_dir($path) && !@mkdir($path, 0775, true) && !@mkdir($path, 0750, true)) {
+            return false;
+        }
+
+        if (!is_dir($path) || !is_writable($path)) {
+            return false;
+        }
+
+        $probe = $path . '/.moncine_session_probe_' . bin2hex(random_bytes(4));
+        $written = @file_put_contents($probe, '1') !== false;
+        if ($written) {
+            @unlink($probe);
+        }
+
+        return $written;
     }
 
     private static function isHttpsRequest(): bool

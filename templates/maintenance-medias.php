@@ -8,6 +8,10 @@
  * @var bool $hasOverride
  * @var list<string> $subdirs
  * @var int $storedCount
+ * @var string $uploadLimitsWarning
+ * @var string $uploadMaxLabel
+ * @var string $postMaxLabel
+ * @var string $pdfMaxLabel
  */
 ?>
 <section class="catalog-maintenance-page">
@@ -73,6 +77,24 @@
                 <button type="submit" class="btn btn-secondary">Revenir au chemin par défaut</button>
             </form>
         <?php endif; ?>
+    </section>
+
+    <section class="catalog-maintenance-panel">
+        <h2>Limites d’envoi PHP (PDF magazines)</h2>
+        <dl class="catalog-maintenance-dl">
+            <dt>upload_max_filesize</dt>
+            <dd><code><?= Moncine\View::escape($uploadMaxLabel) ?></code></dd>
+            <dt>post_max_size</dt>
+            <dd><code><?= Moncine\View::escape($postMaxLabel) ?></code></dd>
+            <dt>Maximum application (PDF)</dt>
+            <dd><code><?= Moncine\View::escape($pdfMaxLabel) ?></code></dd>
+        </dl>
+        <?php if ($uploadLimitsWarning !== ''): ?>
+            <div class="alert alert-danger"><?= $uploadLimitsWarning ?></div>
+        <?php else: ?>
+            <p class="alert alert-success">Les limites PHP permettent d’importer des PDF magazines.</p>
+        <?php endif; ?>
+        <p class="hint">En local : <code>./start-dev.sh</code> ou <code>./www/serve.sh</code> depuis le dossier du projet.</p>
     </section>
 
     <section class="catalog-maintenance-panel">

@@ -22,11 +22,42 @@
         </p>
 
         <?php if ($saved || isset($_GET['added'])): ?>
-            <div class="alert alert-success">Numéro enregistré.</div>
+            <div class="alert alert-success">
+                Numéro enregistré.
+                <?php if (isset($_GET['pdf'])): ?>
+                    Le PDF a bien été importé — bouton « Lire le PDF » ci-dessous.
+                <?php endif; ?>
+            </div>
         <?php endif; ?>
         <?php if ($error !== ''): ?>
             <div class="alert alert-warning"><?= Moncine\View::escape($error) ?></div>
         <?php endif; ?>
+        <?php require MONCINE_ROOT . '/templates/_upload_limits_warning.php'; ?>
+
+        <section class="magazine-pdf-section">
+            <h2>PDF du numéro</h2>
+            <?php if ($pdfUrl !== ''): ?>
+                <p><a href="<?= Moncine\View::escape($pdfUrl) ?>" class="btn btn-primary" target="_blank" rel="noopener">Lire le PDF</a></p>
+            <?php else: ?>
+                <p class="hint">Aucun PDF pour l’instant.</p>
+            <?php endif; ?>
+            <form method="post" action="/traiter-numero-magazine.php" enctype="multipart/form-data" class="import-form">
+                <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                <input type="hidden" name="bib_id" value="<?= $bibId ?>">
+                <input type="hidden" name="action" value="pdf_only">
+                <label for="upload_pdf">Fichier PDF (max <?= Moncine\View::escape(Moncine\UploadLimits::maxPdfBytesLabel()) ?>)</label>
+                <input type="file" name="pdf_file" id="upload_pdf" accept="application/pdf,.pdf" required>
+                <p class="hint">Limite PHP actuelle : upload <?= Moncine\View::escape(Moncine\UploadLimits::uploadMaxFilesizeLabel()) ?>,
+                    post <?= Moncine\View::escape(Moncine\UploadLimits::postMaxSizeLabel()) ?>.
+                    En local, lancez le site avec <code>www/serve.sh</code> si l’envoi échoue.
+                    <?php if (Moncine\MagazinePdfCoverExtractor::isAvailable()): ?>
+                        Sans couverture, la <strong>page 1 du PDF</strong> peut servir d’image automatiquement.
+                    <?php endif; ?>
+                </p>
+                <button type="submit" class="btn btn-accent"><?= $pdfUrl !== '' ? 'Remplacer le PDF' : 'Importer le PDF' ?></button>
+            </form>
+            <p class="hint">Stockage : <code><?= Moncine\View::escape(Moncine\MagazineRepository::pdfStorageHint()) ?></code></p>
+        </section>
 
         <div class="magazine-issue-layout">
             <div class="magazine-issue-layout__cover">
@@ -44,11 +75,8 @@
                     <?php if ((int) ($issue['pages'] ?? 0) > 0): ?>
                         · <?= (int) $issue['pages'] ?> p.
                     <?php endif; ?>
+                    <?php require MONCINE_ROOT . '/templates/_magazine_support_tags.php'; ?>
                 </p>
-
-                <?php if ($pdfUrl !== ''): ?>
-                    <p><a href="<?= Moncine\View::escape($pdfUrl) ?>" class="btn btn-primary" target="_blank" rel="noopener">Lire le PDF</a></p>
-                <?php endif; ?>
 
                 <section class="magazine-sommaire">
                     <h2>Sommaire</h2>
@@ -84,12 +112,26 @@
                 <label for="edit_pages">Nombre de pages</label>
                 <input type="number" name="pages" id="edit_pages" min="0"
                        value="<?= (int) ($issue['pages'] ?? 0) ?>">
+                <?php if (Moncine\MagazinePdfInfo::isAvailable()): ?>
+                    <p class="hint">Si la valeur est 0, elle sera remplie automatiquement à l’import du PDF (via pdfinfo).</p>
+                <?php endif; ?>
 
-                <label for="edit_support">Support</label>
-                <input type="text" name="support_physique" id="edit_support"
-                       placeholder="Papier, PDF, Papier + PDF…"
-                       value="<?= Moncine\View::escape((string) ($issue['support_physique'] ?? '')) ?>">
-
+                <fieldset class="magazine-support-fieldset">
+                    <legend>Support</legend>
+                    <label class="checkbox">
+                        <input type="checkbox" name="support_papier" value="1"
+                            <?= Moncine\MagazineSupport::hasPaper((string) ($issue['support_physique'] ?? '')) ? ' checked' : '' ?>>
+                        J’ai le numéro en <strong>papier</strong>
+                    </label>
+                    <?php if ((int) ($issue['stored_object_id'] ?? 0) > 0 || Moncine\MagazineSupport::hasPdf((string) ($issue['support_physique'] ?? ''))): ?>
+                        <p class="hint">
+                            Tag <span class="magazine-tag magazine-tag--pdf">PDF</span>
+                            ajouté automatiquement (fichier importé).
+                        </p>
+                    <?php else: ?>
+                        <p class="hint">Le tag <span class="magazine-tag magazine-tag--pdf">PDF</span> s’ajoutera à l’import du fichier.</p>
+                    <?php endif; ?>
+                </fieldset>
                 <label class="checkbox">
                     <input type="checkbox" name="est_hors_serie" value="1"<?= !empty($issue['est_hors_serie']) ? ' checked' : '' ?>>
                     Hors-série
@@ -101,8 +143,10 @@
                 <label for="edit_cover">Nouvelle couverture (JPEG, PNG, WebP)</label>
                 <input type="file" name="cover_file" id="edit_cover" accept="image/jpeg,image/png,image/webp">
 
-                <label for="edit_pdf">Remplacer le PDF</label>
+                <label for="edit_pdf">Remplacer le PDF (max <?= Moncine\View::escape(Moncine\UploadLimits::maxPdfBytesLabel()) ?>)</label>
                 <input type="file" name="pdf_file" id="edit_pdf" accept="application/pdf,.pdf">
+                <p class="hint">Limite serveur PHP : upload <?= Moncine\View::escape(Moncine\UploadLimits::uploadMaxFilesizeLabel()) ?>,
+                    post <?= Moncine\View::escape(Moncine\UploadLimits::postMaxSizeLabel()) ?>.</p>
 
                 <button type="submit" class="btn btn-primary">Enregistrer</button>
             </form>

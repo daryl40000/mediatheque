@@ -34,6 +34,22 @@ final class MagazineRepository
         return $stmt !== false && $stmt->fetchColumn() !== false;
     }
 
+    public static function pdfTextPreviewColumnExists(): bool
+    {
+        $stmt = Database::getInstance()->query('PRAGMA table_info(oeuvre_magazine)');
+        if ($stmt === false) {
+            return false;
+        }
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $column) {
+            if (($column['name'] ?? '') === 'pdf_text_preview') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** Ajoute une série à la collection ou aux envies (sans numéro). */
     public function registerSeriesInLibrary(
         int $seriesId,
@@ -171,7 +187,8 @@ final class MagazineRepository
         int $foyerId,
         ?string $statut = null,
         string $sortBy = 'numero_ordre',
-        string $sortDir = 'desc'
+        string $sortDir = 'desc',
+        string $searchQuery = ''
     ): array {
         if (!self::isAvailable() || $seriesId <= 0) {
             return [];
@@ -185,6 +202,13 @@ final class MagazineRepository
         [$statutSql, $statutParams] = $this->libraryStatutFilter($statut, $userId, $foyerId);
         $params = array_merge($params, $statutParams);
 
+        $where = ['om.series_id = :series_id', $statutSql];
+        [$searchSql, $searchParams] = $this->issueGlobalSearchFilterSql($searchQuery);
+        if ($searchSql !== '') {
+            $where[] = $searchSql;
+            $params = array_merge($params, $searchParams);
+        }
+
         $order = $this->issueOrderClause($sortBy, $sortDir);
 
         $sql = 'SELECT b.id AS bib_id, b.statut, b.support_physique, b.created_at AS bib_created_at,
@@ -196,13 +220,32 @@ final class MagazineRepository
                 INNER JOIN oeuvres o ON o.id = om.oeuvre_id AND o.media_domain = :domain
                 INNER JOIN series s ON s.id = om.series_id
                 INNER JOIN bibliotheque b ON b.oeuvre_id = o.id
-                WHERE om.series_id = :series_id AND ' . $statutSql . '
+                WHERE ' . implode(' AND ', $where) . '
                 ORDER BY ' . $order;
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($this->filterParamsForSql($sql, $params));
 
         return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /** Nombre de numéros correspondant aux filtres (même logique que listIssuesForSeries). */
+    public function countIssuesForSeries(
+        int $seriesId,
+        int $userId,
+        int $foyerId,
+        ?string $statut = null,
+        string $searchQuery = ''
+    ): int {
+        return count($this->listIssuesForSeries(
+            $seriesId,
+            $userId,
+            $foyerId,
+            $statut,
+            'numero_ordre',
+            'desc',
+            $searchQuery
+        ));
     }
 
     public function findIssueByBibId(int $bibId, int $userId, int $foyerId): ?array
@@ -298,7 +341,9 @@ final class MagazineRepository
         $dateParution = trim((string) ($data['date_parution'] ?? ''));
         $sommaire = trim((string) ($data['sommaire'] ?? ''));
         $pages = max(0, (int) ($data['pages'] ?? 0));
-        $support = trim((string) ($data['support_physique'] ?? ''));
+        $hasPaper = !empty($data['support_papier']);
+        $hasPdf = isset($data['stored_object_id']) && (int) $data['stored_object_id'] > 0;
+        $support = MagazineSupport::formatTagsForStorage($hasPaper, $hasPdf);
 
         $statut = LibraryStatut::normalize($statut);
 
@@ -406,9 +451,16 @@ final class MagazineRepository
                 $oeuvreId,
             ]);
 
-            if (isset($data['support_physique'])) {
+            if (array_key_exists('support_papier', $data) || array_key_exists('support_physique', $data)) {
+                $hasPaper = array_key_exists('support_papier', $data)
+                    ? !empty($data['support_papier'])
+                    : MagazineSupport::hasPaper((string) ($issue['support_physique'] ?? ''));
+                $effectiveStoredId = $storedObjectId !== null
+                    ? (int) $storedObjectId
+                    : (int) ($issue['stored_object_id'] ?? 0);
+                $hasPdf = $effectiveStoredId > 0;
                 $this->db->prepare('UPDATE bibliotheque SET support_physique = ? WHERE id = ?')
-                    ->execute([trim((string) $data['support_physique']), $bibId]);
+                    ->execute([MagazineSupport::formatTagsForStorage($hasPaper, $hasPdf), $bibId]);
             }
 
             $this->db->commit();
@@ -436,6 +488,57 @@ final class MagazineRepository
         return $stmt->rowCount() > 0 ? true : 'Suppression impossible.';
     }
 
+    /** L’utilisateur peut lire un PDF rattaché à un numéro de sa bibliothèque. */
+    public function userCanAccessStoredObject(int $storedObjectId, int $userId, int $foyerId): bool
+    {
+        if (!self::isAvailable() || $storedObjectId <= 0 || $userId <= 0) {
+            return false;
+        }
+
+        $params = [
+            'stored_object_id' => $storedObjectId,
+            'user_id' => $userId,
+            'foyer_id' => $foyerId,
+            'collection' => LibraryStatut::COLLECTION,
+            'wishlist' => LibraryStatut::WISHLIST,
+        ];
+
+        $sql = 'SELECT 1
+             FROM oeuvre_magazine om
+             INNER JOIN bibliotheque b ON b.oeuvre_id = om.oeuvre_id
+             WHERE om.stored_object_id = :stored_object_id
+               AND (
+                    (b.statut = :collection AND b.foyer_id = :foyer_id)
+                    OR (b.statut = :wishlist AND b.user_id = :user_id)
+               )
+             LIMIT 1';
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($this->filterParamsForSql($sql, $params));
+
+        return (bool) $stmt->fetchColumn();
+    }
+
+    /** Chemin relatif type d’un PDF magazine (sous MONCINE_MEDIA_PATH). */
+    public static function pdfStorageHint(): string
+    {
+        return MediaStorage::rootPath() . '/magazines/{revue}/{annee}/{revue}-{numero}.pdf';
+    }
+
+    /**
+     * Chemin relatif d’un PDF magazine : revue / année / revue-numero.pdf
+     *
+     * @return string|false
+     */
+    public static function buildMagazinePdfRelativePath(string $seriesTitle, string $numero, string $dateParution): string|false
+    {
+        $seriesSlug = self::slugifyForPath($seriesTitle, 'revue');
+        $numeroSlug = self::slugifyForPath($numero, 'numero');
+        $year = self::extractParutionYear($dateParution);
+        $fileName = $seriesSlug . '-' . $numeroSlug . '.pdf';
+
+        return MediaStorage::relativePath('magazine', $seriesSlug, $year, $fileName);
+    }
+
     /**
      * Enregistre un PDF pour un numéro (stored_objects + oeuvre_magazine).
      *
@@ -447,9 +550,9 @@ final class MagazineRepository
             return 'Fichier PDF invalide.';
         }
 
-        $maxBytes = 50 * 1024 * 1024;
+        $maxBytes = UploadLimits::maxPdfBytes();
         if ($fileSize <= 0 || $fileSize > $maxBytes) {
-            return 'PDF trop volumineux (maximum 50 Mo).';
+            return UploadLimits::pdfTooLargeApplicationMessage();
         }
 
         $finfo = finfo_open(FILEINFO_MIME_TYPE);
@@ -457,7 +560,7 @@ final class MagazineRepository
         if ($finfo !== false) {
             finfo_close($finfo);
         }
-        if ($mime !== 'application/pdf') {
+        if (!$this->isPdfMime($mime, $tmpPath)) {
             return 'Le fichier doit être un PDF.';
         }
 
@@ -466,21 +569,39 @@ final class MagazineRepository
             return (string) $layout;
         }
 
-        $safeName = preg_replace('/[^a-zA-Z0-9._-]+/', '_', basename($originalName)) ?: 'numero.pdf';
-        $relative = MediaStorage::relativePath('magazine', (string) $oeuvreId, $safeName);
+        $meta = $this->findMagazinePdfMeta($oeuvreId);
+        if ($meta === null) {
+            return 'Numéro magazine introuvable.';
+        }
+
+        // Remplacement : supprime l’ancien PDF rattaché à ce numéro.
+        $this->removeStoredPdfForOeuvre($oeuvreId);
+
+        $relative = self::buildMagazinePdfRelativePath(
+            (string) ($meta['series_titre'] ?? ''),
+            (string) ($meta['numero'] ?? ''),
+            (string) ($meta['date_parution'] ?? '')
+        );
+        if ($relative === false) {
+            return 'Chemin de stockage invalide.';
+        }
+
         $absolute = MediaStorage::absolutePath($relative);
         if ($absolute === '') {
             return 'Chemin de stockage invalide.';
         }
+
+        $this->purgeStoredObjectAtRelativePath($relative);
 
         $dir = dirname($absolute);
         if (!is_dir($dir) && !mkdir($dir, 0750, true) && !is_dir($dir)) {
             return 'Impossible de créer le dossier médias.';
         }
 
-        if (!move_uploaded_file($tmpPath, $absolute) && !rename($tmpPath, $absolute)) {
-            if (!copy($tmpPath, $absolute)) {
-                return 'Impossible d’enregistrer le PDF.';
+        if (!@move_uploaded_file($tmpPath, $absolute)) {
+            if (!@rename($tmpPath, $absolute) && !@copy($tmpPath, $absolute)) {
+                return 'Impossible d’enregistrer le PDF (vérifiez les droits d’écriture sur '
+                    . dirname($absolute) . ').';
             }
         }
 
@@ -488,15 +609,212 @@ final class MagazineRepository
 
         $stored = (new StoredObjectRepository())->create($relative, $fileSize, 'application/pdf');
         if ($stored === null) {
+            $this->purgeStoredObjectAtRelativePath($relative);
+            $stored = (new StoredObjectRepository())->create($relative, $fileSize, 'application/pdf');
+        }
+        if ($stored === null) {
             @unlink($absolute);
 
-            return 'Enregistrement du PDF en base impossible.';
+            return 'Enregistrement du PDF en base impossible (chemin déjà utilisé ?).';
         }
 
         $this->db->prepare('UPDATE oeuvre_magazine SET stored_object_id = ? WHERE oeuvre_id = ?')
             ->execute([(int) $stored['id'], $oeuvreId]);
 
+        $this->syncSupportTagsForOeuvre($oeuvreId);
+
+        $this->schedulePdfPostProcessing($oeuvreId, $absolute);
+
         return true;
+    }
+
+    /**
+     * Met à jour les tags support (papier / pdf) selon la case papier et la présence d’un PDF.
+     */
+    public function syncSupportTagsForOeuvre(int $oeuvreId, ?bool $hasPaper = null): void
+    {
+        if ($oeuvreId <= 0) {
+            return;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT b.id, b.support_physique, om.stored_object_id
+             FROM bibliotheque b
+             INNER JOIN oeuvre_magazine om ON om.oeuvre_id = b.oeuvre_id
+             WHERE b.oeuvre_id = ?
+             LIMIT 1'
+        );
+        $stmt->execute([$oeuvreId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row === false) {
+            return;
+        }
+
+        if ($hasPaper === null) {
+            $hasPaper = MagazineSupport::hasPaper((string) ($row['support_physique'] ?? ''));
+        }
+
+        $hasPdf = (int) ($row['stored_object_id'] ?? 0) > 0;
+        $this->db->prepare('UPDATE bibliotheque SET support_physique = ? WHERE id = ?')
+            ->execute([
+                MagazineSupport::formatTagsForStorage($hasPaper, $hasPdf),
+                (int) ($row['id'] ?? 0),
+            ]);
+    }
+
+    /**
+     * Indexation texte + couverture après enregistrement (évite de bloquer la réponse HTTP).
+     */
+    private function schedulePdfPostProcessing(int $oeuvreId, string $absolutePdfPath): void
+    {
+        register_shutdown_function(static function () use ($oeuvreId, $absolutePdfPath): void {
+            if (!is_readable($absolutePdfPath)) {
+                return;
+            }
+
+            @set_time_limit(300);
+
+            try {
+                $repo = new MagazineRepository();
+                $repo->indexPdfTextPreviewFromFile($oeuvreId, $absolutePdfPath);
+                $repo->applyCoverFromPdfIfMissing($oeuvreId, $absolutePdfPath);
+                $repo->applyPageCountFromPdf($oeuvreId, $absolutePdfPath);
+            } catch (\Throwable $e) {
+                error_log('MagazineRepository::schedulePdfPostProcessing: ' . $e->getMessage());
+            }
+        });
+    }
+
+    /**
+     * Utilise la page 1 du PDF comme couverture si le numéro n’en a pas encore.
+     */
+    public function applyCoverFromPdfIfMissing(int $oeuvreId, string $absolutePdfPath): void
+    {
+        if ($oeuvreId <= 0 || !is_readable($absolutePdfPath) || !MagazinePdfCoverExtractor::isAvailable()) {
+            return;
+        }
+
+        $stmt = $this->db->prepare('SELECT poster_url FROM oeuvres WHERE id = ? LIMIT 1');
+        $stmt->execute([$oeuvreId]);
+        $posterUrl = trim((string) ($stmt->fetchColumn() ?: ''));
+        if ($posterUrl !== '') {
+            return;
+        }
+
+        $binary = MagazinePdfCoverExtractor::renderFirstPageJpeg($absolutePdfPath);
+        if ($binary === '') {
+            return;
+        }
+
+        $webPath = (new PosterStorage())->importBinaryForOeuvre($oeuvreId, $binary);
+        if ($webPath === '') {
+            return;
+        }
+
+        $this->db->prepare('UPDATE oeuvres SET poster_url = ? WHERE id = ?')
+            ->execute([$webPath, $oeuvreId]);
+    }
+
+    /**
+     * Met à jour le champ « pages » depuis le PDF si la valeur en base est 0 (ou si $force).
+     */
+    public function applyPageCountFromPdf(int $oeuvreId, string $absolutePdfPath, bool $force = false): void
+    {
+        if ($oeuvreId <= 0 || !is_readable($absolutePdfPath) || !MagazinePdfInfo::isAvailable()) {
+            return;
+        }
+
+        $pageCount = MagazinePdfInfo::readPageCount($absolutePdfPath);
+        if ($pageCount <= 0) {
+            return;
+        }
+
+        if (!$force) {
+            $stmt = $this->db->prepare('SELECT pages FROM oeuvre_magazine WHERE oeuvre_id = ? LIMIT 1');
+            $stmt->execute([$oeuvreId]);
+            if ((int) ($stmt->fetchColumn() ?: 0) > 0) {
+                return;
+            }
+        }
+
+        $this->db->prepare('UPDATE oeuvre_magazine SET pages = ? WHERE oeuvre_id = ?')
+            ->execute([$pageCount, $oeuvreId]);
+    }
+
+    /**
+     * Extrait et enregistre le texte des 6 premières pages d’un PDF déjà stocké.
+     */
+    public function indexPdfTextPreviewFromFile(int $oeuvreId, string $absolutePdfPath): void
+    {
+        if ($oeuvreId <= 0 || !self::pdfTextPreviewColumnExists()) {
+            return;
+        }
+
+        $text = MagazinePdfTextExtractor::extractFirstPages($absolutePdfPath);
+        $this->db->prepare('UPDATE oeuvre_magazine SET pdf_text_preview = ? WHERE oeuvre_id = ?')
+            ->execute([$text, $oeuvreId]);
+    }
+
+    /**
+     * Ré-indexe le texte des PDF d’une série (numéros ayant un fichier stocké).
+     *
+     * @return array{indexed: int, skipped: int, errors: int}
+     */
+    public function reindexPdfTextPreviewsForSeries(int $seriesId, int $userId, int $foyerId, ?string $statut = null): array
+    {
+        $result = ['indexed' => 0, 'skipped' => 0, 'errors' => 0];
+        if (!self::pdfTextPreviewColumnExists()) {
+            return $result;
+        }
+
+        $canIndexText = MagazinePdfTextExtractor::isAvailable();
+        $canReadMeta = MagazinePdfInfo::isAvailable() || MagazinePdfCoverExtractor::isAvailable();
+        if (!$canIndexText && !$canReadMeta) {
+            return $result;
+        }
+
+        $issues = $this->listIssuesForSeries($seriesId, $userId, $foyerId, $statut);
+        $storage = new LocalFilesystemObjectStorage();
+        $storedRepo = new StoredObjectRepository();
+
+        foreach ($issues as $issue) {
+            $storedObjectId = (int) ($issue['stored_object_id'] ?? 0);
+            if ($storedObjectId <= 0) {
+                $result['skipped']++;
+
+                continue;
+            }
+
+            $row = $storedRepo->findById($storedObjectId);
+            if ($row === null) {
+                $result['errors']++;
+
+                continue;
+            }
+
+            $relative = (string) ($row['relative_path'] ?? '');
+            $absolute = MediaStorage::absolutePath($relative);
+            if ($absolute === '' || !$storage->exists($relative)) {
+                $result['errors']++;
+
+                continue;
+            }
+
+            try {
+                $oeuvreId = (int) ($issue['oeuvre_id'] ?? 0);
+                if ($canIndexText) {
+                    $this->indexPdfTextPreviewFromFile($oeuvreId, $absolute);
+                }
+                $this->applyCoverFromPdfIfMissing($oeuvreId, $absolute);
+                $this->applyPageCountFromPdf($oeuvreId, $absolute);
+                $result['indexed']++;
+            } catch (\Throwable $e) {
+                error_log('reindexPdfTextPreviewsForSeries: ' . $e->getMessage());
+                $result['errors']++;
+            }
+        }
+
+        return $result;
     }
 
     /** @return array{0: string, 1: array<string, int|string>} */
@@ -616,5 +934,174 @@ final class MagazineRepository
             'titre' => 'o.titre COLLATE FRENCH_NOCASE ' . $dir,
             default => 'om.numero_ordre ' . $dir . ', om.date_parution ' . $dir,
         };
+    }
+
+    /**
+     * Recherche globale dans les numéros d’une série (n°, date, sommaire, texte PDF pages 1–6).
+     *
+     * @return array{0: string, 1: array<string, int|string>}
+     */
+    private function issueGlobalSearchFilterSql(string $searchQuery): array
+    {
+        $searchQuery = trim($searchQuery);
+        if ($searchQuery === '') {
+            return ['', []];
+        }
+
+        $fragment = LikePattern::containsFragment($searchQuery);
+        $orParts = [
+            'LOWER(om.numero) LIKE LOWER(:search_g_numero) ESCAPE \'\\\'',
+            'LOWER(COALESCE(om.sommaire, \'\')) LIKE LOWER(:search_g_sommaire) ESCAPE \'\\\'',
+            'LOWER(COALESCE(om.date_parution, \'\')) LIKE LOWER(:search_g_date_raw) ESCAPE \'\\\'',
+        ];
+        $params = [
+            'search_g_numero' => $fragment,
+            'search_g_sommaire' => $fragment,
+            'search_g_date_raw' => $fragment,
+        ];
+
+        if (self::pdfTextPreviewColumnExists()) {
+            $orParts[] = 'LOWER(COALESCE(om.pdf_text_preview, \'\')) LIKE LOWER(:search_g_pdf) ESCAPE \'\\\'';
+            $params['search_g_pdf'] = $fragment;
+        }
+
+        $parsed = PublicationType::parseParutionDateFilter($searchQuery);
+        if ($parsed !== null) {
+            $orParts[] = "CAST(strftime('%Y', om.date_parution) AS INTEGER) = :search_g_year";
+            $params['search_g_year'] = $parsed['year'];
+            if ($parsed['month'] !== null) {
+                $orParts[] = "CAST(strftime('%m', om.date_parution) AS INTEGER) = :search_g_month";
+                $params['search_g_month'] = $parsed['month'];
+            }
+        }
+
+        return ['(' . implode(' OR ', $orParts) . ')', $params];
+    }
+
+    private function isPdfMime(mixed $mime, string $path): bool
+    {
+        if ($mime === 'application/pdf' || $mime === 'application/x-pdf') {
+            return true;
+        }
+
+        $handle = @fopen($path, 'rb');
+        if ($handle === false) {
+            return false;
+        }
+        $header = (string) fread($handle, 5);
+        fclose($handle);
+
+        return str_starts_with($header, '%PDF-');
+    }
+
+    /** @return array{series_titre: string, numero: string, date_parution: string}|null */
+    private function findMagazinePdfMeta(int $oeuvreId): ?array
+    {
+        if ($oeuvreId <= 0) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT s.titre AS series_titre, om.numero, om.date_parution
+             FROM oeuvre_magazine om
+             INNER JOIN series s ON s.id = om.series_id
+             WHERE om.oeuvre_id = ?
+             LIMIT 1'
+        );
+        $stmt->execute([$oeuvreId]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row !== false ? $row : null;
+    }
+
+    /** Transforme un libellé en segment de chemin sûr (ex. « PC Jeux » → pc-jeux). */
+    private static function slugifyForPath(string $text, string $fallback): string
+    {
+        $text = mb_strtolower(trim($text), 'UTF-8');
+        if ($text === '') {
+            return $fallback;
+        }
+
+        if (function_exists('iconv')) {
+            $ascii = iconv('UTF-8', 'ASCII//TRANSLIT//IGNORE', $text);
+            if ($ascii !== false) {
+                $text = strtolower($ascii);
+            }
+        }
+
+        $slug = preg_replace('/[^a-z0-9]+/', '-', $text) ?? '';
+        $slug = trim($slug, '-');
+
+        return $slug !== '' ? $slug : $fallback;
+    }
+
+    /** Année de parution (AAAA) ou « inconnu » si la date manque. */
+    private static function extractParutionYear(string $dateParution): string
+    {
+        $dateParution = trim($dateParution);
+        if ($dateParution === '') {
+            return 'inconnu';
+        }
+
+        if (preg_match('/^(19|20)\d{2}/', $dateParution, $matches) === 1) {
+            return $matches[0];
+        }
+
+        $timestamp = strtotime($dateParution);
+
+        return $timestamp !== false ? date('Y', $timestamp) : 'inconnu';
+    }
+
+    /** Supprime une entrée stored_objects (et fichier) à un chemin relatif, ex. avant remplacement. */
+    private function purgeStoredObjectAtRelativePath(string $relativePath): void
+    {
+        $relativePath = ltrim(str_replace('\\', '/', $relativePath), '/');
+        if ($relativePath === '') {
+            return;
+        }
+
+        $storedRepo = new StoredObjectRepository();
+        $existing = $storedRepo->findByRelativePath($relativePath);
+        if ($existing === null) {
+            return;
+        }
+
+        (new LocalFilesystemObjectStorage())->delete($relativePath);
+        $storedRepo->deleteById((int) ($existing['id'] ?? 0));
+    }
+
+    private function removeStoredPdfForOeuvre(int $oeuvreId): void
+    {
+        if ($oeuvreId <= 0) {
+            return;
+        }
+
+        $stmt = $this->db->prepare('SELECT stored_object_id FROM oeuvre_magazine WHERE oeuvre_id = ? LIMIT 1');
+        $stmt->execute([$oeuvreId]);
+        $storedObjectId = (int) ($stmt->fetchColumn() ?: 0);
+        if ($storedObjectId <= 0) {
+            return;
+        }
+
+        $storedRepo = new StoredObjectRepository();
+        $row = $storedRepo->findById($storedObjectId);
+        if ($row !== null) {
+            $relative = (string) ($row['relative_path'] ?? '');
+            if ($relative !== '') {
+                (new LocalFilesystemObjectStorage())->delete($relative);
+            }
+            $storedRepo->deleteById($storedObjectId);
+        }
+
+        $this->db->prepare(
+            'UPDATE oeuvre_magazine SET stored_object_id = NULL WHERE oeuvre_id = ?'
+        )->execute([$oeuvreId]);
+
+        $this->syncSupportTagsForOeuvre($oeuvreId);
+
+        if (self::pdfTextPreviewColumnExists()) {
+            $this->db->prepare('UPDATE oeuvre_magazine SET pdf_text_preview = ? WHERE oeuvre_id = ?')
+                ->execute(['', $oeuvreId]);
+        }
     }
 }

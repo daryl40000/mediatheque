@@ -7,11 +7,11 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
-use Moncine\Csrf;
 use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
 use Moncine\MediaDomainGuards;
 use Moncine\PosterStorage;
+use Moncine\UploadLimits;
 use Moncine\UserContext;
 use Moncine\View;
 
@@ -20,14 +20,20 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
+@set_time_limit(600);
+
 MediaDomainGuards::ensureMagazineContext();
-Csrf::rejectUnlessValid($_POST, '/magazines.php');
 
 $seriesId = (int) ($_POST['series_id'] ?? 0);
 $statut = LibraryStatut::normalize((string) ($_POST['statut'] ?? LibraryStatut::COLLECTION));
 $returnUrl = $seriesId > 0
     ? '/ajouter-numero-magazine.php?series_id=' . $seriesId . '&statut=' . rawurlencode($statut)
     : '/magazines.php';
+
+UploadLimits::guardPostWithFiles($_POST, $returnUrl, [
+    'pdf_file' => 'PDF',
+    'cover_file' => 'Couverture',
+]);
 
 $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
@@ -40,7 +46,7 @@ $result = $repo->createIssueWithLibrary($seriesId, [
     'sommaire' => (string) ($_POST['sommaire'] ?? ''),
     'pages' => (int) ($_POST['pages'] ?? 0),
     'est_hors_serie' => isset($_POST['est_hors_serie']),
-    'support_physique' => (string) ($_POST['support_physique'] ?? ''),
+    'support_papier' => isset($_POST['support_papier']),
 ], $statut, $userId, $foyerId);
 
 if (!is_int($result)) {
@@ -61,6 +67,11 @@ if ($oeuvreId > 0 && isset($_FILES['cover_file']) && (int) ($_FILES['cover_file'
 }
 
 if ($oeuvreId > 0 && isset($_FILES['pdf_file']) && (int) ($_FILES['pdf_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+    if (!UploadLimits::phpAllowsPdfUpload()) {
+        header('Location: ' . View::magazineIssueUrl($result) . '&error=' . rawurlencode(strip_tags(UploadLimits::phpLimitsWarning())));
+        exit;
+    }
+
     $pdfResult = $repo->attachPdf(
         $oeuvreId,
         (string) $_FILES['pdf_file']['tmp_name'],
@@ -71,6 +82,11 @@ if ($oeuvreId > 0 && isset($_FILES['pdf_file']) && (int) ($_FILES['pdf_file']['e
         header('Location: ' . View::magazineIssueUrl($result) . '&error=' . rawurlencode((string) $pdfResult));
         exit;
     }
+    header('Location: ' . View::magazineIssueUrl($result) . '&added=1&pdf=1');
+    if (function_exists('fastcgi_finish_request')) {
+        fastcgi_finish_request();
+    }
+    exit;
 }
 
 header('Location: ' . View::magazineIssueUrl($result) . '&added=1');

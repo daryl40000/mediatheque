@@ -76,4 +76,8 @@ View::render('maintenance-medias', [
     'hasOverride' => trim((new \Moncine\SchemaMigrator(\Moncine\Database::getInstance()))->getMetadata(MediaPathConfig::META_ROOT_PATH)) !== '',
     'subdirs' => array_values(MediaStorage::SUBDIRS),
     'storedCount' => $storedCount,
+    'uploadLimitsWarning' => \Moncine\UploadLimits::phpLimitsWarning(),
+    'uploadMaxLabel' => \Moncine\UploadLimits::uploadMaxFilesizeLabel(),
+    'postMaxLabel' => \Moncine\UploadLimits::postMaxSizeLabel(),
+    'pdfMaxLabel' => \Moncine\UploadLimits::maxPdfBytesLabel(),
 ]);

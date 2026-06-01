@@ -1,6 +1,6 @@
-# Médiathèque — guide du fork (v0.1.0)
+# Médiathèque — guide du fork
 
-**Version : 0.1.0** · **Date : 2026-05-30**
+**Version : 0.2.1** · **Date : 2026-05-31**
 
 Ce document décrit ce qu’est la **Médiathèque**, ce qui a été livré en **0.1.0**, et comment cela s’articule avec **Monciné**.
 
@@ -12,7 +12,7 @@ Ce document décrit ce qu’est la **Médiathèque**, ce qui a été livré en *
 
 **Médiathèque** est une **évolution** du même code : une seule application pour plusieurs types de médias, avec le **même principe** (catalogue partagé + ma collection + mes envies) mais des **onglets** en haut de page.
 
-En **0.1.0**, seul l’onglet **Films** est pleinement utilisable. Les autres onglets existent visuellement et affichent « Bientôt disponible ».
+En **0.2.x**, les onglets **Films** et **Magazines** sont utilisables. Les autres onglets affichent « Bientôt disponible ».
 
 ---
 
@@ -26,7 +26,7 @@ En haut de chaque page connectée :
 - **BD / Manga** (rose) — à venir  
 - **Livres** (bleu) — à venir  
 - **Jeux** (violet) — à venir  
-- **Magazines** (vert d’eau) — à venir  
+- **Magazines** (vert d’eau) — séries, numéros, PDF (**0.2.0+**, voir [magazines.md](magazines.md))  
 
 Un clic change **toute l’interface** : couleur, libellés du menu (« Mes films », « Mes envies »…), fond léger.
 
@@ -66,6 +66,7 @@ Le code métier reste largement celui de Monciné (`FilmRepository`, TMDB, etc.)
 | `www/set-media-domain.php` | Change l’onglet puis redirige |
 | `ROADMAP.md` | Plan M0 → M7 |
 | `CHANGELOG.md` | Historique des versions |
+| `doc/magazines.md` | Module magazines (PDF, recherche, tags) |
 | `doc/conventions-techniques.md` | **Nommage Monciné vs Médiathèque — lecture obligatoire** |
 
 ---
@@ -101,7 +102,7 @@ Voir `.gitignore` :
 
 Points essentiels :
 
-- **Médiathèque** = nom produit et version **0.1.0** ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.2.1**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
 - **`media_domain`** (onglet Films/BD/…) ≠ **`moncine_kind`** (film/série/spectacle dans l’onglet Films).
 - Nouveau code multi-médias : `MediaDomain`, `MediaContext`, `CatalogSchema::applyMediaDomainFilter()`.
 
@@ -112,7 +113,8 @@ Points essentiels :
 Voir [ROADMAP.md](../ROADMAP.md) :
 
 - **M1** — Valider qu’aucune régression sur les films  
-- **M2–M5** — BD, livres, jeux, magazines (PDF + recherche)  
+- **M2–M4** — BD, livres, jeux  
+- **M5** — magazines : suite (FTS, polish) — voir [magazines.md](magazines.md) pour l’existant  
 - **M6–M7** — Prêts/partage par domaine, identité et doc  
 
 ---

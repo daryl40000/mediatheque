@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.2.0** (2026-05-31)  
+**Version actuelle : 0.2.1** (2026-05-31)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -22,7 +22,7 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 | **M2** BD / Manga | ⏳ À faire | 0.3.x | Collection BD, séries/tomes |
 | **M3** Livres | ⏳ À faire | 0.4.x | ISBN, auteur, import CSV |
 | **M4** Jeux vidéo | ⏳ À faire | 0.5.x | Physique + plateformes |
-| **M5** Magazines | 🔄 **En cours** | 0.2.0 | Séries, numéros, couvertures, PDF, sommaire |
+| **M5** Magazines | 🔄 **En cours** | 0.2.x | Séries, numéros, PDF, recherche texte PDF, tags support (**0.2.1**) |
 | **M6** Transversal | ⏳ À faire | 0.9.x | Prêts, partage, stats par domaine |
 | **M7** Identité & polish | ⏳ À faire | 1.0.0 | Branding, doc finale, déploiement |
 
@@ -190,17 +190,20 @@ Comptes, foyers, envies personnelles et de groupe, catalogue partagé, soumissio
 
 ## Phase M5 — Magazines (PDF)
 
-**Version visée :** `0.6.0` — la plus lourde techniquement.
+**Version livrée partiellement :** `0.2.0` → `0.2.1` · **Version visée complète :** `0.6.0`
 
-| Tâche | Détail |
-|-------|--------|
-| Modèle | Œuvre = titre de revue ; numéro = entrée biblio + `stored_object_id` |
-| Upload | `magazines/{oeuvre_id}/…`, limites MIME PDF |
-| Lecture | `media-object.php` / page dédiée, accès foyer |
-| Recherche v1 | Titre, n°, date, tags manuels |
-| Recherche v2 | FTS SQLite sur texte extrait (`pdftotext` ou lib PHP) |
+| Tâche | Statut | Détail |
+|-------|--------|--------|
+| Modèle séries + numéros | ✅ 0.2.0 | `series`, `oeuvre_magazine`, sommaire |
+| Upload PDF | ✅ 0.2.1 | `magazines/{revue}/{année}/…`, limites dev 350 Mo |
+| Lecture PDF | ✅ | `media-object.php`, bouton sur fiche |
+| Tags support papier / PDF | ✅ 0.2.1 | `MagazineSupport`, sync à l’import |
+| Recherche série (n°, date, sommaire) | ✅ 0.2.1 | Paramètre `q` |
+| Texte PDF (6 pages) | ✅ 0.2.1 | `pdftotext` → `pdf_text_preview` |
+| Couverture / pages auto | ✅ 0.2.1 | `pdftoppm`, `pdfinfo` |
+| Recherche FTS globale | ⏳ | Hors scope 0.2.1 |
 
-**Infra déjà en place :** `stored_objects`, `StoredObjectDelivery`, dossier `magazines/`.
+**Doc :** [doc/magazines.md](doc/magazines.md) · **Infra :** `stored_objects`, `StoredObjectDelivery`, Poppler optionnel.
 
 ---
 

@@ -27,4 +27,13 @@ final class PublicationTypeTest extends TestCase
         $this->assertSame(1.0, PublicationType::suggestNextNumeroOrdre(0));
         $this->assertSame(124.0, PublicationType::suggestNextNumeroOrdre(123));
     }
+
+    public function testParseParutionDateFilter(): void
+    {
+        $this->assertSame(['year' => 2024, 'month' => null], PublicationType::parseParutionDateFilter('2024'));
+        $this->assertSame(['year' => 2024, 'month' => 6], PublicationType::parseParutionDateFilter('06/2024'));
+        $this->assertSame(['year' => 2024, 'month' => 6], PublicationType::parseParutionDateFilter('2024-06'));
+        $this->assertSame(['year' => 2024, 'month' => 6], PublicationType::parseParutionDateFilter('juin 2024'));
+        $this->assertNull(PublicationType::parseParutionDateFilter(''));
+    }
 }

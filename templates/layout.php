@@ -189,7 +189,9 @@ $mediaCssVars = implode('; ', [
     </header>
     <main class="container<?= !empty($wideLayout) ? ' container--wide' : '' ?>">
         <?php if (!empty($_GET['csrf_error'])): ?>
-            <p class="alert alert-warning"><?= Moncine\View::escape(Moncine\Csrf::REJECT_MESSAGE) ?></p>
+            <p class="alert alert-warning"><?= Moncine\View::escape(Moncine\Csrf::REJECT_MESSAGE) ?>
+                Si vous envoyiez un gros PDF, vérifiez les limites PHP (upload <?= Moncine\View::escape(Moncine\UploadLimits::uploadMaxFilesizeLabel()) ?>,
+                post <?= Moncine\View::escape(Moncine\UploadLimits::postMaxSizeLabel()) ?>).</p>
         <?php endif; ?>
         <?php require $templateFile; ?>
     </main>

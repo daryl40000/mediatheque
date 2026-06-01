@@ -27,6 +27,21 @@ if ($dataPath === false || $dataPath === '') {
 }
 define('MONCINE_DATA', $dataPath);
 
+// Sessions PHP : toujours sous data/sessions (évite /var/lib/php/sessions en dev local).
+$moncineSessionDir = getenv('MONCINE_SESSION_PATH');
+if (!is_string($moncineSessionDir) || trim($moncineSessionDir) === '') {
+    $moncineSessionDir = MONCINE_DATA . '/sessions';
+} else {
+    $moncineSessionDir = rtrim(trim($moncineSessionDir), '/\\');
+}
+if (!is_dir($moncineSessionDir)) {
+    @mkdir($moncineSessionDir, 0775, true);
+}
+if (is_dir($moncineSessionDir) && is_writable($moncineSessionDir)) {
+    session_save_path($moncineSessionDir);
+}
+define('MONCINE_SESSION_DIR', $moncineSessionDir);
+
 define('MONCINE_DB_FILE', MONCINE_DATA . '/moncine.db');
 
 // Affiches catalogue (même dossier de données que la base SQLite)
@@ -49,7 +64,7 @@ define('MONCINE_APP_NAME', 'Médiathèque');
 
 // Version applicative (semver du fork Médiathèque)
 // Identifiants techniques MONCINE_* / namespace Moncine\ : voir doc/conventions-techniques.md
-define('MONCINE_PACKAGE_VERSION', '0.2.0');
+define('MONCINE_PACKAGE_VERSION', '0.2.1');
 
 // Derrière un reverse proxy de confiance (YunoHost / Nginx) : 1 pour utiliser X-Real-IP / X-Forwarded-For.
 $trustProxy = getenv('MONCINE_TRUST_PROXY');
@@ -82,6 +97,9 @@ define('MONCINE_POSTER_MAX_BYTES', 2 * 1024 * 1024);
 
 // Archive ZIP d’affiches à l’import (admin)
 define('MONCINE_POSTERS_ZIP_MAX_BYTES', 80 * 1024 * 1024);
+
+// PDF de numéros de magazines (scan complet, fichiers lourds)
+define('MONCINE_PDF_MAX_BYTES', 350 * 1024 * 1024);
 
 // Sauvegarde / restauration complète de la base SQLite (admin, maintenance)
 define('MONCINE_DB_BACKUP_MAX_BYTES', 128 * 1024 * 1024);

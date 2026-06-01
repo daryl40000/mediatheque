@@ -9,6 +9,39 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.2.1] — 2026-05-31
+
+**Magazines — PDF, recherche, supports en tags, confort dev**
+
+### Ajouté
+
+- **Tags support** (`lib/MagazineSupport.php`) : case **Papier** ; tag **PDF** automatique à l’import ; badges sur la liste série et la fiche numéro (`templates/_magazine_support_tags.php`).
+- **Recherche globale** sur la page série (`q`) : numéro, date, sommaire, texte des 6 premières pages du PDF.
+- **Extraction PDF** (Poppler, post-traitement non bloquant) :
+  - `MagazinePdfTextExtractor` — `pdftotext` → `pdf_text_preview` (migration **`033_magazine_pdf_text_preview.sql`**).
+  - `MagazinePdfCoverExtractor` — couverture depuis la page 1 si absente.
+  - `MagazinePdfInfo` — nombre de pages via `pdfinfo` si champ à 0.
+- **Liste numéros** : grille en cartes, couvertures, layout large ; tri et recherche conservés.
+- **Dev local** : `start-dev.sh`, `www/serve.sh`, `www/php-dev.ini` (limites upload ~350 Mo) ; sessions PHP dans `data/sessions/` (`lib/config.php`).
+- **`lib/UploadLimits.php`** — garde-fou POST et message d’alerte dans les formulaires magazine.
+- Documentation : [doc/magazines.md](doc/magazines.md).
+
+### Modifié
+
+- **Chemins PDF** : `data/media/magazines/{revue}/{année}/{revue}-{numero}.pdf` ; remplacement de fichier simplifié.
+- **Import PDF** : réponse HTTP renvoyée avant l’indexation lourde (`register_shutdown_function`, `fastcgi_finish_request` si disponible).
+- **Formulaires numéro** : plus de champ texte « Support » ; ordre de tri décimal (hors-série `8.5`, insertion `8.1`, etc.).
+- **`www/media-object.php`** — livraison PDF magazines alignée sur le stockage.
+
+### Tests
+
+- `MagazineSupportTest`, `MagazinePdfTextExtractorTest`, `MagazinePdfInfoTest`, `MagazinePdfCoverExtractorTest`.
+- `MagazineTest` — recherche globale série ; `PublicationTypeTest` — suggestion ordre.
+
+Après mise à jour : `php lib/cli/migrate.php` (migration **033**). Dépendance optionnelle : **`poppler-utils`**. Dev PDF : `./start-dev.sh`.
+
+---
+
 ## [0.2.0] — 2026-05-31
 
 **Module Magazines (M5 — première version)** — collection par **série** puis **numéros**.

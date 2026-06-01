@@ -64,6 +64,9 @@ final class View
             'oeuvre',
             'maintenance-catalogue',
             'maintenance-medias',
+            'magazines',
+            'magazines-envies',
+            'serie-magazine',
         ], true);
     }
 
@@ -560,17 +563,33 @@ final class View
         return $params === [] ? '/magazines.php' : '/magazines.php?' . http_build_query($params);
     }
 
-    public static function magazineSeriesUrl(int $seriesId, string $sort = 'numero_ordre', string $dir = 'desc'): string
-    {
+    public static function magazineSeriesUrl(
+        int $seriesId,
+        string $sort = 'numero_ordre',
+        string $dir = 'desc',
+        array $queryExtra = []
+    ): string {
         if ($seriesId <= 0) {
             return '/magazines.php';
         }
 
-        return '/serie-magazine.php?' . http_build_query([
+        $params = [
             'series_id' => $seriesId,
             'sort' => $sort,
             'dir' => $dir,
-        ]);
+        ];
+
+        foreach ($queryExtra as $key => $value) {
+            if (!is_string($key) || $key === '') {
+                continue;
+            }
+            $value = is_string($value) ? trim($value) : (string) $value;
+            if ($value !== '') {
+                $params[$key] = $value;
+            }
+        }
+
+        return '/serie-magazine.php?' . http_build_query($params);
     }
 
     public static function magazineIssueUrl(int $bibId): string

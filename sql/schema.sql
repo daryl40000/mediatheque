@@ -420,7 +420,8 @@ CREATE TABLE IF NOT EXISTS oeuvre_magazine (
     sommaire TEXT DEFAULT '',
     pages INTEGER NOT NULL DEFAULT 0,
     est_hors_serie INTEGER NOT NULL DEFAULT 0,
-    stored_object_id INTEGER DEFAULT NULL REFERENCES stored_objects(id) ON DELETE SET NULL
+    stored_object_id INTEGER DEFAULT NULL REFERENCES stored_objects(id) ON DELETE SET NULL,
+    pdf_text_preview TEXT NOT NULL DEFAULT ''
 );
 
 CREATE INDEX IF NOT EXISTS idx_oeuvre_magazine_series ON oeuvre_magazine(series_id);

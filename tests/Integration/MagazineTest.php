@@ -65,6 +65,87 @@ final class MagazineTest extends MoncineTestCase
         ));
     }
 
+    public function testGlobalSearchInSeries(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Revue Recherche Test',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+
+        $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '10',
+            'numero_ordre' => 10,
+            'date_parution' => '2023-03-01',
+            'sommaire' => 'Article Warhammer',
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '20',
+            'numero_ordre' => 20,
+            'date_parution' => '2024-06-01',
+            'sommaire' => 'Test matériel',
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+
+        $byNumero = $repo->listIssuesForSeries(
+            $seriesId,
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'numero_ordre',
+            'desc',
+            '20'
+        );
+        $this->assertCount(1, $byNumero);
+        $this->assertSame('20', $byNumero[0]['numero']);
+
+        $byDate = $repo->listIssuesForSeries(
+            $seriesId,
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'numero_ordre',
+            'desc',
+            'juin 2024'
+        );
+        $this->assertCount(1, $byDate);
+        $this->assertSame('20', $byDate[0]['numero']);
+
+        $byKeyword = $repo->listIssuesForSeries(
+            $seriesId,
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'numero_ordre',
+            'desc',
+            'Warhammer'
+        );
+        $this->assertCount(1, $byKeyword);
+        $this->assertSame('10', $byKeyword[0]['numero']);
+
+        if (MagazineRepository::pdfTextPreviewColumnExists()) {
+            $db = \Moncine\Database::getInstance();
+            $db->prepare(
+                'UPDATE oeuvre_magazine SET pdf_text_preview = ? WHERE numero = ? AND series_id = ?'
+            )->execute(['Dossier exclusif Zelda sur Switch', '20', $seriesId]);
+
+            $byPdf = $repo->listIssuesForSeries(
+                $seriesId,
+                $userId,
+                $foyerId,
+                LibraryStatut::COLLECTION,
+                'numero_ordre',
+                'desc',
+                'Zelda'
+            );
+            $this->assertCount(1, $byPdf);
+            $this->assertSame('20', $byPdf[0]['numero']);
+        }
+    }
+
     public function testEmptySeriesAppearsInCollection(): void
     {
         $this->assertTrue(MagazineRepository::isAvailable());

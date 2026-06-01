@@ -19,6 +19,7 @@
     <?php if ($error !== ''): ?>
         <div class="alert alert-warning"><?= Moncine\View::escape($error) ?></div>
     <?php endif; ?>
+    <?php require MONCINE_ROOT . '/templates/_upload_limits_warning.php'; ?>
 
     <form method="post" action="/enregistrer-numero-magazine.php" enctype="multipart/form-data" class="import-form">
         <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
@@ -41,10 +42,18 @@
 
         <label for="pages">Nombre de pages</label>
         <input type="number" name="pages" id="pages" min="0" value="0">
+        <?php if (Moncine\MagazinePdfInfo::isAvailable()): ?>
+            <p class="hint">Laissez 0 pour détecter le nombre de pages depuis le PDF importé.</p>
+        <?php endif; ?>
 
-        <label for="support_physique">Support</label>
-        <input type="text" name="support_physique" id="support_physique"
-               placeholder="Papier, PDF, Papier + PDF…">
+        <fieldset class="magazine-support-fieldset">
+            <legend>Support</legend>
+            <label class="checkbox">
+                <input type="checkbox" name="support_papier" value="1">
+                J’ai le numéro en <strong>papier</strong>
+            </label>
+            <p class="hint">Le tag <span class="magazine-tag magazine-tag--pdf">PDF</span> sera ajouté automatiquement si vous importez un fichier.</p>
+        </fieldset>
 
         <label class="checkbox">
             <input type="checkbox" name="est_hors_serie" value="1">
@@ -58,8 +67,11 @@
         <label for="cover_file">Couverture (JPEG, PNG, WebP — même format que les affiches films)</label>
         <input type="file" name="cover_file" id="cover_file" accept="image/jpeg,image/png,image/webp">
 
-        <label for="pdf_file">Fichier PDF du numéro (optionnel)</label>
+        <label for="pdf_file">Fichier PDF du numéro (optionnel, max <?= Moncine\View::escape(Moncine\UploadLimits::maxPdfBytesLabel()) ?>)</label>
         <input type="file" name="pdf_file" id="pdf_file" accept="application/pdf,.pdf">
+        <p class="hint">Les scans complets peuvent être volumineux. Limite serveur PHP :
+            upload <?= Moncine\View::escape(Moncine\UploadLimits::uploadMaxFilesizeLabel()) ?>,
+            post <?= Moncine\View::escape(Moncine\UploadLimits::postMaxSizeLabel()) ?>.</p>
 
         <button type="submit" class="btn btn-primary">
             <?= $statut === Moncine\LibraryStatut::WISHLIST ? 'Ajouter à mes envies' : 'Ajouter à ma collection' ?>
