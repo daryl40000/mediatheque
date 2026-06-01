@@ -12,7 +12,6 @@
 !/data/sessions/.gitkeep
 /data/auth_rate_limit/
 /data/media/
-/data/install_seed/
 
 # Graine d’installation : déposer CSV/ZIP ici sans les versionner
 /install_seed/*.csv
