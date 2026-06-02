@@ -423,6 +423,13 @@ final class MagazineRepository
 
             $this->db->commit();
 
+            if (MagazineSupport::isPossessed([
+                'support_physique' => $support,
+                'stored_object_id' => (int) ($data['stored_object_id'] ?? 0),
+            ])) {
+                $this->clearWishlistEntriesWhenPossessed($oeuvreId);
+            }
+
             return $bibId;
         } catch (\Throwable $e) {
             if ($this->db->inTransaction()) {
@@ -506,6 +513,8 @@ final class MagazineRepository
             }
 
             $this->db->commit();
+
+            $this->clearWishlistEntriesWhenPossessed($oeuvreId);
 
             return true;
         } catch (\Throwable $e) {
@@ -737,10 +746,10 @@ final class MagazineRepository
             'SELECT b.id, b.support_physique, om.stored_object_id
              FROM bibliotheque b
              INNER JOIN oeuvre_magazine om ON om.oeuvre_id = b.oeuvre_id
-             WHERE b.oeuvre_id = ?
+             WHERE b.oeuvre_id = ? AND b.statut = ?
              LIMIT 1'
         );
-        $stmt->execute([$oeuvreId]);
+        $stmt->execute([$oeuvreId, LibraryStatut::COLLECTION]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($row === false) {
             return;
@@ -756,6 +765,8 @@ final class MagazineRepository
                 MagazineSupport::formatTagsForStorage($hasPaper, $hasPdf),
                 (int) ($row['id'] ?? 0),
             ]);
+
+        $this->clearWishlistEntriesWhenPossessed($oeuvreId);
     }
 
     /**
@@ -1231,5 +1242,30 @@ final class MagazineRepository
         } elseif ($possessionFilter === self::POSSESSION_UNOWNED) {
             $where[] = 'NOT ' . $this->sqlIssuePossessedCondition('b', 'om');
         }
+    }
+
+    /** Retire des envies personnelles un numéro désormais possédé en collection (papier ou PDF). */
+    private function clearWishlistEntriesWhenPossessed(int $oeuvreId): void
+    {
+        if ($oeuvreId <= 0) {
+            return;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT b.support_physique, om.stored_object_id
+             FROM bibliotheque b
+             INNER JOIN oeuvre_magazine om ON om.oeuvre_id = b.oeuvre_id
+             WHERE b.oeuvre_id = ? AND b.statut = ?
+             LIMIT 1'
+        );
+        $stmt->execute([$oeuvreId, LibraryStatut::COLLECTION]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if ($row === false || !MagazineSupport::isPossessed($row)) {
+            return;
+        }
+
+        $this->db->prepare(
+            'DELETE FROM bibliotheque WHERE oeuvre_id = ? AND statut = ?'
+        )->execute([$oeuvreId, LibraryStatut::WISHLIST]);
     }
 }

@@ -199,6 +199,39 @@ final class MagazineTest extends MoncineTestCase
         $this->assertSame('1', $unowned[0]['numero']);
     }
 
+    public function testPaperTagRemovesIssueFromWishlist(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Possession Retire Envies Test',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+        $repo->registerSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId);
+
+        $bibId = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '50',
+            'numero_ordre' => 50,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        $this->assertTrue($repo->addIssueToWishlist($bibId, $userId, $foyerId));
+        $this->assertSame(1, $repo->countIssuesInLibrary($userId, $foyerId, LibraryStatut::WISHLIST));
+
+        $updated = $repo->updateIssue($bibId, ['support_papier' => true], $userId, $foyerId);
+        $this->assertTrue($updated);
+
+        $this->assertSame(0, $repo->countIssuesInLibrary($userId, $foyerId, LibraryStatut::WISHLIST));
+
+        $collectionIssue = $repo->findIssueByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($collectionIssue);
+        $this->assertSame(0, (int) ($collectionIssue['in_wishlist'] ?? 1));
+        $this->assertTrue(MagazineSupport::isPossessed($collectionIssue));
+    }
+
     public function testGlobalSearchInSeries(): void
     {
         $seriesId = (new SeriesRepository())->create([

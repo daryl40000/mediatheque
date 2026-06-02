@@ -17,7 +17,7 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ### Ajouté
 
-- Numéros **sans tag** (ni papier ni PDF) : non comptés dans les **numéros possédés** (stats, accueil, cartes série) ; badge « Non possédé » ; bouton **Ajouter aux envies** en un clic (**sans retirer** le numéro de la collection) ; filtre **Tous / Possédés / Non possédés** sur la liste série.
+- Numéros **sans tag** (ni papier ni PDF) : non comptés dans les **numéros possédés** (stats, accueil, cartes série) ; badge « Non possédé » ; bouton **Ajouter aux envies** en un clic (**sans retirer** le numéro de la collection) ; filtre **Tous / Possédés / Non possédés** sur la liste série ; **retrait auto des envies** dès qu’un numéro devient possédé (papier ou PDF).
 
 ### Modifié
 
