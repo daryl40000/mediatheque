@@ -102,6 +102,12 @@ final class MagazineSupport
         return $tags;
     }
 
+    /** Numéro réellement possédé (au moins papier ou PDF). */
+    public static function isPossessed(array $issue): bool
+    {
+        return self::tagsForIssue($issue) !== [];
+    }
+
     private static function normalizeTag(string $tag): string
     {
         $tag = mb_strtolower(trim($tag));

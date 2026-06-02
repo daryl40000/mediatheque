@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
 use Moncine\MediaDomainGuards;
 use Moncine\PosterStorage;
@@ -34,6 +35,22 @@ $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
 $repo = new MagazineRepository();
 $action = (string) ($_POST['action'] ?? 'save');
+
+if ($action === 'wishlist') {
+    $issueBefore = $repo->findIssueByBibId($bibId, $userId, $foyerId);
+    $seriesId = (int) ($issueBefore['series_id'] ?? $_POST['series_id'] ?? 0);
+    $result = $repo->moveIssueToWishlist($bibId, $userId, $foyerId);
+    if ($result !== true) {
+        $redirect = $bibId > 0 ? View::magazineIssueUrl($bibId) : View::magazineSeriesUrl($seriesId);
+        header('Location: ' . $redirect . '&error=' . rawurlencode((string) $result));
+        exit;
+    }
+    $redirect = $seriesId > 0
+        ? View::magazineSeriesUrl($seriesId, 'numero_ordre', 'desc', ['statut' => LibraryStatut::WISHLIST, 'wishlist' => '1'])
+        : '/magazines-envies.php?wishlist=1';
+    header('Location: ' . $redirect);
+    exit;
+}
 
 if ($action === 'delete') {
     $issueBefore = $repo->findIssueByBibId($bibId, $userId, $foyerId);

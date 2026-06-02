@@ -91,6 +91,77 @@ final class MagazineTest extends MoncineTestCase
         $this->assertContains(MagazineSupport::TAG_PAPIER, MagazineSupport::tagsForIssue($issue));
     }
 
+    public function testUnownedIssueNotCountedInCollectionStats(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Stats Possession Test',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+        $repo->registerSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId);
+
+        $bibUnowned = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '1',
+            'numero_ordre' => 1,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibUnowned);
+
+        $this->assertSame(0, $repo->countIssuesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION));
+
+        $seriesList = $repo->listSeriesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION);
+        $this->assertSame(0, (int) ($seriesList[0]['issue_count'] ?? -1));
+
+        $bibOwned = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '2',
+            'numero_ordre' => 2,
+            'support_papier' => true,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibOwned);
+
+        $this->assertSame(1, $repo->countIssuesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION));
+    }
+
+    public function testMoveUnownedIssueToWishlist(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Envies Rapides Test',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+        $repo->registerSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId);
+
+        $bibId = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '99',
+            'numero_ordre' => 99,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        $result = $repo->moveIssueToWishlist($bibId, $userId, $foyerId);
+        $this->assertTrue($result);
+
+        $moved = $repo->findIssueByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($moved);
+        $this->assertSame(LibraryStatut::WISHLIST, (string) ($moved['statut'] ?? ''));
+
+        $wishlistIssues = $repo->listIssuesForSeries(
+            $seriesId,
+            $userId,
+            $foyerId,
+            LibraryStatut::WISHLIST
+        );
+        $this->assertCount(1, $wishlistIssues);
+        $this->assertSame('99', $wishlistIssues[0]['numero']);
+        $this->assertSame(1, $repo->countIssuesInLibrary($userId, $foyerId, LibraryStatut::WISHLIST));
+    }
+
     public function testGlobalSearchInSeries(): void
     {
         $seriesId = (new SeriesRepository())->create([

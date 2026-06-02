@@ -22,7 +22,7 @@ $mediaNav = Moncine\MediaContext::navLabels();
     <?php else: ?>
         <p class="stats">
             <?= (int) $seriesCount ?> série<?= $seriesCount > 1 ? 's' : '' ?>
-            · <?= (int) $issueCount ?> numéro<?= $issueCount > 1 ? 's' : '' ?> en collection
+            · <?= (int) $issueCount ?> numéro<?= $issueCount > 1 ? 's' : '' ?> possédé<?= $issueCount > 1 ? 's' : '' ?>
         </p>
         <div class="hero-actions">
             <a class="btn btn-primary btn-lg" href="/magazines.php"><?= Moncine\View::escape($mediaNav['collection']) ?></a>

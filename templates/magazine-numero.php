@@ -76,7 +76,17 @@
                         · <?= (int) $issue['pages'] ?> p.
                     <?php endif; ?>
                     <?php require MONCINE_ROOT . '/templates/_magazine_support_tags.php'; ?>
+                    <?php if (($issue['statut'] ?? '') === Moncine\LibraryStatut::COLLECTION && !Moncine\MagazineSupport::isPossessed($issue)): ?>
+                        <span class="magazine-tag magazine-tag--none">Non possédé</span>
+                    <?php endif; ?>
                 </p>
+
+                <?php if (($issue['statut'] ?? '') === Moncine\LibraryStatut::COLLECTION && !Moncine\MagazineSupport::isPossessed($issue)): ?>
+                    <div class="magazine-unowned-actions">
+                        <p class="hint">Ce numéro est référencé mais vous ne l’avez ni en papier ni en PDF — il n’est pas compté parmi vos numéros possédés.</p>
+                        <?php require MONCINE_ROOT . '/templates/_magazine_wishlist_button.php'; ?>
+                    </div>
+                <?php endif; ?>
 
                 <section class="magazine-sommaire">
                     <h2>Sommaire</h2>

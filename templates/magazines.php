@@ -50,7 +50,7 @@
                         <h2 class="magazine-series-card__title"><?= Moncine\View::escape((string) ($series['titre'] ?? '')) ?></h2>
                         <p class="hint">
                             <?= Moncine\View::escape(Moncine\PublicationType::label((string) ($series['publication_type'] ?? ''))) ?>
-                            · <?= (int) ($series['issue_count'] ?? 0) ?> numéro(s)<?= (int) ($series['issue_count'] ?? 0) === 0 ? ' — ajoutez le premier' : '' ?>
+                            · <?= (int) ($series['issue_count'] ?? 0) ?> numéro(s) possédé(s)<?= (int) ($series['issue_count'] ?? 0) === 0 ? ' — ajoutez le premier' : '' ?>
                         </p>
                         <?php if (trim((string) ($series['editeur'] ?? '')) !== ''): ?>
                             <p class="hint"><?= Moncine\View::escape((string) $series['editeur']) ?></p>

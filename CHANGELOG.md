@@ -15,6 +15,10 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 - **Magazines** : la case « J’ai le numéro en papier » à l’**ajout** d’un numéro n’était pas enregistrée (`SupportPhysique::normalize` effaçait le tag `papier` à l’insertion bibliothèque).
 
+### Ajouté
+
+- Numéros **sans tag** (ni papier ni PDF) : non comptés dans les **numéros possédés** (stats, accueil, cartes série) ; badge « Non possédé » ; bouton **Ajouter aux envies** en un clic.
+
 ### Modifié
 
 - **Affiches et couvertures** : taille max. par image portée à **10 Mo** (`MONCINE_POSTER_MAX_BYTES`) ; ZIP d’affiches à l’import admin : **200 Mo** (`MONCINE_POSTERS_ZIP_MAX_BYTES`).

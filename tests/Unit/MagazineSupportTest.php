@@ -30,5 +30,17 @@ final class MagazineSupportTest extends TestCase
         ]);
         $this->assertContains(MagazineSupport::TAG_PAPIER, $tags);
         $this->assertContains(MagazineSupport::TAG_PDF, $tags);
+        $this->assertTrue(MagazineSupport::isPossessed([
+            'support_physique' => 'papier',
+            'stored_object_id' => 12,
+        ]));
+    }
+
+    public function testIsPossessedFalseWhenNoTags(): void
+    {
+        $this->assertFalse(MagazineSupport::isPossessed([
+            'support_physique' => '',
+            'stored_object_id' => 0,
+        ]));
     }
 }

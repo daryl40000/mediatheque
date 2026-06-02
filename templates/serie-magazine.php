@@ -58,6 +58,9 @@
         <?php if (isset($_GET['deleted'])): ?>
             <div class="alert alert-success">Numéro retiré de votre liste.</div>
         <?php endif; ?>
+        <?php if (isset($_GET['wishlist'])): ?>
+            <div class="alert alert-success">Numéro ajouté à vos envies.</div>
+        <?php endif; ?>
 
         <?php if ($reindexMessage !== ''): ?>
             <div class="alert alert-success"><?= Moncine\View::escape($reindexMessage) ?></div>
@@ -153,6 +156,9 @@
                                     · <?= $pages ?> p.
                                 <?php endif; ?>
                                 <?php $issue = $row; require MONCINE_ROOT . '/templates/_magazine_support_tags.php'; ?>
+                                <?php if (!$isWishlist && !Moncine\MagazineSupport::isPossessed($row)): ?>
+                                    <span class="magazine-tag magazine-tag--none">Non possédé</span>
+                                <?php endif; ?>
                             </p>
                             <div class="magazine-issue-card__actions">
                                 <a href="<?= Moncine\View::escape($issueUrl) ?>" class="btn btn-secondary btn-sm">Fiche</a>
@@ -161,6 +167,9 @@
                                        class="btn btn-accent btn-sm"
                                        target="_blank"
                                        rel="noopener">PDF</a>
+                                <?php endif; ?>
+                                <?php if (!$isWishlist): ?>
+                                    <?php $issue = $row; require MONCINE_ROOT . '/templates/_magazine_wishlist_button.php'; ?>
                                 <?php endif; ?>
                             </div>
                         </div>

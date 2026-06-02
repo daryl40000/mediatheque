@@ -102,9 +102,9 @@ final class MagazineRepository
         }
 
         $params = [
-            'col_stat_1' => LibraryStatut::COLLECTION,
-            'col_stat_2' => LibraryStatut::COLLECTION,
-            'col_stat_3' => LibraryStatut::COLLECTION,
+            'issue_stat' => $statut === LibraryStatut::WISHLIST
+                ? LibraryStatut::WISHLIST
+                : LibraryStatut::COLLECTION,
             'domain_series' => MediaDomain::MAGAZINE,
             'domain_oeuvre' => MediaDomain::MAGAZINE,
         ];
@@ -123,12 +123,14 @@ final class MagazineRepository
         }
 
         $order = $this->seriesOrderClause($sortBy, $sortDir);
+        $ownedOnly = $statut !== LibraryStatut::WISHLIST;
+        $ownedSql = $ownedOnly ? ' AND ' . $this->sqlIssuePossessedCondition('b', 'om') : '';
 
         // Séries suivies (series_bibliotheque) + numéros optionnels (LEFT JOIN).
         $sql = 'SELECT s.*,
-                    COUNT(DISTINCT CASE WHEN b.statut = :col_stat_1 THEN b.id END) AS issue_count,
-                    MAX(CASE WHEN b.statut = :col_stat_2 THEN om.numero_ordre END) AS last_numero_ordre,
-                    MAX(CASE WHEN b.statut = :col_stat_3 THEN om.date_parution END) AS last_date_parution,
+                    COUNT(DISTINCT CASE WHEN b.statut = :issue_stat' . $ownedSql . ' THEN b.id END) AS issue_count,
+                    MAX(CASE WHEN b.statut = :issue_stat' . $ownedSql . ' THEN om.numero_ordre END) AS last_numero_ordre,
+                    MAX(CASE WHEN b.statut = :issue_stat' . $ownedSql . ' THEN om.date_parution END) AS last_date_parution,
                     MAX(CASE WHEN TRIM(o.poster_url) != \'\' THEN o.poster_url END) AS latest_poster_url
                 FROM series s
                 INNER JOIN series_bibliotheque sb ON sb.series_id = s.id
@@ -150,7 +152,7 @@ final class MagazineRepository
         return count($this->listSeriesInLibrary($userId, $foyerId, $statut, 'titre', 'asc', $query));
     }
 
-    /** Nombre total de numéros en collection ou en envies. */
+    /** Nombre de numéros (collection : possédés uniquement ; envies : tous). */
     public function countIssuesInLibrary(int $userId, int $foyerId, ?string $statut = null): int
     {
         if (!self::isAvailable()) {
@@ -164,11 +166,16 @@ final class MagazineRepository
         [$statutSql, $statutParams] = $this->libraryStatutFilter($statut, $userId, $foyerId);
         $params = array_merge($params, $statutParams);
 
+        $where = [$statutSql];
+        if ($statut === LibraryStatut::COLLECTION) {
+            $where[] = $this->sqlIssuePossessedCondition('b', 'om');
+        }
+
         $sql = 'SELECT COUNT(DISTINCT b.id)
                 FROM bibliotheque b
                 INNER JOIN oeuvres o ON o.id = b.oeuvre_id AND o.media_domain = :domain_oeuvre
                 INNER JOIN oeuvre_magazine om ON om.oeuvre_id = o.id
-                WHERE ' . $statutSql;
+                WHERE ' . implode(' AND ', $where);
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($this->filterParamsForSql($sql, $params));
@@ -486,6 +493,54 @@ final class MagazineRepository
         $stmt->execute([$bibId]);
 
         return $stmt->rowCount() > 0 ? true : 'Suppression impossible.';
+    }
+
+    /**
+     * Passe un numéro de la collection aux envies (sans papier ni PDF).
+     *
+     * @return true|string
+     */
+    public function moveIssueToWishlist(int $bibId, int $userId, int $foyerId): bool|string
+    {
+        $issue = $this->findIssueByBibId($bibId, $userId, $foyerId);
+        if ($issue === null) {
+            return 'Numéro introuvable.';
+        }
+
+        if (($issue['statut'] ?? '') !== LibraryStatut::COLLECTION) {
+            return 'Ce numéro est déjà dans vos envies.';
+        }
+
+        if (MagazineSupport::isPossessed($issue)) {
+            return 'Ce numéro est déjà possédé (papier ou PDF).';
+        }
+
+        $oeuvreId = (int) ($issue['oeuvre_id'] ?? 0);
+        $seriesId = (int) ($issue['series_id'] ?? 0);
+        if ($oeuvreId <= 0 || $seriesId <= 0) {
+            return 'Numéro invalide.';
+        }
+
+        $bibRepo = new BibliothequeRepository();
+        $existingWishlist = $bibRepo->findByOeuvreId($oeuvreId, $userId, $foyerId, LibraryStatut::WISHLIST);
+        if ($existingWishlist !== null) {
+            $deleted = $this->deleteFromLibrary($bibId, $userId, $foyerId);
+            if ($deleted !== true) {
+                return (string) $deleted;
+            }
+
+            $this->registerSeriesInLibrary($seriesId, $userId, $foyerId, LibraryStatut::WISHLIST);
+
+            return true;
+        }
+
+        $this->db->prepare(
+            'UPDATE bibliotheque SET statut = ?, user_id = ?, foyer_id = NULL WHERE id = ?'
+        )->execute([LibraryStatut::WISHLIST, $userId, $bibId]);
+
+        $this->registerSeriesInLibrary($seriesId, $userId, $foyerId, LibraryStatut::WISHLIST);
+
+        return true;
     }
 
     /** L’utilisateur peut lire un PDF rattaché à un numéro de sa bibliothèque. */
@@ -1103,5 +1158,22 @@ final class MagazineRepository
             $this->db->prepare('UPDATE oeuvre_magazine SET pdf_text_preview = ? WHERE oeuvre_id = ?')
                 ->execute(['', $oeuvreId]);
         }
+    }
+
+    /**
+     * Numéro possédé : au moins papier ou PDF (aligné sur MagazineSupport::isPossessed).
+     */
+    private function sqlIssuePossessedCondition(string $bAlias, string $omAlias): string
+    {
+        $support = "LOWER(COALESCE($bAlias.support_physique, ''))";
+
+        return "(
+            ($omAlias.stored_object_id IS NOT NULL AND $omAlias.stored_object_id > 0)
+            OR (INSTR($support, 'papier') > 0)
+            OR (INSTR($support, 'pdf') > 0)
+            OR (INSTR($support, 'physique') > 0)
+            OR (INSTR($support, 'demat') > 0)
+            OR (INSTR($support, 'démat') > 0)
+        )";
     }
 }
