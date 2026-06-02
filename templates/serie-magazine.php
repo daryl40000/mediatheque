@@ -217,6 +217,11 @@
                                     require MONCINE_ROOT . '/templates/_magazine_wishlist_button.php';
                                     ?>
                                 <?php endif; ?>
+                                <?php
+                                $issue = $row;
+                                $pageStatut = $statut;
+                                require MONCINE_ROOT . '/templates/_magazine_delete_button.php';
+                                ?>
                             </div>
                         </div>
                     </article>

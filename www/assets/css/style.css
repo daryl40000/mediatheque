@@ -3687,6 +3687,18 @@ body.media-domain--magazine.page-wide .container--wide {
     margin: 0;
 }
 
+.magazine-issue-card__actions .magazine-delete-form {
+    margin-left: auto;
+}
+
+.magazine-issue-delete {
+    margin-top: 0.75rem;
+}
+
+.magazine-issue-delete .magazine-delete-form {
+    display: inline-block;
+}
+
 .magazine-unowned-actions {
     margin: 0.75rem 0 1rem;
     padding: 0.65rem 0.85rem;

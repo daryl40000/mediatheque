@@ -15,6 +15,10 @@
         <div class="alert alert-warning"><?= Moncine\View::escape($moduleError) ?></div>
     <?php endif; ?>
 
+    <?php if (isset($_GET['deleted'])): ?>
+        <div class="alert alert-success">Numéro retiré de vos envies.</div>
+    <?php endif; ?>
+
     <?php if ($totalCount === 0): ?>
         <p class="hint">Aucune envie magazine pour l’instant.</p>
     <?php else: ?>

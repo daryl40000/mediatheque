@@ -21,6 +21,9 @@
             </a>
         </p>
 
+        <?php if (isset($_GET['deleted'])): ?>
+            <div class="alert alert-success">Numéro retiré de votre liste.</div>
+        <?php endif; ?>
         <?php if ($saved || isset($_GET['added'])): ?>
             <div class="alert alert-success">
                 Numéro enregistré.
@@ -91,6 +94,17 @@
                     </div>
                 <?php elseif ((int) ($issue['in_wishlist'] ?? 0) > 0 && !Moncine\MagazineSupport::isPossessed($issue)): ?>
                     <p class="hint"><span class="magazine-tag magazine-tag--wishlist">En envies</span> — également listé dans vos envies.</p>
+                <?php endif; ?>
+
+                <?php
+                $pageStatut = (string) ($issue['statut'] ?? Moncine\LibraryStatut::COLLECTION);
+                $canDeleteFromFiche = $pageStatut === Moncine\LibraryStatut::WISHLIST
+                    || Moncine\MagazineSupport::isPossessed($issue);
+                if ($canDeleteFromFiche):
+                ?>
+                    <div class="magazine-issue-delete">
+                        <?php require MONCINE_ROOT . '/templates/_magazine_delete_button.php'; ?>
+                    </div>
                 <?php endif; ?>
 
                 <section class="magazine-sommaire">
@@ -167,14 +181,17 @@
                 <button type="submit" class="btn btn-primary">Enregistrer</button>
             </form>
 
+            <?php if (!$canDeleteFromFiche): ?>
             <form method="post" action="/traiter-numero-magazine.php" class="inline-form"
                   onsubmit="return confirm('Retirer ce numéro de votre liste ?');">
                 <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
                 <input type="hidden" name="bib_id" value="<?= $bibId ?>">
                 <input type="hidden" name="series_id" value="<?= $seriesId ?>">
                 <input type="hidden" name="action" value="delete">
+                <input type="hidden" name="return_statut" value="<?= Moncine\View::escape((string) ($issue['statut'] ?? Moncine\LibraryStatut::COLLECTION)) ?>">
                 <button type="submit" class="btn btn-secondary">Retirer de ma liste</button>
             </form>
+            <?php endif; ?>
         </details>
     <?php endif; ?>
 </section>

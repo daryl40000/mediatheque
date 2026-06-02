@@ -60,12 +60,27 @@ if ($action === 'wishlist') {
 if ($action === 'delete') {
     $issueBefore = $repo->findIssueByBibId($bibId, $userId, $foyerId);
     $seriesId = (int) ($issueBefore['series_id'] ?? $_POST['series_id'] ?? 0);
+    $returnStatut = LibraryStatut::normalize(
+        (string) ($_POST['return_statut'] ?? $issueBefore['statut'] ?? LibraryStatut::COLLECTION)
+    );
+    $possession = MagazineRepository::normalizePossessionFilter((string) ($_POST['possession'] ?? 'all'));
     $result = $repo->deleteFromLibrary($bibId, $userId, $foyerId);
     if ($result !== true) {
         header('Location: ' . $returnUrl . '&error=' . rawurlencode((string) $result));
         exit;
     }
-    header('Location: ' . ($seriesId > 0 ? View::magazineSeriesUrl($seriesId) : '/magazines.php') . '&deleted=1');
+    if ($seriesId > 0) {
+        $redirectExtra = ['statut' => $returnStatut];
+        if ($returnStatut === LibraryStatut::COLLECTION && $possession !== MagazineRepository::POSSESSION_ALL) {
+            $redirectExtra['possession'] = $possession;
+        }
+        $redirect = View::magazineSeriesUrl($seriesId, 'numero_ordre', 'desc', $redirectExtra);
+    } elseif ($returnStatut === LibraryStatut::WISHLIST) {
+        $redirect = '/magazines-envies.php';
+    } else {
+        $redirect = '/magazines.php';
+    }
+    header('Location: ' . $redirect . '&deleted=1');
     exit;
 }
 
