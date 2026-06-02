@@ -529,7 +529,7 @@ final class MagazineRepository
                 return (string) $deleted;
             }
 
-            $this->registerSeriesInLibrary($seriesId, $userId, $foyerId, LibraryStatut::WISHLIST);
+            $this->registerSeriesInLibrary($seriesId, LibraryStatut::WISHLIST, $userId, $foyerId);
 
             return true;
         }
@@ -538,7 +538,7 @@ final class MagazineRepository
             'UPDATE bibliotheque SET statut = ?, user_id = ?, foyer_id = NULL WHERE id = ?'
         )->execute([LibraryStatut::WISHLIST, $userId, $bibId]);
 
-        $this->registerSeriesInLibrary($seriesId, $userId, $foyerId, LibraryStatut::WISHLIST);
+        $this->registerSeriesInLibrary($seriesId, LibraryStatut::WISHLIST, $userId, $foyerId);
 
         return true;
     }
