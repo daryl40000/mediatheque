@@ -343,6 +343,30 @@ final class MagazineRepository
     }
 
     /**
+     * Identifiant bibliothèque valide pour afficher la fiche après une action (PDF, papier…).
+     * Priorité : collection du foyer, puis envies personnelles.
+     */
+    public function resolveIssueBibIdForRedirect(int $oeuvreId, int $userId, int $foyerId, int $fallbackBibId = 0): int
+    {
+        if ($oeuvreId <= 0) {
+            return $fallbackBibId;
+        }
+
+        $bibRepo = new BibliothequeRepository();
+        $collection = $bibRepo->findByOeuvreId($oeuvreId, $userId, $foyerId, LibraryStatut::COLLECTION);
+        if ($collection !== null) {
+            return (int) ($collection['id'] ?? 0);
+        }
+
+        $wishlist = $bibRepo->findByOeuvreId($oeuvreId, $userId, $foyerId, LibraryStatut::WISHLIST);
+        if ($wishlist !== null) {
+            return (int) ($wishlist['id'] ?? 0);
+        }
+
+        return $fallbackBibId;
+    }
+
+    /**
      * Crée un numéro catalogue + entrée bibliothèque.
      *
      * @param array<string, mixed> $data

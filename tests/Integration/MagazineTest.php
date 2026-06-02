@@ -232,6 +232,47 @@ final class MagazineTest extends MoncineTestCase
         $this->assertTrue(MagazineSupport::isPossessed($collectionIssue));
     }
 
+    public function testResolveIssueBibIdForRedirectAfterWishlistRemoved(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Redirect Bib Test',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+        $repo->registerSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId);
+
+        $collectionBibId = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '77',
+            'numero_ordre' => 77,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($collectionBibId);
+
+        $this->assertTrue($repo->addIssueToWishlist($collectionBibId, $userId, $foyerId));
+
+        $wishlistIssues = $repo->listIssuesForSeries(
+            $seriesId,
+            $userId,
+            $foyerId,
+            LibraryStatut::WISHLIST
+        );
+        $this->assertCount(1, $wishlistIssues);
+        $wishlistBibId = (int) ($wishlistIssues[0]['bib_id'] ?? 0);
+        $this->assertGreaterThan(0, $wishlistBibId);
+        $oeuvreId = (int) ($wishlistIssues[0]['oeuvre_id'] ?? 0);
+
+        $this->assertTrue($repo->updateIssue($collectionBibId, ['support_papier' => true], $userId, $foyerId));
+
+        $this->assertNull($repo->findIssueByBibId($wishlistBibId, $userId, $foyerId));
+        $this->assertSame(
+            $collectionBibId,
+            $repo->resolveIssueBibIdForRedirect($oeuvreId, $userId, $foyerId, $wishlistBibId)
+        );
+    }
+
     public function testGlobalSearchInSeries(): void
     {
         $seriesId = (new SeriesRepository())->create([

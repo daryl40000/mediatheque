@@ -24,13 +24,13 @@ $repo = new MagazineRepository();
 $issue = $bibId > 0 ? $repo->findIssueByBibId($bibId, $userId, $foyerId) : null;
 
 if ($issue === null) {
+    http_response_code(404);
     View::render('magazine-numero', [
         'pageTitle' => 'Numéro introuvable',
         'issue' => null,
         'saved' => false,
         'error' => '',
     ]);
-    http_response_code(404);
     exit;
 }
 

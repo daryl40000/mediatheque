@@ -128,7 +128,9 @@ if ($action === 'pdf_only') {
         exit;
     }
 
-    header('Location: ' . $returnUrl . '&saved=1&pdf=1');
+    header('Location: ' . View::magazineIssueUrl(
+        $repo->resolveIssueBibIdForRedirect($oeuvreId, $userId, $foyerId, $bibId)
+    ) . '&saved=1&pdf=1');
     if (function_exists('fastcgi_finish_request')) {
         fastcgi_finish_request();
     }
@@ -170,12 +172,16 @@ if ($oeuvreId > 0 && isset($_FILES['pdf_file']) && (int) ($_FILES['pdf_file']['e
         header('Location: ' . $returnUrl . '&error=' . rawurlencode((string) $pdfResult));
         exit;
     }
-    header('Location: ' . $returnUrl . '&saved=1&pdf=1');
+    header('Location: ' . View::magazineIssueUrl(
+        $repo->resolveIssueBibIdForRedirect($oeuvreId, $userId, $foyerId, $bibId)
+    ) . '&saved=1&pdf=1');
     if (function_exists('fastcgi_finish_request')) {
         fastcgi_finish_request();
     }
     exit;
 }
 
-header('Location: ' . $returnUrl . '&saved=1');
+header('Location: ' . View::magazineIssueUrl(
+    $repo->resolveIssueBibIdForRedirect($oeuvreId, $userId, $foyerId, $bibId)
+) . '&saved=1');
 exit;

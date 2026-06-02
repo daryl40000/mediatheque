@@ -14,12 +14,50 @@
         $bibId = (int) ($issue['bib_id'] ?? 0);
         $seriesId = (int) ($issue['series_id'] ?? 0);
         $cover = Moncine\View::posterSrc(trim((string) ($issue['poster_url'] ?? '')) ?: null);
+        $pageStatut = (string) ($issue['statut'] ?? Moncine\LibraryStatut::COLLECTION);
+        $isWishlistIssue = $pageStatut === Moncine\LibraryStatut::WISHLIST;
+        $issuePageUrl = Moncine\View::magazineIssueUrl($bibId);
+        $deleteMode = isset($_GET['supprimer']);
+        $deleteModeUrl = $issuePageUrl . '&supprimer=1';
         ?>
-        <p>
-            <a href="<?= Moncine\View::escape(Moncine\View::magazineSeriesUrl($seriesId)) ?>" class="btn btn-secondary btn-sm">
-                ← <?= Moncine\View::escape((string) ($issue['series_titre'] ?? 'Série')) ?>
-            </a>
-        </p>
+        <div class="magazine-issue-toolbar">
+            <p class="magazine-issue-toolbar__back">
+                <a href="<?= Moncine\View::escape(Moncine\View::magazineSeriesUrl($seriesId, 'numero_ordre', 'desc', ['statut' => $pageStatut])) ?>" class="btn btn-secondary btn-sm">
+                    ← <?= Moncine\View::escape((string) ($issue['series_titre'] ?? 'Série')) ?>
+                </a>
+            </p>
+            <?php if (!$deleteMode): ?>
+                <a href="<?= Moncine\View::escape($deleteModeUrl) ?>"
+                   class="btn btn-icon btn-danger-text magazine-issue-toolbar__delete-toggle"
+                   title="Mode suppression"
+                   aria-label="Activer le mode suppression pour retirer ce numéro">
+                    <svg class="icon-trash" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                        <path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/>
+                    </svg>
+                </a>
+            <?php endif; ?>
+        </div>
+
+        <?php if ($deleteMode): ?>
+            <div class="magazine-delete-mode-panel" role="region" aria-label="Mode suppression">
+                <p class="magazine-delete-mode-panel__title"><strong>Mode suppression</strong></p>
+                <p class="hint">
+                    <?php if ($isWishlistIssue): ?>
+                        Ce numéro sera retiré de vos envies. Il restera visible dans votre collection si vous l’y aviez déjà référencé.
+                    <?php else: ?>
+                        Ce numéro sera retiré de vos magazines (collection du foyer). Cette action ne supprime pas le fichier PDF du serveur si un PDF était importé.
+                    <?php endif; ?>
+                </p>
+                <div class="magazine-delete-mode-panel__actions">
+                    <?php
+                    $possessionFilter = Moncine\MagazineRepository::POSSESSION_ALL;
+                    $variant = 'panel';
+                    require MONCINE_ROOT . '/templates/_magazine_delete_button.php';
+                    ?>
+                    <a href="<?= Moncine\View::escape($issuePageUrl) ?>" class="btn btn-secondary btn-sm">Annuler</a>
+                </div>
+            </div>
+        <?php endif; ?>
 
         <?php if (isset($_GET['deleted'])): ?>
             <div class="alert alert-success">Numéro retiré de votre liste.</div>
@@ -96,17 +134,6 @@
                     <p class="hint"><span class="magazine-tag magazine-tag--wishlist">En envies</span> — également listé dans vos envies.</p>
                 <?php endif; ?>
 
-                <?php
-                $pageStatut = (string) ($issue['statut'] ?? Moncine\LibraryStatut::COLLECTION);
-                $canDeleteFromFiche = $pageStatut === Moncine\LibraryStatut::WISHLIST
-                    || Moncine\MagazineSupport::isPossessed($issue);
-                if ($canDeleteFromFiche):
-                ?>
-                    <div class="magazine-issue-delete">
-                        <?php require MONCINE_ROOT . '/templates/_magazine_delete_button.php'; ?>
-                    </div>
-                <?php endif; ?>
-
                 <section class="magazine-sommaire">
                     <h2>Sommaire</h2>
                     <?php if (trim((string) ($issue['sommaire'] ?? '')) !== ''): ?>
@@ -180,18 +207,6 @@
 
                 <button type="submit" class="btn btn-primary">Enregistrer</button>
             </form>
-
-            <?php if (!$canDeleteFromFiche): ?>
-            <form method="post" action="/traiter-numero-magazine.php" class="inline-form"
-                  onsubmit="return confirm('Retirer ce numéro de votre liste ?');">
-                <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
-                <input type="hidden" name="bib_id" value="<?= $bibId ?>">
-                <input type="hidden" name="series_id" value="<?= $seriesId ?>">
-                <input type="hidden" name="action" value="delete">
-                <input type="hidden" name="return_statut" value="<?= Moncine\View::escape((string) ($issue['statut'] ?? Moncine\LibraryStatut::COLLECTION)) ?>">
-                <button type="submit" class="btn btn-secondary">Retirer de ma liste</button>
-            </form>
-            <?php endif; ?>
         </details>
     <?php endif; ?>
 </section>
