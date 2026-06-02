@@ -105,7 +105,7 @@ final class BibliothequeRepository
             $rowFoyerId,
             $oeuvreId,
             $statut,
-            SupportPhysique::normalize((string) ($libraryData['support_physique'] ?? '')),
+            self::normalizeSupportPhysiqueForStorage((string) ($libraryData['support_physique'] ?? '')),
             trim((string) ($libraryData['format_image'] ?? '')),
             trim((string) ($libraryData['format_son'] ?? '')),
             trim((string) ($libraryData['saga'] ?? '')),
@@ -278,5 +278,30 @@ final class BibliothequeRepository
         $stmt->execute($params);
 
         return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Films : clés dvd / bluray. Magazines : tags papier / pdf (MagazineSupport).
+     */
+    private static function normalizeSupportPhysiqueForStorage(string $raw): string
+    {
+        $raw = trim($raw);
+        if ($raw === '') {
+            return '';
+        }
+
+        $filmSupport = SupportPhysique::normalize($raw);
+        if ($filmSupport !== '') {
+            return $filmSupport;
+        }
+
+        if (MagazineSupport::parseTags($raw) === []) {
+            return '';
+        }
+
+        return MagazineSupport::formatTagsForStorage(
+            MagazineSupport::hasPaper($raw),
+            MagazineSupport::hasPdf($raw)
+        );
     }
 }

@@ -11,6 +11,10 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ## [0.2.2] — 2026-05-31
 
+### Corrigé
+
+- **Magazines** : la case « J’ai le numéro en papier » à l’**ajout** d’un numéro n’était pas enregistrée (`SupportPhysique::normalize` effaçait le tag `papier` à l’insertion bibliothèque).
+
 ### Modifié
 
 - **Affiches et couvertures** : taille max. par image portée à **10 Mo** (`MONCINE_POSTER_MAX_BYTES`) ; ZIP d’affiches à l’import admin : **200 Mo** (`MONCINE_POSTERS_ZIP_MAX_BYTES`).

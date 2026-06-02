@@ -6,6 +6,7 @@ namespace Moncine\Tests\Integration;
 
 use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
+use Moncine\MagazineSupport;
 use Moncine\MediaContext;
 use Moncine\MediaDomain;
 use Moncine\PublicationType;
@@ -63,6 +64,31 @@ final class MagazineTest extends MoncineTestCase
             (string) $issue['date_parution'],
             (string) $issue['publication_type']
         ));
+    }
+
+    public function testCreateIssueWithPaperSupportTag(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Support Papier Test',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+
+        $bibId = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '7',
+            'numero_ordre' => 7,
+            'support_papier' => true,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        $issue = $repo->findIssueByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($issue);
+        $this->assertSame('papier', (string) ($issue['support_physique'] ?? ''));
+        $this->assertContains(MagazineSupport::TAG_PAPIER, MagazineSupport::tagsForIssue($issue));
     }
 
     public function testGlobalSearchInSeries(): void
