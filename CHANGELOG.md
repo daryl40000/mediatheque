@@ -9,15 +9,55 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.2.5] — 2026-05-31
+
+**Magazines — envies, suppression, import PDF**
+
+### Ajouté
+
+- **Mode suppression** sur la fiche numéro : icône poubelle dans la barre d’outils → panneau explicite avec confirmation (évite les poubelles sur chaque carte de la liste).
+- **`MagazineRepository::resolveIssueBibIdForRedirect()`** — redirection fiable vers la fiche collection ou envies après une action (PDF, papier…).
+
+### Corrigé
+
+- **Retrait auto des envies** lorsqu’un numéro devient possédé (tag papier ou import PDF) — l’entrée wishlist est supprimée sans retirer le numéro de la collection.
+- **Import PDF depuis Mes envies** : après possession, redirection vers l’identifiant **collection** (l’ancien id envies n’existait plus → page « introuvable » et avertissement `http_response_code`).
+- **`syncSupportTagsForOeuvre`** : met à jour la ligne **collection** (plus une ligne wishlist prise au hasard).
+- **`magazine-numero.php`** : code HTTP 404 envoyé **avant** le rendu HTML.
+- **`registerSeriesInLibrary`** : ordre des arguments corrigé lors de l’ajout aux envies (régression 0.2.3).
+
+### Modifié
+
+- Suppression retirée des **cartes** de la liste série ; centralisée sur la fiche via le mode suppression.
+
+---
+
+## [0.2.4] — 2026-05-31
+
+### Ajouté
+
+- **Envies** : ajout en **dupliquant** l’entrée wishlist (le numéro **reste** dans la collection) ; badge **« En envies »** si déjà listé.
+- Filtre **Tous / Possédés / Non possédés** (`?possession=all|owned|unowned`) sur `/serie-magazine.php`.
+
+### Modifié
+
+- Bouton **Ajouter aux envies** : ne déplace plus le numéro vers la wishlist seule.
+
+---
+
+## [0.2.3] — 2026-05-31
+
+### Ajouté
+
+- Numéros **sans tag** (ni papier ni PDF) : exclus du compteur **numéros possédés** (stats, accueil, cartes série) ; badge **« Non possédé »** ; bouton **Ajouter aux envies** en un clic.
+
+---
+
 ## [0.2.2] — 2026-05-31
 
 ### Corrigé
 
 - **Magazines** : la case « J’ai le numéro en papier » à l’**ajout** d’un numéro n’était pas enregistrée (`SupportPhysique::normalize` effaçait le tag `papier` à l’insertion bibliothèque).
-
-### Ajouté
-
-- Numéros **sans tag** (ni papier ni PDF) : non comptés dans les **numéros possédés** (stats, accueil, cartes série) ; badge « Non possédé » ; bouton **Ajouter aux envies** en un clic (**sans retirer** le numéro de la collection) ; filtre **Tous / Possédés / Non possédés** sur la liste série ; **retrait auto des envies** dès qu’un numéro devient possédé (papier ou PDF).
 
 ### Modifié
 
