@@ -84,8 +84,13 @@
                 <?php if (($issue['statut'] ?? '') === Moncine\LibraryStatut::COLLECTION && !Moncine\MagazineSupport::isPossessed($issue)): ?>
                     <div class="magazine-unowned-actions">
                         <p class="hint">Ce numéro est référencé mais vous ne l’avez ni en papier ni en PDF — il n’est pas compté parmi vos numéros possédés.</p>
-                        <?php require MONCINE_ROOT . '/templates/_magazine_wishlist_button.php'; ?>
+                        <?php
+                        $possessionFilter = Moncine\MagazineRepository::POSSESSION_ALL;
+                        require MONCINE_ROOT . '/templates/_magazine_wishlist_button.php';
+                        ?>
                     </div>
+                <?php elseif ((int) ($issue['in_wishlist'] ?? 0) > 0 && !Moncine\MagazineSupport::isPossessed($issue)): ?>
+                    <p class="hint"><span class="magazine-tag magazine-tag--wishlist">En envies</span> — également listé dans vos envies.</p>
                 <?php endif; ?>
 
                 <section class="magazine-sommaire">

@@ -34,6 +34,7 @@ if ($searchQuery === '') {
     $searchQuery = implode(' ', $legacyParts);
 }
 $hasSearch = $searchQuery !== '';
+$possessionFilter = MagazineRepository::normalizePossessionFilter((string) ($_GET['possession'] ?? 'all'));
 
 $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
@@ -66,7 +67,10 @@ if (
     && (string) ($_POST['action'] ?? '') === 'reindex_pdf_text'
     && MagazineRepository::pdfTextPreviewColumnExists()
 ) {
-    $redirectBase = View::magazineSeriesUrl($seriesId, 'numero_ordre', 'desc', ['statut' => $statut]);
+    $redirectBase = View::magazineSeriesUrl($seriesId, 'numero_ordre', 'desc', array_filter([
+        'statut' => $statut,
+        'possession' => $possessionFilter !== MagazineRepository::POSSESSION_ALL ? $possessionFilter : null,
+    ]));
     \Moncine\Csrf::rejectUnlessValid($_POST, $redirectBase);
     $stats = $repo->reindexPdfTextPreviewsForSeries($seriesId, $userId, $foyerId, $statut);
     $msg = sprintf(
@@ -90,9 +94,13 @@ $issues = $repo->listIssuesForSeries(
     $statut,
     $sortBy,
     $sortDir,
-    $searchQuery
+    $searchQuery,
+    $possessionFilter
 );
-$totalAllIssues = $repo->countIssuesForSeries($seriesId, $userId, $foyerId, $statut);
+$totalAllIssues = $repo->countIssuesForSeries($seriesId, $userId, $foyerId, $statut, $searchQuery);
+$totalWithPossessionFilter = $possessionFilter !== MagazineRepository::POSSESSION_ALL
+    ? $repo->countIssuesForSeries($seriesId, $userId, $foyerId, $statut, $searchQuery, $possessionFilter)
+    : $totalAllIssues;
 $suggestNumero = PublicationType::suggestNextNumeroOrdre($repo->maxNumeroOrdreForSeries($seriesId));
 
 View::render('serie-magazine', [
@@ -111,4 +119,6 @@ View::render('serie-magazine', [
     'pdfTextSearchEnabled' => MagazineRepository::pdfTextPreviewColumnExists(),
     'pdftotextAvailable' => MagazinePdfTextExtractor::isAvailable(),
     'reindexMessage' => $reindexMessage,
+    'possessionFilter' => $possessionFilter,
+    'totalWithPossessionFilter' => $totalWithPossessionFilter,
 ]);

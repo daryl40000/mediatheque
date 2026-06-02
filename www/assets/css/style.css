@@ -3651,6 +3651,34 @@ body.media-domain--magazine.page-wide .container--wide {
     letter-spacing: 0;
 }
 
+.magazine-tag--wishlist {
+    border-color: rgba(240, 180, 80, 0.55);
+    background: rgba(240, 180, 80, 0.12);
+    color: #f0c878;
+    text-transform: none;
+    font-weight: 600;
+    letter-spacing: 0;
+}
+
+.magazine-possession-filter {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+    margin: 0.5rem 0 0.75rem;
+}
+
+.magazine-possession-filter__label {
+    font-size: 0.85rem;
+    color: var(--text-muted, #888);
+    margin-right: 0.15rem;
+}
+
+.magazine-possession-filter .btn.is-active {
+    border-color: var(--media-accent, var(--accent));
+    background: rgba(77, 182, 172, 0.15);
+}
+
 .magazine-wishlist-form {
     display: inline;
 }

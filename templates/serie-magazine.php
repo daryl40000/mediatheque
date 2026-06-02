@@ -11,6 +11,8 @@
 /** @var bool $pdfTextSearchEnabled */
 /** @var bool $pdftotextAvailable */
 /** @var string $reindexMessage */
+/** @var string $possessionFilter */
+/** @var int $totalWithPossessionFilter */
 ?>
 <section>
     <?php if ($series === null): ?>
@@ -22,6 +24,10 @@
         $posterSrc = Moncine\View::posterSrc(trim((string) ($series['poster_url'] ?? '')) ?: null);
         $isWishlist = $statut === Moncine\LibraryStatut::WISHLIST;
         $seriesQuery = ['statut' => $statut];
+        if (($possessionFilter ?? Moncine\MagazineRepository::POSSESSION_ALL) !== Moncine\MagazineRepository::POSSESSION_ALL) {
+            $seriesQuery['possession'] = $possessionFilter;
+        }
+        $possessionFilter = $possessionFilter ?? Moncine\MagazineRepository::POSSESSION_ALL;
         ?>
         <header class="magazine-series-header">
             <p>
@@ -59,7 +65,7 @@
             <div class="alert alert-success">Numéro retiré de votre liste.</div>
         <?php endif; ?>
         <?php if (isset($_GET['wishlist'])): ?>
-            <div class="alert alert-success">Numéro ajouté à vos envies.</div>
+            <div class="alert alert-success">Numéro ajouté à vos envies (il reste visible ici avec le badge « Non possédé »).</div>
         <?php endif; ?>
 
         <?php if ($reindexMessage !== ''): ?>
@@ -70,6 +76,9 @@
             <form method="get" action="/serie-magazine.php" class="collection-search magazine-issues-search">
                 <input type="hidden" name="series_id" value="<?= $seriesId ?>">
                 <input type="hidden" name="statut" value="<?= Moncine\View::escape($statut) ?>">
+                <?php if ($possessionFilter !== Moncine\MagazineRepository::POSSESSION_ALL): ?>
+                    <input type="hidden" name="possession" value="<?= Moncine\View::escape($possessionFilter) ?>">
+                <?php endif; ?>
                 <div class="magazine-issues-search__bar">
                     <label for="q" class="magazine-issues-search__label">Rechercher dans cette série</label>
                     <div class="magazine-issues-search__bar-row">
@@ -90,6 +99,32 @@
                 </p>
             </form>
 
+            <?php if (!$isWishlist && $totalAllIssues > 0): ?>
+                <?php
+                $possessionBaseQuery = ['statut' => $statut];
+                if ($hasSearch) {
+                    $possessionBaseQuery['q'] = $searchQuery;
+                }
+                $possessionLink = static function (string $filter) use ($seriesId, $possessionBaseQuery): string {
+                    $params = $possessionBaseQuery;
+                    if ($filter !== Moncine\MagazineRepository::POSSESSION_ALL) {
+                        $params['possession'] = $filter;
+                    }
+
+                    return Moncine\View::magazineSeriesUrl($seriesId, 'numero_ordre', 'desc', $params);
+                };
+                ?>
+                <nav class="magazine-possession-filter" aria-label="Filtrer par possession">
+                    <span class="magazine-possession-filter__label">Afficher :</span>
+                    <a href="<?= Moncine\View::escape($possessionLink(Moncine\MagazineRepository::POSSESSION_ALL)) ?>"
+                       class="btn btn-secondary btn-sm<?= $possessionFilter === Moncine\MagazineRepository::POSSESSION_ALL ? ' is-active' : '' ?>">Tous</a>
+                    <a href="<?= Moncine\View::escape($possessionLink(Moncine\MagazineRepository::POSSESSION_OWNED)) ?>"
+                       class="btn btn-secondary btn-sm<?= $possessionFilter === Moncine\MagazineRepository::POSSESSION_OWNED ? ' is-active' : '' ?>">Possédés</a>
+                    <a href="<?= Moncine\View::escape($possessionLink(Moncine\MagazineRepository::POSSESSION_UNOWNED)) ?>"
+                       class="btn btn-secondary btn-sm<?= $possessionFilter === Moncine\MagazineRepository::POSSESSION_UNOWNED ? ' is-active' : '' ?>">Non possédés</a>
+                </nav>
+            <?php endif; ?>
+
             <?php if ($pdfTextSearchEnabled && $pdftotextAvailable && $totalAllIssues > 0): ?>
                 <form method="post" action="/serie-magazine.php?series_id=<?= $seriesId ?>&statut=<?= Moncine\View::escape($statut) ?>" class="magazine-issues-reindex">
                     <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
@@ -106,6 +141,14 @@
             <p class="stats">
                 <?php if ($hasSearch): ?>
                     <?= (int) $filteredCount ?> numéro(s) trouvé(s) sur <?= (int) $totalAllIssues ?>.
+                <?php elseif ($possessionFilter !== Moncine\MagazineRepository::POSSESSION_ALL): ?>
+                    <?= (int) $filteredCount ?> numéro(s)
+                    <?php if ($possessionFilter === Moncine\MagazineRepository::POSSESSION_UNOWNED): ?>
+                        non possédé(s)
+                    <?php else: ?>
+                        possédé(s)
+                    <?php endif; ?>
+                    sur <?= (int) $totalAllIssues ?> au total.
                 <?php else: ?>
                     <?= (int) $totalAllIssues ?> numéro(s) dans cette liste.
                 <?php endif; ?>
@@ -169,7 +212,10 @@
                                        rel="noopener">PDF</a>
                                 <?php endif; ?>
                                 <?php if (!$isWishlist): ?>
-                                    <?php $issue = $row; require MONCINE_ROOT . '/templates/_magazine_wishlist_button.php'; ?>
+                                    <?php
+                                    $issue = $row;
+                                    require MONCINE_ROOT . '/templates/_magazine_wishlist_button.php';
+                                    ?>
                                 <?php endif; ?>
                             </div>
                         </div>

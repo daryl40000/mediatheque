@@ -11,6 +11,10 @@ use PDO;
 
 final class MagazineRepository
 {
+    public const POSSESSION_ALL = 'all';
+    public const POSSESSION_OWNED = 'owned';
+    public const POSSESSION_UNOWNED = 'unowned';
+
     private PDO $db;
 
     public function __construct()
@@ -48,6 +52,17 @@ final class MagazineRepository
         }
 
         return false;
+    }
+
+    public static function normalizePossessionFilter(string $raw): string
+    {
+        $raw = strtolower(trim($raw));
+
+        return match ($raw) {
+            self::POSSESSION_OWNED, 'possede', 'possédé', 'owned' => self::POSSESSION_OWNED,
+            self::POSSESSION_UNOWNED, 'non_possede', 'non-possede', 'unowned' => self::POSSESSION_UNOWNED,
+            default => self::POSSESSION_ALL,
+        };
     }
 
     /** Ajoute une série à la collection ou aux envies (sans numéro). */
@@ -195,21 +210,28 @@ final class MagazineRepository
         ?string $statut = null,
         string $sortBy = 'numero_ordre',
         string $sortDir = 'desc',
-        string $searchQuery = ''
+        string $searchQuery = '',
+        string $possessionFilter = self::POSSESSION_ALL
     ): array {
         if (!self::isAvailable() || $seriesId <= 0) {
             return [];
         }
 
+        $statutNorm = $statut !== null ? LibraryStatut::normalize($statut) : null;
+        $possessionFilter = self::normalizePossessionFilter($possessionFilter);
+
         $params = [
             'series_id' => $seriesId,
             'domain' => MediaDomain::MAGAZINE,
+            'in_wishlist_user' => $userId,
+            'in_wishlist_statut' => LibraryStatut::WISHLIST,
         ];
 
         [$statutSql, $statutParams] = $this->libraryStatutFilter($statut, $userId, $foyerId);
         $params = array_merge($params, $statutParams);
 
         $where = ['om.series_id = :series_id', $statutSql];
+        $this->appendPossessionFilterToWhere($where, $statutNorm, $possessionFilter);
         [$searchSql, $searchParams] = $this->issueGlobalSearchFilterSql($searchQuery);
         if ($searchSql !== '') {
             $where[] = $searchSql;
@@ -217,12 +239,18 @@ final class MagazineRepository
         }
 
         $order = $this->issueOrderClause($sortBy, $sortDir);
+        $inWishlistSelect = $statutNorm === LibraryStatut::COLLECTION
+            ? ', (SELECT COUNT(*) FROM bibliotheque bw
+                  WHERE bw.oeuvre_id = o.id
+                    AND bw.statut = :in_wishlist_statut
+                    AND bw.user_id = :in_wishlist_user) AS in_wishlist'
+            : ', 0 AS in_wishlist';
 
         $sql = 'SELECT b.id AS bib_id, b.statut, b.support_physique, b.created_at AS bib_created_at,
                     o.id AS oeuvre_id, o.titre, o.poster_url,
                     om.numero, om.numero_ordre, om.date_parution, om.sommaire, om.pages,
                     om.est_hors_serie, om.stored_object_id,
-                    s.titre AS series_titre, s.publication_type
+                    s.titre AS series_titre, s.publication_type' . $inWishlistSelect . '
                 FROM oeuvre_magazine om
                 INNER JOIN oeuvres o ON o.id = om.oeuvre_id AND o.media_domain = :domain
                 INNER JOIN series s ON s.id = om.series_id
@@ -242,7 +270,8 @@ final class MagazineRepository
         int $userId,
         int $foyerId,
         ?string $statut = null,
-        string $searchQuery = ''
+        string $searchQuery = '',
+        string $possessionFilter = self::POSSESSION_ALL
     ): int {
         return count($this->listIssuesForSeries(
             $seriesId,
@@ -251,7 +280,8 @@ final class MagazineRepository
             $statut,
             'numero_ordre',
             'desc',
-            $searchQuery
+            $searchQuery,
+            $possessionFilter
         ));
     }
 
@@ -267,6 +297,7 @@ final class MagazineRepository
             'foyer_id' => $foyerId,
             'collection' => LibraryStatut::COLLECTION,
             'wishlist' => LibraryStatut::WISHLIST,
+            'wishlist_check' => LibraryStatut::WISHLIST,
             'domain' => MediaDomain::MAGAZINE,
         ];
 
@@ -275,7 +306,11 @@ final class MagazineRepository
                     o.id AS oeuvre_id, o.titre, o.poster_url,
                     om.series_id, om.numero, om.numero_ordre, om.date_parution, om.sommaire,
                     om.pages, om.est_hors_serie, om.stored_object_id,
-                    s.titre AS series_titre, s.publication_type, s.editeur, s.issn, s.poster_url AS series_poster_url
+                    s.titre AS series_titre, s.publication_type, s.editeur, s.issn, s.poster_url AS series_poster_url,
+                    (SELECT COUNT(*) FROM bibliotheque bw
+                     WHERE bw.oeuvre_id = o.id
+                       AND bw.statut = :wishlist_check
+                       AND bw.user_id = :user_id) AS in_wishlist
              FROM bibliotheque b
              INNER JOIN oeuvres o ON o.id = b.oeuvre_id AND o.media_domain = :domain
              INNER JOIN oeuvre_magazine om ON om.oeuvre_id = o.id
@@ -496,11 +531,11 @@ final class MagazineRepository
     }
 
     /**
-     * Passe un numéro de la collection aux envies (sans papier ni PDF).
+     * Ajoute un numéro non possédé aux envies sans le retirer de la collection.
      *
      * @return true|string
      */
-    public function moveIssueToWishlist(int $bibId, int $userId, int $foyerId): bool|string
+    public function addIssueToWishlist(int $bibId, int $userId, int $foyerId): bool|string
     {
         $issue = $this->findIssueByBibId($bibId, $userId, $foyerId);
         if ($issue === null) {
@@ -508,7 +543,7 @@ final class MagazineRepository
         }
 
         if (($issue['statut'] ?? '') !== LibraryStatut::COLLECTION) {
-            return 'Ce numéro est déjà dans vos envies.';
+            return 'Action réservée aux numéros de votre collection.';
         }
 
         if (MagazineSupport::isPossessed($issue)) {
@@ -524,23 +559,29 @@ final class MagazineRepository
         $bibRepo = new BibliothequeRepository();
         $existingWishlist = $bibRepo->findByOeuvreId($oeuvreId, $userId, $foyerId, LibraryStatut::WISHLIST);
         if ($existingWishlist !== null) {
-            $deleted = $this->deleteFromLibrary($bibId, $userId, $foyerId);
-            if ($deleted !== true) {
-                return (string) $deleted;
-            }
-
-            $this->registerSeriesInLibrary($seriesId, LibraryStatut::WISHLIST, $userId, $foyerId);
-
             return true;
         }
 
-        $this->db->prepare(
-            'UPDATE bibliotheque SET statut = ?, user_id = ?, foyer_id = NULL WHERE id = ?'
-        )->execute([LibraryStatut::WISHLIST, $userId, $bibId]);
+        try {
+            $bibRepo->insert($userId, $foyerId, $oeuvreId, [
+                'statut' => LibraryStatut::WISHLIST,
+                'support_physique' => '',
+            ]);
+        } catch (\Throwable $e) {
+            error_log('MagazineRepository::addIssueToWishlist: ' . $e->getMessage());
+
+            return 'Impossible d’ajouter aux envies.';
+        }
 
         $this->registerSeriesInLibrary($seriesId, LibraryStatut::WISHLIST, $userId, $foyerId);
 
         return true;
+    }
+
+    /** @deprecated Utiliser addIssueToWishlist() */
+    public function moveIssueToWishlist(int $bibId, int $userId, int $foyerId): bool|string
+    {
+        return $this->addIssueToWishlist($bibId, $userId, $foyerId);
     }
 
     /** L’utilisateur peut lire un PDF rattaché à un numéro de sa bibliothèque. */
@@ -1175,5 +1216,20 @@ final class MagazineRepository
             OR (INSTR($support, 'demat') > 0)
             OR (INSTR($support, 'démat') > 0)
         )";
+    }
+
+    /** @param list<string> $where */
+    private function appendPossessionFilterToWhere(array &$where, ?string $statut, string $possessionFilter): void
+    {
+        if ($statut !== LibraryStatut::COLLECTION) {
+            return;
+        }
+
+        $possessionFilter = self::normalizePossessionFilter($possessionFilter);
+        if ($possessionFilter === self::POSSESSION_OWNED) {
+            $where[] = $this->sqlIssuePossessedCondition('b', 'om');
+        } elseif ($possessionFilter === self::POSSESSION_UNOWNED) {
+            $where[] = 'NOT ' . $this->sqlIssuePossessedCondition('b', 'om');
+        }
     }
 }
