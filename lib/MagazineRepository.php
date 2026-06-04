@@ -15,6 +15,9 @@ final class MagazineRepository
     public const POSSESSION_OWNED = 'owned';
     public const POSSESSION_UNOWNED = 'unowned';
 
+    /** Numéros affichés par page sur la liste série (8 colonnes × 6 lignes). */
+    public const ISSUES_PER_PAGE = 48;
+
     private PDO $db;
 
     public function __construct()
@@ -199,6 +202,59 @@ final class MagazineRepository
     }
 
     /**
+     * PDF en collection du foyer : nombre de numéros et taille cumulée (stored_objects.size_bytes).
+     *
+     * @return array{count: int, total_bytes: int}
+     */
+    public function collectionPdfStats(int $userId, int $foyerId): array
+    {
+        if (!self::isAvailable() || $foyerId <= 0 || !StoredObjectRepository::tableExists()) {
+            return ['count' => 0, 'total_bytes' => 0];
+        }
+
+        $sql = 'SELECT COUNT(DISTINCT b.id), COALESCE(SUM(so.size_bytes), 0)
+                FROM bibliotheque b
+                INNER JOIN oeuvres o ON o.id = b.oeuvre_id AND o.media_domain = :domain_oeuvre
+                INNER JOIN oeuvre_magazine om ON om.oeuvre_id = o.id
+                INNER JOIN stored_objects so ON so.id = om.stored_object_id
+                WHERE b.statut = :collection AND b.foyer_id = :foyer_id
+                  AND om.stored_object_id IS NOT NULL AND om.stored_object_id > 0';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'domain_oeuvre' => MediaDomain::MAGAZINE,
+            'collection' => LibraryStatut::COLLECTION,
+            'foyer_id' => $foyerId,
+        ]);
+        $row = $stmt->fetch(PDO::FETCH_NUM);
+
+        return [
+            'count' => (int) ($row[0] ?? 0),
+            'total_bytes' => (int) ($row[1] ?? 0),
+        ];
+    }
+
+    /** Affiche une taille en Go (ou Mo si très petit). */
+    public static function formatPdfStorageGigabytes(int $bytes): string
+    {
+        if ($bytes <= 0) {
+            return '0 Go';
+        }
+
+        $gigabytes = $bytes / (1024 ** 3);
+        if ($gigabytes >= 1) {
+            return number_format($gigabytes, 1, ',', ' ') . ' Go';
+        }
+        if ($gigabytes >= 0.01) {
+            return number_format($gigabytes, 2, ',', ' ') . ' Go';
+        }
+
+        $megabytes = $bytes / (1024 ** 2);
+
+        return number_format($megabytes, 0, ',', ' ') . ' Mo';
+    }
+
+    /**
      * Numéros d’une série dans la bibliothèque.
      *
      * @return list<array<string, mixed>>
@@ -211,32 +267,22 @@ final class MagazineRepository
         string $sortBy = 'numero_ordre',
         string $sortDir = 'desc',
         string $searchQuery = '',
-        string $possessionFilter = self::POSSESSION_ALL
+        string $possessionFilter = self::POSSESSION_ALL,
+        ?int $limit = null,
+        ?int $offset = null
     ): array {
         if (!self::isAvailable() || $seriesId <= 0) {
             return [];
         }
 
-        $statutNorm = $statut !== null ? LibraryStatut::normalize($statut) : null;
-        $possessionFilter = self::normalizePossessionFilter($possessionFilter);
-
-        $params = [
-            'series_id' => $seriesId,
-            'domain' => MediaDomain::MAGAZINE,
-            'in_wishlist_user' => $userId,
-            'in_wishlist_statut' => LibraryStatut::WISHLIST,
-        ];
-
-        [$statutSql, $statutParams] = $this->libraryStatutFilter($statut, $userId, $foyerId);
-        $params = array_merge($params, $statutParams);
-
-        $where = ['om.series_id = :series_id', $statutSql];
-        $this->appendPossessionFilterToWhere($where, $statutNorm, $possessionFilter);
-        [$searchSql, $searchParams] = $this->issueGlobalSearchFilterSql($searchQuery);
-        if ($searchSql !== '') {
-            $where[] = $searchSql;
-            $params = array_merge($params, $searchParams);
-        }
+        [$where, $params, $statutNorm] = $this->issuesForSeriesFilterContext(
+            $seriesId,
+            $userId,
+            $foyerId,
+            $statut,
+            $searchQuery,
+            $possessionFilter
+        );
 
         $order = $this->issueOrderClause($sortBy, $sortDir);
         $inWishlistSelect = $statutNorm === LibraryStatut::COLLECTION
@@ -258,6 +304,10 @@ final class MagazineRepository
                 WHERE ' . implode(' AND ', $where) . '
                 ORDER BY ' . $order;
 
+        if ($limit !== null && $limit > 0) {
+            $sql .= ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, (int) ($offset ?? 0));
+        }
+
         $stmt = $this->db->prepare($sql);
         $stmt->execute($this->filterParamsForSql($sql, $params));
 
@@ -273,16 +323,67 @@ final class MagazineRepository
         string $searchQuery = '',
         string $possessionFilter = self::POSSESSION_ALL
     ): int {
-        return count($this->listIssuesForSeries(
+        if (!self::isAvailable() || $seriesId <= 0) {
+            return 0;
+        }
+
+        [$where, $params] = $this->issuesForSeriesFilterContext(
             $seriesId,
             $userId,
             $foyerId,
             $statut,
-            'numero_ordre',
-            'desc',
             $searchQuery,
             $possessionFilter
-        ));
+        );
+
+        $sql = 'SELECT COUNT(*)
+                FROM oeuvre_magazine om
+                INNER JOIN oeuvres o ON o.id = om.oeuvre_id AND o.media_domain = :domain
+                INNER JOIN series s ON s.id = om.series_id
+                INNER JOIN bibliotheque b ON b.oeuvre_id = o.id
+                WHERE ' . implode(' AND ', $where);
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($this->filterParamsForSql($sql, $params));
+
+        return (int) ($stmt->fetchColumn() ?: 0);
+    }
+
+    /**
+     * Filtres communs liste / comptage des numéros d’une série.
+     *
+     * @return array{0: list<string>, 1: array<string, mixed>, 2: ?string}
+     */
+    private function issuesForSeriesFilterContext(
+        int $seriesId,
+        int $userId,
+        int $foyerId,
+        ?string $statut,
+        string $searchQuery,
+        string $possessionFilter
+    ): array {
+        $statutNorm = $statut !== null ? LibraryStatut::normalize($statut) : null;
+        $possessionFilter = self::normalizePossessionFilter($possessionFilter);
+
+        $params = [
+            'series_id' => $seriesId,
+            'domain' => MediaDomain::MAGAZINE,
+            'in_wishlist_user' => $userId,
+            'in_wishlist_statut' => LibraryStatut::WISHLIST,
+        ];
+
+        [$statutSql, $statutParams] = $this->libraryStatutFilter($statut, $userId, $foyerId);
+        $params = array_merge($params, $statutParams);
+
+        $where = ['om.series_id = :series_id', $statutSql];
+        $this->appendPossessionFilterToWhere($where, $statutNorm, $possessionFilter);
+        [$searchSql, $searchParams] = $this->issueGlobalSearchFilterSql($searchQuery);
+        if ($searchSql !== '') {
+            $where[] = $searchSql;
+            $params = array_merge($params, $searchParams);
+        }
+
+        return [$where, $params, $statutNorm];
     }
 
     public function findIssueByBibId(int $bibId, int $userId, int $foyerId): ?array

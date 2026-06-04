@@ -9,6 +9,28 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.3.0] — 2026-06-02
+
+**Magazines — liste, statistiques, documentation**
+
+### Ajouté
+
+- **Liste série** : pagination **48 numéros par page** (grille **8 × 6**), tuiles plus grandes ; couvertures **noir et blanc** pour les numéros non possédés en collection (couleur conservée sur **Mes envies**).
+- **Statistiques magazines** : nombre de **PDF possédés** et **espace disque** (Go/Mo) via `collectionPdfStats()`.
+- **README** : guide **installation et utilisation** de la webapp (serveur local, premier compte, parcours films/magazines).
+- Tests unitaires `MagazineRepositoryFormatTest`.
+
+### Corrigé
+
+- **Sommaire** sur la fiche numéro : suppression du double saut de ligne (`nl2br` + `pre-wrap`).
+
+### Modifié
+
+- `countIssuesForSeries()` : comptage SQL direct (plus de chargement de toute la liste).
+- `listIssuesForSeries()` : paramètres `limit` / `offset` pour la pagination.
+
+---
+
 ## [0.2.5] — 2026-05-31
 
 **Magazines — envies, suppression, import PDF**

@@ -2,6 +2,8 @@
 /** @var int $seriesCount */
 /** @var int $issueCount */
 /** @var int $wishlistCount */
+/** @var int $pdfCount */
+/** @var string $pdfStorageLabel */
 $mediaNav = Moncine\MediaContext::navLabels();
 ?>
 <section class="stats-page">
@@ -17,6 +19,16 @@ $mediaNav = Moncine\MediaContext::navLabels();
         <article class="stat-card">
             <p class="stat-card__value"><?= (int) $issueCount ?></p>
             <p class="stat-card__label">Numéros possédés</p>
+        </article>
+        <article class="stat-card">
+            <p class="stat-card__value"><?= (int) $pdfCount ?></p>
+            <p class="stat-card__label">PDF possédés</p>
+            <p class="stat-card__hint">Numéros avec fichier importé</p>
+        </article>
+        <article class="stat-card">
+            <p class="stat-card__value"><?= Moncine\View::escape($pdfStorageLabel) ?></p>
+            <p class="stat-card__label">Espace disque (PDF)</p>
+            <p class="stat-card__hint">Taille enregistrée à l’import</p>
         </article>
         <?php if ((int) $wishlistCount > 0): ?>
             <article class="stat-card">

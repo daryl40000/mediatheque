@@ -87,6 +87,19 @@ if (isset($_GET['reindex']) && is_string($_GET['reindex'])) {
     $reindexMessage = 'Indexation terminée : ' . trim($_GET['reindex']) . '.';
 }
 
+$perPage = MagazineRepository::ISSUES_PER_PAGE;
+$listTotal = $repo->countIssuesForSeries(
+    $seriesId,
+    $userId,
+    $foyerId,
+    $statut,
+    $searchQuery,
+    $possessionFilter
+);
+$totalPages = max(1, (int) ceil($listTotal / $perPage));
+$page = max(1, min((int) ($_GET['page'] ?? 1), $totalPages));
+$offset = ($page - 1) * $perPage;
+
 $issues = $repo->listIssuesForSeries(
     $seriesId,
     $userId,
@@ -95,11 +108,13 @@ $issues = $repo->listIssuesForSeries(
     $sortBy,
     $sortDir,
     $searchQuery,
-    $possessionFilter
+    $possessionFilter,
+    $perPage,
+    $offset
 );
 $totalAllIssues = $repo->countIssuesForSeries($seriesId, $userId, $foyerId, $statut, $searchQuery);
 $totalWithPossessionFilter = $possessionFilter !== MagazineRepository::POSSESSION_ALL
-    ? $repo->countIssuesForSeries($seriesId, $userId, $foyerId, $statut, $searchQuery, $possessionFilter)
+    ? $listTotal
     : $totalAllIssues;
 $suggestNumero = PublicationType::suggestNextNumeroOrdre($repo->maxNumeroOrdreForSeries($seriesId));
 
@@ -115,10 +130,14 @@ View::render('serie-magazine', [
     'searchQuery' => $searchQuery,
     'hasSearch' => $hasSearch,
     'totalAllIssues' => $totalAllIssues,
-    'filteredCount' => count($issues),
+    'filteredCount' => $listTotal,
     'pdfTextSearchEnabled' => MagazineRepository::pdfTextPreviewColumnExists(),
     'pdftotextAvailable' => MagazinePdfTextExtractor::isAvailable(),
     'reindexMessage' => $reindexMessage,
     'possessionFilter' => $possessionFilter,
     'totalWithPossessionFilter' => $totalWithPossessionFilter,
+    'page' => $page,
+    'totalPages' => $totalPages,
+    'perPage' => $perPage,
+    'listTotal' => $listTotal,
 ]);

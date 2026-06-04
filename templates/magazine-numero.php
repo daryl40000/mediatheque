@@ -137,7 +137,7 @@
                 <section class="magazine-sommaire">
                     <h2>Sommaire</h2>
                     <?php if (trim((string) ($issue['sommaire'] ?? '')) !== ''): ?>
-                        <div class="magazine-sommaire__body"><?= nl2br(Moncine\View::escape((string) $issue['sommaire'])) ?></div>
+                        <div class="magazine-sommaire__body"><?= Moncine\View::escape((string) $issue['sommaire']) ?></div>
                     <?php else: ?>
                         <p class="hint">Aucun sommaire renseigné.</p>
                     <?php endif; ?>

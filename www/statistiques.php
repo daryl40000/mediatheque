@@ -23,6 +23,9 @@ if (MediaDomain::isMagazine(MediaContext::current())) {
     $userId = UserContext::currentUserId();
     $foyerId = UserContext::currentFoyerId();
     $repo = new MagazineRepository();
+    $pdfStats = MagazineRepository::isAvailable()
+        ? $repo->collectionPdfStats($userId, $foyerId)
+        : ['count' => 0, 'total_bytes' => 0];
 
     View::render('statistiques-magazines', [
         'pageTitle' => MediaContext::navLabels()['stats'],
@@ -35,6 +38,8 @@ if (MediaDomain::isMagazine(MediaContext::current())) {
         'wishlistCount' => MagazineRepository::isAvailable()
             ? $repo->countIssuesInLibrary($userId, $foyerId, LibraryStatut::WISHLIST)
             : 0,
+        'pdfCount' => (int) ($pdfStats['count'] ?? 0),
+        'pdfStorageLabel' => MagazineRepository::formatPdfStorageGigabytes((int) ($pdfStats['total_bytes'] ?? 0)),
     ]);
     exit;
 }

@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.2.5** · **Date : 2026-05-31**
+**Version : 0.3.0** · **Date : 2026-06-02**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -111,7 +111,7 @@ Migration : `sql/migrations/033_magazine_pdf_text_preview.sql`.
 
 ---
 
-## 7. Recherche sur une série
+## 7. Recherche et liste des numéros
 
 Sur `/serie-magazine.php`, le champ **Rechercher** (`q`) filtre sur :
 
@@ -119,6 +119,12 @@ Sur `/serie-magazine.php`, le champ **Rechercher** (`q`) filtre sur :
 - date de parution ;
 - sommaire ;
 - texte extrait du PDF (`pdf_text_preview`).
+
+**Grille** : **48 numéros par page** (8 colonnes × 6 lignes sur grand écran). Navigation **Première / Préc. / Suiv. / Dernière** et saut de page (`?page=2`). Les écrans plus étroits affichent moins de colonnes (6, 4 ou 2) pour garder des tuiles lisibles.
+
+**Couvertures** : sur **Mes magazines** (collection), les numéros **non possédés** (ni papier ni PDF) s’affichent en **noir et blanc** ; les possédés et la liste **Mes envies** restent en couleur.
+
+**Statistiques** (`/statistiques.php`, onglet Magazines) : nombre de **PDF possédés** et **espace disque** total (Go), calculés depuis `stored_objects.size_bytes` à l’import.
 
 ---
 
@@ -180,6 +186,6 @@ Pour le dev local avec import PDF volumineux : utilisez `./start-dev.sh` plutôt
 
 ---
 
-*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (sections 0.2.3 à 0.2.5) et [ROADMAP.md](../ROADMAP.md) (phase M5).*
+*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (section 0.3.0) et [ROADMAP.md](../ROADMAP.md) (phase M5).*
 
 **Import massif d’affiches films** (plusieurs centaines) : page **Importer** → ZIP jusqu’à 200 Mo ([doc via README](../README.md)).

@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.2.5**
+**Version : 0.3.0**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -91,21 +91,119 @@ mediatheque/
 
 ## Prérequis
 
-- PHP **8.2+** avec extension **sqlite3**
-- [Composer](https://getcomposer.org/) (pour les tests)
+- **PHP 8.2 ou plus** avec l’extension **sqlite3** (obligatoire)
+- **[Composer](https://getcomposer.org/)** — utile surtout pour lancer les tests (`composer install`)
+- **Optionnel (magazines)** : paquet **Poppler** (`pdftotext`, `pdftoppm`, `pdfinfo`) pour la recherche dans les PDF et les couvertures auto — sous Debian/Ubuntu : `sudo apt install poppler-utils`
 
 ---
 
-## Installation et test en local
+## Installation et utilisation de la webapp
+
+Cette section décrit comment **installer** Médiathèque sur votre machine et **l’utiliser** au quotidien dans le navigateur.
+
+### 1. Récupérer le projet
 
 ```bash
-cd /chemin/vers/mediatheque
-composer install
-php lib/cli/migrate.php          # ou --fresh la première fois
-php -S localhost:8080 -t www
+git clone https://github.com/VOTRE_ORGANISATION/mediatheque.git
+cd mediatheque
 ```
 
-Ouvrir http://localhost:8080 — créer le **compte administrateur** sur `/premier-compte.php` si besoin.
+*(Adaptez l’URL du dépôt si besoin.)*
+
+### 2. Dépendances PHP
+
+```bash
+composer install
+```
+
+Sans Composer, le site peut quand même tourner si vous n’exécutez pas les tests PHPUnit.
+
+### 3. Base de données
+
+Au **premier accès** au site (navigateur ou ligne de commande), les migrations SQL s’appliquent **automatiquement** et créent la base SQLite dans `data/` (fichier `moncine.db`).
+
+Pour vérifier l’état du schéma :
+
+```bash
+php lib/cli/migrate.php
+```
+
+**Première installation sur une machine vide** (base inexistante uniquement) :
+
+```bash
+php lib/cli/migrate.php --fresh
+```
+
+Ne pas utiliser `--fresh` si vous avez déjà des données dans `data/moncine.db`.
+
+**Graine optionnelle** (catalogue films + affiches au premier install vide) : déposez un CSV et/ou un ZIP dans `install_seed/` — voir [install_seed/README.md](install_seed/README.md).
+
+### 4. Lancer le serveur web local
+
+Deux façons équivalentes pour ouvrir le site ; la **recommandée** pour les **PDF magazines** (gros fichiers) est `start-dev.sh`.
+
+| Méthode | Commande | Quand l’utiliser |
+|---------|----------|------------------|
+| **Recommandée** | `./start-dev.sh` | Magazines, import PDF jusqu’à ~350 Mo, sessions stables |
+| **Simple** | `php -S localhost:8080 -t www` | Essai rapide (limites d’upload PHP souvent basses) |
+
+Par défaut le site écoute sur **http://localhost:8080/**  
+Pour un autre port : `./www/serve.sh localhost:9000`
+
+Arrêt du serveur : **Ctrl+C** dans le terminal.
+
+### 5. Premier démarrage dans le navigateur
+
+1. Ouvrez **http://localhost:8080/**
+2. Si aucun compte n’existe, vous êtes guidé vers **`/premier-compte.php`** — créez le **compte administrateur** (identifiant, mot de passe, foyer).
+3. Ensuite, connectez-vous via **`/connexion.php`** si nécessaire.
+4. Vous arrivez sur l’**accueil** : choisissez un **onglet** en haut (Films, Magazines, etc.).
+
+Les données (base, affiches, PDF, sessions) sont stockées dans le dossier **`data/`** à la racine du projet (non versionné par git).
+
+### 6. Utilisation au quotidien
+
+#### Navigation générale
+
+- **Onglets** en haut : chaque type de média a sa couleur et ses menus (**Ma collection**, **Mes envies**, **Statistiques**, etc.).
+- **Films** : dvdthèque complète (collection, envies, visions, prêts entre amis, questionnaire du soir…).
+- **Magazines** (version 0.2.x) : séries → numéros → fiche détaillée ; détail dans [doc/magazines.md](doc/magazines.md).
+- **BD, Livres, Jeux** : onglets présents mais marqués **« Bientôt disponible »** pour l’instant.
+
+#### Parcours magazines (résumé)
+
+| Action | Où |
+|--------|-----|
+| Voir vos revues | Onglet **Magazines** → **Mes magazines** (`/magazines.php`) |
+| Numéros d’une série | Cliquez sur une série → grille (48 numéros par page) |
+| Ajouter une série / un numéro | Boutons **Ajouter une série** / **Ajouter un numéro** |
+| Importer un PDF | Fiche du numéro → section **PDF du numéro** |
+| Numéros souhaités | **Mes envies magazines** (`/magazines-envies.php`) |
+| Statistiques (PDF, Go…) | **Statistiques** dans l’onglet Magazines |
+
+Pour importer de **gros PDF**, utilisez toujours **`./start-dev.sh`** plutôt que le serveur PHP minimal.
+
+#### Parcours films (résumé)
+
+| Action | Où |
+|--------|-----|
+| Ma collection | Onglet **Films** → liste des films |
+| Ajouter un film | Recherche catalogue ou formulaire d’ajout |
+| Mes envies | Menu **Mes envies** |
+| Import / export bibliothèque | Pages **Importer** / export selon votre profil |
+| Admin catalogue | Compte administrateur → **Catalogue** |
+
+Documentation complémentaire : [questionnaire du soir](doc/questionnaire-du-soir.md), [listes imprimables](doc/listes-imprimables.md), [comptes et mots de passe](doc/comptes-mot-de-passe.md).
+
+### 7. Mise à jour du logiciel
+
+Après un `git pull` :
+
+```bash
+composer install          # si les dépendances ont changé
+php lib/cli/migrate.php   # contrôle des migrations (appliquées au prochain accès web)
+./start-dev.sh            # relancer le serveur
+```
 
 ### Variables d’environnement utiles
 
@@ -121,15 +219,26 @@ Ouvrir http://localhost:8080 — créer le **compte administrateur** sur `/premi
 
 ---
 
-## Migrations SQL
+## Installation rapide (résumé)
 
-- **Install fraîche** : `sql/schema.sql` puis `sql/migrations/*.sql`
-- **Mise à jour** : `php lib/cli/migrate.php`
-- **Version schéma actuelle** : **030** (`media_domain`)
+```bash
+cd mediatheque
+composer install
+./start-dev.sh
+```
 
-Les fichiers `sql/migrations_legacy/` ne sont **pas** exécutés (historique Monciné).
+Puis ouvrir **http://localhost:8080/** et créer le compte sur **`/premier-compte.php`**.
 
 ---
+
+## Migrations SQL
+
+- **Install fraîche** : création automatique via `Database::getInstance()` (schéma + fichiers dans `sql/migrations/`)
+- **Contrôle manuel** : `php lib/cli/migrate.php`
+- **Recréer une base vide** : supprimer `data/moncine.db`, puis `php lib/cli/migrate.php --fresh` ou premier accès web
+- Les fichiers `sql/migrations_legacy/` ne sont **pas** exécutés (historique Monciné)
+
+Voir aussi la section [Installation et utilisation](#installation-et-utilisation-de-la-webapp) ci-dessus.
 
 ## Tests
 

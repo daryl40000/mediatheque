@@ -13,6 +13,10 @@
 /** @var string $reindexMessage */
 /** @var string $possessionFilter */
 /** @var int $totalWithPossessionFilter */
+/** @var int $page */
+/** @var int $totalPages */
+/** @var int $perPage */
+/** @var int $listTotal */
 ?>
 <section>
     <?php if ($series === null): ?>
@@ -152,6 +156,12 @@
                 <?php else: ?>
                     <?= (int) $totalAllIssues ?> numéro(s) dans cette liste.
                 <?php endif; ?>
+                <?php if ($totalPages > 1): ?>
+                    <span class="stats__page-range">
+                        — page <?= (int) $page ?> / <?= (int) $totalPages ?>
+                        (<?= (int) $perPage ?> par page)
+                    </span>
+                <?php endif; ?>
             </p>
         <?php endif; ?>
 
@@ -164,7 +174,11 @@
                 <?php endif; ?>
             </p>
         <?php else: ?>
-            <div class="magazine-issues-grid">
+            <?php
+            $paginationIdSuffix = '-top';
+            require MONCINE_ROOT . '/templates/_magazine_issues_pagination.php';
+            ?>
+            <div class="magazine-issues-grid" id="magazine-issues-grid">
                 <?php foreach ($issues as $row): ?>
                     <?php
                     $bibId = (int) ($row['bib_id'] ?? 0);
@@ -177,8 +191,13 @@
                         (string) ($row['publication_type'] ?? $series['publication_type'] ?? '')
                     );
                     $pages = (int) ($row['pages'] ?? 0);
+                    $isPossessed = Moncine\MagazineSupport::isPossessed($row);
+                    $cardClass = 'magazine-issue-card';
+                    if (!$isWishlist && !$isPossessed) {
+                        $cardClass .= ' magazine-issue-card--unowned';
+                    }
                     ?>
-                    <article class="magazine-issue-card">
+                    <article class="<?= Moncine\View::escape($cardClass) ?>">
                         <a href="<?= Moncine\View::escape($issueUrl) ?>" class="magazine-issue-card__cover-link">
                             <?php if ($cover !== ''): ?>
                                 <img src="<?= $cover ?>" alt="" class="magazine-cover magazine-cover--card" loading="lazy">
@@ -222,6 +241,10 @@
                     </article>
                 <?php endforeach; ?>
             </div>
+            <?php
+            $paginationIdSuffix = '-bottom';
+            require MONCINE_ROOT . '/templates/_magazine_issues_pagination.php';
+            ?>
         <?php endif; ?>
     <?php endif; ?>
 </section>
