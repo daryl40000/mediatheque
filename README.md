@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.3.0**
+**Version : 0.3.1**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -180,6 +180,7 @@ Les données (base, affiches, PDF, sessions) sont stockées dans le dossier **`d
 | Importer un PDF | Fiche du numéro → section **PDF du numéro** |
 | Numéros souhaités | **Mes envies magazines** (`/magazines-envies.php`) |
 | Statistiques (PDF, Go…) | **Statistiques** dans l’onglet Magazines |
+| Export liste en PDF | Bouton **Exporter en PDF** sur la page série (possession par numéro, sans couvertures) |
 
 Pour importer de **gros PDF**, utilisez toujours **`./start-dev.sh`** plutôt que le serveur PHP minimal.
 

@@ -73,14 +73,6 @@ final class CatalogSubmission
             return 'Cette œuvre est déjà au catalogue. Ajoutez-la depuis Mes films ou Mes envies.';
         }
 
-        if ($this->repo->hasPendingForUser($userId)) {
-            $pending = $this->repo->listForUser($userId, CatalogSubmissionRepository::STATUS_PENDING);
-
-            return 'Vous avez déjà une proposition en attente (n° '
-                . (int) ($pending[0]['id'] ?? 0)
-                . '). Attendez la réponse de l’administrateur ou consultez Mes propositions.';
-        }
-
         try {
             $json = CatalogSubmissionPayload::encode($manualEditData);
         } catch (\JsonException) {

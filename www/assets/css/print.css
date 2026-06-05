@@ -92,6 +92,40 @@
     object-fit: cover;
 }
 
+.print-sheet__legend {
+    margin: 0 0 1rem;
+    font-size: 0.85rem;
+    color: #444;
+}
+
+.print-table--magazines .magazine-possession--none {
+    font-weight: 600;
+    color: #555;
+}
+
+.print-table--magazines .magazine-possession--owned {
+    font-weight: 600;
+    color: #1a5c1a;
+}
+
+.print-table--magazines .magazine-possession--both {
+    font-weight: 700;
+    color: #0d4a6b;
+}
+
+.print-sheet__legend .magazine-possession--none,
+.print-sheet__legend .magazine-possession--owned,
+.print-sheet__legend .magazine-possession--both {
+    font-weight: 600;
+}
+
+.print-table__hs {
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-right: 0.15rem;
+    color: #666;
+}
+
 .print-page__footer {
     max-width: 210mm;
     margin: 0 auto;

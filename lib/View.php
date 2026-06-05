@@ -592,6 +592,36 @@ final class View
         return '/serie-magazine.php?' . http_build_query($params);
     }
 
+    /** Liste imprimable / PDF d’une série (mêmes filtres que la page série). */
+    public static function magazineSeriesPrintUrl(
+        int $seriesId,
+        string $sort = 'numero_ordre',
+        string $dir = 'desc',
+        array $queryExtra = []
+    ): string {
+        if ($seriesId <= 0) {
+            return '/magazines.php';
+        }
+
+        $params = [
+            'series_id' => $seriesId,
+            'sort' => $sort,
+            'dir' => $dir,
+        ];
+
+        foreach ($queryExtra as $key => $value) {
+            if (!is_string($key) || $key === '') {
+                continue;
+            }
+            $value = is_string($value) ? trim($value) : (string) $value;
+            if ($value !== '') {
+                $params[$key] = $value;
+            }
+        }
+
+        return '/imprimer-serie-magazine.php?' . http_build_query($params);
+    }
+
     public static function magazineIssueUrl(int $bibId): string
     {
         return $bibId > 0 ? '/magazine-numero.php?id=' . $bibId : '/magazines.php';

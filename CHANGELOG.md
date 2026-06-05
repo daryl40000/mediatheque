@@ -9,6 +9,20 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.3.1] — 2026-06-02
+
+**Magazines — export liste ; catalogue — propositions multiples**
+
+### Ajouté
+
+- **Export PDF** d’une série magazine (`/imprimer-serie-magazine.php`) : bouton **Exporter en PDF** sur la page série ; tableau sans couvertures avec colonne **Possession** (Non possédé, Papier, PDF, Papier + PDF) ; mêmes filtres/tri que la liste ; enregistrement via le navigateur (`MagazinePrintListService`, `MagazineSupport::possessionStatusLabel()`).
+
+### Corrigé
+
+- **Propositions au catalogue** (films) : un utilisateur peut envoyer **plusieurs** suggestions en parallèle (plus de blocage tant qu’une proposition est en attente) ; le formulaire **Proposer une œuvre** reste toujours accessible.
+
+---
+
 ## [0.3.0] — 2026-06-02
 
 **Magazines — liste, statistiques, documentation**

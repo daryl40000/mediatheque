@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.3.0** · **Date : 2026-06-02**
+**Version : 0.3.1** · **Date : 2026-06-02**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -126,6 +126,8 @@ Sur `/serie-magazine.php`, le champ **Rechercher** (`q`) filtre sur :
 
 **Statistiques** (`/statistiques.php`, onglet Magazines) : nombre de **PDF possédés** et **espace disque** total (Go), calculés depuis `stored_objects.size_bytes` à l’import.
 
+**Export PDF** (`/imprimer-serie-magazine.php`) : depuis la page série, bouton **Exporter en PDF** — liste textuelle (sans couvertures) avec colonne **Possession** : Non possédé, Papier, PDF, Papier + PDF. Mêmes filtres et tri que la page série ; enregistrement via « Imprimer / Enregistrer en PDF » du navigateur.
+
 ---
 
 ## 8. Supprimer un numéro (**0.2.5**)
@@ -186,6 +188,6 @@ Pour le dev local avec import PDF volumineux : utilisez `./start-dev.sh` plutôt
 
 ---
 
-*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (section 0.3.0) et [ROADMAP.md](../ROADMAP.md) (phase M5).*
+*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (section 0.3.1) et [ROADMAP.md](../ROADMAP.md) (phase M5).*
 
 **Import massif d’affiches films** (plusieurs centaines) : page **Importer** → ZIP jusqu’à 200 Mo ([doc via README](../README.md)).

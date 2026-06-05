@@ -171,4 +171,48 @@ final class CatalogSubmissionTest extends MoncineTestCase
         $this->assertIsString($result);
         $this->assertStringContainsString('déjà au catalogue', $result);
     }
+
+    public function testUserCanSubmitMultipleWhilePending(): void
+    {
+        $adminId = $this->loginAsAdmin();
+        $foyerId = (new FoyerRepository())->currentFoyerIdForUser($adminId);
+
+        Auth::logout();
+        $this->startSession();
+
+        $userId = (new UtilisateurRepository())->create(
+            'Proposeur Multi',
+            'multiprop@test.local',
+            'TestPass123!',
+            UserRole::USER,
+            $foyerId
+        );
+        $this->assertIsInt($userId);
+        Auth::login('multiprop@test.local', 'TestPass123!');
+
+        $first = FilmManualEdit::parseFromPost([
+            'titre' => 'Film Proposition A',
+            'realisateur' => 'Réalisateur A',
+            'content_kind' => 'film',
+        ]);
+        $this->assertTrue($first['ok']);
+        $firstId = (new CatalogSubmission())->submit($userId, $first['data']);
+        $this->assertIsInt($firstId);
+
+        $second = FilmManualEdit::parseFromPost([
+            'titre' => 'Film Proposition B',
+            'realisateur' => 'Réalisateur B',
+            'content_kind' => 'film',
+        ]);
+        $this->assertTrue($second['ok']);
+        $secondId = (new CatalogSubmission())->submit($userId, $second['data']);
+        $this->assertIsInt($secondId);
+        $this->assertNotSame($firstId, $secondId);
+
+        $pending = (new CatalogSubmissionRepository())->listForUser(
+            $userId,
+            CatalogSubmissionRepository::STATUS_PENDING
+        );
+        $this->assertCount(2, $pending);
+    }
 }

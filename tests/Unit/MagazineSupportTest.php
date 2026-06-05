@@ -43,4 +43,24 @@ final class MagazineSupportTest extends TestCase
             'stored_object_id' => 0,
         ]));
     }
+
+    public function testPossessionStatusLabel(): void
+    {
+        $this->assertSame('Non possédé', MagazineSupport::possessionStatusLabel([
+            'support_physique' => '',
+            'stored_object_id' => 0,
+        ]));
+        $this->assertSame('Papier', MagazineSupport::possessionStatusLabel([
+            'support_physique' => 'papier',
+            'stored_object_id' => 0,
+        ]));
+        $this->assertSame('PDF', MagazineSupport::possessionStatusLabel([
+            'support_physique' => '',
+            'stored_object_id' => 5,
+        ]));
+        $this->assertSame('Papier + PDF', MagazineSupport::possessionStatusLabel([
+            'support_physique' => 'papier,pdf',
+            'stored_object_id' => 5,
+        ]));
+    }
 }

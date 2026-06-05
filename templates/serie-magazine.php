@@ -17,6 +17,8 @@
 /** @var int $totalPages */
 /** @var int $perPage */
 /** @var int $listTotal */
+/** @var string|null $sortBy */
+/** @var string|null $sortDir */
 ?>
 <section>
     <?php if ($series === null): ?>
@@ -62,6 +64,21 @@
                    class="btn btn-accent">Ajouter un numéro</a>
                 <a href="/modifier-serie-magazine.php?series_id=<?= $seriesId ?>"
                    class="btn btn-secondary">Modifier la série</a>
+                <?php if ($totalAllIssues > 0 || $hasSearch): ?>
+                    <a href="<?= Moncine\View::escape(Moncine\View::magazineSeriesPrintUrl(
+                        $seriesId,
+                        $sortBy ?? 'numero_ordre',
+                        $sortDir ?? 'desc',
+                        array_filter([
+                            'statut' => $statut,
+                            'q' => $hasSearch ? $searchQuery : null,
+                            'possession' => $possessionFilter !== Moncine\MagazineRepository::POSSESSION_ALL
+                                ? $possessionFilter
+                                : null,
+                        ])
+                    )) ?>"
+                       class="btn btn-secondary">Exporter en PDF</a>
+                <?php endif; ?>
             </p>
         </header>
 

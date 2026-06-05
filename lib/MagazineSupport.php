@@ -108,6 +108,41 @@ final class MagazineSupport
         return self::tagsForIssue($issue) !== [];
     }
 
+    /** Libellé clair pour listes / export (Non possédé, Papier, PDF, Papier + PDF). */
+    public static function possessionStatusLabel(array $issue): string
+    {
+        $tags = self::tagsForIssue($issue);
+        $hasPaper = in_array(self::TAG_PAPIER, $tags, true);
+        $hasPdf = in_array(self::TAG_PDF, $tags, true);
+
+        if ($hasPaper && $hasPdf) {
+            return 'Papier + PDF';
+        }
+        if ($hasPaper) {
+            return 'Papier';
+        }
+        if ($hasPdf) {
+            return 'PDF';
+        }
+
+        return 'Non possédé';
+    }
+
+    /** Classe CSS pour le libellé possession (export imprimable). */
+    public static function possessionStatusCssClass(array $issue): string
+    {
+        if (!self::isPossessed($issue)) {
+            return 'magazine-possession--none';
+        }
+
+        $tags = self::tagsForIssue($issue);
+        if (in_array(self::TAG_PAPIER, $tags, true) && in_array(self::TAG_PDF, $tags, true)) {
+            return 'magazine-possession--both';
+        }
+
+        return 'magazine-possession--owned';
+    }
+
     private static function normalizeTag(string $tag): string
     {
         $tag = mb_strtolower(trim($tag));
