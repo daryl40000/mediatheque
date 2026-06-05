@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.3.1**
+**Version : 0.3.2**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -31,7 +31,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné ; l’on
 | Foyers & famille | Collection partagée par foyer ; envies et historique personnels |
 | Catalogue partagé | Fiches œuvres, enrichissement TMDB / OMDB, affiches |
 | Comptes | Connexion, rôles admin/utilisateur, inscription publique optionnelle |
-| Social | Amis, groupe famille, envies du groupe, partage visiteur |
+| Social | Amis, groupe famille, envies du groupe, partage visiteur, **profil public multi-onglets** (films + magazines) |
 | EAN | Codes-barres multiples par œuvre catalogue |
 
 ### Prochaines versions (résumé)
@@ -195,6 +195,20 @@ Pour importer de **gros PDF**, utilisez toujours **`./start-dev.sh`** plutôt qu
 | Admin catalogue | Compte administrateur → **Catalogue** |
 
 Documentation complémentaire : [questionnaire du soir](doc/questionnaire-du-soir.md), [listes imprimables](doc/listes-imprimables.md), [comptes et mots de passe](doc/comptes-mot-de-passe.md).
+
+#### Profil public d’un ami (`/utilisateur.php`)
+
+Visible par les **amis** et les **membres du même groupe** :
+
+| Onglet profil | Contenu |
+|---------------|---------|
+| **Films** | Statistiques, 5 derniers vus/ajouts, listes collection / envies / visions, demandes de prêt |
+| **Magazines** | Statistiques séries et numéros, listes collection / envies, **numéros par série** (lecture seule) |
+| **BD, Livres, Jeux** | Message « bientôt disponible » sur le profil |
+
+Sur l’onglet **Magazines** du profil : cliquez une **série** → liste des numéros (`/utilisateur-serie-magazine.php`) → fiche numéro avec sommaire (`/utilisateur-numero-magazine.php`). Les **PDF ne sont pas partagés** (couvertures et texte uniquement).
+
+Paramètre d’URL : `?id=…&domain=magazine` (Films par défaut si omis).
 
 ### 7. Mise à jour du logiciel
 

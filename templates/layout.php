@@ -19,7 +19,9 @@ $unreadNotifications = $notificationsAvailable
     : 0;
 $profileUrl = $currentUserId > 0 ? Moncine\View::userProfileUrl($currentUserId) : '';
 $currentPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/';
-$mediaDomain = Moncine\MediaContext::current();
+$mediaDomain = isset($pageMediaDomain)
+    ? Moncine\MediaDomain::normalize((string) $pageMediaDomain)
+    : Moncine\MediaContext::current();
 $mediaNav = Moncine\MediaContext::navLabels();
 $mediaTheme = Moncine\MediaDomain::theme($mediaDomain);
 $collectionPath = Moncine\MediaDomain::collectionPath($mediaDomain);

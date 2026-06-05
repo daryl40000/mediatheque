@@ -3,11 +3,15 @@
  * @var array<string, mixed>|null $profileUser
  * @var string $accessDenied
  * @var bool $isSelf
+ * @var string $profileDomain
+ * @var array{collection: string, wishlist: string, stats: string, footer: string} $profileNav
+ * @var bool $profileDomainImplemented
  * @var array<string, int> $stats
  * @var list<array<string, mixed>> $lastViewed
  * @var list<array<string, mixed>> $lastCollection
  * @var list<array<string, mixed>> $lastWishlist
  * @var list<array<string, mixed>> $listFilms
+ * @var list<array<string, mixed>> $listMagazineSeries
  * @var list<array<string, mixed>> $listViewings
  * @var string $listMode
  * @var int|null $yearFilter
@@ -18,6 +22,12 @@
  * @var int $viewerId
  * @var bool $areFriends
  */
+use Moncine\MediaDomain;
+
+$profileDomain = MediaDomain::normalize($profileDomain ?? MediaDomain::FILM);
+$profileNav = $profileNav ?? MediaDomain::navLabels($profileDomain);
+$isMagazineProfile = MediaDomain::isMagazine($profileDomain);
+$profileDomainImplemented = !empty($profileDomainImplemented);
 ?>
 <section class="account-page social-profile-page">
     <?php if ($accessDenied !== '' || $profileUser === null): ?>
@@ -27,6 +37,7 @@
             <a href="/mes-amis.php">← Mes amis</a>
         </p>
     <?php elseif ($listMode !== ''): ?>
+        <?php require MONCINE_ROOT . '/templates/_user_profile_domain_tabs.php'; ?>
         <?php if (!empty($_GET['pret'])): ?>
             <?php if ((string) $_GET['pret'] === 'demande'): ?>
                 <p class="alert alert-success">Demande de prêt envoyée.</p>
@@ -38,7 +49,7 @@
             <p class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['pret_erreur']) ?></p>
         <?php endif; ?>
         <p class="breadcrumb">
-            <a href="<?= Moncine\View::escape(Moncine\View::userProfileUrl($targetUserId)) ?>">
+            <a href="<?= Moncine\View::escape(Moncine\View::userProfileUrl($targetUserId, $profileDomain)) ?>">
                 <?= Moncine\View::escape(Moncine\UserProfile::displayName($profileUser)) ?>
             </a>
             <span aria-hidden="true"> › </span>
@@ -51,6 +62,8 @@
             $viewings = $listViewings ?? [];
             require MONCINE_ROOT . '/templates/_user_public_viewings_list.php';
             ?>
+        <?php elseif ($isMagazineProfile): ?>
+            <?php require MONCINE_ROOT . '/templates/_user_public_magazine_series_grid.php'; ?>
         <?php else: ?>
             <?php
             $films = $listFilms ?? [];
@@ -58,7 +71,7 @@
             ?>
         <?php endif; ?>
         <p class="collection-page__footer-links">
-            <a href="<?= Moncine\View::escape(Moncine\View::userProfileUrl($targetUserId)) ?>">← Retour au profil</a>
+            <a href="<?= Moncine\View::escape(Moncine\View::userProfileUrl($targetUserId, $profileDomain)) ?>">← Retour au profil</a>
             ·
             <a href="/mes-amis.php">Mes amis</a>
         </p>
@@ -66,6 +79,8 @@
         $pseudo = trim((string) ($profileUser['pseudo'] ?? ''));
         $displayName = Moncine\UserProfile::displayName($profileUser);
         ?>
+        <?php require MONCINE_ROOT . '/templates/_user_profile_domain_tabs.php'; ?>
+
         <header class="social-profile-header">
             <h1><?= Moncine\View::escape($displayName) ?></h1>
             <?php if ($pseudo !== '' && $pseudo !== $displayName): ?>
@@ -83,87 +98,130 @@
             <?php endif; ?>
         </header>
 
-        <section class="social-profile-stats" aria-labelledby="social-stats-heading">
-            <h2 id="social-stats-heading">Statistiques</h2>
-            <dl class="social-profile-stats__list">
-                <div>
-                    <dt>Films en collection</dt>
-                    <dd>
-                        <a href="<?= Moncine\View::escape(
-                            Moncine\View::userProfileListUrl($targetUserId, 'collection')
-                        ) ?>">
-                            <?= (int) ($stats['collection_count'] ?? 0) ?>
-                        </a>
-                    </dd>
-                </div>
-                <div>
-                    <dt>Films dans les envies</dt>
-                    <dd>
-                        <a href="<?= Moncine\View::escape(
-                            Moncine\View::userProfileListUrl($targetUserId, 'envies')
-                        ) ?>">
-                            <?= (int) ($stats['wishlist_count'] ?? 0) ?>
-                        </a>
-                    </dd>
-                </div>
-                <div>
-                    <dt>Films déjà vus</dt>
-                    <dd>
-                        <a href="<?= Moncine\View::escape(
-                            Moncine\View::userProfileListUrl($targetUserId, 'vus')
-                        ) ?>">
-                            <?= (int) ($stats['films_vus_count'] ?? 0) ?>
-                        </a>
-                    </dd>
-                </div>
-                <div>
-                    <dt>Films vus en <?= (int) ($stats['year'] ?? (int) date('Y')) ?></dt>
-                    <dd>
-                        <a href="<?= Moncine\View::escape(
-                            Moncine\View::userProfileListUrl(
-                                $targetUserId,
-                                'vus',
-                                'date',
-                                'date',
-                                'desc',
-                                (int) ($stats['year'] ?? (int) date('Y'))
-                            )
-                        ) ?>">
-                            <?= (int) ($stats['films_vus_year_count'] ?? 0) ?>
-                        </a>
-                    </dd>
-                </div>
-            </dl>
-        </section>
+        <?php if (!$profileDomainImplemented): ?>
+            <section class="media-domain-soon">
+                <p class="lead">
+                    La consultation du profil pour les <strong><?= Moncine\View::escape(MediaDomain::label($profileDomain)) ?></strong>
+                    n’est pas encore disponible.
+                </p>
+                <p class="hint">Utilisez les onglets Films ou Magazines pour voir ce que cette personne partage déjà.</p>
+            </section>
+        <?php else: ?>
+            <section class="social-profile-stats" aria-labelledby="social-stats-heading">
+                <h2 id="social-stats-heading">Statistiques — <?= Moncine\View::escape(MediaDomain::label($profileDomain)) ?></h2>
+                <dl class="social-profile-stats__list">
+                    <div>
+                        <dt><?= $isMagazineProfile ? 'Séries en collection' : 'Films en collection' ?></dt>
+                        <dd>
+                            <a href="<?= Moncine\View::escape(
+                                Moncine\View::userProfileListUrl($targetUserId, 'collection', 'titre', 'titre', 'asc', null, $profileDomain)
+                            ) ?>">
+                                <?= (int) ($stats['collection_count'] ?? 0) ?>
+                            </a>
+                        </dd>
+                    </div>
+                    <?php if ($isMagazineProfile && (int) ($stats['issue_count'] ?? 0) > 0): ?>
+                        <div>
+                            <dt>Numéros possédés</dt>
+                            <dd><?= (int) ($stats['issue_count'] ?? 0) ?></dd>
+                        </div>
+                    <?php endif; ?>
+                    <div>
+                        <dt><?= $isMagazineProfile ? 'Séries dans les envies' : 'Films dans les envies' ?></dt>
+                        <dd>
+                            <a href="<?= Moncine\View::escape(
+                                Moncine\View::userProfileListUrl($targetUserId, 'envies', 'titre', 'titre', 'asc', null, $profileDomain)
+                            ) ?>">
+                                <?= (int) ($stats['wishlist_count'] ?? 0) ?>
+                            </a>
+                        </dd>
+                    </div>
+                    <?php if (!$isMagazineProfile): ?>
+                        <div>
+                            <dt>Films déjà vus</dt>
+                            <dd>
+                                <a href="<?= Moncine\View::escape(
+                                    Moncine\View::userProfileListUrl($targetUserId, 'vus', 'date', 'date', 'desc', null, $profileDomain)
+                                ) ?>">
+                                    <?= (int) ($stats['films_vus_count'] ?? 0) ?>
+                                </a>
+                            </dd>
+                        </div>
+                        <div>
+                            <dt>Films vus en <?= (int) ($stats['year'] ?? (int) date('Y')) ?></dt>
+                            <dd>
+                                <a href="<?= Moncine\View::escape(
+                                    Moncine\View::userProfileListUrl(
+                                        $targetUserId,
+                                        'vus',
+                                        'date',
+                                        'date',
+                                        'desc',
+                                        (int) ($stats['year'] ?? (int) date('Y')),
+                                        $profileDomain
+                                    )
+                                ) ?>">
+                                    <?= (int) ($stats['films_vus_year_count'] ?? 0) ?>
+                                </a>
+                            </dd>
+                        </div>
+                    <?php endif; ?>
+                </dl>
+            </section>
 
-        <section class="social-profile-section" aria-labelledby="social-last-viewed-heading">
-            <h2 id="social-last-viewed-heading">5 derniers films vus</h2>
-            <?php
-            $films = $lastViewed;
-            $emptyHint = 'Aucune vision enregistrée pour le moment.';
-            require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
-            ?>
-        </section>
+            <?php if (!$isMagazineProfile): ?>
+                <section class="social-profile-section" aria-labelledby="social-last-viewed-heading">
+                    <h2 id="social-last-viewed-heading">5 derniers films vus</h2>
+                    <?php
+                    $films = $lastViewed;
+                    $emptyHint = 'Aucune vision enregistrée pour le moment.';
+                    require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
+                    ?>
+                </section>
+            <?php endif; ?>
 
-        <?php if ($isSelf || (int) ($stats['collection_count'] ?? 0) > 0): ?>
-            <section class="social-profile-section" aria-labelledby="social-last-collection-heading">
-                <h2 id="social-last-collection-heading">5 derniers ajouts à la collection</h2>
-                <?php
-                $films = $lastCollection ?? [];
-                $emptyHint = 'Aucun film dans la collection pour le moment.';
-                require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
-                ?>
+            <?php if ($isSelf || (int) ($stats['collection_count'] ?? 0) > 0): ?>
+                <section class="social-profile-section" aria-labelledby="social-last-collection-heading">
+                    <h2 id="social-last-collection-heading">
+                        <?= $isMagazineProfile ? '5 dernières séries ajoutées à la collection' : '5 derniers ajouts à la collection' ?>
+                    </h2>
+                    <?php if ($isMagazineProfile): ?>
+                        <?php
+                        $seriesList = $lastCollection ?? [];
+                        $emptyHint = 'Aucune série en collection pour le moment.';
+                        $magazineListMode = 'collection';
+                        require MONCINE_ROOT . '/templates/_user_profile_magazine_strip.php';
+                        ?>
+                    <?php else: ?>
+                        <?php
+                        $films = $lastCollection ?? [];
+                        $emptyHint = 'Aucun film dans la collection pour le moment.';
+                        require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
+                        ?>
+                    <?php endif; ?>
+                </section>
+            <?php endif; ?>
+
+            <section class="social-profile-section" aria-labelledby="social-last-wishlist-heading">
+                <h2 id="social-last-wishlist-heading">
+                    <?= $isMagazineProfile ? '5 dernières séries ajoutées aux envies' : '5 derniers ajouts aux envies' ?>
+                </h2>
+                <?php if ($isMagazineProfile): ?>
+                    <?php
+                    $seriesList = $lastWishlist ?? [];
+                    $emptyHint = 'Aucune série dans les envies pour le moment.';
+                    $magazineListMode = 'envies';
+                    require MONCINE_ROOT . '/templates/_user_profile_magazine_strip.php';
+                    ?>
+                <?php else: ?>
+                    <?php
+                    $films = $lastWishlist;
+                    $emptyHint = 'Aucun film dans les envies pour le moment.';
+                    require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
+                    ?>
+                <?php endif; ?>
             </section>
         <?php endif; ?>
-
-        <section class="social-profile-section" aria-labelledby="social-last-wishlist-heading">
-            <h2 id="social-last-wishlist-heading">5 derniers ajouts aux envies</h2>
-            <?php
-            $films = $lastWishlist;
-            $emptyHint = 'Aucun film dans les envies pour le moment.';
-            require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
-            ?>
-        </section>
 
         <p class="collection-page__footer-links">
             <a href="/mes-amis.php">← Mes amis</a>

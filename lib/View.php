@@ -67,6 +67,8 @@ final class View
             'magazines',
             'magazines-envies',
             'serie-magazine',
+            'utilisateur-serie-magazine',
+            'utilisateur-numero-magazine',
         ], true);
     }
 
@@ -124,9 +126,19 @@ final class View
         return implode(' ; ', $parts);
     }
 
-    public static function userProfileUrl(int $userId): string
+    public static function userProfileUrl(int $userId, string $mediaDomain = MediaDomain::FILM): string
     {
-        return $userId > 0 ? '/utilisateur.php?id=' . $userId : '/mes-amis.php';
+        if ($userId <= 0) {
+            return '/mes-amis.php';
+        }
+
+        $mediaDomain = MediaDomain::normalize($mediaDomain);
+        $params = ['id' => (string) $userId];
+        if ($mediaDomain !== MediaDomain::FILM) {
+            $params['domain'] = $mediaDomain;
+        }
+
+        return '/utilisateur.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
     }
 
     public static function userProfileListUrl(
@@ -135,11 +147,14 @@ final class View
         string $sortBy = 'titre',
         string $currentSort = 'titre',
         string $currentDir = 'asc',
-        ?int $yearFilter = null
+        ?int $yearFilter = null,
+        string $mediaDomain = MediaDomain::FILM
     ): string {
         if ($userId <= 0) {
             return '/mes-amis.php';
         }
+
+        $mediaDomain = MediaDomain::normalize($mediaDomain);
 
         $liste = match ($liste) {
             'envies', 'vus' => $liste,
@@ -163,6 +178,9 @@ final class View
             'sort' => $sortBy,
             'dir' => $dir,
         ];
+        if ($mediaDomain !== MediaDomain::FILM) {
+            $params['domain'] = $mediaDomain;
+        }
         if ($yearFilter !== null && $yearFilter > 0 && $liste === 'vus') {
             $params['annee'] = (string) $yearFilter;
         }
@@ -625,5 +643,51 @@ final class View
     public static function magazineIssueUrl(int $bibId): string
     {
         return $bibId > 0 ? '/magazine-numero.php?id=' . $bibId : '/magazines.php';
+    }
+
+    public static function userProfileMagazineSeriesUrl(
+        int $targetUserId,
+        int $seriesId,
+        string $listMode = 'collection',
+        string $sort = 'numero_ordre',
+        string $dir = 'desc',
+        array $queryExtra = []
+    ): string {
+        if ($targetUserId <= 0 || $seriesId <= 0) {
+            return self::userProfileUrl($targetUserId, MediaDomain::MAGAZINE);
+        }
+
+        $statut = $listMode === 'envies' ? LibraryStatut::WISHLIST : LibraryStatut::COLLECTION;
+        $params = [
+            'id' => (string) $targetUserId,
+            'series_id' => (string) $seriesId,
+            'statut' => $statut,
+            'sort' => $sort,
+            'dir' => $dir,
+        ];
+
+        foreach ($queryExtra as $key => $value) {
+            if (!is_string($key) || $key === '') {
+                continue;
+            }
+            $value = is_string($value) ? trim($value) : (string) $value;
+            if ($value !== '') {
+                $params[$key] = $value;
+            }
+        }
+
+        return '/utilisateur-serie-magazine.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    public static function userProfileMagazineIssueUrl(int $targetUserId, int $bibId): string
+    {
+        if ($targetUserId <= 0 || $bibId <= 0) {
+            return self::userProfileUrl($targetUserId, MediaDomain::MAGAZINE);
+        }
+
+        return '/utilisateur-numero-magazine.php?' . http_build_query([
+            'id' => (string) $targetUserId,
+            'bib_id' => (string) $bibId,
+        ], '', '&', PHP_QUERY_RFC3986);
     }
 }

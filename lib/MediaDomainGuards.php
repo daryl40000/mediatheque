@@ -20,14 +20,59 @@ final class MediaDomainGuards
         '/support.php',
     ];
 
+    /** Pages collection / envies réservées à l’onglet Films. */
+    private const FILM_COLLECTION_PATHS = [
+        '/films.php',
+        '/film.php',
+        '/souhaits.php',
+    ];
+
+    /** Préfixes d’URL réservés à l’onglet Magazines. */
+    private const MAGAZINE_ONLY_PATH_PREFIXES = [
+        '/magazines',
+        '/magazine-',
+        '/serie-magazine.php',
+        '/ajouter-serie-magazine.php',
+        '/ajouter-numero-magazine.php',
+        '/modifier-serie-magazine.php',
+        '/enregistrer-serie-magazine.php',
+        '/enregistrer-numero-magazine.php',
+        '/enregistrer-modification-serie-magazine.php',
+        '/traiter-numero-magazine.php',
+        '/imprimer-serie-magazine.php',
+    ];
+
     public static function isFilmOnlyPath(string $path): bool
+    {
+        return in_array(self::normalizePath($path), self::FILM_ONLY_PATHS, true);
+    }
+
+    public static function isFilmCollectionPath(string $path): bool
+    {
+        return in_array(self::normalizePath($path), self::FILM_COLLECTION_PATHS, true);
+    }
+
+    public static function isMagazineOnlyPath(string $path): bool
+    {
+        $path = self::normalizePath($path);
+
+        foreach (self::MAGAZINE_ONLY_PATH_PREFIXES as $prefix) {
+            if (str_starts_with($path, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    private static function normalizePath(string $path): string
     {
         $path = parse_url($path, PHP_URL_PATH) ?: $path;
         if ($path === '' || $path[0] !== '/') {
             $path = '/' . ltrim($path, '/');
         }
 
-        return in_array($path, self::FILM_ONLY_PATHS, true);
+        return $path;
     }
 
     /**
@@ -35,15 +80,25 @@ final class MediaDomainGuards
      */
     public static function redirectTargetForTabSwitch(string $targetDomain, string $currentPath, string $queryString = ''): string
     {
-        $pathOnly = parse_url($currentPath, PHP_URL_PATH) ?: $currentPath;
-        if ($pathOnly === '' || $pathOnly === '/') {
+        $pathOnly = self::normalizePath($currentPath);
+        if ($pathOnly === '/') {
             $pathOnly = '/films.php';
         }
 
+        $targetDomain = MediaDomain::normalize($targetDomain);
+
         if (
             self::isFilmOnlyPath($pathOnly)
-            || !MediaDomain::isCollectionImplemented(MediaDomain::normalize($targetDomain))
+            || !MediaDomain::isCollectionImplemented($targetDomain)
         ) {
+            return MediaDomain::collectionPath($targetDomain);
+        }
+
+        if (MediaDomain::isFilm($targetDomain) && self::isMagazineOnlyPath($pathOnly)) {
+            return MediaDomain::collectionPath($targetDomain);
+        }
+
+        if (MediaDomain::isMagazine($targetDomain) && self::isFilmCollectionPath($pathOnly)) {
             return MediaDomain::collectionPath($targetDomain);
         }
 

@@ -90,44 +90,25 @@ final class UserPublicProfileService
 
     /**
      * @return array{
+     *   media_domain: string,
      *   collection_count: int,
      *   wishlist_count: int,
+     *   issue_count: int,
      *   films_vus_count: int,
      *   films_vus_year_count: int,
      *   year: int
      * }
      */
-    public function getStats(int $userId): array
+    public function getStats(int $userId, string $mediaDomain = MediaDomain::FILM): array
     {
+        $mediaDomain = MediaDomain::normalize($mediaDomain);
         $year = (int) date('Y');
-        $foyerId = $this->foyerIdForUser($userId);
 
-        $collectionCount = 0;
-        if ($foyerId > 0) {
-            $stmt = $this->db->prepare(
-                'SELECT COUNT(*) FROM bibliotheque
-                 WHERE foyer_id = ? AND statut = ?'
-            );
-            $stmt->execute([$foyerId, LibraryStatut::COLLECTION]);
-            $collectionCount = (int) $stmt->fetchColumn();
+        if (MediaDomain::isMagazine($mediaDomain)) {
+            return $this->getMagazineStats($userId, $year);
         }
 
-        $stmt = $this->db->prepare(
-            'SELECT COUNT(*) FROM bibliotheque WHERE user_id = ? AND statut = ?'
-        );
-        $stmt->execute([$userId, LibraryStatut::WISHLIST]);
-        $wishlistCount = (int) $stmt->fetchColumn();
-
-        $filmsVus = $this->countDistinctViewedFilms($userId);
-        $filmsVusYear = $this->countDistinctViewedFilms($userId, $year);
-
-        return [
-            'collection_count' => $collectionCount,
-            'wishlist_count' => $wishlistCount,
-            'films_vus_count' => $filmsVus,
-            'films_vus_year_count' => $filmsVusYear,
-            'year' => $year,
-        ];
+        return $this->getFilmStats($userId, $mediaDomain, $year);
     }
 
     /** @return list<array<string, mixed>> */
@@ -136,25 +117,32 @@ final class UserPublicProfileService
         if ($userId <= 0 || $limit <= 0) {
             return [];
         }
+        $params = ['profile_user_id' => $userId];
+        $domainSql = self::publicProfileMediaDomainSql($params, MediaDomain::FILM, 'o');
         $stmt = $this->db->prepare(
             'SELECT ' . CatalogSchema::selectFilmRow() . ',
                     MAX(h.date_vue) AS derniere_vue
              FROM historique h
              INNER JOIN bibliotheque b ON b.id = h.film_id
              INNER JOIN oeuvres o ON o.id = b.oeuvre_id
-             WHERE h.user_id = :profile_user_id
+             WHERE h.user_id = :profile_user_id' . $domainSql . '
              GROUP BY b.id
              ORDER BY derniere_vue DESC, b.id DESC
              LIMIT ' . (int) $limit
         );
-        $stmt->execute(['profile_user_id' => $userId]);
+        $stmt->execute($params);
 
         return $stmt->fetchAll() ?: [];
     }
 
     /** @return list<array<string, mixed>> */
-    public function lastCollectionFilms(int $userId, int $limit = 5): array
+    public function lastCollectionFilms(int $userId, int $limit = 5, string $mediaDomain = MediaDomain::FILM): array
     {
+        $mediaDomain = MediaDomain::normalize($mediaDomain);
+        if (MediaDomain::isMagazine($mediaDomain)) {
+            return $this->lastMagazineSeries($userId, LibraryStatut::COLLECTION, $limit);
+        }
+
         $foyerId = $this->foyerIdForUser($userId);
         if ($foyerId <= 0 || $limit <= 0) {
             return [];
@@ -164,7 +152,7 @@ final class UserPublicProfileService
         $stmt = $this->db->prepare(
             'SELECT ' . CatalogSchema::selectFilmRow() . '
              FROM ' . CatalogSchema::JOIN . '
-             WHERE ' . $userWhere . self::publicProfileMediaDomainSql($params) . '
+             WHERE ' . $userWhere . self::publicProfileMediaDomainSql($params, $mediaDomain) . '
              ORDER BY b.created_at DESC, b.id DESC
              LIMIT ' . (int) $limit
         );
@@ -174,8 +162,13 @@ final class UserPublicProfileService
     }
 
     /** @return list<array<string, mixed>> */
-    public function lastWishlistFilms(int $userId, int $limit = 5): array
+    public function lastWishlistFilms(int $userId, int $limit = 5, string $mediaDomain = MediaDomain::FILM): array
     {
+        $mediaDomain = MediaDomain::normalize($mediaDomain);
+        if (MediaDomain::isMagazine($mediaDomain)) {
+            return $this->lastMagazineSeries($userId, LibraryStatut::WISHLIST, $limit);
+        }
+
         if ($userId <= 0 || $limit <= 0) {
             return [];
         }
@@ -187,7 +180,7 @@ final class UserPublicProfileService
             'SELECT ' . CatalogSchema::selectFilmRow() . '
              FROM ' . CatalogSchema::JOIN . '
              WHERE b.user_id = :profile_user_id AND b.statut = :profile_statut'
-            . self::publicProfileMediaDomainSql($params) . '
+            . self::publicProfileMediaDomainSql($params, $mediaDomain) . '
              ORDER BY b.created_at DESC, b.id DESC
              LIMIT ' . (int) $limit
         );
@@ -199,22 +192,47 @@ final class UserPublicProfileService
     /**
      * @return list<array<string, mixed>>
      */
-    public function listCollection(int $userId, string $sortBy = 'titre', string $sortDir = 'asc'): array
-    {
+    public function listCollection(
+        int $userId,
+        string $sortBy = 'titre',
+        string $sortDir = 'asc',
+        string $mediaDomain = MediaDomain::FILM
+    ): array {
+        $mediaDomain = MediaDomain::normalize($mediaDomain);
+        if (MediaDomain::isMagazine($mediaDomain)) {
+            return $this->listMagazineSeries($userId, LibraryStatut::COLLECTION, $sortBy, $sortDir);
+        }
+
         $foyerId = $this->foyerIdForUser($userId);
         if ($foyerId <= 0) {
             return [];
         }
 
-        return $this->listLibraryForUser($foyerId, $userId, LibraryStatut::COLLECTION, $sortBy, $sortDir);
+        return $this->listLibraryForUser(
+            $foyerId,
+            $userId,
+            LibraryStatut::COLLECTION,
+            $sortBy,
+            $sortDir,
+            $mediaDomain
+        );
     }
 
     /**
      * @return list<array<string, mixed>>
      */
-    public function listWishlist(int $userId, string $sortBy = 'titre', string $sortDir = 'asc'): array
-    {
-        return $this->listLibraryForUser(0, $userId, LibraryStatut::WISHLIST, $sortBy, $sortDir);
+    public function listWishlist(
+        int $userId,
+        string $sortBy = 'titre',
+        string $sortDir = 'asc',
+        string $mediaDomain = MediaDomain::FILM
+    ): array {
+        $mediaDomain = MediaDomain::normalize($mediaDomain);
+        if (MediaDomain::isMagazine($mediaDomain)) {
+            return $this->listMagazineSeries($userId, LibraryStatut::WISHLIST, $sortBy, $sortDir);
+        }
+
+        return $this->listLibraryForUser(0, $userId, LibraryStatut::WISHLIST, $sortBy, $sortDir, $mediaDomain);
     }
 
     /**
@@ -251,12 +269,14 @@ final class UserPublicProfileService
             $params['year_end'] = ($yearFilter + 1) . '-01-01';
         }
 
+        $domainSql = self::publicProfileMediaDomainSql($params, MediaDomain::FILM, 'o');
+
         $sql = 'SELECT h.id AS historique_id, h.date_vue, h.note,
                        ' . CatalogSchema::selectFilmRow() . '
                 FROM historique h
                 INNER JOIN bibliotheque b ON b.id = h.film_id
                 INNER JOIN oeuvres o ON o.id = b.oeuvre_id
-                WHERE ' . $where . '
+                WHERE ' . $where . $domainSql . '
                 ORDER BY ' . $sortColumns[$sortBy] . ' ' . $direction;
         if ($sortBy !== 'titre') {
             $sql .= ', o.titre COLLATE FRENCH_NOCASE ASC';
@@ -270,6 +290,328 @@ final class UserPublicProfileService
     }
 
     /**
+     * @return array{
+     *   media_domain: string,
+     *   collection_count: int,
+     *   wishlist_count: int,
+     *   issue_count: int,
+     *   films_vus_count: int,
+     *   films_vus_year_count: int,
+     *   year: int
+     * }
+     */
+    private function getFilmStats(int $userId, string $mediaDomain, int $year): array
+    {
+        $foyerId = $this->foyerIdForUser($userId);
+
+        $collectionCount = 0;
+        if ($foyerId > 0) {
+            $params = [
+                'foyer_id' => $foyerId,
+                'statut' => LibraryStatut::COLLECTION,
+            ];
+            $stmt = $this->db->prepare(
+                'SELECT COUNT(*) FROM bibliotheque b
+                 INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+                 WHERE b.foyer_id = :foyer_id AND b.statut = :statut'
+                . self::publicProfileMediaDomainSql($params, $mediaDomain)
+            );
+            $stmt->execute($params);
+            $collectionCount = (int) $stmt->fetchColumn();
+        }
+
+        $wishParams = [
+            'user_id' => $userId,
+            'statut' => LibraryStatut::WISHLIST,
+        ];
+        $stmt = $this->db->prepare(
+            'SELECT COUNT(*) FROM bibliotheque b
+             INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+             WHERE b.user_id = :user_id AND b.statut = :statut'
+            . self::publicProfileMediaDomainSql($wishParams, $mediaDomain)
+        );
+        $stmt->execute($wishParams);
+        $wishlistCount = (int) $stmt->fetchColumn();
+
+        $filmsVus = $this->countDistinctViewedFilms($userId);
+        $filmsVusYear = $this->countDistinctViewedFilms($userId, $year);
+
+        return [
+            'media_domain' => $mediaDomain,
+            'collection_count' => $collectionCount,
+            'wishlist_count' => $wishlistCount,
+            'issue_count' => 0,
+            'films_vus_count' => $filmsVus,
+            'films_vus_year_count' => $filmsVusYear,
+            'year' => $year,
+        ];
+    }
+
+    /**
+     * @return array{
+     *   media_domain: string,
+     *   collection_count: int,
+     *   wishlist_count: int,
+     *   issue_count: int,
+     *   films_vus_count: int,
+     *   films_vus_year_count: int,
+     *   year: int
+     * }
+     */
+    private function getMagazineStats(int $userId, int $year): array
+    {
+        $foyerId = $this->foyerIdForUser($userId);
+        $repo = new MagazineRepository();
+        $available = MagazineRepository::isAvailable();
+
+        $seriesCollection = $foyerId > 0 && $available
+            ? $repo->countSeriesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION)
+            : 0;
+        $seriesWishlist = $available
+            ? $repo->countSeriesInLibrary($userId, $foyerId, LibraryStatut::WISHLIST)
+            : 0;
+        $issueCount = $foyerId > 0 && $available
+            ? $repo->countIssuesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION)
+            : 0;
+
+        return [
+            'media_domain' => MediaDomain::MAGAZINE,
+            'collection_count' => $seriesCollection,
+            'wishlist_count' => $seriesWishlist,
+            'issue_count' => $issueCount,
+            'films_vus_count' => 0,
+            'films_vus_year_count' => 0,
+            'year' => $year,
+        ];
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function listMagazineSeries(
+        int $userId,
+        string $statut,
+        string $sortBy,
+        string $sortDir
+    ): array {
+        if (!MagazineRepository::isAvailable()) {
+            return [];
+        }
+
+        $foyerId = $this->foyerIdForUser($userId);
+        if ($statut === LibraryStatut::COLLECTION && $foyerId <= 0) {
+            return [];
+        }
+
+        $magSort = match ($sortBy) {
+            'issues' => 'issues',
+            'last_date' => 'last_date',
+            default => 'titre',
+        };
+
+        return (new MagazineRepository())->listSeriesInLibrary(
+            $userId,
+            $foyerId,
+            $statut,
+            $magSort,
+            $sortDir
+        );
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function lastMagazineSeries(int $userId, string $statut, int $limit): array
+    {
+        if ($userId <= 0 || $limit <= 0 || !MagazineRepository::seriesLibraryTableExists()) {
+            return [];
+        }
+
+        $foyerId = $this->foyerIdForUser($userId);
+        $params = [
+            'domain_series' => MediaDomain::MAGAZINE,
+            'domain_oeuvre' => MediaDomain::MAGAZINE,
+            'limit' => $limit,
+        ];
+
+        if ($statut === LibraryStatut::COLLECTION) {
+            if ($foyerId <= 0) {
+                return [];
+            }
+            $scopeSql = 'sb.statut = :sb_statut AND sb.foyer_id = :sb_foyer_id';
+            $params['sb_statut'] = LibraryStatut::COLLECTION;
+            $params['sb_foyer_id'] = $foyerId;
+        } else {
+            $scopeSql = 'sb.statut = :sb_statut AND sb.user_id = :sb_user_id';
+            $params['sb_statut'] = LibraryStatut::WISHLIST;
+            $params['sb_user_id'] = $userId;
+        }
+
+        $sql = 'SELECT s.*,
+                    MAX(CASE WHEN TRIM(o.poster_url) != \'\' THEN o.poster_url END) AS latest_poster_url,
+                    COUNT(DISTINCT CASE WHEN b.statut = sb.statut THEN b.id END) AS issue_count
+                FROM series s
+                INNER JOIN series_bibliotheque sb ON sb.series_id = s.id
+                LEFT JOIN oeuvre_magazine om ON om.series_id = s.id
+                LEFT JOIN oeuvres o ON o.id = om.oeuvre_id AND o.media_domain = :domain_oeuvre
+                LEFT JOIN bibliotheque b ON b.oeuvre_id = o.id
+                WHERE s.media_domain = :domain_series AND ' . $scopeSql . '
+                GROUP BY s.id
+                ORDER BY sb.created_at DESC, s.id DESC
+                LIMIT :limit';
+
+        $stmt = $this->db->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(':' . $key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * @return true|string
+     */
+    public function canViewMagazineSeries(int $viewerId, int $targetUserId, int $seriesId): bool|string
+    {
+        $access = $this->canView($viewerId, $targetUserId);
+        if ($access !== true) {
+            return $access;
+        }
+        if ($seriesId <= 0) {
+            return 'Série introuvable.';
+        }
+        if (!MagazineRepository::isAvailable()) {
+            return 'Module magazines non disponible.';
+        }
+        if ((new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE) === null) {
+            return 'Série introuvable.';
+        }
+        if (!$this->seriesVisibleOnProfile($targetUserId, $seriesId)) {
+            return 'Cette série n’est pas partagée sur ce profil.';
+        }
+
+        return true;
+    }
+
+    /**
+     * @return true|string
+     */
+    public function canViewMagazineIssue(int $viewerId, int $targetUserId, int $bibId): bool|string
+    {
+        $access = $this->canView($viewerId, $targetUserId);
+        if ($access !== true) {
+            return $access;
+        }
+        if ($bibId <= 0 || !MagazineRepository::isAvailable()) {
+            return 'Numéro introuvable.';
+        }
+
+        $foyerId = $this->foyerIdForUser($targetUserId);
+        $issue = (new MagazineRepository())->findIssueByBibId($bibId, $targetUserId, $foyerId);
+        if ($issue === null) {
+            return 'Numéro introuvable.';
+        }
+
+        return true;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function findMagazineIssueForProfile(int $targetUserId, int $bibId): ?array
+    {
+        if ($targetUserId <= 0 || $bibId <= 0 || !MagazineRepository::isAvailable()) {
+            return null;
+        }
+
+        $foyerId = $this->foyerIdForUser($targetUserId);
+
+        return (new MagazineRepository())->findIssueByBibId($bibId, $targetUserId, $foyerId);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function listMagazineIssuesForSeries(
+        int $targetUserId,
+        int $seriesId,
+        string $statut = LibraryStatut::COLLECTION,
+        string $sortBy = 'numero_ordre',
+        string $sortDir = 'desc',
+        string $searchQuery = '',
+        string $possessionFilter = MagazineRepository::POSSESSION_ALL,
+        ?int $limit = null,
+        ?int $offset = null
+    ): array {
+        if (!MagazineRepository::isAvailable() || $seriesId <= 0) {
+            return [];
+        }
+
+        $foyerId = $this->foyerIdForUser($targetUserId);
+
+        return (new MagazineRepository())->listIssuesForSeries(
+            $seriesId,
+            $targetUserId,
+            $foyerId,
+            LibraryStatut::normalize($statut),
+            $sortBy,
+            $sortDir,
+            $searchQuery,
+            $possessionFilter,
+            $limit,
+            $offset
+        );
+    }
+
+    public function countMagazineIssuesForSeries(
+        int $targetUserId,
+        int $seriesId,
+        string $statut = LibraryStatut::COLLECTION,
+        string $searchQuery = '',
+        string $possessionFilter = MagazineRepository::POSSESSION_ALL
+    ): int {
+        if (!MagazineRepository::isAvailable() || $seriesId <= 0) {
+            return 0;
+        }
+
+        $foyerId = $this->foyerIdForUser($targetUserId);
+
+        return (new MagazineRepository())->countIssuesForSeries(
+            $seriesId,
+            $targetUserId,
+            $foyerId,
+            LibraryStatut::normalize($statut),
+            $searchQuery,
+            $possessionFilter
+        );
+    }
+
+    private function seriesVisibleOnProfile(int $targetUserId, int $seriesId): bool
+    {
+        $foyerId = $this->foyerIdForUser($targetUserId);
+        $repo = new MagazineRepository();
+
+        if (MagazineRepository::seriesLibraryTableExists()) {
+            $stmt = $this->db->prepare(
+                'SELECT 1 FROM series_bibliotheque sb
+                 WHERE sb.series_id = :series_id
+                   AND (
+                        (sb.statut = :collection AND sb.foyer_id = :foyer_id)
+                        OR (sb.statut = :wishlist AND sb.user_id = :user_id)
+                   )
+                 LIMIT 1'
+            );
+            $stmt->execute([
+                'series_id' => $seriesId,
+                'collection' => LibraryStatut::COLLECTION,
+                'foyer_id' => $foyerId,
+                'wishlist' => LibraryStatut::WISHLIST,
+                'user_id' => $targetUserId,
+            ]);
+            if ($stmt->fetchColumn() !== false) {
+                return true;
+            }
+        }
+
+        return $repo->countIssuesForSeries($seriesId, $targetUserId, $foyerId, null) > 0;
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     private function listLibraryForUser(
@@ -277,7 +619,8 @@ final class UserPublicProfileService
         int $userId,
         string $statut,
         string $sortBy,
-        string $sortDir
+        string $sortDir,
+        string $mediaDomain
     ): array {
         $sortColumns = [
             'titre' => 'o.titre COLLATE FRENCH_NOCASE',
@@ -293,7 +636,7 @@ final class UserPublicProfileService
 
         $sql = 'SELECT ' . CatalogSchema::selectFilmRow() . '
                 FROM ' . CatalogSchema::JOIN . '
-                WHERE ' . $userWhere . self::publicProfileMediaDomainSql($params) . '
+                WHERE ' . $userWhere . self::publicProfileMediaDomainSql($params, $mediaDomain) . '
                 ORDER BY ' . $sortColumns[$sortBy] . ' ' . $direction;
         if ($sortBy !== 'titre') {
             $sql .= ', o.titre COLLATE FRENCH_NOCASE ASC';
@@ -306,19 +649,20 @@ final class UserPublicProfileService
     }
 
     /**
-     * Profils publics : dvdthèque films uniquement (M0).
-     *
      * @param array<string, mixed> $params
      */
-    private static function publicProfileMediaDomainSql(array &$params): string
-    {
+    private static function publicProfileMediaDomainSql(
+        array &$params,
+        string $mediaDomain,
+        string $oeuvreAlias = 'o'
+    ): string {
         if (!CatalogSchema::hasMediaDomainColumn()) {
             return '';
         }
 
-        $params['profile_media_domain'] = MediaDomain::FILM;
+        $params['profile_media_domain'] = MediaDomain::normalize($mediaDomain);
 
-        return ' AND o.media_domain = :profile_media_domain';
+        return ' AND ' . $oeuvreAlias . '.media_domain = :profile_media_domain';
     }
 
     private function countDistinctViewedFilms(int $userId, ?int $year = null): int
@@ -328,8 +672,13 @@ final class UserPublicProfileService
         }
         $sql = 'SELECT COUNT(DISTINCT h.film_id) FROM historique h
                 INNER JOIN bibliotheque b ON b.id = h.film_id
+                INNER JOIN oeuvres o ON o.id = b.oeuvre_id
                 WHERE h.user_id = ?';
         $params = [$userId];
+        if (CatalogSchema::hasMediaDomainColumn()) {
+            $sql .= ' AND o.media_domain = ?';
+            $params[] = MediaDomain::FILM;
+        }
         if ($year !== null && $year > 0) {
             $sql .= ' AND h.date_vue >= ? AND h.date_vue < ?';
             $params[] = $year . '-01-01';

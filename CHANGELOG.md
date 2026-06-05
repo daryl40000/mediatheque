@@ -9,6 +9,28 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.3.2] — 2026-05-31
+
+**Navigation onglets ; profil public multi-médias**
+
+### Ajouté
+
+- **Profil public multi-onglets** (`/utilisateur.php?domain=…`) : Films, Magazines et message « bientôt » pour BD / Livres / Jeux ; thème couleur selon l’onglet consulté.
+- **Profil Magazines** : statistiques (séries, numéros possédés, envies), vignettes et listes collection / envies.
+- **Numéros sur le profil ami** : `/utilisateur-serie-magazine.php` (grille paginée, recherche) et `/utilisateur-numero-magazine.php` (couverture, sommaire, tags support) — **lecture seule**, PDF non partagés.
+- Tests `UserPublicProfileMagazineTest`, `MediaDomainTest::testTabSwitchBetweenFilmAndMagazineCollections`.
+
+### Corrigé
+
+- **Changement d’onglet Magazines → Films** : plus de boucle de redirection (la cible restait une URL magazine) — `MediaDomainGuards::redirectTargetForTabSwitch()`.
+
+### Modifié
+
+- `UserPublicProfileService` : stats et listes filtrées par `media_domain` ; méthodes magazines pour le profil public.
+- `View::userProfileUrl()` / `userProfileListUrl()` : paramètre `domain` ; URLs `userProfileMagazineSeriesUrl()` / `userProfileMagazineIssueUrl()`.
+
+---
+
 ## [0.3.1] — 2026-06-02
 
 **Magazines — export liste ; catalogue — propositions multiples**

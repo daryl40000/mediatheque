@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.3.1** · **Date : 2026-06-02**
+**Version : 0.3.2** · **Date : 2026-05-31**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -16,6 +16,8 @@ L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **nu
 | Fiche numéro | `/magazine-numero.php?id=…` | Détail, PDF, édition, suppression |
 | Ajouter une série | `/ajouter-serie-magazine.php` | Création catalogue |
 | Ajouter un numéro | `/ajouter-numero-magazine.php?series_id=…` | Nouveau numéro + import PDF |
+| Profil ami — série | `/utilisateur-serie-magazine.php?id=…&series_id=…` | Numéros d’un ami (lecture seule, **0.3.2**) |
+| Profil ami — numéro | `/utilisateur-numero-magazine.php?id=…&bib_id=…` | Fiche numéro sans PDF partagé (**0.3.2**) |
 
 Paramètres utiles sur la liste série :
 
@@ -188,6 +190,6 @@ Pour le dev local avec import PDF volumineux : utilisez `./start-dev.sh` plutôt
 
 ---
 
-*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (section 0.3.1) et [ROADMAP.md](../ROADMAP.md) (phase M5).*
+*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (sections 0.3.2 et 0.3.1) et [ROADMAP.md](../ROADMAP.md) (phase M5).*
 
 **Import massif d’affiches films** (plusieurs centaines) : page **Importer** → ZIP jusqu’à 200 Mo ([doc via README](../README.md)).

@@ -7,19 +7,22 @@
  * @var string $sortBy
  * @var string $sortDir
  * @var int|null $yearFilter
+ * @var string $profileDomain
  */
 $yearFilter = isset($yearFilter) ? $yearFilter : null;
+$profileDomain = $profileDomain ?? Moncine\MediaDomain::FILM;
 
 $sortLink = static function (string $label, string $column) use (
     $targetUserId,
     $sortBy,
     $sortDir,
-    $yearFilter
+    $yearFilter,
+    $profileDomain
 ): void {
     $active = $sortBy === $column;
     ?>
     <a href="<?= Moncine\View::escape(
-        Moncine\View::userProfileListUrl($targetUserId, 'vus', $column, $sortBy, $sortDir, $yearFilter)
+        Moncine\View::userProfileListUrl($targetUserId, 'vus', $column, $sortBy, $sortDir, $yearFilter, $profileDomain)
     ) ?>"
        class="collection-grid-sort__link<?= $active ? ' is-active' : '' ?>">
         <?= Moncine\View::escape($label) ?><?= Moncine\View::filmsSortIndicator($column, $sortBy, $sortDir) ?>

@@ -141,13 +141,13 @@ $oeuvres->insert([…, 'media_domain' => MediaContext::current()]);
 
 - Si la requête lit `oeuvres` ou `CatalogSchema::JOIN`, vérifier si le **filtre `media_domain`** est appliqué.
 - Exception documentée : **partage visiteur films** force `MediaDomain::FILM` (liens créés pour la dvdthèque).
-- Exception : **profil public** — films uniquement en 0.1.0 (`UserPublicProfileService`).
+- Exception : **profil public** — domaine choisi via `?domain=` (`UserPublicProfileService`, films + magazines en **0.3.2**).
 
 ### 4.3 Pages et URLs
 
 - Ne pas renommer `films.php` en `collection.php` sans plan de redirection (M7).
 - Pages **réservées aux films** : les ajouter à `MediaDomainGuards::FILM_ONLY_PATHS` si elles ne doivent pas exister sur BD/livres/etc.
-- Changement d’onglet depuis une page film-only → redirection vers `/films.php` (voir `redirectTargetForTabSwitch()`).
+- Changement d’onglet depuis une page **film-only** ou **magazine-only** → redirection vers la collection du domaine cible (voir `redirectTargetForTabSwitch()`).
 
 ### 4.4 Affichage utilisateur vs code
 

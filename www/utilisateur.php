@@ -11,6 +11,7 @@ use Moncine\Auth;
 use Moncine\FriendshipRepository;
 use Moncine\LoanRepository;
 use Moncine\LoanRequestRepository;
+use Moncine\MediaDomain;
 use Moncine\UserProfile;
 use Moncine\UserPublicProfileService;
 use Moncine\View;
@@ -25,22 +26,32 @@ $targetUserId = max(0, (int) ($_GET['id'] ?? 0));
 $liste = (string) ($_GET['liste'] ?? '');
 $sortBy = (string) ($_GET['sort'] ?? 'titre');
 $sortDir = (string) ($_GET['dir'] ?? 'asc');
+$profileDomain = MediaDomain::normalize((string) ($_GET['domain'] ?? MediaDomain::FILM));
 
 $profile = new UserPublicProfileService();
 $access = $profile->canView($viewerId, $targetUserId);
 
-if ($access !== true) {
-    http_response_code($targetUserId <= 0 ? 404 : 403);
-    View::render('utilisateur', [
+$emptyRenderData = static function (string $accessDenied, int $httpCode = 403) use (
+    $targetUserId,
+    $sortBy,
+    $sortDir,
+    $profileDomain
+): array {
+    http_response_code($httpCode);
+
+    return [
         'pageTitle' => 'Profil utilisateur',
         'profileUser' => null,
-        'accessDenied' => (string) $access,
+        'accessDenied' => $accessDenied,
         'isSelf' => false,
+        'profileDomain' => $profileDomain,
+        'pageMediaDomain' => $profileDomain,
         'stats' => [],
         'lastViewed' => [],
         'lastCollection' => [],
         'lastWishlist' => [],
         'listFilms' => [],
+        'listMagazineSeries' => [],
         'listViewings' => [],
         'listMode' => '',
         'listTitle' => '',
@@ -48,36 +59,26 @@ if ($access !== true) {
         'sortBy' => $sortBy,
         'sortDir' => $sortDir,
         'yearFilter' => null,
-    ]);
+        'profileDomainImplemented' => MediaDomain::isCollectionImplemented($profileDomain),
+    ];
+};
+
+if ($access !== true) {
+    View::render('utilisateur', $emptyRenderData((string) $access, $targetUserId <= 0 ? 404 : 403));
     exit;
 }
 
 $user = $profile->findPublicUser($targetUserId);
 if ($user === null) {
-    http_response_code(404);
-    View::render('utilisateur', [
-        'pageTitle' => 'Profil introuvable',
-        'profileUser' => null,
-        'accessDenied' => 'Utilisateur introuvable.',
-        'isSelf' => false,
-        'stats' => [],
-        'lastViewed' => [],
-        'lastCollection' => [],
-        'lastWishlist' => [],
-        'listFilms' => [],
-        'listViewings' => [],
-        'listMode' => '',
-        'listTitle' => '',
-        'targetUserId' => $targetUserId,
-        'sortBy' => $sortBy,
-        'sortDir' => $sortDir,
-        'yearFilter' => null,
-    ]);
+    View::render('utilisateur', $emptyRenderData('Utilisateur introuvable.', 404));
     exit;
 }
 
 $isSelf = $viewerId === $targetUserId;
 $displayName = UserProfile::displayName($user);
+$profileNav = MediaDomain::navLabels($profileDomain);
+$profileDomainImplemented = MediaDomain::isCollectionImplemented($profileDomain);
+$isMagazineProfile = MediaDomain::isMagazine($profileDomain);
 
 $areFriends = false;
 if (!$isSelf && FriendshipRepository::isAvailable()) {
@@ -85,6 +86,7 @@ if (!$isSelf && FriendshipRepository::isAvailable()) {
 }
 
 $listFilms = [];
+$listMagazineSeries = [];
 $listViewings = [];
 $listMode = '';
 $listTitle = '';
@@ -94,21 +96,35 @@ if ($anneeParam > 0) {
     $yearFilter = $anneeParam;
 }
 
-if ($liste === 'collection') {
-    $listMode = 'collection';
-    $listTitle = 'Films de ' . $displayName;
-    $listFilms = $profile->listCollection($targetUserId, $sortBy, $sortDir);
-} elseif ($liste === 'envies') {
-    $listMode = 'envies';
-    $listTitle = 'Envies de ' . $displayName;
-    $listFilms = $profile->listWishlist($targetUserId, $sortBy, $sortDir);
-} elseif ($liste === 'vus') {
-    $listMode = 'vus';
-    $listTitle = $yearFilter !== null
-        ? 'Films vus en ' . $yearFilter . ' — ' . $displayName
-        : 'Films vus — ' . $displayName;
-    $viewSort = in_array($sortBy, ['date', 'titre', 'note'], true) ? $sortBy : 'date';
-    $listViewings = $profile->listViewingHistory($targetUserId, $viewSort, $sortDir, $yearFilter);
+if ($profileDomainImplemented) {
+    if ($liste === 'collection') {
+        $listMode = 'collection';
+        $listTitle = $isMagazineProfile
+            ? $profileNav['collection'] . ' — ' . $displayName
+            : 'Films de ' . $displayName;
+        if ($isMagazineProfile) {
+            $listMagazineSeries = $profile->listCollection($targetUserId, $sortBy, $sortDir, $profileDomain);
+        } else {
+            $listFilms = $profile->listCollection($targetUserId, $sortBy, $sortDir, $profileDomain);
+        }
+    } elseif ($liste === 'envies') {
+        $listMode = 'envies';
+        $listTitle = $isMagazineProfile
+            ? $profileNav['wishlist'] . ' — ' . $displayName
+            : 'Envies de ' . $displayName;
+        if ($isMagazineProfile) {
+            $listMagazineSeries = $profile->listWishlist($targetUserId, $sortBy, $sortDir, $profileDomain);
+        } else {
+            $listFilms = $profile->listWishlist($targetUserId, $sortBy, $sortDir, $profileDomain);
+        }
+    } elseif ($liste === 'vus' && !$isMagazineProfile) {
+        $listMode = 'vus';
+        $listTitle = $yearFilter !== null
+            ? 'Films vus en ' . $yearFilter . ' — ' . $displayName
+            : 'Films vus — ' . $displayName;
+        $viewSort = in_array($sortBy, ['date', 'titre', 'note'], true) ? $sortBy : 'date';
+        $listViewings = $profile->listViewingHistory($targetUserId, $viewSort, $sortDir, $yearFilter);
+    }
 }
 
 $loanUi = [
@@ -116,7 +132,7 @@ $loanUi = [
     'myRequests' => [],
     'reservedByOthers' => [],
 ];
-if ($listMode === 'collection' && !$isSelf && $areFriends) {
+if ($listMode === 'collection' && !$isSelf && $areFriends && !$isMagazineProfile) {
     if (LoanRepository::tableExists()) {
         $loanUi['activeLoans'] = (new LoanRepository())->mapActiveLoansByBibliothequeId($targetUserId);
     }
@@ -135,11 +151,20 @@ View::render('utilisateur', [
     'viewerId' => $viewerId,
     'areFriends' => $areFriends,
     'loanUi' => $loanUi,
-    'stats' => $listMode === '' ? $profile->getStats($targetUserId) : [],
-    'lastViewed' => $listMode === '' ? $profile->lastViewedFilms($targetUserId, 5) : [],
-    'lastCollection' => $listMode === '' ? $profile->lastCollectionFilms($targetUserId, 5) : [],
-    'lastWishlist' => $listMode === '' ? $profile->lastWishlistFilms($targetUserId, 5) : [],
+    'profileDomain' => $profileDomain,
+    'profileNav' => $profileNav,
+    'profileDomainImplemented' => $profileDomainImplemented,
+    'pageMediaDomain' => $profileDomain,
+    'stats' => $listMode === '' && $profileDomainImplemented ? $profile->getStats($targetUserId, $profileDomain) : [],
+    'lastViewed' => $listMode === '' && !$isMagazineProfile ? $profile->lastViewedFilms($targetUserId, 5) : [],
+    'lastCollection' => $listMode === '' && $profileDomainImplemented
+        ? $profile->lastCollectionFilms($targetUserId, 5, $profileDomain)
+        : [],
+    'lastWishlist' => $listMode === '' && $profileDomainImplemented
+        ? $profile->lastWishlistFilms($targetUserId, 5, $profileDomain)
+        : [],
     'listFilms' => $listFilms,
+    'listMagazineSeries' => $listMagazineSeries,
     'listViewings' => $listViewings,
     'listMode' => $listMode,
     'listTitle' => $listTitle,

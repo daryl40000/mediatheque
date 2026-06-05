@@ -9,17 +9,19 @@
  * @var string $sortDir
  * @var int $viewerId
  * @var bool $areFriends
+ * @var string $profileDomain
  * @var array{
  *   activeLoans?: array<int, bool>,
  *   myRequests?: array<int, array{request_id:int, status:string}>,
  *   reservedByOthers?: array<int, bool>
  * } $loanUi
  */
-$sortLink = static function (string $label, string $column) use ($targetUserId, $listMode, $sortBy, $sortDir): void {
+$sortLink = static function (string $label, string $column) use ($targetUserId, $listMode, $sortBy, $sortDir, $profileDomain): void {
     $active = $sortBy === $column;
+    $domain = $profileDomain ?? Moncine\MediaDomain::FILM;
     ?>
     <a href="<?= Moncine\View::escape(
-        Moncine\View::userProfileListUrl($targetUserId, $listMode, $column, $sortBy, $sortDir)
+        Moncine\View::userProfileListUrl($targetUserId, $listMode, $column, $sortBy, $sortDir, null, $domain)
     ) ?>"
        class="collection-grid-sort__link<?= $active ? ' is-active' : '' ?>">
         <?= Moncine\View::escape($label) ?><?= Moncine\View::filmsSortIndicator($column, $sortBy, $sortDir) ?>
@@ -58,6 +60,7 @@ $sortLink = static function (string $label, string $column) use ($targetUserId, 
                 'liste' => (string) ($listMode ?? 'collection'),
                 'sort' => (string) ($sortBy ?? 'titre'),
                 'dir' => (string) ($sortDir ?? 'asc'),
+                'domain' => (string) ($profileDomain ?? Moncine\MediaDomain::FILM),
             ], '', '&', PHP_QUERY_RFC3986);
 
             $activeLoans = $loanUi['activeLoans'] ?? [];

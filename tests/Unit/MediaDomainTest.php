@@ -39,4 +39,28 @@ final class MediaDomainTest extends TestCase
             MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::FILM, '/films.php', 'q=test')
         );
     }
+
+    public function testTabSwitchBetweenFilmAndMagazineCollections(): void
+    {
+        $this->assertTrue(MediaDomainGuards::isMagazineOnlyPath('/magazines.php'));
+        $this->assertTrue(MediaDomainGuards::isMagazineOnlyPath('/serie-magazine.php'));
+        $this->assertTrue(MediaDomainGuards::isFilmCollectionPath('/films.php'));
+
+        $this->assertSame(
+            '/films.php',
+            MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::FILM, '/magazines.php')
+        );
+        $this->assertSame(
+            '/films.php',
+            MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::FILM, '/serie-magazine.php', 'id=3')
+        );
+        $this->assertSame(
+            '/magazines.php',
+            MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::MAGAZINE, '/films.php', 'q=test')
+        );
+        $this->assertSame(
+            '/statistiques.php',
+            MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::FILM, '/statistiques.php')
+        );
+    }
 }
