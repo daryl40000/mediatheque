@@ -83,9 +83,21 @@ final class MagazineSubjectRepository
 
         $query = trim($query);
         if ($query !== '') {
-            $where[] = '(LOWER(ms.label) LIKE LOWER(:q) ESCAPE \'\\\' OR LOWER(ms.detail) LIKE LOWER(:q_detail) ESCAPE \'\\\')';
-            $params['q'] = LikePattern::containsFragment($query);
-            $params['q_detail'] = LikePattern::containsFragment($query);
+            $ftsMatch = MagazineSubjectFts::isAvailable()
+                ? MagazineSubjectFts::matchExpression($query)
+                : '';
+            if ($ftsMatch !== '') {
+                $where[] = 'ms.id IN (
+                    SELECT magazine_subject_fts.subject_id
+                    FROM magazine_subject_fts
+                    WHERE magazine_subject_fts MATCH :subject_fts
+                )';
+                $params['subject_fts'] = $ftsMatch;
+            } else {
+                $where[] = '(LOWER(ms.label) LIKE LOWER(:q) ESCAPE \'\\\' OR LOWER(ms.detail) LIKE LOWER(:q_detail) ESCAPE \'\\\')';
+                $params['q'] = LikePattern::containsFragment($query);
+                $params['q_detail'] = LikePattern::containsFragment($query);
+            }
         }
 
         $sql = 'SELECT ms.id, ms.category, ms.label, ms.detail, ms.parution_year, ms.created_at,
@@ -165,11 +177,18 @@ final class MagazineSubjectRepository
             return $existing;
         }
 
+        $similar = $this->findBySimilarLabelKey($category, $label, $detail, $parutionYear);
+        if ($similar !== null) {
+            return $similar;
+        }
+
         $stmt = $this->db->prepare(
             'INSERT INTO magazine_subject (category, label, detail, parution_year) VALUES (?, ?, ?, ?)'
         );
         $stmt->execute([$category, $label, $detail, $parutionYear]);
         $id = (int) $this->db->lastInsertId();
+
+        MagazineSubjectFts::upsert($id);
 
         return $this->findById($id);
     }
@@ -297,6 +316,34 @@ final class MagazineSubjectRepository
     public function countIssuesInLibrary(int $subjectId, int $userId, int $foyerId, ?string $statut = null): int
     {
         return $this->countInLibrary($subjectId, $userId, $foyerId)['issue_count'];
+    }
+
+    /**
+     * Retrouve un sujet existant dont le libellé diffère seulement par espaces ou ponctuation.
+     */
+    private function findBySimilarLabelKey(string $category, string $label, string $detail, int $parutionYear): ?array
+    {
+        $labelKey = MagazineSubject::normalizeLabelKey($label);
+        if ($labelKey === '') {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT id, category, label, detail, parution_year, created_at
+             FROM magazine_subject
+             WHERE category = ?
+               AND LOWER(detail) = LOWER(?)
+               AND parution_year = ?'
+        );
+        $stmt->execute([$category, $detail, $parutionYear]);
+
+        while (($row = $stmt->fetch(PDO::FETCH_ASSOC)) !== false) {
+            if (MagazineSubject::normalizeLabelKey((string) ($row['label'] ?? '')) === $labelKey) {
+                return $this->hydrateSubjectRow($row);
+            }
+        }
+
+        return null;
     }
 
     /** @return array<string, mixed>|null */

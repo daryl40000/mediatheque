@@ -32,6 +32,7 @@
                 </select>
             </div>
             <div class="magazine-subject-search__row magazine-subject-search__row--autocomplete"
+                 data-magazine-subject-autocomplete="navigate"
                  data-search-url="<?= Moncine\View::escape(Moncine\View::magazineSubjectApiUrl()) ?>">
                 <label for="subject_q">Nom du sujet</label>
                 <input type="search" name="q" id="subject_q"

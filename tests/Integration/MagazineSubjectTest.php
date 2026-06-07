@@ -173,4 +173,16 @@ final class MagazineSubjectTest extends MoncineTestCase
         $this->assertContains('Sujet Preview Seul', $previewLabels);
         $this->assertNotContains('Sujet Jeu Legacy', $previewLabels);
     }
+
+    public function testFindOrCreateReusesSimilarLabelSpelling(): void
+    {
+        $repo = new MagazineSubjectRepository();
+        $first = $repo->findOrCreate(MagazineSubject::TEST, 'After Life', 'PC', 2024);
+        $this->assertNotNull($first);
+
+        $second = $repo->findOrCreate(MagazineSubject::TEST, 'Afterlife', 'PC', 2024);
+        $this->assertNotNull($second);
+        $this->assertSame((int) ($first['id'] ?? 0), (int) ($second['id'] ?? 0));
+        $this->assertSame('After Life', (string) ($second['label'] ?? ''));
+    }
 }

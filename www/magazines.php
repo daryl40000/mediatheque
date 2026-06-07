@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
+use Moncine\MagazineSubjectRepository;
 use Moncine\MediaDomainGuards;
 use Moncine\UserContext;
 use Moncine\View;
@@ -24,6 +25,8 @@ if (!MagazineRepository::isAvailable()) {
         'query' => '',
         'sortBy' => 'titre',
         'sortDir' => 'asc',
+        'contentSubjects' => [],
+        'contentIssues' => [],
         'moduleError' => 'Le module magazines n’est pas encore disponible. Rechargez la page dans quelques secondes.',
     ]);
     exit;
@@ -36,6 +39,7 @@ $sortDir = (string) ($_GET['dir'] ?? 'asc');
 $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
 $repo = new MagazineRepository();
+$subjectRepo = new MagazineSubjectRepository();
 
 $seriesList = $repo->listSeriesInLibrary(
     $userId,
@@ -46,6 +50,24 @@ $seriesList = $repo->listSeriesInLibrary(
     $query
 );
 
+$contentSubjects = [];
+$contentIssues = [];
+if ($query !== '' && MagazineSubjectRepository::isAvailable()) {
+    $contentSubjects = $subjectRepo->searchCatalog($query, null, 20);
+    foreach ($contentSubjects as $i => $subject) {
+        $counts = $subjectRepo->countInLibrary((int) ($subject['id'] ?? 0), $userId, $foyerId);
+        $contentSubjects[$i]['library_issue_count'] = $counts['issue_count'];
+        $contentSubjects[$i]['library_series_count'] = $counts['series_count'];
+    }
+    $contentIssues = $repo->searchIssuesInLibrary(
+        $userId,
+        $foyerId,
+        LibraryStatut::COLLECTION,
+        $query,
+        24
+    );
+}
+
 View::render('magazines', [
     'pageTitle' => \Moncine\MediaContext::navLabels()['collection'],
     'seriesList' => $seriesList,
@@ -53,5 +75,7 @@ View::render('magazines', [
     'query' => $query,
     'sortBy' => $sortBy,
     'sortDir' => $sortDir,
+    'contentSubjects' => $contentSubjects,
+    'contentIssues' => $contentIssues,
     'moduleError' => '',
 ]);

@@ -25,7 +25,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCollectionBulkSelection();
     initContentKindFields();
     initCatalogTitleAutocomplete();
-    initMagazineSubjectSearchAutocomplete();
+    initMagazineSubjectAutocompleteFields();
     initMagazineSeriesTagsField();
     initShareLinkCopy();
 
@@ -531,96 +531,135 @@ function initShareLinkCopy() {
     });
 }
 
-/** Autocomplétion des sujets magazines (page recherche globale). */
-function initMagazineSubjectSearchAutocomplete() {
-    const row = document.querySelector('.magazine-subject-search__row--autocomplete');
-    if (!row) {
-        return;
-    }
+/** Autocomplétion des sujets magazines (recherche, liste, fiche numéro). */
+function initMagazineSubjectAutocompleteFields() {
+    document.querySelectorAll('[data-magazine-subject-autocomplete]').forEach((row) => {
+        const input = row.querySelector('input[type="search"], input[type="text"]');
+        const list = row.querySelector('[role="listbox"]');
+        const searchUrl = row.getAttribute('data-search-url') || '/rechercher-sujets-magazine.php';
+        const mode = row.getAttribute('data-magazine-subject-autocomplete') || 'navigate';
+        const form = row.closest('form');
+        const categorySelect = form
+            ? form.querySelector('#subject_category, #attach_category')
+            : document.getElementById('subject_category');
 
-    const input = row.querySelector('#subject_q');
-    const list = document.getElementById('magazine-subject-suggestions');
-    const categorySelect = document.getElementById('subject_category');
-    const searchUrl = row.getAttribute('data-search-url') || '/rechercher-sujets-magazine.php';
-
-    if (!input || !list) {
-        return;
-    }
-
-    let debounceTimer = null;
-
-    const closeList = () => {
-        list.hidden = true;
-        list.innerHTML = '';
-    };
-
-    const renderResults = (results) => {
-        list.innerHTML = '';
-        if (!results.length) {
-            closeList();
+        if (!input || !list) {
             return;
         }
 
-        results.forEach((item) => {
-            const li = document.createElement('li');
-            li.className = 'catalog-title-autocomplete__option';
-            li.setAttribute('role', 'option');
+        let debounceTimer = null;
 
-            const main = document.createElement('span');
-            main.className = 'catalog-title-autocomplete__option-label';
-            main.textContent = item.display_label || item.label || '';
+        const closeList = () => {
+            list.hidden = true;
+            list.innerHTML = '';
+        };
 
-            const meta = document.createElement('span');
-            meta.className = 'hint';
-            meta.textContent = (item.category_label || '') + (item.issue_count ? ' · ' + item.issue_count + ' num.' : '');
+        const applyFillSelection = (item) => {
+            input.value = item.label || '';
 
-            li.appendChild(main);
-            li.appendChild(meta);
+            if (categorySelect && item.category) {
+                categorySelect.value = item.category;
+            }
 
-            li.addEventListener('mousedown', (event) => {
-                event.preventDefault();
-                if (item.url) {
-                    window.location.href = item.url;
-                    return;
+            const detailField = form ? form.querySelector('#attach_detail') : null;
+            if (detailField && item.detail) {
+                if (detailField.tagName === 'SELECT') {
+                    const option = [...detailField.options].find(
+                        (entry) => entry.value.toLowerCase() === String(item.detail).toLowerCase()
+                    );
+                    if (option) {
+                        detailField.value = option.value;
+                    }
+                } else if (detailField.tagName === 'INPUT') {
+                    detailField.value = item.detail;
                 }
-                input.value = item.label || '';
+            }
+
+            closeList();
+            input.focus();
+        };
+
+        const renderResults = (results) => {
+            list.innerHTML = '';
+            if (!results.length) {
                 closeList();
+                return;
+            }
+
+            results.forEach((item) => {
+                const li = document.createElement('li');
+                li.className = 'catalog-title-autocomplete__option';
+                li.setAttribute('role', 'option');
+
+                const main = document.createElement('span');
+                main.className = 'catalog-title-autocomplete__option-label';
+                main.textContent = item.display_label || item.label || '';
+
+                const meta = document.createElement('span');
+                meta.className = 'hint';
+                meta.textContent = (item.category_label || '')
+                    + (item.issue_count ? ' · ' + item.issue_count + ' num.' : '');
+
+                li.appendChild(main);
+                li.appendChild(meta);
+
+                li.addEventListener('mousedown', (event) => {
+                    event.preventDefault();
+                    if (mode === 'fill') {
+                        applyFillSelection(item);
+                        return;
+                    }
+                    if (item.url) {
+                        window.location.href = item.url;
+                        return;
+                    }
+                    input.value = item.label || '';
+                    closeList();
+                });
+
+                list.appendChild(li);
             });
 
-            list.appendChild(li);
+            list.hidden = false;
+        };
+
+        const fetchResults = () => {
+            const q = input.value.trim();
+            if (q.length < 2) {
+                closeList();
+                return;
+            }
+
+            const params = new URLSearchParams({ q });
+            if (categorySelect && categorySelect.value && categorySelect.id === 'subject_category') {
+                params.set('category', categorySelect.value);
+            }
+
+            fetch(searchUrl + '?' + params.toString(), {
+                headers: { Accept: 'application/json' },
+                credentials: 'same-origin',
+            })
+                .then((response) => response.json())
+                .then((data) => renderResults(Array.isArray(data.results) ? data.results : []))
+                .catch(() => closeList());
+        };
+
+        input.addEventListener('input', () => {
+            window.clearTimeout(debounceTimer);
+            debounceTimer = window.setTimeout(fetchResults, 250);
         });
 
-        list.hidden = false;
-    };
+        input.addEventListener('blur', () => {
+            window.setTimeout(closeList, 150);
+        });
 
-    const fetchResults = () => {
-        const q = input.value.trim();
-        if (q.length < 2) {
-            closeList();
-            return;
+        if (categorySelect && categorySelect.id === 'subject_category') {
+            categorySelect.addEventListener('change', () => {
+                if (input.value.trim().length >= 2) {
+                    fetchResults();
+                }
+            });
         }
-
-        const params = new URLSearchParams({ q });
-        if (categorySelect && categorySelect.value) {
-            params.set('category', categorySelect.value);
-        }
-
-        fetch(searchUrl + '?' + params.toString(), {
-            headers: { Accept: 'application/json' },
-            credentials: 'same-origin',
-        })
-            .then((response) => response.json())
-            .then((data) => renderResults(Array.isArray(data.results) ? data.results : []))
-            .catch(() => closeList());
-    };
-
-    input.addEventListener('input', () => {
-        window.clearTimeout(debounceTimer);
-        debounceTimer = window.setTimeout(fetchResults, 250);
-    });
-
-    input.addEventListener('blur', () => {
-        window.setTimeout(closeList, 150);
     });
 }
 

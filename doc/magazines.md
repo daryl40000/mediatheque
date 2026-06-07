@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.4.0** · **Date : 2026-05-31**
+**Version : 0.4.1** · **Date : 2026-05-31**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -10,7 +10,7 @@ L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **nu
 
 | Page | URL | Rôle |
 |------|-----|------|
-| Liste des séries | `/magazines.php` | Séries présentes dans votre collection |
+| Liste des séries | `/magazines.php` | Séries en collection + **recherche globale** (sujets, sommaires, PDF) (**0.4.1**) |
 | Mes envies | `/magazines-envies.php` | Numéros que vous souhaitez acquérir |
 | Numéros d’une série | `/serie-magazine.php?series_id=…` | Grille de numéros, recherche, tri, filtres |
 | Fiche numéro | `/magazine-numero.php?id=…` | Détail, PDF, édition, suppression |
@@ -120,9 +120,23 @@ Migration : `sql/migrations/033_magazine_pdf_text_preview.sql`.
 Sur `/serie-magazine.php`, le champ **Rechercher** (`q`) filtre sur :
 
 - numéro affiché ;
-- date de parution ;
+- date de parution (ex. « juin 2024 ») ;
 - sommaire ;
 - texte extrait du PDF (`pdf_text_preview`).
+
+Sur **Mes magazines** (`/magazines.php`), le champ **Rechercher dans vos magazines** interroge en plus :
+
+- les **sujets** associés (tests, previews, comparatifs, dossiers) ;
+- le **sommaire** et l’**extrait PDF** de tous les numéros de votre bibliothèque ;
+- les **titres de séries** (comme avant).
+
+Les résultats sont regroupés en **Sujets trouvés**, **Numéros trouvés** et **Séries correspondantes**. Une autocomplétion propose les sujets déjà connus pendant la saisie.
+
+Depuis **0.4.1**, la recherche texte utilise un index **FTS5** (`magazine_issue_fts`) : plus rapide sur de gros catalogues. Si FTS n’est pas disponible, l’ancienne recherche `LIKE` est utilisée.
+
+La **recherche par sujet** (`/magazines-recherche.php`) utilise aussi FTS sur le catalogue de sujets (`magazine_subject_fts`).
+
+Migration : `sql/migrations/038_magazine_fts.sql`.
 
 **Grille** : **48 numéros par page** (8 colonnes × 6 lignes sur grand écran). Navigation **Première / Préc. / Suiv. / Dernière** et saut de page (`?page=2`). Les écrans plus étroits affichent moins de colonnes (6, 4 ou 2) pour garder des tuiles lisibles.
 
@@ -176,7 +190,9 @@ Classe : `lib/UploadLimits.php` — alerte dans les formulaires si les limites P
 | `lib/SeriesRepository.php` | Séries magazine (dont **tags** de série) |
 | `lib/MagazineSubject.php` | Catégories de sujets (Test, Preview…) |
 | `lib/MagazineSubjectRepository.php` | Catalogue sujets, liens numéro ↔ sujet, recherche |
-| `lib/MagazineSeriesTag.php` | Tags libres de série (badges, un ou plusieurs) |
+| `lib/MagazineIssueFts.php` | Index FTS5 des numéros (recherche série) |
+| `lib/MagazineSubjectFts.php` | Index FTS5 du catalogue de sujets |
+| `lib/MagazineFtsQuery.php` | Construction des requêtes MATCH |
 | `templates/_magazine_issue_subjects.php` | Formulaire sujets sur fiche numéro |
 | `templates/_magazine_series_tags_field.php` | Badges tags sur fiche série |
 | `templates/_magazine_delete_button.php` | Formulaire suppression (mode fiche) |
@@ -196,12 +212,15 @@ Pour retrouver un **test**, une **preview** ou un **dossier** dans l’ensemble 
    - **2 tags ou plus** → menu déroulant à chaque ajout ;
    - **aucun tag** → précision libre optionnelle sur le numéro.
 2. **Fiche numéro**, section **Sujets et tests** : catégorie (**Test**, Preview, Comparatif, Dossier) + nom ;
+   - **autocomplétion** pendant la saisie : choisissez un sujet déjà existant pour éviter les doublons (ex. « After Life » vs « Afterlife ») ;
+   - à l’enregistrement, les libellés **proches** (espaces ou ponctuation différents) sont **fusionnés** avec le sujet existant ;
    - **année** = date de parution du numéro (obligatoire pour ajouter un sujet).
 3. **Recherche par sujet** (`/magazines-recherche.php`) : filtre **Test** regroupe aussi les anciennes catégories en base ; autocomplétion sur le nom.
+4. **Mes magazines** (`/magazines.php`) : recherche globale dans titres, sujets, sommaires et extraits PDF (depuis **0.4.1**).
 
 Affichage type : `Gran Turismo 7 (PC · 2024)`.
 
-Tables : `magazine_subject`, `oeuvre_magazine_subject`, `series.tags` — migrations `034` à `037`.
+Tables : `magazine_subject`, `oeuvre_magazine_subject`, `series.tags` — migrations `034` à `037` ; index FTS — migration `038`.
 
 ---
 
@@ -217,6 +236,6 @@ Pour le dev local avec import PDF volumineux : utilisez `./start-dev.sh` plutôt
 
 ---
 
-*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (section 0.4.0, 0.3.2…) et [ROADMAP.md](../ROADMAP.md) (phase M5).*
+*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (sections 0.4.1, 0.4.0, 0.3.2…) et [ROADMAP.md](../ROADMAP.md) (phase M5).*
 
 **Import massif d’affiches films** (plusieurs centaines) : page **Importer** → ZIP jusqu’à 200 Mo ([doc via README](../README.md)).

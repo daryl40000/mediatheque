@@ -89,9 +89,16 @@ $hasSingleTag = $forcedTag !== null;
                 </select>
 
                 <label for="attach_label">Nom du sujet</label>
-                <input type="text" name="label" id="attach_label" required maxlength="200"
-                       placeholder="Ex. Gran Turismo 7, Peugeot 308 III, RTX 4080"
-                       autocomplete="off" data-subject-autocomplete="1">
+                <div class="magazine-subject-form__label-wrap magazine-subject-search__row--autocomplete"
+                     data-magazine-subject-autocomplete="fill"
+                     data-search-url="<?= Moncine\View::escape(Moncine\View::magazineSubjectApiUrl()) ?>">
+                    <input type="text" name="label" id="attach_label" required maxlength="200"
+                           placeholder="Ex. Gran Turismo 7, Peugeot 308 III, RTX 4080"
+                           autocomplete="off" autocapitalize="off" spellcheck="false"
+                           aria-autocomplete="list" aria-controls="attach_label_suggestions">
+                    <ul class="catalog-title-autocomplete__list magazine-subject-suggestions" id="attach_label_suggestions"
+                        role="listbox" hidden></ul>
+                </div>
 
                 <?php if ($hasSingleTag): ?>
                     <p class="hint">

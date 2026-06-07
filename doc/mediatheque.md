@@ -1,6 +1,6 @@
 # Médiathèque — guide du fork
 
-**Version : 0.4.0** · **Date : 2026-05-31**
+**Version : 0.4.1** · **Date : 2026-05-31**
 
 Ce document décrit ce qu’est la **Médiathèque**, ce qui a été livré en **0.1.0**, et comment cela s’articule avec **Monciné**.
 
@@ -38,7 +38,9 @@ Un clic change **toute l’interface** : couleur, libellés du menu (« Mes film
 
 Depuis **0.3.2**, la page **`/utilisateur.php`** propose des onglets **Films** et **Magazines** (plus message « bientôt » pour les autres domaines). Les magazines d’un ami sont consultables en lecture seule : séries → numéros → fiche (sans accès aux PDF). Voir [CHANGELOG.md](../CHANGELOG.md) (section 0.3.2).
 
-Depuis **0.4.0**, les magazines disposent de **sujets** (tests, previews…) liés aux numéros, de **tags de série** (badges PC, PS5…) et d’une **recherche globale par sujet** — voir [magazines.md](magazines.md) §11.
+Depuis **0.4.0**, les magazines disposent de **sujets** (tests, previews…) liés aux numéros, de **tags de série** (badges PC, PS5…) et d’une **recherche par sujet** — voir [magazines.md](magazines.md) §11.
+
+Depuis **0.4.1** : **recherche FTS** (texte intégral SQLite) dans les numéros et le catalogue de sujets ; **recherche globale** sur **Mes magazines** (séries + sujets + sommaires + extraits PDF) ; **autocomplétion** à la saisie d’un sujet sur la fiche numéro ; fusion des libellés proches (« After Life » / « Afterlife »).
 
 ### Pages réservées aux films
 
@@ -108,7 +110,7 @@ Voir `.gitignore` :
 
 Points essentiels :
 
-- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.4.0**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.4.1**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
 - **`media_domain`** (onglet Films/BD/…) ≠ **`moncine_kind`** (film/série/spectacle dans l’onglet Films).
 - Nouveau code multi-médias : `MediaDomain`, `MediaContext`, `CatalogSchema::applyMediaDomainFilter()`.
 

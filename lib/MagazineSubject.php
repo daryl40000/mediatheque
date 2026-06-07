@@ -89,6 +89,23 @@ final class MagazineSubject
         return self::choices()[$category] ?? self::choices()[self::TEST];
     }
 
+    /**
+     * Clé de comparaison pour regrouper des libellés proches
+     * (ex. « After Life » et « Afterlife » → « afterlife »).
+     */
+    public static function normalizeLabelKey(string $label): string
+    {
+        $label = mb_strtolower(trim($label));
+        if ($label === '') {
+            return '';
+        }
+
+        $label = preg_replace('/\s+/u', '', $label) ?? '';
+        $label = preg_replace('/[^\p{L}\p{N}]/u', '', $label) ?? '';
+
+        return $label;
+    }
+
     /** Libellé complet affiché (ex. « Gran Turismo 7 (PS5 · 2024) »). */
     public static function displayLabel(string $label, string $detail = '', int $parutionYear = 0): string
     {

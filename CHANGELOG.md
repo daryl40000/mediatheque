@@ -9,6 +9,31 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.4.1] — 2026-05-31
+
+**Magazines — recherche FTS (texte intégral)**
+
+### Ajouté
+
+- Index **FTS5** SQLite pour la recherche rapide dans les **numéros** (`magazine_issue_fts`) : n°, sommaire, extrait PDF, date.
+- Index **FTS5** pour le **catalogue de sujets** (`magazine_subject_fts`).
+- Triggers SQL de synchronisation automatique ; repli **LIKE** si FTS indisponible.
+- Classes `MagazineFtsQuery`, `MagazineIssueFts`, `MagazineSubjectFts` ; migration `038_magazine_fts.sql`.
+- **Recherche globale** sur **Mes magazines** : titres de séries, sujets (tests, previews, dossiers), sommaires et extraits PDF.
+- **Autocomplétion** à la saisie d’un sujet sur la fiche numéro (réutilise le catalogue existant).
+- Regroupement des libellés proches à l’ajout (ex. « After Life » / « Afterlife »).
+
+### Modifié
+
+- Champ de recherche **Mes magazines** : placeholder et résultats par sujets / numéros / séries.
+- Recherche par sujet et par série : syntaxe FTS5 corrigée (`magazine_issue_fts MATCH`, nom complet de table).
+
+### Corrigé
+
+- Erreur SQL **« no such column: f »** lors d’une recherche sur **Mes magazines** : SQLite n’accepte pas l’alias de table avec l’opérateur `MATCH` FTS5.
+
+---
+
 ## [0.4.0] — 2026-05-31
 
 **Magazines — sujets, tags de série et recherche globale**

@@ -3784,6 +3784,26 @@ body.media-domain--magazine.page-wide .container--wide {
     max-width: 36rem;
 }
 
+.magazine-subject-form__label-wrap {
+    position: relative;
+}
+
+.magazine-global-search__hint {
+    margin-top: 0.35rem;
+}
+
+.magazine-global-results {
+    margin-top: 1.5rem;
+}
+
+.magazine-global-results__series-heading {
+    margin-top: 2rem;
+}
+
+.magazine-global-results__issues {
+    margin-top: 0.75rem;
+}
+
 .magazine-subject-search__row {
     margin-bottom: 0.75rem;
 }

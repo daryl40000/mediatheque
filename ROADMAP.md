@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.2.1** (2026-05-31)  
+**Version actuelle : 0.4.1** (2026-05-31)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -201,7 +201,7 @@ Comptes, foyers, envies personnelles et de groupe, catalogue partagé, soumissio
 | Recherche série (n°, date, sommaire) | ✅ 0.2.1 | Paramètre `q` |
 | Texte PDF (6 pages) | ✅ 0.2.1 | `pdftotext` → `pdf_text_preview` |
 | Couverture / pages auto | ✅ 0.2.1 | `pdftoppm`, `pdfinfo` |
-| Recherche FTS globale | ⏳ | Hors scope 0.2.1 |
+| Recherche FTS globale | ✅ 0.4.1 | `magazine_issue_fts`, `magazine_subject_fts` (FTS5) |
 
 **Doc :** [doc/magazines.md](doc/magazines.md) · **Infra :** `stored_objects`, `StoredObjectDelivery`, Poppler optionnel.
 

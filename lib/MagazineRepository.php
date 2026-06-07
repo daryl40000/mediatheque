@@ -136,8 +136,7 @@ final class MagazineRepository
         ];
 
         if (trim($query) !== '') {
-            $where[] = 'LOWER(s.titre) LIKE LOWER(:q) ESCAPE \'\\\'';
-            $params['q'] = LikePattern::containsFragment(trim($query));
+            $where[] = $this->seriesGlobalSearchFilterSql(trim($query), $userId, $foyerId, $statut, $params);
         }
 
         $order = $this->seriesOrderClause($sortBy, $sortDir);
@@ -307,6 +306,78 @@ final class MagazineRepository
         if ($limit !== null && $limit > 0) {
             $sql .= ' LIMIT ' . (int) $limit . ' OFFSET ' . max(0, (int) ($offset ?? 0));
         }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($this->filterParamsForSql($sql, $params));
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /**
+     * Numéros de la bibliothèque correspondant à une recherche globale (sommaire, PDF, n°, date).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function searchIssuesInLibrary(
+        int $userId,
+        int $foyerId,
+        ?string $statut = null,
+        string $searchQuery = '',
+        int $limit = 30
+    ): array {
+        $searchQuery = trim($searchQuery);
+        if (!self::isAvailable() || $searchQuery === '') {
+            return [];
+        }
+
+        $statutNorm = $statut !== null ? LibraryStatut::normalize($statut) : null;
+        $params = [
+            'domain' => MediaDomain::MAGAZINE,
+            'domain_series' => MediaDomain::MAGAZINE,
+            'in_wishlist_user' => $userId,
+            'in_wishlist_statut' => LibraryStatut::WISHLIST,
+        ];
+
+        [$seriesStatutSql, $seriesStatutParams] = $this->seriesLibraryStatutFilter($statut, $userId, $foyerId);
+        [$statutSql, $statutParams] = $this->libraryStatutFilter($statut, $userId, $foyerId);
+        [$searchSql, $searchParams] = $this->issueGlobalSearchFilterSql($searchQuery);
+        if ($searchSql === '') {
+            return [];
+        }
+
+        $params = array_merge($params, $seriesStatutParams, $statutParams, $searchParams);
+
+        $where = [
+            's.media_domain = :domain_series',
+            $seriesStatutSql,
+            $statutSql,
+            $searchSql,
+        ];
+        if ($statutNorm === LibraryStatut::COLLECTION) {
+            $where[] = $this->sqlIssuePossessedCondition('b', 'om');
+        }
+
+        $limit = max(1, min($limit, 50));
+        $inWishlistSelect = $statutNorm === LibraryStatut::COLLECTION
+            ? ', (SELECT COUNT(*) FROM bibliotheque bw
+                  WHERE bw.oeuvre_id = o.id
+                    AND bw.statut = :in_wishlist_statut
+                    AND bw.user_id = :in_wishlist_user) AS in_wishlist'
+            : ', 0 AS in_wishlist';
+
+        $sql = 'SELECT b.id AS bib_id, b.statut, b.support_physique, b.created_at AS bib_created_at,
+                    o.id AS oeuvre_id, o.titre, o.poster_url,
+                    om.numero, om.numero_ordre, om.date_parution, om.sommaire, om.pages,
+                    om.est_hors_serie, om.stored_object_id,
+                    s.id AS series_id, s.titre AS series_titre, s.publication_type' . $inWishlistSelect . '
+                FROM oeuvre_magazine om
+                INNER JOIN oeuvres o ON o.id = om.oeuvre_id AND o.media_domain = :domain
+                INNER JOIN series s ON s.id = om.series_id
+                INNER JOIN series_bibliotheque sb ON sb.series_id = s.id
+                INNER JOIN bibliotheque b ON b.oeuvre_id = o.id
+                WHERE ' . implode(' AND ', $where) . '
+                ORDER BY om.date_parution DESC, om.numero_ordre DESC, b.id DESC
+                LIMIT ' . $limit;
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($this->filterParamsForSql($sql, $params));
@@ -549,6 +620,8 @@ final class MagazineRepository
 
             $this->db->commit();
 
+            MagazineIssueFts::upsert($oeuvreId);
+
             if (MagazineSupport::isPossessed([
                 'support_physique' => $support,
                 'stored_object_id' => (int) ($data['stored_object_id'] ?? 0),
@@ -639,6 +712,8 @@ final class MagazineRepository
             }
 
             $this->db->commit();
+
+            MagazineIssueFts::upsert($oeuvreId);
 
             $this->clearWishlistEntriesWhenPossessed($oeuvreId);
 
@@ -986,6 +1061,8 @@ final class MagazineRepository
         $text = MagazinePdfTextExtractor::extractFirstPages($absolutePdfPath);
         $this->db->prepare('UPDATE oeuvre_magazine SET pdf_text_preview = ? WHERE oeuvre_id = ?')
             ->execute([$text, $oeuvreId]);
+        // Trigger SQL met à jour magazine_issue_fts ; secours si index désynchronisé.
+        MagazineIssueFts::upsert($oeuvreId);
     }
 
     /**
@@ -1171,6 +1248,7 @@ final class MagazineRepository
 
     /**
      * Recherche globale dans les numéros d’une série (n°, date, sommaire, texte PDF pages 1–6).
+     * Utilise FTS5 si disponible, sinon LIKE.
      *
      * @return array{0: string, 1: array<string, int|string>}
      */
@@ -1181,22 +1259,8 @@ final class MagazineRepository
             return ['', []];
         }
 
-        $fragment = LikePattern::containsFragment($searchQuery);
-        $orParts = [
-            'LOWER(om.numero) LIKE LOWER(:search_g_numero) ESCAPE \'\\\'',
-            'LOWER(COALESCE(om.sommaire, \'\')) LIKE LOWER(:search_g_sommaire) ESCAPE \'\\\'',
-            'LOWER(COALESCE(om.date_parution, \'\')) LIKE LOWER(:search_g_date_raw) ESCAPE \'\\\'',
-        ];
-        $params = [
-            'search_g_numero' => $fragment,
-            'search_g_sommaire' => $fragment,
-            'search_g_date_raw' => $fragment,
-        ];
-
-        if (self::pdfTextPreviewColumnExists()) {
-            $orParts[] = 'LOWER(COALESCE(om.pdf_text_preview, \'\')) LIKE LOWER(:search_g_pdf) ESCAPE \'\\\'';
-            $params['search_g_pdf'] = $fragment;
-        }
+        $orParts = [];
+        $params = [];
 
         $parsed = PublicationType::parseParutionDateFilter($searchQuery);
         if ($parsed !== null) {
@@ -1208,7 +1272,126 @@ final class MagazineRepository
             }
         }
 
+        $ftsMatch = MagazineIssueFts::isAvailable()
+            ? MagazineIssueFts::matchExpression($searchQuery)
+            : '';
+        if ($ftsMatch !== '') {
+            $orParts[] = 'om.oeuvre_id IN (
+                SELECT magazine_issue_fts.oeuvre_id
+                FROM magazine_issue_fts
+                WHERE magazine_issue_fts.series_id = om.series_id
+                  AND magazine_issue_fts MATCH :search_fts
+            )';
+            $params['search_fts'] = $ftsMatch;
+        } elseif ($parsed === null) {
+            $fragment = LikePattern::containsFragment($searchQuery);
+            $likeParts = [
+                'LOWER(om.numero) LIKE LOWER(:search_g_numero) ESCAPE \'\\\'',
+                'LOWER(COALESCE(om.sommaire, \'\')) LIKE LOWER(:search_g_sommaire) ESCAPE \'\\\'',
+                'LOWER(COALESCE(om.date_parution, \'\')) LIKE LOWER(:search_g_date_raw) ESCAPE \'\\\'',
+            ];
+            $params['search_g_numero'] = $fragment;
+            $params['search_g_sommaire'] = $fragment;
+            $params['search_g_date_raw'] = $fragment;
+
+            if (self::pdfTextPreviewColumnExists()) {
+                $likeParts[] = 'LOWER(COALESCE(om.pdf_text_preview, \'\')) LIKE LOWER(:search_g_pdf) ESCAPE \'\\\'';
+                $params['search_g_pdf'] = $fragment;
+            }
+
+            $orParts[] = '(' . implode(' OR ', $likeParts) . ')';
+        }
+
+        if ($orParts === []) {
+            return ['', []];
+        }
+
         return ['(' . implode(' OR ', $orParts) . ')', $params];
+    }
+
+    /**
+     * Filtre séries : titre, contenu des numéros ou sujets associés (bibliothèque).
+     *
+     * @param array<string, int|string> $params
+     */
+    private function seriesGlobalSearchFilterSql(
+        string $searchQuery,
+        int $userId,
+        int $foyerId,
+        ?string $statut,
+        array &$params
+    ): string {
+        $searchParts = ['LOWER(s.titre) LIKE LOWER(:series_q) ESCAPE \'\\\''];
+        $params['series_q'] = LikePattern::containsFragment($searchQuery);
+
+        [$issueSearchSql, $issueSearchParams] = $this->issueGlobalSearchFilterSql($searchQuery);
+        if ($issueSearchSql !== '') {
+            [$librarySql, $libraryParams] = $this->libraryStatutFilter($statut, $userId, $foyerId);
+            $librarySqlInSub = str_replace('b.', 'b_gs.', $librarySql);
+            $params = array_merge($params, $libraryParams, $issueSearchParams);
+            $params['domain_gs'] = MediaDomain::MAGAZINE;
+            $searchParts[] = 's.id IN (
+                SELECT DISTINCT om_gs.series_id
+                FROM oeuvre_magazine om_gs
+                INNER JOIN oeuvres o_gs ON o_gs.id = om_gs.oeuvre_id AND o_gs.media_domain = :domain_gs
+                INNER JOIN bibliotheque b_gs ON b_gs.oeuvre_id = o_gs.id
+                WHERE ' . $librarySqlInSub . ' AND ' . str_replace('om.', 'om_gs.', $issueSearchSql) . '
+            )';
+        }
+
+        if (MagazineSubjectRepository::isAvailable()) {
+            [$subjectSql, $subjectParams] = $this->subjectGlobalSearchMatchSql($searchQuery);
+            if ($subjectSql !== '') {
+                [$librarySql, $libraryParams] = $this->libraryStatutFilter($statut, $userId, $foyerId);
+                $librarySqlInSub = str_replace('b.', 'b_sub.', $librarySql);
+                $params = array_merge($params, $libraryParams, $subjectParams);
+                $params['domain_sub'] = MediaDomain::MAGAZINE;
+                $searchParts[] = 's.id IN (
+                    SELECT DISTINCT om_sub.series_id
+                    FROM oeuvre_magazine om_sub
+                    INNER JOIN oeuvres o_sub ON o_sub.id = om_sub.oeuvre_id AND o_sub.media_domain = :domain_sub
+                    INNER JOIN bibliotheque b_sub ON b_sub.oeuvre_id = o_sub.id
+                    INNER JOIN oeuvre_magazine_subject oms ON oms.oeuvre_id = om_sub.oeuvre_id
+                    INNER JOIN magazine_subject ms ON ms.id = oms.subject_id
+                    WHERE ' . $librarySqlInSub . ' AND ' . $subjectSql . '
+                )';
+            }
+        }
+
+        return '(' . implode(' OR ', $searchParts) . ')';
+    }
+
+    /**
+     * @return array{0: string, 1: array<string, int|string>}
+     */
+    private function subjectGlobalSearchMatchSql(string $searchQuery): array
+    {
+        $searchQuery = trim($searchQuery);
+        if ($searchQuery === '') {
+            return ['', []];
+        }
+
+        $ftsMatch = MagazineSubjectFts::isAvailable()
+            ? MagazineSubjectFts::matchExpression($searchQuery)
+            : '';
+        if ($ftsMatch !== '') {
+            return [
+                'ms.id IN (
+                    SELECT magazine_subject_fts.subject_id
+                    FROM magazine_subject_fts
+                    WHERE magazine_subject_fts MATCH :series_subj_fts
+                )',
+                ['series_subj_fts' => $ftsMatch],
+            ];
+        }
+
+        return [
+            '(LOWER(ms.label) LIKE LOWER(:series_subj_q) ESCAPE \'\\\' OR LOWER(ms.detail) LIKE LOWER(:series_subj_q_detail) ESCAPE \'\\\')',
+            [
+                'series_subj_q' => LikePattern::containsFragment($searchQuery),
+                'series_subj_q_detail' => LikePattern::containsFragment($searchQuery),
+            ],
+        ];
     }
 
     private function isPdfMime(mixed $mime, string $path): bool
@@ -1335,6 +1518,7 @@ final class MagazineRepository
         if (self::pdfTextPreviewColumnExists()) {
             $this->db->prepare('UPDATE oeuvre_magazine SET pdf_text_preview = ? WHERE oeuvre_id = ?')
                 ->execute(['', $oeuvreId]);
+            MagazineIssueFts::upsert($oeuvreId);
         }
     }
 

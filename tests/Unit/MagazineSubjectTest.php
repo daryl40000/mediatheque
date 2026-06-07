@@ -55,4 +55,16 @@ final class MagazineSubjectTest extends TestCase
         $this->assertSame('PC, PS5', MagazineSeriesTag::normalizeInput('PC, PS5, pc'));
         $this->assertSame('PC, PS5', MagazineSeriesTag::normalizeFromPost(['PC', 'PS5', 'pc']));
     }
+
+    public function testNormalizeLabelKeyGroupsSimilarSpellings(): void
+    {
+        $this->assertSame(
+            MagazineSubject::normalizeLabelKey('After Life'),
+            MagazineSubject::normalizeLabelKey('Afterlife')
+        );
+        $this->assertSame(
+            MagazineSubject::normalizeLabelKey('Gran Turismo 7'),
+            MagazineSubject::normalizeLabelKey('GranTurismo7')
+        );
+    }
 }
