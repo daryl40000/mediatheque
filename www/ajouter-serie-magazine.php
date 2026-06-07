@@ -20,6 +20,7 @@ View::render('ajouter-serie-magazine', [
     'series' => [
         'titre' => trim((string) ($_GET['titre'] ?? '')),
         'publication_type' => 'mensuel',
+        'tags' => '',
         'editeur' => '',
         'issn' => '',
         'langue' => 'fr',

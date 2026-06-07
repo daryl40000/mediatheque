@@ -98,8 +98,8 @@ final class SeriesRepository
         $this->db->prepare(
             'INSERT INTO series (
                 media_domain, titre, publication_type, poster_url, editeur, issn,
-                langue, pays, date_debut, date_fin, notes, created_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime(\'now\'))'
+                langue, pays, date_debut, date_fin, notes, tags, created_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime(\'now\'))'
         )->execute([
             $domain,
             $titre,
@@ -112,6 +112,7 @@ final class SeriesRepository
             self::nullableDate((string) ($data['date_debut'] ?? '')),
             self::nullableDate((string) ($data['date_fin'] ?? '')),
             trim((string) ($data['notes'] ?? '')),
+            MagazineSeriesTag::normalizeInput((string) ($data['tags'] ?? '')),
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -142,7 +143,7 @@ final class SeriesRepository
         $this->db->prepare(
             'UPDATE series SET
                 titre = ?, publication_type = ?, poster_url = ?, editeur = ?, issn = ?,
-                langue = ?, pays = ?, date_debut = ?, date_fin = ?, notes = ?,
+                langue = ?, pays = ?, date_debut = ?, date_fin = ?, notes = ?, tags = ?,
                 updated_at = datetime(\'now\')
              WHERE id = ?'
         )->execute([
@@ -156,6 +157,9 @@ final class SeriesRepository
             self::nullableDate((string) ($data['date_debut'] ?? $series['date_debut'] ?? '')),
             self::nullableDate((string) ($data['date_fin'] ?? $series['date_fin'] ?? '')),
             trim((string) ($data['notes'] ?? $series['notes'] ?? '')),
+            array_key_exists('tags', $data)
+                ? MagazineSeriesTag::normalizeInput((string) $data['tags'])
+                : (string) ($series['tags'] ?? ''),
             $id,
         ]);
 

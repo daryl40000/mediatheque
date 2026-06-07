@@ -54,6 +54,18 @@
                             · ISSN <?= Moncine\View::escape((string) $series['issn']) ?>
                         <?php endif; ?>
                     </p>
+                    <?php
+                    $seriesTagList = Moncine\MagazineSeriesTag::parseList((string) ($series['tags'] ?? ''));
+                    if ($seriesTagList !== []):
+                    ?>
+                        <p class="hint">
+                            Tags :
+                            <?php foreach ($seriesTagList as $tagIndex => $tagLabel): ?>
+                                <?php if ($tagIndex > 0): ?>, <?php endif; ?>
+                                <span class="magazine-tag magazine-tag--series"><?= Moncine\View::escape($tagLabel) ?></span>
+                            <?php endforeach; ?>
+                        </p>
+                    <?php endif; ?>
                     <?php if (trim((string) ($series['notes'] ?? '')) !== ''): ?>
                         <p class="hint"><?= nl2br(Moncine\View::escape((string) $series['notes'])) ?></p>
                     <?php endif; ?>

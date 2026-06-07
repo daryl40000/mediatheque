@@ -15,6 +15,7 @@
         </p>
         <div class="collection-page__actions">
             <a href="/ajouter-serie-magazine.php" class="btn btn-accent">Nouvelle série</a>
+            <a href="<?= Moncine\View::escape(Moncine\View::magazineSubjectSearchUrl()) ?>" class="btn btn-secondary">Recherche par sujet</a>
         </div>
     </header>
 

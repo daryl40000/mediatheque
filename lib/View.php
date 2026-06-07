@@ -66,6 +66,8 @@ final class View
             'maintenance-medias',
             'magazines',
             'magazines-envies',
+            'magazines-recherche',
+            'magazine-sujet',
             'serie-magazine',
             'utilisateur-serie-magazine',
             'utilisateur-numero-magazine',
@@ -643,6 +645,23 @@ final class View
     public static function magazineIssueUrl(int $bibId): string
     {
         return $bibId > 0 ? '/magazine-numero.php?id=' . $bibId : '/magazines.php';
+    }
+
+    public static function magazineSubjectSearchUrl(): string
+    {
+        return '/magazines-recherche.php';
+    }
+
+    public static function magazineSubjectUrl(int $subjectId): string
+    {
+        return $subjectId > 0
+            ? '/magazine-sujet.php?id=' . $subjectId
+            : self::magazineSubjectSearchUrl();
+    }
+
+    public static function magazineSubjectApiUrl(): string
+    {
+        return '/rechercher-sujets-magazine.php';
     }
 
     public static function userProfileMagazineSeriesUrl(

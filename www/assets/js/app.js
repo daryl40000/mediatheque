@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initCollectionBulkSelection();
     initContentKindFields();
     initCatalogTitleAutocomplete();
+    initMagazineSubjectSearchAutocomplete();
+    initMagazineSeriesTagsField();
     initShareLinkCopy();
 
     const params = new URLSearchParams(window.location.search);
@@ -525,6 +527,189 @@ function initShareLinkCopy() {
             } catch {
                 input.select();
             }
+        });
+    });
+}
+
+/** Autocomplétion des sujets magazines (page recherche globale). */
+function initMagazineSubjectSearchAutocomplete() {
+    const row = document.querySelector('.magazine-subject-search__row--autocomplete');
+    if (!row) {
+        return;
+    }
+
+    const input = row.querySelector('#subject_q');
+    const list = document.getElementById('magazine-subject-suggestions');
+    const categorySelect = document.getElementById('subject_category');
+    const searchUrl = row.getAttribute('data-search-url') || '/rechercher-sujets-magazine.php';
+
+    if (!input || !list) {
+        return;
+    }
+
+    let debounceTimer = null;
+
+    const closeList = () => {
+        list.hidden = true;
+        list.innerHTML = '';
+    };
+
+    const renderResults = (results) => {
+        list.innerHTML = '';
+        if (!results.length) {
+            closeList();
+            return;
+        }
+
+        results.forEach((item) => {
+            const li = document.createElement('li');
+            li.className = 'catalog-title-autocomplete__option';
+            li.setAttribute('role', 'option');
+
+            const main = document.createElement('span');
+            main.className = 'catalog-title-autocomplete__option-label';
+            main.textContent = item.display_label || item.label || '';
+
+            const meta = document.createElement('span');
+            meta.className = 'hint';
+            meta.textContent = (item.category_label || '') + (item.issue_count ? ' · ' + item.issue_count + ' num.' : '');
+
+            li.appendChild(main);
+            li.appendChild(meta);
+
+            li.addEventListener('mousedown', (event) => {
+                event.preventDefault();
+                if (item.url) {
+                    window.location.href = item.url;
+                    return;
+                }
+                input.value = item.label || '';
+                closeList();
+            });
+
+            list.appendChild(li);
+        });
+
+        list.hidden = false;
+    };
+
+    const fetchResults = () => {
+        const q = input.value.trim();
+        if (q.length < 2) {
+            closeList();
+            return;
+        }
+
+        const params = new URLSearchParams({ q });
+        if (categorySelect && categorySelect.value) {
+            params.set('category', categorySelect.value);
+        }
+
+        fetch(searchUrl + '?' + params.toString(), {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        })
+            .then((response) => response.json())
+            .then((data) => renderResults(Array.isArray(data.results) ? data.results : []))
+            .catch(() => closeList());
+    };
+
+    input.addEventListener('input', () => {
+        window.clearTimeout(debounceTimer);
+        debounceTimer = window.setTimeout(fetchResults, 250);
+    });
+
+    input.addEventListener('blur', () => {
+        window.setTimeout(closeList, 150);
+    });
+}
+
+/**
+ * Tags de série magazine : badges + ajout / retrait avant enregistrement du formulaire.
+ */
+function initMagazineSeriesTagsField() {
+    document.querySelectorAll('[data-series-tags-field]').forEach((root) => {
+        const list = root.querySelector('.magazine-series-tags-field__list');
+        const input = root.querySelector('.magazine-series-tags-field__input');
+        const addBtn = root.querySelector('.magazine-series-tags-field__add-btn');
+        if (!list || !input || !addBtn) {
+            return;
+        }
+
+        const collectKeys = () => new Set(
+            [...list.querySelectorAll('input[name="tags[]"]')]
+                .map((field) => field.value.trim().toLowerCase())
+                .filter(Boolean)
+        );
+
+        const appendTag = (label) => {
+            const trimmed = label.trim();
+            if (trimmed === '') {
+                return;
+            }
+
+            const key = trimmed.toLowerCase();
+            if (collectKeys().has(key)) {
+                return;
+            }
+
+            const item = document.createElement('li');
+            item.className = 'magazine-series-tags-field__item';
+            item.setAttribute('role', 'listitem');
+
+            const badge = document.createElement('span');
+            badge.className = 'magazine-tag magazine-tag--series';
+
+            const text = document.createElement('span');
+            text.className = 'magazine-series-tags-field__text';
+            text.textContent = trimmed;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'magazine-series-tags-field__remove';
+            removeBtn.title = 'Retirer ce tag';
+            removeBtn.setAttribute('aria-label', 'Retirer le tag ' + trimmed);
+            removeBtn.textContent = '×';
+
+            badge.appendChild(text);
+            badge.appendChild(removeBtn);
+
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'tags[]';
+            hidden.value = trimmed;
+
+            item.appendChild(badge);
+            item.appendChild(hidden);
+            list.appendChild(item);
+        };
+
+        const addFromInput = () => {
+            const raw = input.value.trim();
+            if (raw === '') {
+                return;
+            }
+
+            raw.split(/[,;]+/).forEach((part) => appendTag(part));
+            input.value = '';
+            input.focus();
+        };
+
+        addBtn.addEventListener('click', addFromInput);
+
+        input.addEventListener('keydown', (event) => {
+            if (event.key === 'Enter') {
+                event.preventDefault();
+                addFromInput();
+            }
+        });
+
+        list.addEventListener('click', (event) => {
+            const removeBtn = event.target.closest('.magazine-series-tags-field__remove');
+            if (!removeBtn) {
+                return;
+            }
+            removeBtn.closest('.magazine-series-tags-field__item')?.remove();
         });
     });
 }

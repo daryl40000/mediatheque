@@ -45,6 +45,11 @@ $posterSrc = Moncine\View::posterSrc(trim((string) ($series['poster_url'] ?? '')
             <?php endforeach; ?>
         </select>
 
+        <?php
+        $seriesTagsList = Moncine\MagazineSeriesTag::parseList((string) ($series['tags'] ?? ''));
+        require MONCINE_ROOT . '/templates/_magazine_series_tags_field.php';
+        ?>
+
         <label for="cover_file">Logo ou couverture type (JPEG, PNG, WebP)</label>
         <input type="file" name="cover_file" id="cover_file" accept="image/jpeg,image/png,image/webp">
         <p class="hint">Image affichée dans la liste « Mes magazines ». Vous pourrez la remplacer en téléversant une nouvelle image.</p>

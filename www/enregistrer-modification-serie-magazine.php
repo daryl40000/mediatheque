@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\Csrf;
+use Moncine\MagazineSeriesTag;
 use Moncine\MediaDomainGuards;
 use Moncine\PosterStorage;
 use Moncine\SeriesRepository;
@@ -41,6 +42,7 @@ $result = $repo->update($seriesId, [
     'date_debut' => (string) ($_POST['date_debut'] ?? ''),
     'date_fin' => (string) ($_POST['date_fin'] ?? ''),
     'notes' => (string) ($_POST['notes'] ?? ''),
+    'tags' => MagazineSeriesTag::normalizeFromPost($_POST['tags'] ?? ''),
 ]);
 
 if ($result !== true) {

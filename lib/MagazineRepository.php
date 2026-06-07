@@ -408,6 +408,7 @@ final class MagazineRepository
                     om.series_id, om.numero, om.numero_ordre, om.date_parution, om.sommaire,
                     om.pages, om.est_hors_serie, om.stored_object_id,
                     s.titre AS series_titre, s.publication_type, s.editeur, s.issn, s.poster_url AS series_poster_url,
+                    s.tags AS series_tags,
                     (SELECT COUNT(*) FROM bibliotheque bw
                      WHERE bw.oeuvre_id = o.id
                        AND bw.statut = :wishlist_check

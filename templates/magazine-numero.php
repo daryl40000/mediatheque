@@ -75,6 +75,8 @@
         <?php endif; ?>
         <?php require MONCINE_ROOT . '/templates/_upload_limits_warning.php'; ?>
 
+        <?php require MONCINE_ROOT . '/templates/_magazine_issue_subjects.php'; ?>
+
         <section class="magazine-pdf-section">
             <h2>PDF du numéro</h2>
             <?php if ($pdfUrl !== ''): ?>

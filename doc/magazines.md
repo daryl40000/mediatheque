@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.3.2** · **Date : 2026-05-31**
+**Version : 0.4.0** · **Date : 2026-05-31**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -18,6 +18,8 @@ L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **nu
 | Ajouter un numéro | `/ajouter-numero-magazine.php?series_id=…` | Nouveau numéro + import PDF |
 | Profil ami — série | `/utilisateur-serie-magazine.php?id=…&series_id=…` | Numéros d’un ami (lecture seule, **0.3.2**) |
 | Profil ami — numéro | `/utilisateur-numero-magazine.php?id=…&bib_id=…` | Fiche numéro sans PDF partagé (**0.3.2**) |
+| Recherche par sujet | `/magazines-recherche.php` | Tests, previews, dossiers dans **toutes** les séries (**0.4.0**) |
+| Fiche sujet | `/magazine-sujet.php?id=…` | Numéros et séries concernés par un sujet (**0.4.0**) |
 
 Paramètres utiles sur la liste série :
 
@@ -171,14 +173,39 @@ Classe : `lib/UploadLimits.php` — alerte dans les formulaires si les limites P
 | `lib/MagazinePdfTextExtractor.php` | Extraction texte 6 pages |
 | `lib/MagazinePdfCoverExtractor.php` | Couverture page 1 |
 | `lib/MagazinePdfInfo.php` | Nombre de pages |
-| `lib/SeriesRepository.php` | Séries magazine |
-| `lib/PublicationType.php` | Types de parution, formatage dates |
+| `lib/SeriesRepository.php` | Séries magazine (dont **tags** de série) |
+| `lib/MagazineSubject.php` | Catégories de sujets (Test, Preview…) |
+| `lib/MagazineSubjectRepository.php` | Catalogue sujets, liens numéro ↔ sujet, recherche |
+| `lib/MagazineSeriesTag.php` | Tags libres de série (badges, un ou plusieurs) |
+| `templates/_magazine_issue_subjects.php` | Formulaire sujets sur fiche numéro |
+| `templates/_magazine_series_tags_field.php` | Badges tags sur fiche série |
 | `templates/_magazine_delete_button.php` | Formulaire suppression (mode fiche) |
 | `templates/_magazine_wishlist_button.php` | Bouton / badge envies |
+| `lib/PublicationType.php` | Types de parution, formatage dates |
 
 ---
 
-## 11. Mise à jour depuis 0.2.0
+## 11. Sujets et recherche globale (**0.4.0**)
+
+Pour retrouver un **test**, une **preview** ou un **dossier** dans l’ensemble de vos magazines :
+
+1. **Tags de la série** (création ou modification de la revue) :
+   - tapez un mot (ex. `PC`) → **Ajouter** (ou Entrée) → badge ;
+   - répétez pour un 2ᵉ tag (ex. `PS5`) ; **×** pour retirer avant enregistrement ;
+   - **1 tag** → appliqué automatiquement à chaque sujet du numéro ;
+   - **2 tags ou plus** → menu déroulant à chaque ajout ;
+   - **aucun tag** → précision libre optionnelle sur le numéro.
+2. **Fiche numéro**, section **Sujets et tests** : catégorie (**Test**, Preview, Comparatif, Dossier) + nom ;
+   - **année** = date de parution du numéro (obligatoire pour ajouter un sujet).
+3. **Recherche par sujet** (`/magazines-recherche.php`) : filtre **Test** regroupe aussi les anciennes catégories en base ; autocomplétion sur le nom.
+
+Affichage type : `Gran Turismo 7 (PC · 2024)`.
+
+Tables : `magazine_subject`, `oeuvre_magazine_subject`, `series.tags` — migrations `034` à `037`.
+
+---
+
+## 12. Mise à jour depuis 0.2.0
 
 ```bash
 php lib/cli/migrate.php
@@ -190,6 +217,6 @@ Pour le dev local avec import PDF volumineux : utilisez `./start-dev.sh` plutôt
 
 ---
 
-*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (sections 0.3.2 et 0.3.1) et [ROADMAP.md](../ROADMAP.md) (phase M5).*
+*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (section 0.4.0, 0.3.2…) et [ROADMAP.md](../ROADMAP.md) (phase M5).*
 
 **Import massif d’affiches films** (plusieurs centaines) : page **Importer** → ZIP jusqu’à 200 Mo ([doc via README](../README.md)).

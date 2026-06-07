@@ -40,6 +40,8 @@ final class MediaDomainGuards
         '/enregistrer-modification-serie-magazine.php',
         '/traiter-numero-magazine.php',
         '/imprimer-serie-magazine.php',
+        '/magazines-recherche.php',
+        '/magazine-sujet.php',
     ];
 
     public static function isFilmOnlyPath(string $path): bool

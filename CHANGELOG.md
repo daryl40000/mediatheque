@@ -9,6 +9,28 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.4.0] — 2026-05-31
+
+**Magazines — sujets, tags de série et recherche globale**
+
+### Ajouté
+
+- **Catalogue de sujets** (`magazine_subject`, `oeuvre_magazine_subject`) : catégories **Test**, Preview, Comparatif, Dossier.
+- **Sujets sur la fiche numéro** (`templates/_magazine_issue_subjects.php`) : associer un test, une preview ou un dossier à un numéro.
+- **Tags de série** (`series.tags`) : saisie par **badges** sur la fiche série (Ajouter / ×) ; un tag → appliqué à tous les sujets ; plusieurs tags → menu déroulant sur chaque numéro.
+- **Année automatique** sur les tags : tirée de la **date de parution** du numéro (`parution_year`), ex. « Gran Turismo 7 (PC · 2024) ».
+- **Recherche globale** `/magazines-recherche.php` et **fiche sujet** `/magazine-sujet.php` (statistiques + liste des parutions).
+- API JSON `/rechercher-sujets-magazine.php` (autocomplétion).
+- Classes `MagazineSubject`, `MagazineSubjectRepository`, `MagazineSeriesTag` ; tests unitaires et d’intégration.
+- Migrations `034` à `037` (sujets, année, tags série, fusion catégorie Test).
+
+### Modifié
+
+- Catégories **Test jeu / voiture / matériel** fusionnées en une seule catégorie **Test** ; la recherche inclut les anciennes valeurs en base.
+- Menu **Mes magazines** : lien « Recherche par sujet ».
+
+---
+
 ## [0.3.2] — 2026-05-31
 
 **Navigation onglets ; profil public multi-médias**
