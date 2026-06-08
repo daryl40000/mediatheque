@@ -129,16 +129,17 @@ final class MagazineSubjectRepository
         string $label,
         string $userDetail,
         array $series,
-        array $issue
+        array $issue,
+        int $userParutionYear = 0
     ): array|string {
         $label = trim($label);
         if ($label === '') {
             return 'Indiquez un nom de sujet.';
         }
 
-        $parutionYear = MagazineSubject::parutionYearFromIssue($issue);
+        $parutionYear = MagazineSubject::normalizeParutionYear($userParutionYear);
         if ($parutionYear <= 0) {
-            return 'Renseignez la date de parution du numéro avant d\'ajouter un sujet.';
+            return 'Choisissez une année pour ce sujet.';
         }
 
         $category = MagazineSubject::normalizeCategory($category);

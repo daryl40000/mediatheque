@@ -48,6 +48,8 @@ $seriesForSubjects = [
     'tags' => (string) ($issue['series_tags'] ?? ''),
 ];
 $parutionYear = MagazineSubject::parutionYearFromIssue($issue);
+$defaultSubjectYear = MagazineSubject::defaultSubjectYearFromIssue($issue);
+$subjectYearChoices = MagazineSubject::subjectYearChoices($defaultSubjectYear);
 $seriesTags = MagazineSeriesTag::listForSeries($seriesForSubjects);
 $forcedTag = MagazineSeriesTag::singleTag($seriesForSubjects);
 $issueSubjects = MagazineSubjectRepository::isAvailable()
@@ -68,6 +70,8 @@ View::render('magazine-numero', [
     'seriesTags' => $seriesTags,
     'forcedTag' => $forcedTag,
     'parutionYear' => $parutionYear,
+    'defaultSubjectYear' => $defaultSubjectYear,
+    'subjectYearChoices' => $subjectYearChoices,
     'dateLabel' => PublicationType::formatParutionDate(
         (string) ($issue['date_parution'] ?? ''),
         (string) ($issue['publication_type'] ?? '')

@@ -78,7 +78,8 @@ final class MagazineSubjectTest extends MoncineTestCase
             'Les jeux indépendants',
             '',
             $seriesAData,
-            $issueA
+            $issueA,
+            2024
         );
         $this->assertIsArray($prepared);
         $this->assertSame('PC', $prepared['detail']);
@@ -109,7 +110,8 @@ final class MagazineSubjectTest extends MoncineTestCase
             'Gran Turismo 7',
             '',
             $seriesBData,
-            $issueB
+            $issueB,
+            2024
         );
         $this->assertIsString($needsTag);
 
@@ -118,7 +120,8 @@ final class MagazineSubjectTest extends MoncineTestCase
             'Gran Turismo 7',
             'PS4',
             $seriesBData,
-            $issueB
+            $issueB,
+            2024
         );
         $this->assertIsArray($preparedPs4);
 
@@ -172,6 +175,31 @@ final class MagazineSubjectTest extends MoncineTestCase
         );
         $this->assertContains('Sujet Preview Seul', $previewLabels);
         $this->assertNotContains('Sujet Jeu Legacy', $previewLabels);
+    }
+
+    public function testPrepareSubjectUsesSelectedYearNotIssueDate(): void
+    {
+        $subjectRepo = new MagazineSubjectRepository();
+        $prepared = $subjectRepo->prepareSubjectForIssue(
+            MagazineSubject::TEST,
+            'Jeu rétro',
+            '',
+            ['tags' => 'PC'],
+            ['date_parution' => '2024-06-01'],
+            2020
+        );
+        $this->assertIsArray($prepared);
+        $this->assertSame(2020, $prepared['parution_year']);
+
+        $missingYear = $subjectRepo->prepareSubjectForIssue(
+            MagazineSubject::TEST,
+            'Sans année',
+            '',
+            ['tags' => 'PC'],
+            ['date_parution' => '2024-06-01'],
+            0
+        );
+        $this->assertIsString($missingYear);
     }
 
     public function testFindOrCreateReusesSimilarLabelSpelling(): void

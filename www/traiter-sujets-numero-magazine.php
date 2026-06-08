@@ -62,7 +62,8 @@ $prepared = $subjectRepo->prepareSubjectForIssue(
     trim((string) ($_POST['label'] ?? '')),
     trim((string) ($_POST['detail'] ?? '')),
     $series,
-    $issue
+    $issue,
+    (int) ($_POST['parution_year'] ?? 0)
 );
 if (!is_array($prepared)) {
     header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode($prepared));

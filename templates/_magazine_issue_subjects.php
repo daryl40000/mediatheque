@@ -11,20 +11,25 @@
  * @var list<string> $seriesTags
  * @var string|null $forcedTag
  * @var int $parutionYear
+ * @var int $defaultSubjectYear
+ * @var list<int> $subjectYearChoices
  */
 $bibId = (int) ($issue['bib_id'] ?? 0);
 $hasMultipleTags = count($seriesTags) > 1;
 $hasSingleTag = $forcedTag !== null;
+$defaultSubjectYear = (int) ($defaultSubjectYear ?? Moncine\MagazineSubject::defaultSubjectYearFromIssue($issue));
+$subjectYearChoices = $subjectYearChoices ?? Moncine\MagazineSubject::subjectYearChoices($defaultSubjectYear);
 ?>
 <section class="magazine-subjects-section" aria-labelledby="magazine-subjects-heading">
     <h2 id="magazine-subjects-heading">Sujets et tests</h2>
     <p class="hint">
         Associez un sujet testé ou traité dans ce numéro (jeu, voiture, matériel, dossier, interview…).
+        Choisissez l’<strong>année</strong> affichée sur le tag (par défaut celle du numéro
         <?php if ($parutionYear > 0): ?>
-            L’année affichée sur le tag est celle du numéro (<strong><?= (int) $parutionYear ?></strong>).
+            : <strong><?= (int) $parutionYear ?></strong>
         <?php else: ?>
-            Renseignez d’abord la <strong>date de parution</strong> du numéro pour pouvoir ajouter un sujet.
-        <?php endif; ?>
+            — année courante si le numéro n’a pas encore de date de parution
+        <?php endif; ?>).
     </p>
     <?php if ($hasSingleTag): ?>
         <p class="hint">
@@ -73,60 +78,68 @@ $hasSingleTag = $forcedTag !== null;
             </ul>
         <?php endif; ?>
 
-        <?php if ($parutionYear <= 0): ?>
-            <p class="hint">Modifiez le numéro pour ajouter une date de parution, puis revenez ici.</p>
-        <?php else: ?>
-            <form method="post" action="/traiter-sujets-numero-magazine.php" class="magazine-subject-form import-form">
-                <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
-                <input type="hidden" name="bib_id" value="<?= $bibId ?>">
-                <input type="hidden" name="action" value="attach">
+        <form method="post" action="/traiter-sujets-numero-magazine.php" class="magazine-subject-form import-form">
+            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+            <input type="hidden" name="bib_id" value="<?= $bibId ?>">
+            <input type="hidden" name="action" value="attach">
 
-                <label for="attach_category">Catégorie</label>
-                <select name="category" id="attach_category" required>
-                    <?php foreach ($subjectCategories as $catKey => $catLabel): ?>
-                        <option value="<?= Moncine\View::escape($catKey) ?>"><?= Moncine\View::escape($catLabel) ?></option>
+            <label for="attach_category">Catégorie</label>
+            <select name="category" id="attach_category" required>
+                <?php foreach ($subjectCategories as $catKey => $catLabel): ?>
+                    <option value="<?= Moncine\View::escape($catKey) ?>"><?= Moncine\View::escape($catLabel) ?></option>
+                <?php endforeach; ?>
+            </select>
+
+            <label for="attach_label">Nom du sujet</label>
+            <div class="magazine-subject-form__label-wrap magazine-subject-search__row--autocomplete"
+                 data-magazine-subject-autocomplete="fill"
+                 data-search-url="<?= Moncine\View::escape(Moncine\View::magazineSubjectApiUrl()) ?>">
+                <input type="text" name="label" id="attach_label" required maxlength="200"
+                       placeholder="Ex. Gran Turismo 7, Peugeot 308 III, RTX 4080"
+                       autocomplete="off" autocapitalize="off" spellcheck="false"
+                       aria-autocomplete="list" aria-controls="attach_label_suggestions">
+                <ul class="catalog-title-autocomplete__list magazine-subject-suggestions" id="attach_label_suggestions"
+                    role="listbox" hidden></ul>
+            </div>
+
+            <label for="attach_parution_year">Année (sur le tag)</label>
+            <select name="parution_year" id="attach_parution_year" required>
+                <?php foreach ($subjectYearChoices as $yearChoice): ?>
+                    <option value="<?= (int) $yearChoice ?>"<?= (int) $yearChoice === $defaultSubjectYear ? ' selected' : '' ?>>
+                        <?= (int) $yearChoice ?>
+                    </option>
+                <?php endforeach; ?>
+            </select>
+            <p class="hint">
+                Utile si le test porte sur une version antérieure ou postérieure à la parution du numéro.
+            </p>
+
+            <?php if ($hasSingleTag): ?>
+                <p class="hint">
+                    Tag : <strong><?= Moncine\View::escape($forcedTag) ?></strong>
+                </p>
+            <?php elseif ($hasMultipleTags): ?>
+                <label for="attach_detail">Tag</label>
+                <select name="detail" id="attach_detail" required>
+                    <option value="">— Choisir —</option>
+                    <?php foreach ($seriesTags as $tag): ?>
+                        <option value="<?= Moncine\View::escape($tag) ?>">
+                            <?= Moncine\View::escape($tag) ?>
+                        </option>
                     <?php endforeach; ?>
                 </select>
+            <?php else: ?>
+                <label for="attach_detail">Précision (optionnel)</label>
+                <input type="text" name="detail" id="attach_detail" maxlength="120"
+                       placeholder="Variante, finition, motorisation…">
+                <p class="hint">
+                    Vous pouvez aussi définir des tags sur la <a href="<?= Moncine\View::escape(Moncine\View::magazineSeriesUrl((int) ($issue['series_id'] ?? 0))) ?>">fiche série</a>
+                    pour les appliquer automatiquement.
+                </p>
+            <?php endif; ?>
 
-                <label for="attach_label">Nom du sujet</label>
-                <div class="magazine-subject-form__label-wrap magazine-subject-search__row--autocomplete"
-                     data-magazine-subject-autocomplete="fill"
-                     data-search-url="<?= Moncine\View::escape(Moncine\View::magazineSubjectApiUrl()) ?>">
-                    <input type="text" name="label" id="attach_label" required maxlength="200"
-                           placeholder="Ex. Gran Turismo 7, Peugeot 308 III, RTX 4080"
-                           autocomplete="off" autocapitalize="off" spellcheck="false"
-                           aria-autocomplete="list" aria-controls="attach_label_suggestions">
-                    <ul class="catalog-title-autocomplete__list magazine-subject-suggestions" id="attach_label_suggestions"
-                        role="listbox" hidden></ul>
-                </div>
-
-                <?php if ($hasSingleTag): ?>
-                    <p class="hint">
-                        Tag : <strong><?= Moncine\View::escape($forcedTag) ?></strong>
-                    </p>
-                <?php elseif ($hasMultipleTags): ?>
-                    <label for="attach_detail">Tag</label>
-                    <select name="detail" id="attach_detail" required>
-                        <option value="">— Choisir —</option>
-                        <?php foreach ($seriesTags as $tag): ?>
-                            <option value="<?= Moncine\View::escape($tag) ?>">
-                                <?= Moncine\View::escape($tag) ?>
-                            </option>
-                        <?php endforeach; ?>
-                    </select>
-                <?php else: ?>
-                    <label for="attach_detail">Précision (optionnel)</label>
-                    <input type="text" name="detail" id="attach_detail" maxlength="120"
-                           placeholder="Variante, finition, motorisation…">
-                    <p class="hint">
-                        Vous pouvez aussi définir des tags sur la <a href="<?= Moncine\View::escape(Moncine\View::magazineSeriesUrl((int) ($issue['series_id'] ?? 0))) ?>">fiche série</a>
-                        pour les appliquer automatiquement.
-                    </p>
-                <?php endif; ?>
-
-                <button type="submit" class="btn btn-accent">Ajouter le sujet</button>
-            </form>
-        <?php endif; ?>
+            <button type="submit" class="btn btn-accent">Ajouter le sujet</button>
+        </form>
 
         <p class="hint">
             <a href="<?= Moncine\View::escape(Moncine\View::magazineSubjectSearchUrl()) ?>">Rechercher un sujet</a>

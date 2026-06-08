@@ -40,6 +40,11 @@ final class MagazineSubjectTest extends TestCase
     {
         $this->assertSame(2024, MagazineSubject::parutionYearFromIssue(['date_parution' => '2024-06-15']));
         $this->assertSame(0, MagazineSubject::parutionYearFromIssue(['date_parution' => '']));
+        $this->assertSame(2024, MagazineSubject::defaultSubjectYearFromIssue(['date_parution' => '2024-06-15']));
+        $this->assertContains(
+            2024,
+            MagazineSubject::subjectYearChoices(2024)
+        );
     }
 
     public function testSeriesTagResolution(): void

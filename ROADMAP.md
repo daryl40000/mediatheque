@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.4.2** (2026-05-31)  
+**Version actuelle : 0.4.3** (2026-05-31)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -264,6 +264,7 @@ Relier optionnellement un sujet magazine à une **fiche jeu du catalogue** (`oeu
 | Autocomplétion & fusion libellés | ✅ 0.4.1 | Saisie sujet ; orthographes proches (« After Life » / « Afterlife ») |
 | Filtre hors-série (liste numéros) | ✅ 0.4.2 | `possession=hors_serie` |
 | Maintenance sujets (orphelins, fusion) | ✅ 0.4.2 | `/maintenance-magazine-sujets.php` |
+| Année sujet (menu déroulant) | ✅ 0.4.3 | Défaut = année du numéro, modifiable à l’ajout |
 | **Lien sujet → catalogue jeu** | ⏳ M4+ | Voir § Pont Magazines ↔ Jeux ; **données prod actuelles compatibles** |
 
 **Doc :** [doc/magazines.md](doc/magazines.md) · **Infra :** `stored_objects`, `StoredObjectDelivery`, Poppler optionnel.
@@ -372,7 +373,7 @@ flowchart TB
 
 ## Prochaine action (équipe / développement)
 
-1. **Tagger** `v0.4.2` (Interview, filtre hors-série, maintenance sujets admin).  
+1. **Tagger** `v0.4.3` (année sujet choisie à la saisie).  
 2. **Exécuter la checklist M1** (films) et corriger les anomalies.  
 3. **Poursuivre M5** (polish magazines) ou **démarrer M4** (catalogue jeux) selon priorité — le pont sujets ↔ jeux viendra **après M4**.  
 4. Continuer la saisie des **sujets magazine en prod** : compatible avec le lien catalogue futur (voir § Pont Magazines ↔ Jeux).  
@@ -393,4 +394,4 @@ flowchart TB
 | UI | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | **Conventions dev** | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : 0.4.2 — 2026-05-31.*
+*Dernière mise à jour : 0.4.3 — 2026-05-31.*

@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.4.2** · **Date : 2026-05-31**
+**Version : 0.4.3** · **Date : 2026-05-31**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -213,8 +213,8 @@ Pour retrouver un **test**, une **preview**, un **dossier** ou une **interview**
    - **aucun tag** → précision libre optionnelle sur le numéro.
 2. **Fiche numéro**, section **Sujets et tests** : catégorie (**Test**, Preview, Comparatif, Dossier, Interview) + nom ;
    - **autocomplétion** pendant la saisie : choisissez un sujet déjà existant pour éviter les doublons (ex. « After Life » vs « Afterlife ») ;
-   - à l’enregistrement, les libellés **proches** (espaces ou ponctuation différents) sont **fusionnés** avec le sujet existant ;
-   - **année** = date de parution du numéro (obligatoire pour ajouter un sujet).
+   - **année** : menu déroulant sur la fiche numéro (par défaut l’année du numéro, modifiable si le test porte sur une autre année) ;
+   - à l’enregistrement, les libellés **proches** (espaces ou ponctuation différents) sont **fusionnés** avec le sujet existant.
 3. **Recherche par sujet** (`/magazines-recherche.php`) : filtre **Test** regroupe aussi les anciennes catégories en base ; autocomplétion sur le nom.
 4. **Mes magazines** (`/magazines.php`) : recherche globale dans titres, sujets, sommaires et extraits PDF (depuis **0.4.1**).
 
@@ -269,6 +269,6 @@ Pour le dev local avec import PDF volumineux : utilisez `./start-dev.sh` plutôt
 
 ---
 
-*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (sections 0.4.2, 0.4.1, 0.4.0…) et [ROADMAP.md](../ROADMAP.md) (phase M5, pont jeux).*
+*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (sections 0.4.3, 0.4.2, 0.4.1…) et [ROADMAP.md](../ROADMAP.md) (phase M5, pont jeux).*
 
 **Import massif d’affiches films** (plusieurs centaines) : page **Importer** → ZIP jusqu’à 200 Mo ([doc via README](../README.md)).

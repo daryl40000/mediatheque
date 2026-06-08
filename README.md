@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.4.2**
+**Version : 0.4.3**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -185,6 +185,7 @@ Les données (base, affiches, PDF, sessions) sont stockées dans le dossier **`d
 | **Recherche par sujet** | **Recherche par sujet** (`/magazines-recherche.php`) — tests, previews, dossiers, interviews ; tags de série et année du numéro (**0.4.0**, Interview **0.4.2**) |
 | **Filtre hors-série** | Liste numéros d’une série → bouton **Hors-série** (**0.4.2**) |
 | **Nettoyage sujets (admin)** | **Maintenance catalogue** → **Sujets magazines** — orphelins et doublons après faute de frappe (**0.4.2**) |
+| **Année du sujet** | Menu déroulant sur la fiche numéro (défaut = année du magazine, modifiable) (**0.4.3**) |
 
 Pour importer de **gros PDF**, utilisez toujours **`./start-dev.sh`** plutôt que le serveur PHP minimal.
 

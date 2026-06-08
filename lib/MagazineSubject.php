@@ -143,6 +143,48 @@ final class MagazineSubject
 
         $year = (int) substr($date, 0, 4);
 
+        return self::normalizeParutionYear($year);
+    }
+
+    /** Année valide pour un sujet (1900–2100), sinon 0. */
+    public static function normalizeParutionYear(int $year): int
+    {
         return $year >= 1900 && $year <= 2100 ? $year : 0;
+    }
+
+    /**
+     * Année proposée par défaut à l’ajout d’un sujet (date du numéro, sinon année courante).
+     *
+     * @param array<string, mixed> $issue
+     */
+    public static function defaultSubjectYearFromIssue(array $issue): int
+    {
+        $fromIssue = self::parutionYearFromIssue($issue);
+
+        return $fromIssue > 0 ? $fromIssue : (int) date('Y');
+    }
+
+    /**
+     * Années proposées dans le menu déroulant (centrées sur l’année par défaut).
+     *
+     * @return list<int>
+     */
+    public static function subjectYearChoices(int $defaultYear = 0): array
+    {
+        $defaultYear = self::normalizeParutionYear($defaultYear);
+        if ($defaultYear <= 0) {
+            $defaultYear = (int) date('Y');
+        }
+
+        $currentYear = (int) date('Y');
+        $min = max(1900, $defaultYear - 15);
+        $max = min(2100, max($defaultYear + 2, $currentYear + 1));
+
+        $years = [];
+        for ($year = $max; $year >= $min; $year--) {
+            $years[] = $year;
+        }
+
+        return $years;
     }
 }

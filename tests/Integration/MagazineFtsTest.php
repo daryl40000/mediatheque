@@ -115,7 +115,8 @@ final class MagazineFtsTest extends MoncineTestCase
             'RTX 4080',
             '',
             $series,
-            $issue
+            $issue,
+            2024
         );
         $this->assertIsArray($prepared);
         $subject = $subjectRepo->findOrCreate(

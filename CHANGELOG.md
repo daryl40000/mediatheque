@@ -9,6 +9,17 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.4.3] — 2026-05-31
+
+**Magazines — année du sujet choisie à la saisie**
+
+### Modifié
+
+- **Année sur les sujets** : menu déroulant à l’ajout d’un sujet sur la fiche numéro (par défaut l’année du numéro, modifiable) — remplace l’affectation automatique systématique à la date de parution.
+- Ajout d’un sujet possible même si le numéro n’a pas encore de date de parution (année courante proposée par défaut).
+
+---
+
 ## [0.4.2] — 2026-05-31
 
 **Magazines — Interview, filtre hors-série, maintenance sujets admin**
