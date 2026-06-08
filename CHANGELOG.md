@@ -9,6 +9,26 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.4.2] — 2026-05-31
+
+**Magazines — Interview, filtre hors-série, maintenance sujets admin**
+
+### Ajouté
+
+- Catégorie **Interview** sur les sujets magazines (alias « entretien » / « entretiens »).
+- **Filtre Hors-série** sur la liste des numéros d’une série (`possession=hors_serie`) ; export PDF série avec libellé adapté.
+- **Maintenance admin — sujets magazines** (`/maintenance-magazine-sujets.php`) : suppression des sujets **orphelins** (créés par erreur, sans numéro lié), purge groupée, fusion de **doublons probables** ; journal d’audit (`MagazineSubjectMaintenance`, `CatalogAuditLog`).
+
+### Modifié
+
+- **ROADMAP** : section **Pont Magazines ↔ Jeux vidéo** (lien optionnel sujet → fiche jeu, compatibilité des données déjà saisies en production).
+
+### Corrigé
+
+- Mise à jour partielle d’un numéro (couverture, tag papier, etc.) ne remettait plus le flag **hors-série** à zéro.
+
+---
+
 ## [0.4.1] — 2026-05-31
 
 **Magazines — recherche FTS (texte intégral)**

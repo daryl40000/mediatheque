@@ -199,6 +199,52 @@ final class MagazineTest extends MoncineTestCase
         $this->assertSame('1', $unowned[0]['numero']);
     }
 
+    public function testHorsSerieFilterOnly(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Filtre Hors Serie Test',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+        $repo->registerSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId);
+
+        $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '100',
+            'numero_ordre' => 100,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $repo->createIssueWithLibrary($seriesId, [
+            'numero' => 'HS 1',
+            'numero_ordre' => 100.5,
+            'est_hors_serie' => true,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $repo->createIssueWithLibrary($seriesId, [
+            'numero' => 'HS 2',
+            'numero_ordre' => 101.5,
+            'est_hors_serie' => true,
+            'support_papier' => true,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+
+        $horsSerie = $repo->listIssuesForSeries(
+            $seriesId,
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'numero_ordre',
+            'desc',
+            '',
+            MagazineRepository::FILTER_HORS_SERIE
+        );
+        $this->assertCount(2, $horsSerie);
+        $numeros = array_map(static fn (array $row): string => (string) ($row['numero'] ?? ''), $horsSerie);
+        $this->assertContains('HS 1', $numeros);
+        $this->assertContains('HS 2', $numeros);
+        $this->assertNotContains('100', $numeros);
+    }
+
     public function testPaperTagRemovesIssueFromWishlist(): void
     {
         $seriesId = (new SeriesRepository())->create([
@@ -230,6 +276,42 @@ final class MagazineTest extends MoncineTestCase
         $this->assertNotNull($collectionIssue);
         $this->assertSame(0, (int) ($collectionIssue['in_wishlist'] ?? 1));
         $this->assertTrue(MagazineSupport::isPossessed($collectionIssue));
+    }
+
+    public function testPartialUpdatePreservesHorsSerieFlag(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Hors Serie Partial Update',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+
+        $bibId = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => 'HS 1',
+            'numero_ordre' => 100.5,
+            'est_hors_serie' => true,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        $issue = $repo->findIssueByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($issue);
+        $this->assertSame(1, (int) ($issue['est_hors_serie'] ?? 0));
+
+        $this->assertTrue($repo->updateIssue($bibId, ['poster_url' => '/poster.php?id=999'], $userId, $foyerId));
+
+        $issueAfterCover = $repo->findIssueByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($issueAfterCover);
+        $this->assertSame(1, (int) ($issueAfterCover['est_hors_serie'] ?? 0));
+
+        $this->assertTrue($repo->updateIssue($bibId, ['support_papier' => true], $userId, $foyerId));
+
+        $issueAfterPaper = $repo->findIssueByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($issueAfterPaper);
+        $this->assertSame(1, (int) ($issueAfterPaper['est_hors_serie'] ?? 0));
     }
 
     public function testResolveIssueBibIdForRedirectAfterWishlistRemoved(): void

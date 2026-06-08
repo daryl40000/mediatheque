@@ -16,6 +16,9 @@ final class CatalogAuditLog
     public const ACTION_PURGE_POSTERS = 'purge_orphan_posters';
     public const ACTION_DB_EXPORT = 'export_database';
     public const ACTION_DB_RESTORE = 'restore_database';
+    public const ACTION_MAGAZINE_SUBJECT_DELETE = 'delete_magazine_subject';
+    public const ACTION_MAGAZINE_SUBJECT_MERGE = 'merge_magazine_subjects';
+    public const ACTION_MAGAZINE_SUBJECT_PURGE = 'purge_orphan_magazine_subjects';
 
     private PDO $db;
 
@@ -82,6 +85,9 @@ final class CatalogAuditLog
             self::ACTION_PURGE_POSTERS => 'Nettoyage affiches',
             self::ACTION_DB_EXPORT => 'Export base SQLite',
             self::ACTION_DB_RESTORE => 'Restauration base SQLite',
+            self::ACTION_MAGAZINE_SUBJECT_DELETE => 'Suppression sujet magazine',
+            self::ACTION_MAGAZINE_SUBJECT_MERGE => 'Fusion sujets magazine',
+            self::ACTION_MAGAZINE_SUBJECT_PURGE => 'Purge sujets orphelins',
             default => $action,
         };
     }

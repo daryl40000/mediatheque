@@ -14,6 +14,7 @@ final class MagazineRepository
     public const POSSESSION_ALL = 'all';
     public const POSSESSION_OWNED = 'owned';
     public const POSSESSION_UNOWNED = 'unowned';
+    public const FILTER_HORS_SERIE = 'hors_serie';
 
     /** Numéros affichés par page sur la liste série (8 colonnes × 6 lignes). */
     public const ISSUES_PER_PAGE = 48;
@@ -64,6 +65,7 @@ final class MagazineRepository
         return match ($raw) {
             self::POSSESSION_OWNED, 'possede', 'possédé', 'owned' => self::POSSESSION_OWNED,
             self::POSSESSION_UNOWNED, 'non_possede', 'non-possede', 'unowned' => self::POSSESSION_UNOWNED,
+            self::FILTER_HORS_SERIE, 'hors-serie', 'hors_série', 'special' => self::FILTER_HORS_SERIE,
             default => self::POSSESSION_ALL,
         };
     }
@@ -663,7 +665,9 @@ final class MagazineRepository
         $titre = $seriesTitre !== '' ? $seriesTitre . ' — n°' . $numero : (string) ($issue['titre'] ?? '');
 
         $numeroOrdre = (float) ($data['numero_ordre'] ?? $issue['numero_ordre'] ?? 0);
-        $horsSerie = !empty($data['est_hors_serie']);
+        $horsSerie = array_key_exists('est_hors_serie', $data)
+            ? !empty($data['est_hors_serie'])
+            : !empty($issue['est_hors_serie']);
         $dateParution = trim((string) ($data['date_parution'] ?? $issue['date_parution'] ?? ''));
         $sommaire = trim((string) ($data['sommaire'] ?? $issue['sommaire'] ?? ''));
         $pages = max(0, (int) ($data['pages'] ?? $issue['pages'] ?? 0));
@@ -1542,11 +1546,17 @@ final class MagazineRepository
     /** @param list<string> $where */
     private function appendPossessionFilterToWhere(array &$where, ?string $statut, string $possessionFilter): void
     {
+        $possessionFilter = self::normalizePossessionFilter($possessionFilter);
+        if ($possessionFilter === self::FILTER_HORS_SERIE) {
+            $where[] = 'om.est_hors_serie = 1';
+
+            return;
+        }
+
         if ($statut !== LibraryStatut::COLLECTION) {
             return;
         }
 
-        $possessionFilter = self::normalizePossessionFilter($possessionFilter);
         if ($possessionFilter === self::POSSESSION_OWNED) {
             $where[] = $this->sqlIssuePossessedCondition('b', 'om');
         } elseif ($possessionFilter === self::POSSESSION_UNOWNED) {

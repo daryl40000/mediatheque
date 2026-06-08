@@ -146,6 +146,8 @@ final class MagazinePrintListService
             $parts[] = 'numéros possédés uniquement';
         } elseif ($possession === MagazineRepository::POSSESSION_UNOWNED) {
             $parts[] = 'numéros non possédés uniquement';
+        } elseif ($possession === MagazineRepository::FILTER_HORS_SERIE) {
+            $parts[] = 'numéros hors-série uniquement';
         }
 
         if ($params['searchQuery'] !== '') {

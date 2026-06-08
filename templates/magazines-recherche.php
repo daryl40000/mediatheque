@@ -9,7 +9,7 @@
     <header class="collection-page__header">
         <h1>Recherche par sujet</h1>
         <p class="lead">
-            Retrouvez un <strong>test</strong>, une <strong>preview</strong> ou un <strong>dossier</strong>
+            Retrouvez un <strong>test</strong>, une <strong>preview</strong>, un <strong>dossier</strong> ou une <strong>interview</strong>
             dans l’ensemble de vos magazines (tags de série et année du numéro).
         </p>
         <p class="collection-page__actions">

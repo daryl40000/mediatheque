@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.4.1** · **Date : 2026-05-31**
+**Version : 0.4.2** · **Date : 2026-05-31**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -24,7 +24,7 @@ L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **nu
 Paramètres utiles sur la liste série :
 
 - `statut=collection` ou `statut=wishlist` — collection du foyer ou envies personnelles ;
-- `possession=all|owned|unowned` — filtre **Tous / Possédés / Non possédés** (collection uniquement).
+- `possession=all|owned|unowned|hors_serie` — filtre **Tous / Possédés / Non possédés / Hors-série** (collection uniquement, **0.4.2**).
 
 ---
 
@@ -126,7 +126,7 @@ Sur `/serie-magazine.php`, le champ **Rechercher** (`q`) filtre sur :
 
 Sur **Mes magazines** (`/magazines.php`), le champ **Rechercher dans vos magazines** interroge en plus :
 
-- les **sujets** associés (tests, previews, comparatifs, dossiers) ;
+- les **sujets** associés (tests, previews, comparatifs, dossiers, interviews) ;
 - le **sommaire** et l’**extrait PDF** de tous les numéros de votre bibliothèque ;
 - les **titres de séries** (comme avant).
 
@@ -203,7 +203,7 @@ Classe : `lib/UploadLimits.php` — alerte dans les formulaires si les limites P
 
 ## 11. Sujets et recherche globale (**0.4.0**)
 
-Pour retrouver un **test**, une **preview** ou un **dossier** dans l’ensemble de vos magazines :
+Pour retrouver un **test**, une **preview**, un **dossier** ou une **interview** dans l’ensemble de vos magazines :
 
 1. **Tags de la série** (création ou modification de la revue) :
    - tapez un mot (ex. `PC`) → **Ajouter** (ou Entrée) → badge ;
@@ -211,7 +211,7 @@ Pour retrouver un **test**, une **preview** ou un **dossier** dans l’ensemble 
    - **1 tag** → appliqué automatiquement à chaque sujet du numéro ;
    - **2 tags ou plus** → menu déroulant à chaque ajout ;
    - **aucun tag** → précision libre optionnelle sur le numéro.
-2. **Fiche numéro**, section **Sujets et tests** : catégorie (**Test**, Preview, Comparatif, Dossier) + nom ;
+2. **Fiche numéro**, section **Sujets et tests** : catégorie (**Test**, Preview, Comparatif, Dossier, Interview) + nom ;
    - **autocomplétion** pendant la saisie : choisissez un sujet déjà existant pour éviter les doublons (ex. « After Life » vs « Afterlife ») ;
    - à l’enregistrement, les libellés **proches** (espaces ou ponctuation différents) sont **fusionnés** avec le sujet existant ;
    - **année** = date de parution du numéro (obligatoire pour ajouter un sujet).
@@ -222,9 +222,42 @@ Affichage type : `Gran Turismo 7 (PC · 2024)`.
 
 Tables : `magazine_subject`, `oeuvre_magazine_subject`, `series.tags` — migrations `034` à `037` ; index FTS — migration `038`.
 
+**Évolution prévue (onglet Jeux, phase M4+)** : lien optionnel d’un sujet test/preview vers une **fiche jeu du catalogue** (`catalog_oeuvre_id`). Les sujets déjà saisis en production restent valides ; voir [ROADMAP.md](../ROADMAP.md) § *Pont Magazines ↔ Jeux vidéo*.
+
 ---
 
-## 12. Mise à jour depuis 0.2.0
+## 12. Maintenance admin des sujets (administrateur)
+
+Page réservée aux **administrateurs** du catalogue :
+
+| Page | URL | Rôle |
+|------|-----|------|
+| Nettoyage sujets | `/maintenance-magazine-sujets.php` | Orphelins, purge, fusion de doublons |
+
+Accès depuis le menu admin **Sujets magazines** ou **Maintenance catalogue** → lien « Sujets magazines (nettoyage) ».
+
+### Sujets orphelins
+
+Un sujet **orphelin** n’est lié à **aucun numéro**. Cela arrive souvent après une **faute de frappe** : vous commencez à taper un nom, un mauvais sujet est créé, puis vous corrigez et enregistrez un autre libellé — l’ancien reste en base sans numéro.
+
+- **Supprimer** : retire un orphelin précis (avec confirmation).
+- **Tout supprimer** : purge en une fois tous les orphelins listés.
+- Les sujets avec **libellé vide** sont mis en évidence (ligne surlignée).
+
+### Doublons probables
+
+Regroupe les sujets qui ont la **même catégorie**, le **même tag**, la **même année** et un **libellé normalisé identique** (espaces et ponctuation ignorés), mais un texte d’affichage différent — ex. « After Life » et « Afterlife » si les deux existent encore.
+
+- Choisissez **Conserver** (fiche à garder) et **Fusionner (supprimer)** (doublon).
+- Les numéros liés au doublon sont **réaffectés** vers le sujet conservé.
+
+Les actions sont tracées dans le **journal d’audit** du catalogue (`CatalogAuditLog`).
+
+Classe PHP : `lib/MagazineSubjectMaintenance.php`.
+
+---
+
+## 13. Mise à jour depuis 0.2.0
 
 ```bash
 php lib/cli/migrate.php
@@ -236,6 +269,6 @@ Pour le dev local avec import PDF volumineux : utilisez `./start-dev.sh` plutôt
 
 ---
 
-*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (sections 0.4.1, 0.4.0, 0.3.2…) et [ROADMAP.md](../ROADMAP.md) (phase M5).*
+*Voir aussi [CHANGELOG.md](../CHANGELOG.md) (sections 0.4.2, 0.4.1, 0.4.0…) et [ROADMAP.md](../ROADMAP.md) (phase M5, pont jeux).*
 
 **Import massif d’affiches films** (plusieurs centaines) : page **Importer** → ZIP jusqu’à 200 Mo ([doc via README](../README.md)).

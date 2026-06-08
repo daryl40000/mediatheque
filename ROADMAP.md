@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.4.1** (2026-05-31)  
+**Version actuelle : 0.4.2** (2026-05-31)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -21,8 +21,8 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 | **M1** Stabilisation films | 🔄 **En cours** | 0.2.0 | QA complète, zéro régression Monciné |
 | **M2** BD / Manga | ⏳ À faire | 0.3.x | Collection BD, séries/tomes |
 | **M3** Livres | ⏳ À faire | 0.4.x | ISBN, auteur, import CSV |
-| **M4** Jeux vidéo | ⏳ À faire | 0.5.x | Physique + plateformes |
-| **M5** Magazines | 🔄 **En cours** | 0.2.x | Séries, numéros, PDF, recherche texte PDF, tags support (**0.2.1**) |
+| **M4** Jeux vidéo | ⏳ À faire | 0.5.x | Catalogue jeux, collection ; lien futur avec sujets magazines |
+| **M5** Magazines | 🔄 **En cours** | 0.4.x → 0.6.0 | Séries, numéros, PDF, sujets/tests, FTS (**0.4.1**) |
 | **M6** Transversal | ⏳ À faire | 0.9.x | Prêts, partage, stats par domaine |
 | **M7** Identité & polish | ⏳ À faire | 1.0.0 | Branding, doc finale, déploiement |
 
@@ -101,6 +101,7 @@ Comptes, foyers, envies personnelles et de groupe, catalogue partagé, soumissio
 | Métadonnées clés | Réalisateur, acteurs | Série, tome, auteurs | Auteur, ISBN | Plateforme, éditeur | N°, parution |
 | Support exemplaire | DVD, Blu-ray… | Album, relié… | Broché, poche… | Boîte, démat… | **PDF** |
 | Outil dédié | Quiz « Ce soir » | — | — | — | Lecteur + recherche PDF |
+| Lien inter-domaines | — | — | — | **Tests magazine → fiche jeu** (M4+) | **Sujets → catalogue jeu** (M4+) |
 | Sagas | Sagas films | Séries BD | Collections | Franchises | Titre de revue |
 
 ---
@@ -181,10 +182,66 @@ Comptes, foyers, envies personnelles et de groupe, catalogue partagé, soumissio
 | Tâche | Détail |
 |-------|--------|
 | Schéma | `oeuvre_jeu` : studio, genre, plateforme (Steam, PSN…), mode physique/démat |
+| Catalogue | `oeuvres` + `media_domain = jeu` ; fiche jeu partagée (comme films / magazines) |
 | Exemplaire | Boîte, édition ; flag « non prêtable » si démat |
 | Listes | Plateformes configurables |
+| Prérequis lien magazines | Catalogue jeux stable **avant** le pont sujets magazine (voir § Pont Magazines ↔ Jeux) |
 
-**Critère de sortie :** collection + envies jeux physiques et démat.
+**Critère de sortie :** collection + envies jeux physiques et démat ; fiches jeu consultables et recherchables dans l’onglet Jeux.
+
+---
+
+## Pont Magazines ↔ Jeux vidéo (transversal M4 + M5)
+
+**Version visée :** `0.5.x` ou `0.6.x` — **après** le catalogue jeux (M4) et les sujets magazines (M5 ✅ depuis 0.4.0).
+
+### Contexte
+
+Les **sujets magazines** (`magazine_subject`, tests / previews / interviews…) sont aujourd’hui identifiés par :
+
+- catégorie (Test, Preview, Comparatif, Dossier, Interview) ;
+- **libellé** saisi (ex. « Gran Turismo 7 ») ;
+- **tag de série** (`series.tags` → champ `detail`, ex. PS5) ;
+- **année** du numéro (`parution_year`).
+
+Les **tags de série** (PC, PS5…) décrivent le **contexte de la revue**, pas l’identité du jeu. Le **lien catalogue** portera sur le **libellé du sujet** (jeu testé), pas sur ces tags.
+
+### Objectif
+
+Relier optionnellement un sujet magazine à une **fiche jeu du catalogue** (`oeuvres.id`, `media_domain = jeu`) pour :
+
+- depuis un **jeu** : lister tests, previews et interviews parus dans les magazines ;
+- depuis un **sujet / numéro** : ouvrir la fiche jeu canonique ;
+- réduire les doublons d’orthographe tout en gardant année + tag plateforme sur l’article.
+
+### Modèle cible (anticipation)
+
+| Élément | Décision |
+|---------|----------|
+| Lien | Colonne nullable `magazine_subject.catalog_oeuvre_id` → `oeuvres(id)` (jeu uniquement) |
+| Saisie | Autocomplétion catalogue jeux à l’ajout d’un sujet **Test / Preview / Interview** ; saisie libre conservée |
+| Unicité actuelle | Inchangée : `(category, label, detail, parution_year)` — plusieurs sujets peuvent pointer vers **le même** jeu |
+| Données prod existantes | **Non bloquantes** : sujets déjà saisis restent valides ; rattachement progressif (migration assistée ou UI admin) |
+| Hors périmètre jeu | Dossiers, comparatifs matériel, sujets voiture… restent en texte libre sans lien catalogue |
+
+### Tâches prévues
+
+| Tâche | Phase | Détail |
+|-------|-------|--------|
+| Migration | M4+ | `catalog_oeuvre_id` nullable + index ; contrôle `media_domain = jeu` |
+| Saisie fiche numéro | M5+ | Autocomplétion jeux (API JSON) en complément de l’autocomplétion sujets existants |
+| Fiche jeu | M4 | Section « Revues » : numéros / sujets liés dans la bibliothèque du foyer |
+| Fiche sujet magazine | M5+ | Lien vers fiche jeu si `catalog_oeuvre_id` renseigné |
+| Rattachement rétroactif | M5+ | Outil ou script : matcher libellés existants → fiches jeu (revue manuelle des cas ambigus) |
+| Recherche | M5+ | FTS / recherche globale : remonter aussi par titre catalogue jeu |
+
+### Compatibilité des données déjà en production
+
+- Les sujets créés **sans** lien catalogue continueront de fonctionner (recherche, fiche sujet, export).
+- Pas de ressaisie obligatoire : le lien est un **enrichissement** optionnel.
+- Doublons texte proches déjà limités (`normalizeLabelKey`, autocomplétion) ; le catalogue jeu renforce la cohérence **sans supprimer** l’historique magazine (année, tag PS5/PC, catégorie test vs preview).
+
+**Critère de sortie :** depuis une fiche jeu, voir les parutions magazine liées ; depuis un sujet test, ouvrir la fiche jeu ; rattachement possible sur les sujets existants.
 
 ---
 
@@ -202,6 +259,12 @@ Comptes, foyers, envies personnelles et de groupe, catalogue partagé, soumissio
 | Texte PDF (6 pages) | ✅ 0.2.1 | `pdftotext` → `pdf_text_preview` |
 | Couverture / pages auto | ✅ 0.2.1 | `pdftoppm`, `pdfinfo` |
 | Recherche FTS globale | ✅ 0.4.1 | `magazine_issue_fts`, `magazine_subject_fts` (FTS5) |
+| Sujets (tests, previews…) | ✅ 0.4.0 | `magazine_subject`, tags série, recherche par sujet |
+| Recherche globale Mes magazines | ✅ 0.4.1 | Sujets + sommaires + PDF sur `/magazines.php` |
+| Autocomplétion & fusion libellés | ✅ 0.4.1 | Saisie sujet ; orthographes proches (« After Life » / « Afterlife ») |
+| Filtre hors-série (liste numéros) | ✅ 0.4.2 | `possession=hors_serie` |
+| Maintenance sujets (orphelins, fusion) | ✅ 0.4.2 | `/maintenance-magazine-sujets.php` |
+| **Lien sujet → catalogue jeu** | ⏳ M4+ | Voir § Pont Magazines ↔ Jeux ; **données prod actuelles compatibles** |
 
 **Doc :** [doc/magazines.md](doc/magazines.md) · **Infra :** `stored_objects`, `StoredObjectDelivery`, Poppler optionnel.
 
@@ -221,6 +284,7 @@ Comptes, foyers, envies personnelles et de groupe, catalogue partagé, soumissio
 | Listes imprimables | Colonnes par domaine |
 | Notifications | Types par domaine |
 | Profil public | Collection du domaine consulté |
+| **Pont magazine ↔ jeu** | Navigation croisée sujets / fiches jeu (après M4) |
 | Maintenance | Stats et nettoyage PDF orphelins |
 
 ---
@@ -250,6 +314,7 @@ Comptes, foyers, envies personnelles et de groupe, catalogue partagé, soumissio
 | Quiz | **Films uniquement** |
 | Couleur Films | **Gris** (distinct des autres onglets) |
 | Code Monciné | Namespace **`Moncine\`**, constantes **`MONCINE_*`**, **`moncine.db`** — **ne pas renommer avant M7** → [doc/conventions-techniques.md](doc/conventions-techniques.md) |
+| Sujets magazine vs catalogue | **Texte libre d’abord** (0.4.x) ; **lien optionnel** vers `oeuvres` jeu plus tard — pas de rupture des données prod |
 
 ---
 
@@ -266,10 +331,13 @@ flowchart TB
   M3 --> M6
   M4 --> M6
   M5 --> M6
+  M4 --> XPont[Pont sujets ↔ jeu]
+  M5 --> XPont
+  XPont --> M6
   M6 --> M7[M7 v1.0.0]
 ```
 
-**Parallèle possible après M1 :** M2, M3, M4. **M5** peut avancer en parallèle (peu de dépendances aux autres domaines).
+**Parallèle possible après M1 :** M2, M3, M4. **M5** peut avancer en parallèle (peu de dépendances aux autres domaines). Le **pont sujets magazine ↔ catalogue jeu** dépend de **M4 (catalogue jeux)** et de **M5 (sujets ✅)** — implémentation après les deux.
 
 ---
 
@@ -282,6 +350,7 @@ flowchart TB
 | PDF lourds | Hors `www/`, limites upload, FTS optionnelle |
 | APIs instables | Saisie manuelle d’abord |
 | Confusion Monciné / Médiathèque | CHANGELOG, doc/mediatheque.md, version 0.1.0 |
+| Sujets magazine sans lien jeu | Lien **optionnel** ; saisie prod 0.4.x conservée ; rattachement progressif (§ Pont Magazines ↔ Jeux) |
 
 ---
 
@@ -294,6 +363,7 @@ flowchart TB
 | M2 | 2 semaines | 0.3.0 |
 | M3 | 1–2 semaines | 0.4.0 |
 | M4 | 1–2 semaines | 0.5.0 |
+| Pont magazine ↔ jeu | 1 semaine (après M4) | 0.5.x–0.6.x |
 | M5 | 3–4 semaines | 0.6.0 |
 | M6 | 2–3 semaines | 0.9.0 |
 | M7 | 1 semaine | 1.0.0 |
@@ -302,10 +372,11 @@ flowchart TB
 
 ## Prochaine action (équipe / développement)
 
-1. **Tagger** `v0.2.1` (magazines PDF / recherche).  
+1. **Tagger** `v0.4.2` (Interview, filtre hors-série, maintenance sujets admin).  
 2. **Exécuter la checklist M1** (films) et corriger les anomalies.  
-3. **Poursuivre M5** (FTS, polish magazines) ou **démarrer M2** (BD) selon priorité.  
-4. Installer **poppler-utils** sur les serveurs qui importent des PDF magazines.
+3. **Poursuivre M5** (polish magazines) ou **démarrer M4** (catalogue jeux) selon priorité — le pont sujets ↔ jeux viendra **après M4**.  
+4. Continuer la saisie des **sujets magazine en prod** : compatible avec le lien catalogue futur (voir § Pont Magazines ↔ Jeux).  
+5. Installer **poppler-utils** sur les serveurs qui importent des PDF magazines.
 
 ---
 
@@ -318,7 +389,8 @@ flowchart TB
 | Collection films | `lib/FilmRepository.php`, `lib/CatalogFilmRepository.php` |
 | Sous-types films | `lib/MoncineContentKind.php` (film / série / spectacle) |
 | PDF futur | `lib/MediaStorage.php`, `lib/StoredObjectRepository.php` |
+| Sujets magazines | `lib/MagazineSubject.php`, `lib/MagazineSubjectRepository.php`, `doc/magazines.md` §11 |
 | UI | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | **Conventions dev** | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : 0.1.0 — 2026-05-30.*
+*Dernière mise à jour : 0.4.2 — 2026-05-31.*

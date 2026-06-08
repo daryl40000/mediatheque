@@ -13,6 +13,7 @@ final class MagazineSubject
     public const PREVIEW = 'preview';
     public const COMPARATIF = 'comparatif';
     public const DOSSIER = 'dossier';
+    public const INTERVIEW = 'interview';
 
     /** Anciennes catégories fusionnées dans {@see TEST}. */
     private const LEGACY_TEST = ['test_jeu', 'test_voiture', 'test_materiel'];
@@ -46,6 +47,7 @@ final class MagazineSubject
             self::PREVIEW => 'Preview / avant-première',
             self::COMPARATIF => 'Comparatif',
             self::DOSSIER => 'Dossier',
+            self::INTERVIEW => 'Interview',
         ];
     }
 
@@ -73,6 +75,8 @@ final class MagazineSubject
             'hardware' => self::TEST,
             'apercu' => self::PREVIEW,
             'aperçu' => self::PREVIEW,
+            'entretien' => self::INTERVIEW,
+            'entretiens' => self::INTERVIEW,
         ];
 
         if (isset(self::choices()[$raw])) {

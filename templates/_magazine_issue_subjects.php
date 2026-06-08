@@ -19,7 +19,7 @@ $hasSingleTag = $forcedTag !== null;
 <section class="magazine-subjects-section" aria-labelledby="magazine-subjects-heading">
     <h2 id="magazine-subjects-heading">Sujets et tests</h2>
     <p class="hint">
-        Associez un sujet testé ou traité dans ce numéro (jeu, voiture, matériel, dossier…).
+        Associez un sujet testé ou traité dans ce numéro (jeu, voiture, matériel, dossier, interview…).
         <?php if ($parutionYear > 0): ?>
             L’année affichée sur le tag est celle du numéro (<strong><?= (int) $parutionYear ?></strong>).
         <?php else: ?>

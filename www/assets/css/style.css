@@ -1832,6 +1832,38 @@ textarea {
     font-size: 0.9rem;
 }
 
+.catalog-maintenance-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 0.75rem;
+    font-size: 0.92rem;
+}
+
+.catalog-maintenance-table th,
+.catalog-maintenance-table td {
+    padding: 0.5rem 0.65rem;
+    border-bottom: 1px solid var(--border);
+    text-align: left;
+    vertical-align: middle;
+}
+
+.catalog-maintenance-table__warn {
+    background: rgba(255, 193, 7, 0.08);
+}
+
+.catalog-maintenance-table__empty {
+    color: var(--accent);
+}
+
+.catalog-maintenance-bulk {
+    margin-bottom: 0.75rem;
+}
+
+.catalog-maintenance-duplicate__list {
+    margin: 0 0 0.75rem;
+    padding-left: 1.25rem;
+}
+
 .collection-toolbar {
     margin: 0 0 1rem;
     padding: 0.85rem 1rem;

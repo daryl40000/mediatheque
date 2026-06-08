@@ -20,6 +20,8 @@ final class MagazineSubjectTest extends TestCase
             MagazineSubject::categoryFilterValues(MagazineSubject::TEST)
         );
         $this->assertSame(['preview'], MagazineSubject::categoryFilterValues(MagazineSubject::PREVIEW));
+        $this->assertSame(['interview'], MagazineSubject::categoryFilterValues(MagazineSubject::INTERVIEW));
+        $this->assertSame(MagazineSubject::INTERVIEW, MagazineSubject::normalizeCategory('entretien'));
         $this->assertSame(
             'Peugeot 308 III (2024)',
             MagazineSubject::displayLabel('Peugeot 308 III', '', 2024)

@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.4.1**
+**Version : 0.4.2**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -182,7 +182,9 @@ Les données (base, affiches, PDF, sessions) sont stockées dans le dossier **`d
 | Statistiques (PDF, Go…) | **Statistiques** dans l’onglet Magazines |
 | Export liste en PDF | Bouton **Exporter en PDF** sur la page série (possession par numéro, sans couvertures) |
 | **Recherche globale** | Champ **Rechercher dans vos magazines** sur **Mes magazines** — séries, sujets, sommaires, extraits PDF (**0.4.1**) |
-| **Recherche par sujet** | **Recherche par sujet** (`/magazines-recherche.php`) — tests, previews, dossiers ; tags de série et année du numéro (**0.4.0**) |
+| **Recherche par sujet** | **Recherche par sujet** (`/magazines-recherche.php`) — tests, previews, dossiers, interviews ; tags de série et année du numéro (**0.4.0**, Interview **0.4.2**) |
+| **Filtre hors-série** | Liste numéros d’une série → bouton **Hors-série** (**0.4.2**) |
+| **Nettoyage sujets (admin)** | **Maintenance catalogue** → **Sujets magazines** — orphelins et doublons après faute de frappe (**0.4.2**) |
 
 Pour importer de **gros PDF**, utilisez toujours **`./start-dev.sh`** plutôt que le serveur PHP minimal.
 

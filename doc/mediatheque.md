@@ -1,6 +1,6 @@
 # Médiathèque — guide du fork
 
-**Version : 0.4.1** · **Date : 2026-05-31**
+**Version : 0.4.2** · **Date : 2026-05-31**
 
 Ce document décrit ce qu’est la **Médiathèque**, ce qui a été livré en **0.1.0**, et comment cela s’articule avec **Monciné**.
 
@@ -41,6 +41,8 @@ Depuis **0.3.2**, la page **`/utilisateur.php`** propose des onglets **Films** e
 Depuis **0.4.0**, les magazines disposent de **sujets** (tests, previews…) liés aux numéros, de **tags de série** (badges PC, PS5…) et d’une **recherche par sujet** — voir [magazines.md](magazines.md) §11.
 
 Depuis **0.4.1** : **recherche FTS** (texte intégral SQLite) dans les numéros et le catalogue de sujets ; **recherche globale** sur **Mes magazines** (séries + sujets + sommaires + extraits PDF) ; **autocomplétion** à la saisie d’un sujet sur la fiche numéro ; fusion des libellés proches (« After Life » / « Afterlife »).
+
+Depuis **0.4.2** : catégorie **Interview** ; filtre **Hors-série** sur la liste des numéros ; **maintenance admin** des sujets orphelins / doublons (`/maintenance-magazine-sujets.php`) ; correctif conservation du flag hors-série lors d’une mise à jour partielle.
 
 ### Pages réservées aux films
 
@@ -110,7 +112,7 @@ Voir `.gitignore` :
 
 Points essentiels :
 
-- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.4.1**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.4.2**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
 - **`media_domain`** (onglet Films/BD/…) ≠ **`moncine_kind`** (film/série/spectacle dans l’onglet Films).
 - Nouveau code multi-médias : `MediaDomain`, `MediaContext`, `CatalogSchema::applyMediaDomainFilter()`.
 
@@ -121,8 +123,9 @@ Points essentiels :
 Voir [ROADMAP.md](../ROADMAP.md) :
 
 - **M1** — Valider qu’aucune régression sur les films  
-- **M2–M4** — BD, livres, jeux  
-- **M5** — magazines : suite (FTS, polish) — voir [magazines.md](magazines.md) pour l’existant  
+- **M2–M4** — BD, livres, jeux (catalogue `oeuvre_jeu`)  
+- **M5** — magazines : suite (polish) — voir [magazines.md](magazines.md) pour l’existant (sujets, FTS **0.4.1**)  
+- **Pont Magazines ↔ Jeux** — après M4 : lien optionnel sujet magazine → fiche jeu ; **données déjà saisies en prod conservées** (ROADMAP § Pont Magazines ↔ Jeux)  
 - **M6–M7** — Prêts/partage par domaine, identité et doc  
 
 ---

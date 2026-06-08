@@ -147,7 +147,7 @@
                     return Moncine\View::magazineSeriesUrl($seriesId, 'numero_ordre', 'desc', $params);
                 };
                 ?>
-                <nav class="magazine-possession-filter" aria-label="Filtrer par possession">
+                <nav class="magazine-possession-filter" aria-label="Filtrer les numéros affichés">
                     <span class="magazine-possession-filter__label">Afficher :</span>
                     <a href="<?= Moncine\View::escape($possessionLink(Moncine\MagazineRepository::POSSESSION_ALL)) ?>"
                        class="btn btn-secondary btn-sm<?= $possessionFilter === Moncine\MagazineRepository::POSSESSION_ALL ? ' is-active' : '' ?>">Tous</a>
@@ -155,6 +155,8 @@
                        class="btn btn-secondary btn-sm<?= $possessionFilter === Moncine\MagazineRepository::POSSESSION_OWNED ? ' is-active' : '' ?>">Possédés</a>
                     <a href="<?= Moncine\View::escape($possessionLink(Moncine\MagazineRepository::POSSESSION_UNOWNED)) ?>"
                        class="btn btn-secondary btn-sm<?= $possessionFilter === Moncine\MagazineRepository::POSSESSION_UNOWNED ? ' is-active' : '' ?>">Non possédés</a>
+                    <a href="<?= Moncine\View::escape($possessionLink(Moncine\MagazineRepository::FILTER_HORS_SERIE)) ?>"
+                       class="btn btn-secondary btn-sm<?= $possessionFilter === Moncine\MagazineRepository::FILTER_HORS_SERIE ? ' is-active' : '' ?>">Hors-série</a>
                 </nav>
             <?php endif; ?>
 
@@ -176,7 +178,9 @@
                     <?= (int) $filteredCount ?> numéro(s) trouvé(s) sur <?= (int) $totalAllIssues ?>.
                 <?php elseif ($possessionFilter !== Moncine\MagazineRepository::POSSESSION_ALL): ?>
                     <?= (int) $filteredCount ?> numéro(s)
-                    <?php if ($possessionFilter === Moncine\MagazineRepository::POSSESSION_UNOWNED): ?>
+                    <?php if ($possessionFilter === Moncine\MagazineRepository::FILTER_HORS_SERIE): ?>
+                        hors-série
+                    <?php elseif ($possessionFilter === Moncine\MagazineRepository::POSSESSION_UNOWNED): ?>
                         non possédé(s)
                     <?php else: ?>
                         possédé(s)
@@ -198,6 +202,8 @@
             <p class="hint">
                 <?php if ($hasSearch): ?>
                     Aucun numéro ne correspond à votre recherche.
+                <?php elseif ($possessionFilter === Moncine\MagazineRepository::FILTER_HORS_SERIE): ?>
+                    Aucun numéro hors-série dans cette série.
                 <?php else: ?>
                     Aucun numéro dans cette liste. Ajoutez le premier numéro.
                 <?php endif; ?>
