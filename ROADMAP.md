@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.4.4** (2026-06-09)  
+**Version actuelle : 0.5.0** (2026-06-10)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -19,9 +19,9 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 |-------|--------|---------------|--------|
 | **M0** Fondations multi-médias | ✅ **Livré** (0.1.0) | 0.1.0 | Onglets, couleurs, `media_domain`, films filtrés |
 | **M1** Stabilisation films | ✅ **Livré** (0.4.4) | 0.4.4 | QA prod complète (2026-06-09) ; grille + pagination |
-| **M2** BD / Manga | ⏳ À faire | 0.3.x | Collection BD, séries/tomes |
-| **M3** Livres | ⏳ À faire | 0.4.x | ISBN, auteur, import CSV |
-| **M4** Jeux vidéo | ⏳ À faire | 0.5.x | Catalogue jeux, collection ; lien futur avec sujets magazines |
+| **M2** BD / Manga | ⏸️ Repoussé | 0.3.x | Après M4 (priorité jeux + synergie magazines) |
+| **M3** Livres | ⏸️ Repoussé | 0.4.x | Après M4 |
+| **M4** Jeux vidéo | ✅ **MVP livré** (0.5.0) | 0.5.0 | Collection, envies, pont magazine, accueil, badge Linux |
 | **M5** Magazines | 🔄 **En cours** | 0.4.x → 0.6.0 | Séries, numéros, PDF, sujets/tests, FTS (**0.4.1**) |
 | **M6** Transversal | ⏳ À faire | 0.9.x | Prêts, partage, stats par domaine |
 | **M7** Identité & polish | ⏳ À faire | 1.0.0 | Branding, doc finale, déploiement |
@@ -215,17 +215,27 @@ Comptes, foyers, envies personnelles et de groupe, catalogue partagé, soumissio
 
 ## Phase M4 — Jeux vidéo
 
-**Version visée :** `0.5.0`
+**Version livrée :** `0.5.0` (2026-06-10) — **✅ MVP livré** (priorité sur M2/M3 pour synergie magazines)
 
-| Tâche | Détail |
-|-------|--------|
-| Schéma | `oeuvre_jeu` : studio, genre, plateforme (Steam, PSN…), mode physique/démat |
-| Catalogue | `oeuvres` + `media_domain = jeu` ; fiche jeu partagée (comme films / magazines) |
-| Exemplaire | Boîte, édition ; flag « non prêtable » si démat |
-| Listes | Plateformes configurables |
-| Prérequis lien magazines | Catalogue jeux stable **avant** le pont sujets magazine (voir § Pont Magazines ↔ Jeux) |
+| Tâche | Détail | Statut |
+|-------|--------|--------|
+| Schéma | `039`–`041` — `oeuvre_jeu`, exemplaires, `catalog_oeuvre_id`, `tested_on_linux` | ✅ |
+| Catalogue | `oeuvres` + `media_domain = jeu` ; fiche jeu partagée | ✅ |
+| Collection | `/jeux.php`, `/jeux-envies.php`, ajout, modification admin | ✅ |
+| Accueil | `home-jeu.php` — activité récente, raccourcis | ✅ |
+| API | `/rechercher-jeux-catalogue.php` (autocomplétion) | ✅ |
+| Pont magazine | `MagazineGameLink`, autocomplétion sujet, affichage croisé | ✅ |
+| Parité films | Notes, suppression, envie → collection, tri liste | ✅ |
+| Linux PC | Case formulaire + badge Tux (listes + fiche) | ✅ |
+| Statistiques | `GameCollectionStats` | ✅ |
+| Saisie numéro | Autocomplétion jeux à l’ajout d’un sujet test/preview | ✅ 0.5.0 |
+| Exemplaire | Boîte, édition ; flag « non prêtable » si démat | ⏳ |
+| Listes | Plateformes configurables (admin) | ⏳ (liste fixe `GamePlatform`) |
+| Rattachement rétroactif sujets | Matcher libellés existants → fiches jeu | ⏳ M5+ |
 
-**Critère de sortie :** collection + envies jeux physiques et démat ; fiches jeu consultables et recherchables dans l’onglet Jeux.
+**Critère de sortie MVP :** ✅ collection + envies jeux ; fiches consultables ; pont magazine opérationnel (UI + affichage).
+
+**Documentation :** [doc/jeux.md](doc/jeux.md)
 
 ---
 
@@ -411,10 +421,10 @@ flowchart TB
 
 ## Prochaine action (équipe / développement)
 
-1. **Tagger** `v0.4.4` (clôture M1 : grille + pagination films).  
-2. **Poursuivre M5** (polish magazines) ou **démarrer M4** (catalogue jeux) selon priorité.  
-3. Continuer la saisie des **sujets magazine en prod** (compatible pont jeux futur).  
-4. Installer **poppler-utils** sur les serveurs qui importent des PDF magazines.
+1. **Tester M4 en prod** : migrations 039–041, onglet Jeux, ajout jeux, pont magazine.  
+2. **Pont magazine (suite)** : rattachement rétroactif sujets existants, recherche globale par titre jeu (M5+).  
+3. **M2/M3** — BD et livres (repoussés après M4).  
+4. Tag Git **`v0.5.0`** après validation.
 
 ---
 
@@ -429,7 +439,8 @@ flowchart TB
 | Sous-types films | `lib/MoncineContentKind.php` (film / série / spectacle) |
 | PDF futur | `lib/MediaStorage.php`, `lib/StoredObjectRepository.php` |
 | Sujets magazines | `lib/MagazineSubject.php`, `lib/MagazineSubjectRepository.php`, `doc/magazines.md` §11 |
+| Jeux vidéo (M4) | `lib/GameRepository.php`, `lib/MagazineGameLink.php`, `doc/jeux.md` |
 | UI | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | **Conventions dev** | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : 0.4.4 — 2026-06-09 (M1 clôturée).*
+*Dernière mise à jour : 0.5.0 — 2026-06-10 (M4 MVP jeux livré).*

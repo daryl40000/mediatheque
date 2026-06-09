@@ -222,7 +222,7 @@ Affichage type : `Gran Turismo 7 (PC · 2024)`.
 
 Tables : `magazine_subject`, `oeuvre_magazine_subject`, `series.tags` — migrations `034` à `037` ; index FTS — migration `038`.
 
-**Évolution prévue (onglet Jeux, phase M4+)** : lien optionnel d’un sujet test/preview vers une **fiche jeu du catalogue** (`catalog_oeuvre_id`). Les sujets déjà saisis en production restent valides ; voir [ROADMAP.md](../ROADMAP.md) § *Pont Magazines ↔ Jeux vidéo*.
+**Évolution (onglet Jeux, phase M4+)** : lien optionnel d’un sujet test/preview/interview vers une **fiche jeu du catalogue** (`catalog_oeuvre_id`). À l’ajout d’un sujet sur un numéro, l’autocomplétion propose les jeux du catalogue (titre, plateforme, année) en plus des sujets déjà saisis. Les sujets déjà en production restent valides ; voir [ROADMAP.md](../ROADMAP.md) § *Pont Magazines ↔ Jeux vidéo* et [jeux.md](jeux.md).
 
 ---
 

@@ -44,6 +44,24 @@ final class MediaDomainGuards
         '/magazine-sujet.php',
     ];
 
+    /** Préfixes d’URL réservés à l’onglet Jeux. */
+    private const GAME_ONLY_PATH_PREFIXES = [
+        '/jeux',
+        '/jeu.php',
+        '/ajouter-jeu.php',
+        '/modifier-jeu.php',
+        '/enregistrer-jeu.php',
+        '/enregistrer-modification-jeu.php',
+        '/rechercher-jeux-catalogue.php',
+    ];
+
+    /** Pages collection / envies réservées à l’onglet Jeux. */
+    private const GAME_COLLECTION_PATHS = [
+        '/jeux.php',
+        '/jeu.php',
+        '/jeux-envies.php',
+    ];
+
     public static function isFilmOnlyPath(string $path): bool
     {
         return in_array(self::normalizePath($path), self::FILM_ONLY_PATHS, true);
@@ -65,6 +83,24 @@ final class MediaDomainGuards
         }
 
         return false;
+    }
+
+    public static function isGameOnlyPath(string $path): bool
+    {
+        $path = self::normalizePath($path);
+
+        foreach (self::GAME_ONLY_PATH_PREFIXES as $prefix) {
+            if (str_starts_with($path, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function isGameCollectionPath(string $path): bool
+    {
+        return in_array(self::normalizePath($path), self::GAME_COLLECTION_PATHS, true);
     }
 
     private static function normalizePath(string $path): string
@@ -101,6 +137,18 @@ final class MediaDomainGuards
         }
 
         if (MediaDomain::isMagazine($targetDomain) && self::isFilmCollectionPath($pathOnly)) {
+            return MediaDomain::collectionPath($targetDomain);
+        }
+
+        if (MediaDomain::isGame($targetDomain) && (self::isFilmCollectionPath($pathOnly) || self::isMagazineOnlyPath($pathOnly))) {
+            return MediaDomain::collectionPath($targetDomain);
+        }
+
+        if (MediaDomain::isFilm($targetDomain) && self::isGameOnlyPath($pathOnly)) {
+            return MediaDomain::collectionPath($targetDomain);
+        }
+
+        if (MediaDomain::isMagazine($targetDomain) && self::isGameOnlyPath($pathOnly)) {
             return MediaDomain::collectionPath($targetDomain);
         }
 
@@ -153,6 +201,22 @@ final class MediaDomainGuards
         header(
             'Location: /set-media-domain.php?domain='
             . rawurlencode(MediaDomain::MAGAZINE)
+            . '&redirect='
+            . rawurlencode($redirectPath)
+        );
+        exit;
+    }
+
+    /** Redirige vers l’onglet Jeux si la page jeu est ouverte depuis un autre domaine. */
+    public static function ensureGameContext(string $redirectPath = '/jeux.php'): void
+    {
+        if (MediaContext::current() === MediaDomain::JEU) {
+            return;
+        }
+
+        header(
+            'Location: /set-media-domain.php?domain='
+            . rawurlencode(MediaDomain::JEU)
             . '&redirect='
             . rawurlencode($redirectPath)
         );

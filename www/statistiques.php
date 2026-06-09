@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\CollectionStats;
+use Moncine\GameCollectionStats;
 use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
 use Moncine\MediaContext;
@@ -40,6 +41,19 @@ if (MediaDomain::isMagazine(MediaContext::current())) {
             : 0,
         'pdfCount' => (int) ($pdfStats['count'] ?? 0),
         'pdfStorageLabel' => MagazineRepository::formatPdfStorageGigabytes((int) ($pdfStats['total_bytes'] ?? 0)),
+    ]);
+    exit;
+}
+
+if (MediaDomain::isGame(MediaContext::current())) {
+    MediaDomainGuards::ensureGameContext('/statistiques.php');
+    $userId = UserContext::currentUserId();
+    $foyerId = UserContext::currentFoyerId();
+
+    View::render('statistiques-jeux', [
+        'pageTitle' => MediaContext::navLabels()['stats'],
+        'stats' => (new GameCollectionStats())->getDashboard($userId, $foyerId),
+        'wideLayout' => true,
     ]);
     exit;
 }

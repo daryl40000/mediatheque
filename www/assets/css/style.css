@@ -1331,6 +1331,20 @@ textarea {
     line-height: 1.35;
 }
 
+.catalog-title-autocomplete__option--game {
+    border-left: 3px solid #9575cd;
+}
+
+.catalog-title-autocomplete__option--game:hover,
+.catalog-title-autocomplete__option--game.is-active {
+    background: rgba(149, 117, 205, 0.12);
+}
+
+.magazine-subject-tags__game-link {
+    margin-left: 0.35rem;
+    white-space: nowrap;
+}
+
 .catalog-title-autocomplete__badge {
     font-size: 0.78rem;
     color: var(--muted);
@@ -3756,6 +3770,172 @@ body.media-domain--magazine.page-wide .container--wide {
     display: inline-flex;
     align-items: center;
     gap: 0.35rem;
+}
+
+.magazine-tag--game-genre {
+    border-color: rgba(149, 117, 205, 0.5);
+    background: rgba(149, 117, 205, 0.14);
+    color: #d1c4e9;
+    text-transform: none;
+    font-weight: 600;
+    letter-spacing: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    margin-right: 0.35rem;
+    margin-bottom: 0.25rem;
+}
+
+.game-genre-tags .magazine-tag {
+    margin: 0 0.35rem 0.35rem 0;
+}
+
+.game-editions-fieldset {
+    margin: 1.25rem 0;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+}
+
+.game-editions-fieldset__label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.game-physical-supports {
+    margin-bottom: 1rem;
+}
+
+.game-digital-section {
+    margin-top: 0.75rem;
+}
+
+.game-digital-store-row {
+    display: grid;
+    gap: 0.35rem;
+    margin: 0.65rem 0 0.65rem 1rem;
+}
+
+@media (min-width: 640px) {
+    .game-digital-store-row {
+        grid-template-columns: 10rem 1fr;
+        align-items: center;
+    }
+}
+
+.game-digital-store-url input {
+    width: 100%;
+}
+
+.game-editions-display__list {
+    list-style: none;
+    padding: 0;
+    margin: 0 0 1rem;
+}
+
+.game-editions-display__list li {
+    margin-bottom: 0.35rem;
+}
+
+.game-detail-page__toolbar {
+    margin: 0.75rem 0 1rem;
+}
+
+.game-detail__title-row {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.65rem;
+}
+
+.game-detail__platform-row {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.game-linux-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #111;
+    background: #87ceeb;
+    border-radius: 999px;
+    vertical-align: middle;
+    box-shadow: 0 0 0 1px rgba(135, 206, 235, 0.35);
+}
+
+.game-linux-badge--md {
+    width: 1.75rem;
+    height: 1.75rem;
+}
+
+.game-linux-badge--sm {
+    width: 1.35rem;
+    height: 1.35rem;
+}
+
+.game-linux-badge--plain {
+    background: #87ceeb;
+    width: 1.2rem;
+    height: 1.2rem;
+    flex-shrink: 0;
+}
+
+.game-linux-badge--plain.game-linux-badge--md {
+    width: 1.65rem;
+    height: 1.65rem;
+}
+
+.game-list-title {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.game-list-title + .game-linux-badge,
+td .game-linux-badge--plain {
+    margin-left: 0.25rem;
+    vertical-align: middle;
+}
+
+.game-linux-badge__icon {
+    width: 88%;
+    height: 88%;
+}
+
+.result-actions--with-delete {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+}
+
+.game-detail__delete-form {
+    margin: 0;
+}
+
+.game-linux-panel {
+    margin: 1.25rem 0;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+.game-linux-panel__title {
+    margin: 0 0 0.65rem;
+    font-size: 1.05rem;
+}
+
+.game-linux-form__label {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    cursor: pointer;
 }
 
 .magazine-series-tags-field {

@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\MagazineGameLink;
 use Moncine\MagazineRepository;
 use Moncine\MagazineSeriesTag;
 use Moncine\MagazineSubject;
@@ -55,7 +56,14 @@ $forcedTag = MagazineSeriesTag::singleTag($seriesForSubjects);
 $issueSubjects = MagazineSubjectRepository::isAvailable()
     ? (new MagazineSubjectRepository())->listForOeuvre($oeuvreId)
     : [];
+if (MagazineGameLink::isAvailable()) {
+    $gameLink = new MagazineGameLink();
+    foreach ($issueSubjects as $index => $issueSubject) {
+        $issueSubjects[$index] = $gameLink->enrichSubjectRow($issueSubject, $userId, $foyerId);
+    }
+}
 $subjectCategories = MagazineSubject::choices();
+$gameCatalogLinkAvailable = MagazineGameLink::isAvailable();
 
 View::render('magazine-numero', [
     'pageTitle' => (string) ($issue['titre'] ?? 'Numéro'),
@@ -72,6 +80,7 @@ View::render('magazine-numero', [
     'parutionYear' => $parutionYear,
     'defaultSubjectYear' => $defaultSubjectYear,
     'subjectYearChoices' => $subjectYearChoices,
+    'gameCatalogLinkAvailable' => $gameCatalogLinkAvailable,
     'dateLabel' => PublicationType::formatParutionDate(
         (string) ($issue['date_parution'] ?? ''),
         (string) ($issue['publication_type'] ?? '')

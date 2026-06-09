@@ -34,6 +34,19 @@ final class MagazineSubjectRepository
         return $stmt !== false && $stmt->fetchColumn() !== false;
     }
 
+    /** Colonnes magazine_subject (inclut catalog_oeuvre_id si migration 039 appliquée). */
+    private static function selectSubjectColumns(string $alias = ''): string
+    {
+        $prefix = $alias !== '' ? $alias . '.' : '';
+        $cols = $prefix . 'id, ' . $prefix . 'category, ' . $prefix . 'label, ' . $prefix . 'detail, '
+            . $prefix . 'parution_year, ' . $prefix . 'created_at';
+        if (MagazineGameLink::catalogColumnExists()) {
+            $cols .= ', ' . $prefix . 'catalog_oeuvre_id';
+        }
+
+        return $cols;
+    }
+
     /** @return array<string, mixed>|null */
     public function findById(int $subjectId): ?array
     {
@@ -42,7 +55,7 @@ final class MagazineSubjectRepository
         }
 
         $stmt = $this->db->prepare(
-            'SELECT id, category, label, detail, parution_year, created_at FROM magazine_subject WHERE id = ? LIMIT 1'
+            'SELECT ' . self::selectSubjectColumns() . ' FROM magazine_subject WHERE id = ? LIMIT 1'
         );
         $stmt->execute([$subjectId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
@@ -100,7 +113,7 @@ final class MagazineSubjectRepository
             }
         }
 
-        $sql = 'SELECT ms.id, ms.category, ms.label, ms.detail, ms.parution_year, ms.created_at,
+        $sql = 'SELECT ' . self::selectSubjectColumns('ms') . ',
                        COUNT(DISTINCT oms.oeuvre_id) AS usage_count
                 FROM magazine_subject ms
                 LEFT JOIN oeuvre_magazine_subject oms ON oms.subject_id = ms.id
@@ -157,6 +170,69 @@ final class MagazineSubjectRepository
     }
 
     /**
+     * Prépare un sujet en s’appuyant sur une fiche jeu du catalogue (titre, plateforme, année).
+     *
+     * @param array<string, mixed> $series
+     * @param array<string, mixed> $issue
+     * @return array<string, mixed>|string
+     */
+    public function prepareSubjectForIssueWithCatalog(
+        string $category,
+        string $label,
+        string $userDetail,
+        array $series,
+        array $issue,
+        int $userParutionYear,
+        int $catalogOeuvreId
+    ): array|string {
+        $prepared = $this->prepareSubjectForIssue(
+            $category,
+            $label,
+            $userDetail,
+            $series,
+            $issue,
+            $userParutionYear
+        );
+        if (!is_array($prepared)) {
+            return $prepared;
+        }
+
+        if ($catalogOeuvreId <= 0 || !MagazineGameLink::isAvailable()) {
+            return $prepared;
+        }
+
+        if (!MagazineGameLink::supportsSubjectCategory((string) ($prepared['category'] ?? ''))) {
+            return 'Cette catégorie de sujet ne peut pas être reliée à un jeu du catalogue.';
+        }
+
+        $valid = MagazineGameLink::validateCatalogOeuvreId($catalogOeuvreId);
+        if ($valid !== true) {
+            return $valid;
+        }
+
+        $game = (new GameRepository())->findCatalogByOeuvreId($catalogOeuvreId);
+        if ($game === null) {
+            return 'La fiche jeu sélectionnée est introuvable.';
+        }
+
+        $prepared['label'] = trim((string) ($game['titre'] ?? ''));
+        if ($prepared['label'] === '') {
+            return 'La fiche jeu sélectionnée est incomplète (titre manquant).';
+        }
+
+        if ($prepared['detail'] === '') {
+            $platformShort = GamePlatform::shortLabel((string) ($game['platform'] ?? ''));
+            if ($platformShort !== '') {
+                $prepared['detail'] = $platformShort;
+            }
+        }
+
+        $prepared['catalog_oeuvre_id'] = $catalogOeuvreId;
+
+        return $prepared;
+    }
+
+    /**
      * @return array<string, mixed>|null
      */
     public function findOrCreate(string $category, string $label, string $detail = '', int $parutionYear = 0): ?array
@@ -202,7 +278,7 @@ final class MagazineSubjectRepository
         }
 
         $stmt = $this->db->prepare(
-            'SELECT ms.id, ms.category, ms.label, ms.detail, ms.parution_year, ms.created_at, oms.created_at AS linked_at
+            'SELECT ' . self::selectSubjectColumns('ms') . ', oms.created_at AS linked_at
              FROM oeuvre_magazine_subject oms
              INNER JOIN magazine_subject ms ON ms.id = oms.subject_id
              WHERE oms.oeuvre_id = ?
@@ -330,7 +406,7 @@ final class MagazineSubjectRepository
         }
 
         $stmt = $this->db->prepare(
-            'SELECT id, category, label, detail, parution_year, created_at
+            'SELECT ' . self::selectSubjectColumns() . '
              FROM magazine_subject
              WHERE category = ?
                AND LOWER(detail) = LOWER(?)
@@ -351,7 +427,7 @@ final class MagazineSubjectRepository
     private function findByUniqueKey(string $category, string $label, string $detail, int $parutionYear): ?array
     {
         $stmt = $this->db->prepare(
-            'SELECT id, category, label, detail, parution_year, created_at
+            'SELECT ' . self::selectSubjectColumns() . '
              FROM magazine_subject
              WHERE category = ?
                AND LOWER(label) = LOWER(?)
@@ -379,6 +455,7 @@ final class MagazineSubjectRepository
         $row['detail_label'] = MagazineSeriesTag::detailLabel($detail);
         $row['display_label'] = MagazineSubject::displayLabel($label, $detail, $parutionYear);
         $row['usage_count'] = (int) ($row['usage_count'] ?? 0);
+        $row['catalog_oeuvre_id'] = (int) ($row['catalog_oeuvre_id'] ?? 0);
 
         return $row;
     }

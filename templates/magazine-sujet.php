@@ -24,6 +24,19 @@
                 </span>
             </p>
             <h1><?= Moncine\View::escape((string) ($subject['display_label'] ?? '')) ?></h1>
+            <?php if (!empty($subject['catalog_game_url'])): ?>
+                <p>
+                    <a href="<?= Moncine\View::escape((string) $subject['catalog_game_url']) ?>" class="btn btn-secondary btn-sm">
+                        Voir la fiche jeu liée
+                    </a>
+                </p>
+            <?php elseif (!empty($subject['catalog_game'])): ?>
+                <p class="hint">
+                    Relié au catalogue jeux :
+                    <strong><?= Moncine\View::escape((string) ($subject['catalog_game']['display_label'] ?? '')) ?></strong>
+                    (pas encore dans votre bibliothèque jeux).
+                </p>
+            <?php endif; ?>
             <p class="stats">
                 <?= (int) ($stats['issue_count'] ?? 0) ?> numéro<?= (int) ($stats['issue_count'] ?? 0) > 1 ? 's' : '' ?>
                 dans <?= (int) ($stats['series_count'] ?? 0) ?> série<?= (int) ($stats['series_count'] ?? 0) > 1 ? 's' : '' ?>

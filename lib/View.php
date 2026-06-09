@@ -60,6 +60,8 @@ final class View
             'support',
             'sagas',
             'statistiques',
+            'statistiques-magazines',
+            'statistiques-jeux',
             'catalogue',
             'oeuvre',
             'maintenance-catalogue',
@@ -71,6 +73,11 @@ final class View
             'serie-magazine',
             'utilisateur-serie-magazine',
             'utilisateur-numero-magazine',
+            'jeux',
+            'jeux-envies',
+            'jeu',
+            'ajouter-jeu',
+            'modifier-jeu',
         ], true);
     }
 
@@ -712,5 +719,81 @@ final class View
             'id' => (string) $targetUserId,
             'bib_id' => (string) $bibId,
         ], '', '&', PHP_QUERY_RFC3986);
+    }
+
+    public static function gamesCollectionUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string
+    {
+        $params = [];
+        if ($query !== '') {
+            $params['q'] = $query;
+        }
+        if ($sort !== 'titre') {
+            $params['sort'] = $sort;
+        }
+        if ($dir !== 'asc') {
+            $params['dir'] = $dir;
+        }
+
+        return $params === [] ? '/jeux.php' : '/jeux.php?' . http_build_query($params);
+    }
+
+    public static function gamesWishlistUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string
+    {
+        $params = [];
+        if ($query !== '') {
+            $params['q'] = $query;
+        }
+        if ($sort !== 'titre') {
+            $params['sort'] = $sort;
+        }
+        if ($dir !== 'asc') {
+            $params['dir'] = $dir;
+        }
+
+        return $params === [] ? '/jeux-envies.php' : '/jeux-envies.php?' . http_build_query($params);
+    }
+
+    /** Lien de tri pour la liste « Mes jeux » (clic = bascule asc/desc). */
+    public static function gamesSortUrl(
+        string $column,
+        string $currentSort,
+        string $currentDir,
+        string $searchQuery = ''
+    ): string {
+        $dir = 'asc';
+        if ($currentSort === $column && strtolower($currentDir) === 'asc') {
+            $dir = 'desc';
+        }
+
+        return self::gamesCollectionUrl($searchQuery, $column, $dir);
+    }
+
+    public static function gamesWishlistSortUrl(
+        string $column,
+        string $currentSort,
+        string $currentDir,
+        string $searchQuery = ''
+    ): string {
+        $dir = 'asc';
+        if ($currentSort === $column && strtolower($currentDir) === 'asc') {
+            $dir = 'desc';
+        }
+
+        return self::gamesWishlistUrl($searchQuery, $column, $dir);
+    }
+
+    public static function gameUrl(int $bibId): string
+    {
+        return $bibId > 0 ? '/jeu.php?id=' . $bibId : '/jeux.php';
+    }
+
+    public static function gameCatalogApiUrl(): string
+    {
+        return '/rechercher-jeux-catalogue.php';
+    }
+
+    public static function gameEditUrl(int $bibId): string
+    {
+        return $bibId > 0 ? '/modifier-jeu.php?id=' . $bibId : '/jeux.php';
     }
 }

@@ -24,6 +24,46 @@ final class HistoriqueRepository
         $this->recordViewing($filmId, date('Y-m-d'), $note);
     }
 
+    /** Enregistre ou met à jour la note personnelle sur un jeu (sans saisie de date). */
+    public function setPersonalNote(int $libraryId, ?int $note): void
+    {
+        if ($note !== null && ($note < 1 || $note > 10)) {
+            throw new \InvalidArgumentException('La note doit être entre 1 et 10.');
+        }
+
+        $userId = UserContext::currentUserId();
+        if (!$this->libraryEntryExists($libraryId, $userId)) {
+            throw new \RuntimeException('Cette fiche est introuvable dans votre bibliothèque.');
+        }
+
+        if ($note === null) {
+            $stmt = $this->db->prepare(
+                'DELETE FROM historique WHERE film_id = ? AND user_id = ?'
+            );
+            $stmt->execute([$libraryId, $userId]);
+
+            return;
+        }
+
+        $today = date('Y-m-d');
+        $check = $this->db->prepare(
+            'SELECT id FROM historique WHERE film_id = ? AND user_id = ? ORDER BY date_vue DESC, id DESC LIMIT 1'
+        );
+        $check->execute([$libraryId, $userId]);
+        $existingId = $check->fetchColumn();
+
+        if ($existingId !== false) {
+            $upd = $this->db->prepare(
+                'UPDATE historique SET note = ?, date_vue = ? WHERE id = ? AND user_id = ?'
+            );
+            $upd->execute([$note, $today, $existingId, $userId]);
+
+            return;
+        }
+
+        $this->recordViewing($libraryId, $today, $note);
+    }
+
     public static function todayForInput(): string
     {
         return date('d/m/Y');

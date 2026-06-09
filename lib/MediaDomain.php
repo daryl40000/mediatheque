@@ -77,12 +77,19 @@ final class MediaDomain
         return self::normalize($domain) === self::MAGAZINE;
     }
 
+    public static function isGame(string $domain): bool
+    {
+        return self::normalize($domain) === self::JEU;
+    }
+
     /** Domaines dont la collection est utilisable. */
     public static function isCollectionImplemented(string $domain): bool
     {
         $domain = self::normalize($domain);
 
-        return $domain === self::FILM || $domain === self::MAGAZINE;
+        return $domain === self::FILM
+            || $domain === self::MAGAZINE
+            || $domain === self::JEU;
     }
 
     /** Page principale « ma collection » selon l’onglet actif. */
@@ -90,6 +97,7 @@ final class MediaDomain
     {
         return match (self::normalize($domain)) {
             self::MAGAZINE => '/magazines.php',
+            self::JEU => '/jeux.php',
             default => '/films.php',
         };
     }
@@ -99,6 +107,7 @@ final class MediaDomain
     {
         return match (self::normalize($domain)) {
             self::MAGAZINE => '/magazines-envies.php',
+            self::JEU => '/jeux-envies.php',
             default => '/souhaits.php',
         };
     }

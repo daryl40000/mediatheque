@@ -13,8 +13,10 @@
  * @var int $parutionYear
  * @var int $defaultSubjectYear
  * @var list<int> $subjectYearChoices
+ * @var bool $gameCatalogLinkAvailable
  */
 $bibId = (int) ($issue['bib_id'] ?? 0);
+$gameCatalogLinkAvailable = $gameCatalogLinkAvailable ?? false;
 $hasMultipleTags = count($seriesTags) > 1;
 $hasSingleTag = $forcedTag !== null;
 $defaultSubjectYear = (int) ($defaultSubjectYear ?? Moncine\MagazineSubject::defaultSubjectYearFromIssue($issue));
@@ -66,6 +68,15 @@ $subjectYearChoices = $subjectYearChoices ?? Moncine\MagazineSubject::subjectYea
                             </span>
                             <?= Moncine\View::escape((string) ($subject['display_label'] ?? '')) ?>
                         </a>
+                        <?php if (!empty($subject['catalog_game_url'])): ?>
+                            <a href="<?= Moncine\View::escape((string) $subject['catalog_game_url']) ?>"
+                               class="magazine-subject-tags__game-link hint"
+                               title="Voir la fiche jeu liée">↗ Jeu</a>
+                        <?php elseif (!empty($subject['catalog_game'])): ?>
+                            <span class="hint" title="Jeu catalogue (pas dans votre bibliothèque jeux)">
+                                · <?= Moncine\View::escape((string) ($subject['catalog_game']['display_label'] ?? '')) ?>
+                            </span>
+                        <?php endif; ?>
                         <form method="post" action="/traiter-sujets-numero-magazine.php" class="inline-form">
                             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
                             <input type="hidden" name="bib_id" value="<?= $bibId ?>">
@@ -78,10 +89,16 @@ $subjectYearChoices = $subjectYearChoices ?? Moncine\MagazineSubject::subjectYea
             </ul>
         <?php endif; ?>
 
-        <form method="post" action="/traiter-sujets-numero-magazine.php" class="magazine-subject-form import-form">
+        <form method="post" action="/traiter-sujets-numero-magazine.php" class="magazine-subject-form import-form"
+              <?php if ($gameCatalogLinkAvailable): ?>
+              data-game-catalog-url="<?= Moncine\View::escape(Moncine\View::gameCatalogApiUrl()) ?>"
+              <?php endif; ?>>
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
             <input type="hidden" name="bib_id" value="<?= $bibId ?>">
             <input type="hidden" name="action" value="attach">
+            <?php if ($gameCatalogLinkAvailable): ?>
+                <input type="hidden" name="catalog_oeuvre_id" id="attach_catalog_oeuvre_id" value="">
+            <?php endif; ?>
 
             <label for="attach_category">Catégorie</label>
             <select name="category" id="attach_category" required>
@@ -91,13 +108,26 @@ $subjectYearChoices = $subjectYearChoices ?? Moncine\MagazineSubject::subjectYea
             </select>
 
             <label for="attach_label">Nom du sujet</label>
+            <?php if ($gameCatalogLinkAvailable): ?>
+                <p class="hint magazine-subject-form__game-hint" id="attach_game_catalog_hint" hidden>
+                    Lié au jeu du catalogue : <strong id="attach_game_catalog_label"></strong>
+                    <button type="button" class="btn btn-ghost btn-sm" id="attach_clear_game_catalog">Effacer le lien</button>
+                </p>
+            <?php endif; ?>
             <div class="magazine-subject-form__label-wrap magazine-subject-search__row--autocomplete"
                  data-magazine-subject-autocomplete="fill"
                  data-search-url="<?= Moncine\View::escape(Moncine\View::magazineSubjectApiUrl()) ?>">
                 <input type="text" name="label" id="attach_label" required maxlength="200"
                        placeholder="Ex. Gran Turismo 7, Peugeot 308 III, RTX 4080"
                        autocomplete="off" autocapitalize="off" spellcheck="false"
-                       aria-autocomplete="list" aria-controls="attach_label_suggestions">
+                       aria-autocomplete="list" aria-controls="attach_label_suggestions"
+                       aria-describedby="<?= $gameCatalogLinkAvailable ? 'attach_label_game_help' : '' ?>">
+                <?php if ($gameCatalogLinkAvailable): ?>
+                    <p class="hint" id="attach_label_game_help">
+                        Pour un <strong>test</strong>, une <strong>preview</strong> ou une <strong>interview</strong>,
+                        choisissez un jeu dans le catalogue pour remplir titre, plateforme et année automatiquement.
+                    </p>
+                <?php endif; ?>
                 <ul class="catalog-title-autocomplete__list magazine-subject-suggestions" id="attach_label_suggestions"
                     role="listbox" hidden></ul>
             </div>

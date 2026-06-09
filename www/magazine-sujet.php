@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\LibraryStatut;
+use Moncine\MagazineGameLink;
 use Moncine\MagazineSubjectRepository;
 use Moncine\MediaDomainGuards;
 use Moncine\UserContext;
@@ -59,6 +60,10 @@ $offset = ($page - 1) * $perPage;
 
 $issues = $repo->listIssuesInLibrary($subjectId, $userId, $foyerId, null, $perPage, $offset);
 $stats = $repo->countInLibrary($subjectId, $userId, $foyerId);
+
+if (MagazineGameLink::isAvailable()) {
+    $subject = (new MagazineGameLink())->enrichSubjectRow($subject, $userId, $foyerId);
+}
 
 View::render('magazine-sujet', [
     'pageTitle' => (string) ($subject['display_label'] ?? 'Sujet'),

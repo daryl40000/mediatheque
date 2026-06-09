@@ -5,10 +5,12 @@
  * @var list<array<string, mixed>> $films
  * @var string $emptyHint
  * @var bool $linkToFilm Lien vers la fiche film (/film.php)
+ * @var bool $linkToGame Lien vers la fiche jeu (/jeu.php)
  */
 $films = $films ?? [];
 $emptyHint = $emptyHint ?? 'Aucun film à afficher.';
 $linkToFilm = !empty($linkToFilm);
+$linkToGame = !empty($linkToGame);
 ?>
 <?php if ($films === []): ?>
     <p class="hint"><?= Moncine\View::escape($emptyHint) ?></p>
@@ -22,7 +24,13 @@ $linkToFilm = !empty($linkToFilm);
             <li class="social-poster-strip__item" role="listitem">
                 <?php
                 $filmId = (int) ($film['id'] ?? 0);
-                $filmHref = $linkToFilm && $filmId > 0 ? '/film.php?id=' . $filmId : '';
+                if ($linkToGame && $filmId > 0) {
+                    $filmHref = Moncine\View::gameUrl($filmId);
+                } elseif ($linkToFilm && $filmId > 0) {
+                    $filmHref = '/film.php?id=' . $filmId;
+                } else {
+                    $filmHref = '';
+                }
                 ?>
                 <?php if ($filmHref !== ''): ?>
                     <a href="<?= Moncine\View::escape($filmHref) ?>" class="social-poster-strip__link">

@@ -1,19 +1,20 @@
 # Médiathèque
 
-**Version : 0.4.4**
+**Version : 0.5.0**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
 
 **Médiathèque** est l’évolution de **[Monciné](CHANGELOG.md)** : une application web pour gérer **plusieurs types de médias** (films, BD/manga, livres, jeux vidéo, magazines) dans une seule interface, avec des **onglets** et une **couleur par média**.
 
-En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné ; l’onglet **Magazines** permet de gérer des séries et numéros (PDF, recherche, tags papier/PDF). Les autres onglets affichent « Bientôt disponible ».
+En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné ; l’onglet **Magazines** permet de gérer des séries et numéros (PDF, recherche, tags papier/PDF). L’onglet **Jeux** est utilisable depuis **0.5.0** (collection, envies, pont magazine). Les onglets BD et Livres affichent « Bientôt disponible ».
 
 | Document | Contenu |
 |----------|---------|
 | [doc/conventions-techniques.md](doc/conventions-techniques.md) | **Règles de nommage** Monciné vs Médiathèque (obligatoire pour les devs) |
 | [doc/mediatheque.md](doc/mediatheque.md) | Guide du fork, socle multi-médias |
 | [doc/magazines.md](doc/magazines.md) | Magazines : PDF, recherche, tags, hors-série |
+| [doc/jeux.md](doc/jeux.md) | Jeux vidéo : collection, pont magazine, Linux |
 | [ROADMAP.md](ROADMAP.md) | Plan détaillé M0 → M7 |
 | [CHANGELOG.md](CHANGELOG.md) | Journal des versions (Médiathèque + historique Monciné) |
 
@@ -25,6 +26,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné ; l’on
 |---------|------------|
 | Multi-médias | Onglets Films / BD / Livres / Jeux / Magazines + thème couleur |
 | Magazines | Séries, numéros, couvertures, PDF, sommaire, recherche OCR 6 pages, tags support (**0.2.0+**, détail [doc/magazines.md](doc/magazines.md)) |
+| Jeux vidéo | Collection, envies, notes, statistiques, pont magazine, badge Linux (**0.5.0+**, détail [doc/jeux.md](doc/jeux.md)) |
 | Collection & envies | Mes films, Mes envies, sagas, statistiques, **questionnaire du soir**, **listes imprimables** |
 | Prêts | Demandes entre amis, réservation, validation et retour (`/mes-prets.php`) |
 | Stockage médias | Fichiers volumineux hors `www/` (PDF magazines par numéro) |
@@ -38,11 +40,11 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné ; l’on
 
 | Version cible | Contenu |
 |---------------|---------|
+| **0.5.0 (M4 ✅)** | Jeux vidéo : collection, envies, pont magazine, accueil dédié, badge Linux |
 | **0.4.4 (M1 ✅)** | Stabilisation films : QA prod, grille homogène, pagination collection |
 | **0.3.x (M2)** | BD / Manga |
 | **0.4.x (M3)** | Livres |
-| **0.5.x (M4)** | Jeux vidéo |
-| **0.6.x (M5)** | Magazines (PDF, lecteur, recherche) |
+| **0.6.x (M5)** | Magazines (PDF, lecteur, recherche) — suite polish |
 | **1.0.0 (M6–M7)** | Fonctions transverses + identité « Médiathèque » aboutie |
 
 Détail phase par phase : [ROADMAP.md](ROADMAP.md).

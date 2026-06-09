@@ -1,6 +1,6 @@
 # Médiathèque — guide du fork
 
-**Version : 0.4.4** · **Date : 2026-06-09**
+**Version : 0.5.0** · **Date : 2026-06-10**
 
 Ce document décrit ce qu’est la **Médiathèque**, ce qui a été livré en **0.1.0**, et comment cela s’articule avec **Monciné**.
 
@@ -25,7 +25,7 @@ En haut de chaque page connectée :
 - **Films** (gris) — comportement identique à Monciné 1.0.0  
 - **BD / Manga** (rose) — à venir  
 - **Livres** (bleu) — à venir  
-- **Jeux** (violet) — à venir  
+- **Jeux** (violet) — collection, envies, pont magazine (**0.5.0+**, voir [jeux.md](jeux.md))  
 - **Magazines** (vert d’eau) — séries, numéros, PDF (**0.2.0+**, voir [magazines.md](magazines.md))  
 
 Un clic change **toute l’interface** : couleur, libellés du menu (« Mes films », « Mes envies »…), fond léger.
@@ -47,6 +47,10 @@ Depuis **0.4.2** : catégorie **Interview** ; filtre **Hors-série** sur la list
 Depuis **0.4.3** : **année du sujet** choisie via un menu déroulant à l’ajout (par défaut l’année du numéro).
 
 Depuis **0.4.4** : phase **M1 (stabilisation films) clôturée** — QA production complète sur l’onglet Films ; **pagination** Mes films (56 vignettes ou 100 en liste) ; **grille** homogène.
+
+Depuis **0.5.0** : onglet **Jeux vidéo** utilisable — collection, envies, fiches, notes, statistiques, pont magazine (tests/previews), badge Linux — voir [jeux.md](jeux.md).
+
+**M4 (jeux vidéo)** — MVP livré en **0.5.0** : voir [jeux.md](jeux.md).
 
 ### Phase M1 — stabilisation films ✅ (0.4.4)
 
@@ -120,7 +124,7 @@ Voir `.gitignore` :
 
 Points essentiels :
 
-- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.4.4**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.5.0**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
 - **`media_domain`** (onglet Films/BD/…) ≠ **`moncine_kind`** (film/série/spectacle dans l’onglet Films).
 - Nouveau code multi-médias : `MediaDomain`, `MediaContext`, `CatalogSchema::applyMediaDomainFilter()`.
 
@@ -131,9 +135,10 @@ Points essentiels :
 Voir [ROADMAP.md](../ROADMAP.md) :
 
 - **M1** — ✅ Stabilisation films (**0.4.4**, QA prod 2026-06-09)  
-- **M2–M4** — BD, livres, jeux (catalogue `oeuvre_jeu`)  
+- **M4** — ✅ Jeux vidéo MVP (**0.5.0**) — [jeux.md](jeux.md)  
+- **M2–M3** — BD, livres (repoussés après M4)  
 - **M5** — magazines : suite (polish) — voir [magazines.md](magazines.md) pour l’existant (sujets, FTS **0.4.1**)  
-- **Pont Magazines ↔ Jeux** — après M4 : lien optionnel sujet magazine → fiche jeu ; **données déjà saisies en prod conservées** (ROADMAP § Pont Magazines ↔ Jeux)  
+- **Pont Magazines ↔ Jeux** — socle schéma + API ; UI saisie numéro en M5+ ; **données prod conservées** (ROADMAP § Pont Magazines ↔ Jeux)  
 - **M6–M7** — Prêts/partage par domaine, identité et doc  
 
 ---

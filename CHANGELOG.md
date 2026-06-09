@@ -9,6 +9,40 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.5.0] — 2026-06-10
+
+**Jeux vidéo — phase M4 (MVP livré)**
+
+Première version utilisable de l’onglet **Jeux** : collection, envies, fiches catalogue, pont avec les magazines et parité fonctionnelle avec les films (notes, suppression, promotion envie → collection).
+
+### Ajouté
+
+- **Migrations 039–041** : table `oeuvre_jeu`, colonnes exemplaires (`physical_supports`, `digital_stores`), `magazine_subject.catalog_oeuvre_id`, `bibliotheque.tested_on_linux`.
+- **Onglet Jeux actif** : `/jeux.php`, `/jeux-envies.php`, `/jeu.php`, `/ajouter-jeu.php`, `/modifier-jeu.php`.
+- **Accueil jeux** : page dédiée (`home-jeu.php`) — derniers jeux notés, ajouts collection/envies, raccourcis.
+- **API catalogue** : `/rechercher-jeux-catalogue.php` (autocomplétion JSON).
+- **Classes** : `GameRepository`, `GamePlatform`, `GameGenre`, `GamePhysicalSupport`, `GameDigitalStore`, `GameCollectionStats`, `MagazineGameLink`.
+- **Fiche jeu** : jaquette, genres (badges), exemplaires physiques/démat, section « Dans vos magazines ».
+- **Parité films** : notes sur 10 (+ moyenne foyer), date d’ajout, suppression (icône poubelle), passage envie → collection (« J’ai acheté »).
+- **Linux (jeux PC)** : case « Testé sur Linux » à l’ajout/modification ; badge pingouin Tux (fond bleu ciel) sur fiche et listes.
+- **Pont magazine ↔ jeu (UI)** : autocomplétion catalogue jeux à l’ajout d’un sujet test/preview/interview ; lien `catalog_oeuvre_id` ; affichage sur fiche sujet et numéro.
+- **Liste triable** : titre, année, studio, genre, support, note, date d’ajout.
+- **Statistiques jeux** : page dédiée (`GameCollectionStats`) — plateformes, démat/physique, genres, décennies, sujets magazine liés.
+- **Documentation** : [doc/jeux.md](doc/jeux.md).
+
+### Modifié
+
+- **ROADMAP** : M4 MVP livré en **0.5.0** ; M2/M3 repoussés ; pont magazine ↔ jeu partiellement en place (UI saisie + affichage).
+- **Accueil** (`index.php`) : branche selon l’onglet actif (films / magazines / jeux).
+- **Profil public** : bandeau d’affiches compatible jeux (`UserPublicProfileService`, `_user_profile_poster_strip.php`).
+
+### Technique
+
+- Notes jeux via table `historique` réutilisée (`HistoriqueRepository::setPersonalNote`) — note sans session datée visible.
+- Garde-fous domaine média : `MediaDomainGuards::ensureGameContext()`.
+
+---
+
 ## [0.4.4] — 2026-06-09
 
 **Films — clôture phase M1 (stabilisation Monciné)**

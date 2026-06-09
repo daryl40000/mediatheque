@@ -4,7 +4,10 @@ declare(strict_types=1);
 
 namespace Moncine\Tests\Integration;
 
+use Moncine\GamePlatform;
+use Moncine\GameRepository;
 use Moncine\LibraryStatut;
+use Moncine\MagazineGameLink;
 use Moncine\MagazineRepository;
 use Moncine\MagazineSubject;
 use Moncine\MagazineSubjectRepository;
@@ -212,5 +215,77 @@ final class MagazineSubjectTest extends MoncineTestCase
         $this->assertNotNull($second);
         $this->assertSame((int) ($first['id'] ?? 0), (int) ($second['id'] ?? 0));
         $this->assertSame('After Life', (string) ($second['label'] ?? ''));
+    }
+
+    public function testPrepareSubjectWithCatalogGameLink(): void
+    {
+        if (!MagazineGameLink::isAvailable() || !GameRepository::isAvailable()) {
+            $this->markTestSkipped('Pont magazine ↔ jeu non disponible.');
+        }
+
+        MediaContext::set(MediaDomain::JEU);
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $gameRepo = new GameRepository();
+        $bibId = $gameRepo->createWithLibrary([
+            'titre' => 'Catalog Link Test Game',
+            'annee' => 2023,
+            'platform' => GamePlatform::PS5,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+        $game = $gameRepo->findByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($game);
+        $catalogOeuvreId = (int) ($game['oeuvre_id'] ?? 0);
+
+        MediaContext::set(MediaDomain::MAGAZINE);
+        $magRepo = new MagazineRepository();
+        $subjectRepo = new MagazineSubjectRepository();
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Pont Jeu Test',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+        $issueBibId = $magRepo->createIssueWithLibrary($seriesId, [
+            'numero' => '77',
+            'numero_ordre' => 77,
+            'date_parution' => '2024-05-01',
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $issue = $magRepo->findIssueByBibId((int) $issueBibId, $userId, $foyerId);
+        $series = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE);
+        $this->assertNotNull($issue);
+        $this->assertNotNull($series);
+
+        $prepared = $subjectRepo->prepareSubjectForIssueWithCatalog(
+            MagazineSubject::TEST,
+            'Saisie libre',
+            '',
+            $series,
+            $issue,
+            2024,
+            $catalogOeuvreId
+        );
+        $this->assertIsArray($prepared);
+        $this->assertSame('Catalog Link Test Game', $prepared['label']);
+        $this->assertSame('PS5', $prepared['detail']);
+        $this->assertSame($catalogOeuvreId, (int) ($prepared['catalog_oeuvre_id'] ?? 0));
+
+        $subject = $subjectRepo->findOrCreate(
+            (string) $prepared['category'],
+            (string) $prepared['label'],
+            (string) $prepared['detail'],
+            (int) $prepared['parution_year']
+        );
+        $this->assertNotNull($subject);
+        $subjectId = (int) ($subject['id'] ?? 0);
+        $this->assertTrue($subjectRepo->attachToOeuvre((int) $issue['oeuvre_id'], $subjectId) === true);
+        $this->assertSame(true, (new MagazineGameLink())->setSubjectCatalogLink($subjectId, $catalogOeuvreId));
+
+        $linked = $subjectRepo->findById($subjectId);
+        $this->assertNotNull($linked);
+        $this->assertSame($catalogOeuvreId, (int) ($linked['catalog_oeuvre_id'] ?? 0));
+
+        MediaContext::set(MediaDomain::JEU);
+        $coverage = (new MagazineGameLink())->listMagazineCoverageForGame($catalogOeuvreId, $userId, $foyerId);
+        $this->assertCount(1, $coverage);
     }
 }

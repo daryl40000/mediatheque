@@ -43,9 +43,12 @@ foreach ($subjects as $subject) {
         'display_label' => (string) ($subject['display_label'] ?? ''),
         'category' => (string) ($subject['category'] ?? ''),
         'category_label' => (string) ($subject['category_label'] ?? ''),
+        'parution_year' => (int) ($subject['parution_year'] ?? 0),
+        'catalog_oeuvre_id' => (int) ($subject['catalog_oeuvre_id'] ?? 0),
         'issue_count' => (int) ($counts['issue_count'] ?? 0),
         'series_count' => (int) ($counts['series_count'] ?? 0),
         'url' => $subjectId > 0 ? \Moncine\View::magazineSubjectUrl($subjectId) : '',
+        'source' => 'magazine_subject',
     ];
 }
 

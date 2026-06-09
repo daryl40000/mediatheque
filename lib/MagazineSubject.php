@@ -93,6 +93,14 @@ final class MagazineSubject
         return self::choices()[$category] ?? self::choices()[self::TEST];
     }
 
+    /** Sujets pouvant être reliés à une fiche jeu du catalogue (pont M4/M5). */
+    public static function supportsCatalogGameLink(string $category): bool
+    {
+        $category = self::normalizeCategory($category);
+
+        return in_array($category, [self::TEST, self::PREVIEW, self::INTERVIEW], true);
+    }
+
     /**
      * Clé de comparaison pour regrouper des libellés proches
      * (ex. « After Life » et « Afterlife » → « afterlife »).

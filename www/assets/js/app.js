@@ -27,6 +27,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initCatalogTitleAutocomplete();
     initMagazineSubjectAutocompleteFields();
     initMagazineSeriesTagsField();
+    initTagsBadgeFields();
+    initGameEditionFields();
     initShareLinkCopy();
 
     const params = new URLSearchParams(window.location.search);
@@ -533,6 +535,8 @@ function initShareLinkCopy() {
 
 /** Autocomplétion des sujets magazines (recherche, liste, fiche numéro). */
 function initMagazineSubjectAutocompleteFields() {
+    const gameLinkCategories = new Set(['test', 'preview', 'interview']);
+
     document.querySelectorAll('[data-magazine-subject-autocomplete]').forEach((row) => {
         const input = row.querySelector('input[type="search"], input[type="text"]');
         const list = row.querySelector('[role="listbox"]');
@@ -542,16 +546,95 @@ function initMagazineSubjectAutocompleteFields() {
         const categorySelect = form
             ? form.querySelector('#subject_category, #attach_category')
             : document.getElementById('subject_category');
+        const gameCatalogUrl = form?.getAttribute('data-game-catalog-url') || '';
+        const catalogInput = form?.querySelector('#attach_catalog_oeuvre_id');
+        const gameHint = form?.querySelector('#attach_game_catalog_hint');
+        const gameHintLabel = form?.querySelector('#attach_game_catalog_label');
+        const clearGameBtn = form?.querySelector('#attach_clear_game_catalog');
 
         if (!input || !list) {
             return;
         }
 
         let debounceTimer = null;
+        let linkedGameLabel = '';
+
+        const supportsGameCatalog = () => (
+            gameCatalogUrl !== ''
+            && categorySelect
+            && gameLinkCategories.has(categorySelect.value)
+        );
 
         const closeList = () => {
             list.hidden = true;
             list.innerHTML = '';
+        };
+
+        const clearGameCatalogLink = () => {
+            linkedGameLabel = '';
+            if (catalogInput) {
+                catalogInput.value = '';
+            }
+            if (gameHint) {
+                gameHint.hidden = true;
+            }
+            if (gameHintLabel) {
+                gameHintLabel.textContent = '';
+            }
+        };
+
+        const showGameCatalogLink = (label) => {
+            linkedGameLabel = label || '';
+            if (gameHint && gameHintLabel && label) {
+                gameHintLabel.textContent = label;
+                gameHint.hidden = false;
+            }
+        };
+
+        const setParutionYear = (year) => {
+            const yearSelect = form?.querySelector('#attach_parution_year');
+            if (!yearSelect || !year || year <= 0) {
+                return;
+            }
+            const yearStr = String(year);
+            const existing = [...yearSelect.options].find((entry) => entry.value === yearStr);
+            if (existing) {
+                yearSelect.value = yearStr;
+                return;
+            }
+            const option = document.createElement('option');
+            option.value = yearStr;
+            option.textContent = yearStr;
+            yearSelect.appendChild(option);
+            yearSelect.value = yearStr;
+        };
+
+        const applyGameCatalogSelection = (item) => {
+            input.value = item.titre || item.display_label || '';
+            linkedGameLabel = input.value.trim();
+            if (catalogInput) {
+                catalogInput.value = String(item.oeuvre_id || '');
+            }
+            setParutionYear(item.annee);
+
+            const detailField = form ? form.querySelector('#attach_detail') : null;
+            if (detailField && (item.platform_short || item.platform_label)) {
+                const platformValue = item.platform_short || item.platform_label || '';
+                if (detailField.tagName === 'SELECT') {
+                    const option = [...detailField.options].find(
+                        (entry) => entry.value.toLowerCase() === String(platformValue).toLowerCase()
+                    );
+                    if (option) {
+                        detailField.value = option.value;
+                    }
+                } else if (detailField.tagName === 'INPUT') {
+                    detailField.value = platformValue;
+                }
+            }
+
+            showGameCatalogLink(item.display_label || item.titre || '');
+            closeList();
+            input.focus();
         };
 
         const applyFillSelection = (item) => {
@@ -575,6 +658,19 @@ function initMagazineSubjectAutocompleteFields() {
                 }
             }
 
+            if (item.parution_year) {
+                setParutionYear(item.parution_year);
+            }
+
+            if (catalogInput) {
+                if (item.catalog_oeuvre_id && item.catalog_oeuvre_id > 0) {
+                    catalogInput.value = String(item.catalog_oeuvre_id);
+                    showGameCatalogLink(item.display_label || item.label || '');
+                } else {
+                    clearGameCatalogLink();
+                }
+            }
+
             closeList();
             input.focus();
         };
@@ -588,23 +684,34 @@ function initMagazineSubjectAutocompleteFields() {
 
             results.forEach((item) => {
                 const li = document.createElement('li');
-                li.className = 'catalog-title-autocomplete__option';
+                const isGameCatalog = item.source === 'game_catalog';
+                li.className = 'catalog-title-autocomplete__option'
+                    + (isGameCatalog ? ' catalog-title-autocomplete__option--game' : '');
                 li.setAttribute('role', 'option');
 
                 const main = document.createElement('span');
                 main.className = 'catalog-title-autocomplete__option-label';
-                main.textContent = item.display_label || item.label || '';
+                main.textContent = item.display_label || item.label || item.titre || '';
 
                 const meta = document.createElement('span');
                 meta.className = 'hint';
-                meta.textContent = (item.category_label || '')
-                    + (item.issue_count ? ' · ' + item.issue_count + ' num.' : '');
+                if (isGameCatalog) {
+                    meta.textContent = 'Catalogue jeux'
+                        + (item.in_library ? ' · dans votre bibliothèque' : '');
+                } else {
+                    meta.textContent = (item.category_label || '')
+                        + (item.issue_count ? ' · ' + item.issue_count + ' num.' : '');
+                }
 
                 li.appendChild(main);
                 li.appendChild(meta);
 
                 li.addEventListener('mousedown', (event) => {
                     event.preventDefault();
+                    if (isGameCatalog) {
+                        applyGameCatalogSelection(item);
+                        return;
+                    }
                     if (mode === 'fill') {
                         applyFillSelection(item);
                         return;
@@ -630,21 +737,42 @@ function initMagazineSubjectAutocompleteFields() {
                 return;
             }
 
-            const params = new URLSearchParams({ q });
+            const subjectParams = new URLSearchParams({ q });
             if (categorySelect && categorySelect.value && categorySelect.id === 'subject_category') {
-                params.set('category', categorySelect.value);
+                subjectParams.set('category', categorySelect.value);
             }
 
-            fetch(searchUrl + '?' + params.toString(), {
-                headers: { Accept: 'application/json' },
-                credentials: 'same-origin',
-            })
-                .then((response) => response.json())
-                .then((data) => renderResults(Array.isArray(data.results) ? data.results : []))
+            const requests = [
+                fetch(searchUrl + '?' + subjectParams.toString(), {
+                    headers: { Accept: 'application/json' },
+                    credentials: 'same-origin',
+                }).then((response) => response.json()),
+            ];
+
+            if (supportsGameCatalog()) {
+                requests.push(
+                    fetch(gameCatalogUrl + '?' + new URLSearchParams({ q }).toString(), {
+                        headers: { Accept: 'application/json' },
+                        credentials: 'same-origin',
+                    }).then((response) => response.json())
+                );
+            }
+
+            Promise.all(requests)
+                .then((payloads) => {
+                    const subjectResults = Array.isArray(payloads[0]?.results) ? payloads[0].results : [];
+                    const gameResults = payloads.length > 1 && Array.isArray(payloads[1]?.results)
+                        ? payloads[1].results
+                        : [];
+                    renderResults([...gameResults, ...subjectResults]);
+                })
                 .catch(() => closeList());
         };
 
         input.addEventListener('input', () => {
+            if (catalogInput && linkedGameLabel !== '' && input.value.trim() !== linkedGameLabel.trim()) {
+                clearGameCatalogLink();
+            }
             window.clearTimeout(debounceTimer);
             debounceTimer = window.setTimeout(fetchResults, 250);
         });
@@ -660,23 +788,39 @@ function initMagazineSubjectAutocompleteFields() {
                 }
             });
         }
+
+        if (categorySelect && categorySelect.id === 'attach_category') {
+            categorySelect.addEventListener('change', () => {
+                if (!supportsGameCatalog()) {
+                    clearGameCatalogLink();
+                } else if (input.value.trim().length >= 2) {
+                    fetchResults();
+                }
+            });
+        }
+
+        clearGameBtn?.addEventListener('click', () => {
+            clearGameCatalogLink();
+            input.focus();
+        });
     });
 }
 
 /**
- * Tags de série magazine : badges + ajout / retrait avant enregistrement du formulaire.
+ * Champs tags / genres en badges (magazines, jeux…).
  */
-function initMagazineSeriesTagsField() {
-    document.querySelectorAll('[data-series-tags-field]').forEach((root) => {
+function initTagsBadgeFields() {
+    document.querySelectorAll('[data-tags-badge-field]').forEach((root) => {
         const list = root.querySelector('.magazine-series-tags-field__list');
         const input = root.querySelector('.magazine-series-tags-field__input');
         const addBtn = root.querySelector('.magazine-series-tags-field__add-btn');
+        const inputName = root.getAttribute('data-tags-input-name') || 'tags[]';
         if (!list || !input || !addBtn) {
             return;
         }
 
         const collectKeys = () => new Set(
-            [...list.querySelectorAll('input[name="tags[]"]')]
+            [...list.querySelectorAll(`input[name="${CSS.escape(inputName)}"]`)]
                 .map((field) => field.value.trim().toLowerCase())
                 .filter(Boolean)
         );
@@ -697,7 +841,9 @@ function initMagazineSeriesTagsField() {
             item.setAttribute('role', 'listitem');
 
             const badge = document.createElement('span');
-            badge.className = 'magazine-tag magazine-tag--series';
+            badge.className = root.classList.contains('game-genre-tags-field')
+                ? 'magazine-tag magazine-tag--game-genre'
+                : 'magazine-tag magazine-tag--series';
 
             const text = document.createElement('span');
             text.className = 'magazine-series-tags-field__text';
@@ -706,8 +852,8 @@ function initMagazineSeriesTagsField() {
             const removeBtn = document.createElement('button');
             removeBtn.type = 'button';
             removeBtn.className = 'magazine-series-tags-field__remove';
-            removeBtn.title = 'Retirer ce tag';
-            removeBtn.setAttribute('aria-label', 'Retirer le tag ' + trimmed);
+            removeBtn.title = 'Retirer';
+            removeBtn.setAttribute('aria-label', 'Retirer ' + trimmed);
             removeBtn.textContent = '×';
 
             badge.appendChild(text);
@@ -715,7 +861,7 @@ function initMagazineSeriesTagsField() {
 
             const hidden = document.createElement('input');
             hidden.type = 'hidden';
-            hidden.name = 'tags[]';
+            hidden.name = inputName;
             hidden.value = trimmed;
 
             item.appendChild(badge);
@@ -750,5 +896,76 @@ function initMagazineSeriesTagsField() {
             }
             removeBtn.closest('.magazine-series-tags-field__item')?.remove();
         });
+    });
+}
+
+/**
+ * Tags de série magazine : badges + ajout / retrait avant enregistrement du formulaire.
+ */
+function initMagazineSeriesTagsField() {
+    document.querySelectorAll('[data-series-tags-field]').forEach((root) => {
+        if (root.hasAttribute('data-tags-badge-field')) {
+            return;
+        }
+        root.setAttribute('data-tags-badge-field', '');
+        root.setAttribute('data-tags-input-name', 'tags[]');
+    });
+}
+
+/** Exemplaires jeux : panneaux démat PC vs console selon la plateforme. */
+function initGameEditionFields() {
+    const consoleStoreLabels = {
+        ps5: 'PlayStation Store',
+        ps4: 'PlayStation Store',
+        xbox_series: 'Microsoft Store / Xbox',
+        xbox_one: 'Microsoft Store / Xbox',
+        switch: 'Nintendo eShop',
+        switch2: 'Nintendo eShop',
+    };
+
+    document.querySelectorAll('form').forEach((form) => {
+        const platformSelect = form.querySelector('[data-game-platform-select]');
+        const linuxField = form.querySelector('[data-game-linux-field]');
+
+        const refreshLinuxField = () => {
+            if (!linuxField) {
+                return;
+            }
+            const isPc = (platformSelect?.value || '') === 'pc';
+            linuxField.hidden = !isPc;
+        };
+
+        platformSelect?.addEventListener('change', refreshLinuxField);
+        refreshLinuxField();
+    });
+
+    document.querySelectorAll('[data-game-editions-root]').forEach((root) => {
+        const form = root.closest('form');
+        const platformSelect = form?.querySelector('[data-game-platform-select]');
+        const digitalToggle = root.querySelector('[data-game-digital-toggle]');
+        const pcPanel = root.querySelector('[data-game-digital-pc]');
+        const consolePanel = root.querySelector('[data-game-digital-console]');
+        const consoleLabel = root.querySelector('[data-game-console-store-label]');
+
+        const refresh = () => {
+            const platform = platformSelect?.value || '';
+            const digitalOn = Boolean(digitalToggle?.checked);
+            const isPc = platform === 'pc';
+            const isConsole = Object.prototype.hasOwnProperty.call(consoleStoreLabels, platform);
+
+            if (pcPanel) {
+                pcPanel.hidden = !(digitalOn && isPc);
+            }
+            if (consolePanel) {
+                consolePanel.hidden = !(digitalOn && isConsole);
+            }
+            if (consoleLabel && isConsole) {
+                consoleLabel.textContent = consoleStoreLabels[platform] || '—';
+            }
+        };
+
+        platformSelect?.addEventListener('change', refresh);
+        digitalToggle?.addEventListener('change', refresh);
+        refresh();
     });
 }

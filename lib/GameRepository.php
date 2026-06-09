@@ -1,0 +1,775 @@
+<?php
+/**
+ * Jeux vidéo : catalogue (oeuvres + oeuvre_jeu) et collection utilisateur.
+ */
+
+declare(strict_types=1);
+
+namespace Moncine;
+
+use PDO;
+
+final class GameRepository
+{
+    /** Colonnes triables sur les listes jeux. */
+    private const SORT_COLUMNS = [
+        'titre' => 'o.titre COLLATE FRENCH_NOCASE',
+        'annee' => 'o.annee',
+        'platform' => 'oj.platform COLLATE NOCASE',
+        'studio' => 'oj.studio COLLATE FRENCH_NOCASE',
+        'genre' => 'oj.genre COLLATE FRENCH_NOCASE',
+        'note' => 'note_max',
+        'added_at' => 'b.created_at',
+    ];
+
+    /** @return list<string> */
+    public static function sortableColumns(): array
+    {
+        return ['titre', 'annee', 'genre', 'studio', 'support', 'note', 'added_at'];
+    }
+
+    public static function isValidSortColumn(string $sortBy): bool
+    {
+        return in_array($sortBy, self::sortableColumns(), true);
+    }
+
+    private static function sortOrderExpression(string $sortBy): string
+    {
+        if ($sortBy === 'support') {
+            if (self::hasEditionColumns()) {
+                return 'oj.physical_supports COLLATE NOCASE, oj.digital_stores COLLATE NOCASE, oj.is_digital';
+            }
+
+            return 'oj.is_digital';
+        }
+
+        return self::SORT_COLUMNS[$sortBy] ?? self::SORT_COLUMNS['titre'];
+    }
+
+    private PDO $db;
+
+    public function __construct()
+    {
+        $this->db = Database::getInstance();
+    }
+
+    public static function isAvailable(): bool
+    {
+        return self::tableExists() && CatalogSchema::usesCatalogTables(Database::getInstance());
+    }
+
+    public static function tableExists(): bool
+    {
+        $stmt = Database::getInstance()->query(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'oeuvre_jeu' LIMIT 1"
+        );
+
+        return $stmt !== false && $stmt->fetchColumn() !== false;
+    }
+
+    public static function hasEditionColumns(): bool
+    {
+        if (!self::tableExists()) {
+            return false;
+        }
+
+        $stmt = Database::getInstance()->query('PRAGMA table_info(oeuvre_jeu)');
+        if ($stmt === false) {
+            return false;
+        }
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (($row['name'] ?? '') === 'physical_supports') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function hasTestedOnLinuxColumn(): bool
+    {
+        $stmt = Database::getInstance()->query('PRAGMA table_info(bibliotheque)');
+        if ($stmt === false) {
+            return false;
+        }
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (($row['name'] ?? '') === 'tested_on_linux') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Exemplaires / éditions depuis un formulaire POST.
+     *
+     * @param array<string, mixed> $post
+     * @return array{physical_supports: string, digital_stores: string, is_digital: bool}
+     */
+    public static function editionPayloadFromPost(array $post): array
+    {
+        $platform = GamePlatform::normalize((string) ($post['platform'] ?? ''));
+        $physicalSupports = self::hasEditionColumns()
+            ? GamePhysicalSupport::normalizeFromPost($post['physical_supports'] ?? [])
+            : '';
+        $digitalStores = self::hasEditionColumns()
+            ? GameDigitalStore::buildFromPost($post, $platform)
+            : '';
+        $isDigital = !empty($post['is_digital'])
+            || GameDigitalStore::hasDigitalEdition($digitalStores, false);
+
+        return [
+            'physical_supports' => $physicalSupports,
+            'digital_stores' => $digitalStores,
+            'is_digital' => $isDigital,
+        ];
+    }
+
+    /** Case « testé sur Linux » (jeux PC uniquement). */
+    public static function testedOnLinuxFromPost(array $post): bool
+    {
+        $platform = GamePlatform::normalize((string) ($post['platform'] ?? ''));
+
+        return $platform === GamePlatform::PC && !empty($post['tested_on_linux']);
+    }
+
+    /**
+     * Jeux présents dans la bibliothèque (collection ou envies).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function listInLibrary(
+        int $userId,
+        int $foyerId,
+        string $statut = LibraryStatut::COLLECTION,
+        string $sortBy = 'titre',
+        string $sortDir = 'asc',
+        string $searchQuery = ''
+    ): array {
+        if (!self::isAvailable()) {
+            return [];
+        }
+
+        if (!self::isValidSortColumn($sortBy)) {
+            $sortBy = 'titre';
+        }
+        $direction = strtolower($sortDir) === 'desc' ? 'DESC' : 'ASC';
+        $orderExpr = self::sortOrderExpression($sortBy);
+
+        $params = [];
+        [$userWhere, $params] = CatalogSchema::libraryFilter($foyerId, $userId, LibraryStatut::normalize($statut));
+
+        $where = [
+            'o.media_domain = :game_domain',
+            $userWhere,
+        ];
+        $params['game_domain'] = MediaDomain::JEU;
+        $params['history_user_id'] = $userId;
+        $params['foyer_id_rating'] = $foyerId;
+
+        $searchQuery = trim($searchQuery);
+        if ($searchQuery !== '') {
+            $where[] = '(LOWER(o.titre) LIKE LOWER(:q) ESCAPE \'\\\' OR LOWER(oj.studio) LIKE LOWER(:q_studio) ESCAPE \'\\\' OR LOWER(oj.genre) LIKE LOWER(:q_genre) ESCAPE \'\\\')';
+            $params['q'] = LikePattern::containsFragment($searchQuery);
+            $params['q_studio'] = LikePattern::containsFragment($searchQuery);
+            $params['q_genre'] = LikePattern::containsFragment($searchQuery);
+        }
+
+        $sql = 'SELECT ' . self::selectGameRow() . self::selectGameHistoryExtras()
+            . ' FROM bibliotheque b'
+            . ' INNER JOIN oeuvres o ON o.id = b.oeuvre_id'
+            . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . ' WHERE ' . implode(' AND ', $where)
+            . ' ORDER BY ' . $orderExpr . ' ' . $direction;
+        if ($sortBy !== 'titre') {
+            $sql .= ', o.titre COLLATE FRENCH_NOCASE ASC';
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return array_map([$this, 'hydrateGameRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    /** Passe une envie jeu dans la collection du foyer. */
+    public function promoteToCollection(int $bibId, int $userId, int $foyerId): bool
+    {
+        $game = $this->findByBibId($bibId, $userId, $foyerId);
+        if ($game === null || ($game['statut'] ?? '') !== LibraryStatut::WISHLIST) {
+            return false;
+        }
+
+        return (new BibliothequeRepository())->promoteToCollection($bibId, $userId, $foyerId);
+    }
+
+    /** Retire un jeu de la bibliothèque (collection ou envies) et efface ses notes/sessions. */
+    public function deleteById(int $bibId, int $userId, int $foyerId): bool
+    {
+        if ($this->findByBibId($bibId, $userId, $foyerId) === null) {
+            return false;
+        }
+
+        $this->db->prepare('DELETE FROM historique WHERE film_id = ?')->execute([$bibId]);
+
+        return (new BibliothequeRepository())->deleteById($bibId, $userId, $foyerId);
+    }
+
+    /** @return true|string */
+    public function updateTestedOnLinux(int $bibId, int $userId, int $foyerId, bool $testedOnLinux): bool|string
+    {
+        if (!self::hasTestedOnLinuxColumn()) {
+            return 'Option Linux non disponible (migration en cours).';
+        }
+
+        $game = $this->findByBibId($bibId, $userId, $foyerId);
+        if ($game === null) {
+            return 'Jeu introuvable.';
+        }
+
+        if (GamePlatform::normalize((string) ($game['platform'] ?? '')) !== GamePlatform::PC && $testedOnLinux) {
+            return 'Seuls les jeux PC peuvent être marqués comme testés sous Linux.';
+        }
+
+        $this->saveTestedOnLinuxFlag(
+            $bibId,
+            GamePlatform::normalize((string) ($game['platform'] ?? '')),
+            $testedOnLinux
+        );
+
+        return true;
+    }
+
+    private function saveTestedOnLinuxFlag(int $bibId, string $platform, bool $testedOnLinux): void
+    {
+        if (!self::hasTestedOnLinuxColumn() || $bibId <= 0) {
+            return;
+        }
+
+        $value = $platform === GamePlatform::PC && $testedOnLinux ? 1 : 0;
+        $this->db->prepare('UPDATE bibliotheque SET tested_on_linux = ? WHERE id = ?')
+            ->execute([$value, $bibId]);
+    }
+
+    /**
+     * Recherche dans le catalogue jeux (autocomplétion, pont magazine).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function searchCatalog(string $query, int $limit = 20): array
+    {
+        if (!self::isAvailable()) {
+            return [];
+        }
+
+        $limit = max(1, min($limit, 50));
+        $params = ['game_domain' => MediaDomain::JEU];
+        $where = ['o.media_domain = :game_domain'];
+
+        $query = trim($query);
+        if ($query !== '') {
+            $where[] = '(LOWER(o.titre) LIKE LOWER(:q) ESCAPE \'\\\' OR LOWER(oj.studio) LIKE LOWER(:q_studio) ESCAPE \'\\\')';
+            $params['q'] = LikePattern::containsFragment($query);
+            $params['q_studio'] = LikePattern::containsFragment($query);
+        }
+
+        $sql = 'SELECT ' . self::selectCatalogRow()
+            . ' FROM oeuvres o'
+            . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . ' WHERE ' . implode(' AND ', $where)
+            . ' ORDER BY o.titre COLLATE FRENCH_NOCASE ASC'
+            . ' LIMIT ' . $limit;
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return array_map([$this, 'hydrateCatalogRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    /** @return array<string, mixed>|null */
+    public function findByBibId(int $bibId, int $userId, int $foyerId): ?array
+    {
+        if (!self::isAvailable() || $bibId <= 0) {
+            return null;
+        }
+
+        $params = [
+            'bib_id' => $bibId,
+            'game_domain' => MediaDomain::JEU,
+            'collection' => LibraryStatut::COLLECTION,
+            'wishlist' => LibraryStatut::WISHLIST,
+            'foyer_id' => $foyerId,
+            'user_id' => $userId,
+        ];
+
+        $stmt = $this->db->prepare(
+            'SELECT ' . self::selectGameRow()
+            . ' FROM bibliotheque b'
+            . ' INNER JOIN oeuvres o ON o.id = b.oeuvre_id'
+            . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . ' WHERE b.id = :bib_id'
+            . ' AND o.media_domain = :game_domain'
+            . ' AND ('
+            . '   (b.statut = :collection AND b.foyer_id = :foyer_id)'
+            . '   OR (b.statut = :wishlist AND b.user_id = :user_id)'
+            . ' )'
+            . ' LIMIT 1'
+        );
+        $stmt->execute($params);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row !== false ? $this->hydrateGameRow($row) : null;
+    }
+
+    /** Fiche catalogue jeu (indépendamment du contexte média actif).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function findCatalogByOeuvreId(int $oeuvreId): ?array
+    {
+        if (!self::isAvailable() || $oeuvreId <= 0) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT ' . self::selectCatalogRow()
+            . ' FROM oeuvres o'
+            . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . ' WHERE o.id = ? AND o.media_domain = ?'
+            . ' LIMIT 1'
+        );
+        $stmt->execute([$oeuvreId, MediaDomain::JEU]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row !== false ? $this->hydrateCatalogRow($row) : null;
+    }
+
+    /** Id bibliothèque (collection ou envies) pour une fiche catalogue jeu, ou null. */
+    public function findLibraryBibIdForCatalogOeuvre(int $oeuvreId, int $userId, int $foyerId): ?int
+    {
+        if ($oeuvreId <= 0) {
+            return null;
+        }
+
+        $library = (new BibliothequeRepository())->findByOeuvreId($oeuvreId, $userId, $foyerId);
+        if ($library === null) {
+            return null;
+        }
+
+        $game = $this->findCatalogByOeuvreId($oeuvreId);
+
+        return $game !== null ? (int) ($library['id'] ?? 0) : null;
+    }
+
+    /**
+     * Crée une fiche jeu catalogue + entrée bibliothèque.
+     *
+     * @param array<string, mixed> $data
+     * @return int|string bib_id ou message d’erreur
+     */
+    public function createWithLibrary(
+        array $data,
+        string $statut,
+        int $userId,
+        int $foyerId
+    ): int|string {
+        if (!self::isAvailable()) {
+            return 'Module jeux non disponible.';
+        }
+
+        $titre = trim((string) ($data['titre'] ?? ''));
+        if ($titre === '') {
+            return 'Le titre est obligatoire.';
+        }
+
+        $statut = LibraryStatut::normalize($statut);
+        $platform = GamePlatform::normalize((string) ($data['platform'] ?? ''));
+        $physicalSupports = (string) ($data['physical_supports'] ?? '');
+        $digitalStores = (string) ($data['digital_stores'] ?? '');
+        $isDigital = !empty($data['is_digital'])
+            || GameDigitalStore::hasDigitalEdition($digitalStores, !empty($data['is_digital']));
+
+        $this->db->beginTransaction();
+        try {
+            $oeuvreId = (new OeuvreRepository())->insert([
+                'titre' => $titre,
+                'realisateur' => '',
+                'annee' => max(0, (int) ($data['annee'] ?? 0)),
+                'synopsis' => trim((string) ($data['synopsis'] ?? '')),
+                'poster_url' => trim((string) ($data['poster_url'] ?? '')),
+                'media_domain' => MediaDomain::JEU,
+            ]);
+
+            if (self::hasEditionColumns()) {
+                $this->db->prepare(
+                    'INSERT INTO oeuvre_jeu (
+                        oeuvre_id, studio, editeur, genre, platform, is_digital,
+                        physical_supports, digital_stores
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+                )->execute([
+                    $oeuvreId,
+                    trim((string) ($data['studio'] ?? '')),
+                    trim((string) ($data['editeur'] ?? '')),
+                    GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
+                    $platform,
+                    $isDigital ? 1 : 0,
+                    $physicalSupports,
+                    $digitalStores,
+                ]);
+            } else {
+                $this->db->prepare(
+                    'INSERT INTO oeuvre_jeu (oeuvre_id, studio, editeur, genre, platform, is_digital)
+                     VALUES (?, ?, ?, ?, ?, ?)'
+                )->execute([
+                    $oeuvreId,
+                    trim((string) ($data['studio'] ?? '')),
+                    trim((string) ($data['editeur'] ?? '')),
+                    GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
+                    $platform,
+                    $isDigital ? 1 : 0,
+                ]);
+            }
+
+            $bibId = (new BibliothequeRepository())->insert($userId, $foyerId, $oeuvreId, [
+                'statut' => $statut,
+                'support_physique' => trim((string) ($data['support_physique'] ?? '')),
+            ]);
+
+            $this->saveTestedOnLinuxFlag(
+                $bibId,
+                $platform,
+                !empty($data['tested_on_linux'])
+            );
+
+            $this->db->commit();
+
+            return $bibId;
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            return 'Erreur lors de l’enregistrement du jeu.';
+        }
+    }
+
+    /**
+     * Met à jour le catalogue d’un jeu (admin).
+     *
+     * @param array<string, mixed> $data
+     * @return true|string
+     */
+    public function updateCatalog(int $bibId, array $data, int $userId, int $foyerId): bool|string
+    {
+        if (!self::isAvailable()) {
+            return 'Module jeux non disponible.';
+        }
+
+        $game = $this->findByBibId($bibId, $userId, $foyerId);
+        if ($game === null) {
+            return 'Jeu introuvable.';
+        }
+
+        $titre = trim((string) ($data['titre'] ?? ''));
+        if ($titre === '') {
+            return 'Le titre est obligatoire.';
+        }
+
+        $oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
+        if ($oeuvreId <= 0) {
+            return 'Fiche catalogue introuvable.';
+        }
+
+        $platform = GamePlatform::normalize((string) ($data['platform'] ?? ''));
+        $physicalSupports = (string) ($data['physical_supports'] ?? '');
+        $digitalStores = (string) ($data['digital_stores'] ?? '');
+        $isDigital = !empty($data['is_digital'])
+            || GameDigitalStore::hasDigitalEdition($digitalStores, false);
+
+        $this->db->beginTransaction();
+        try {
+            (new OeuvreRepository())->update($oeuvreId, [
+                'titre' => $titre,
+                'annee' => max(0, (int) ($data['annee'] ?? 0)),
+                'synopsis' => trim((string) ($data['synopsis'] ?? '')),
+            ], ['titre', 'annee', 'synopsis']);
+
+            if (self::hasEditionColumns()) {
+                $this->db->prepare(
+                    'UPDATE oeuvre_jeu SET
+                        studio = ?, editeur = ?, genre = ?, platform = ?, is_digital = ?,
+                        physical_supports = ?, digital_stores = ?
+                     WHERE oeuvre_id = ?'
+                )->execute([
+                    trim((string) ($data['studio'] ?? '')),
+                    trim((string) ($data['editeur'] ?? '')),
+                    GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
+                    $platform,
+                    $isDigital ? 1 : 0,
+                    $physicalSupports,
+                    $digitalStores,
+                    $oeuvreId,
+                ]);
+            } else {
+                $this->db->prepare(
+                    'UPDATE oeuvre_jeu SET studio = ?, editeur = ?, genre = ?, platform = ?, is_digital = ?
+                     WHERE oeuvre_id = ?'
+                )->execute([
+                    trim((string) ($data['studio'] ?? '')),
+                    trim((string) ($data['editeur'] ?? '')),
+                    GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
+                    $platform,
+                    $isDigital ? 1 : 0,
+                    $oeuvreId,
+                ]);
+            }
+
+            $this->saveTestedOnLinuxFlag(
+                $bibId,
+                $platform,
+                !empty($data['tested_on_linux'])
+            );
+
+            $this->db->commit();
+
+            return true;
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            return 'Erreur lors de la mise à jour du jeu.';
+        }
+    }
+
+    /** Résumé supports pour listes (ex. « CD/DVD · Steam »). */
+    public static function editionSummary(array $row): string
+    {
+        $parts = GamePhysicalSupport::displayLabels((string) ($row['physical_supports'] ?? ''));
+        $parts = array_merge($parts, GameDigitalStore::summaryLabels((string) ($row['digital_stores'] ?? '')));
+
+        if ($parts === [] && !empty($row['is_digital'])) {
+            $parts[] = 'Démat';
+        }
+
+        return implode(' · ', $parts);
+    }
+
+    /** Libellé affiché pour autocomplétion (ex. « Elden Ring (PS5 · 2022) »). */
+    public static function displayLabel(array $row): string
+    {
+        $titre = trim((string) ($row['titre'] ?? ''));
+        if ($titre === '') {
+            return '';
+        }
+
+        $parts = [];
+        $platform = GamePlatform::shortLabel((string) ($row['platform'] ?? ''));
+        if ($platform !== '') {
+            $parts[] = $platform;
+        }
+        $annee = (int) ($row['annee'] ?? 0);
+        if ($annee > 0) {
+            $parts[] = (string) $annee;
+        }
+        if ($parts === []) {
+            return $titre;
+        }
+
+        return $titre . ' (' . implode(' · ', $parts) . ')';
+    }
+
+    /**
+     * Genres déjà utilisés dans le catalogue (pour réutilisation à la saisie).
+     *
+     * @return list<string>
+     */
+    public function listKnownGenres(int $limit = 80): array
+    {
+        if (!self::isAvailable()) {
+            return [];
+        }
+
+        $limit = max(1, min($limit, 200));
+        $stmt = $this->db->query(
+            "SELECT genre FROM oeuvre_jeu WHERE TRIM(genre) != '' ORDER BY genre COLLATE FRENCH_NOCASE ASC"
+        );
+        if ($stmt === false) {
+            return [];
+        }
+
+        $known = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            foreach (GameGenre::parseList((string) ($row['genre'] ?? '')) as $tag) {
+                $key = mb_strtolower($tag);
+                if (!isset($known[$key])) {
+                    $known[$key] = $tag;
+                }
+            }
+        }
+
+        $tags = array_values($known);
+        sort($tags, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return array_slice($tags, 0, $limit);
+    }
+
+    public function updatePosterUrl(int $oeuvreId, string $posterUrl): bool
+    {
+        if ($oeuvreId <= 0 || !self::isAvailable()) {
+            return false;
+        }
+
+        $game = $this->findCatalogByOeuvreId($oeuvreId);
+        if ($game === null) {
+            return false;
+        }
+
+        (new OeuvreRepository())->update($oeuvreId, [
+            'poster_url' => trim($posterUrl),
+        ], ['poster_url']);
+
+        return true;
+    }
+
+    /**
+     * Enregistre la jaquette : fichier upload prioritaire, sinon téléchargement URL → stockage local.
+     */
+    public function savePoster(int $oeuvreId, string $posterUrlInput, ?string $uploadedBinary = null): void
+    {
+        if ($oeuvreId <= 0 || !self::isAvailable()) {
+            return;
+        }
+
+        $storage = new PosterStorage();
+
+        if ($uploadedBinary !== null && $uploadedBinary !== '') {
+            $local = $storage->importBinaryForOeuvre($oeuvreId, $uploadedBinary);
+            if ($local !== '') {
+                $this->updatePosterUrl($oeuvreId, $local);
+            }
+
+            return;
+        }
+
+        $posterUrlInput = trim($posterUrlInput);
+        if ($posterUrlInput === '') {
+            return;
+        }
+
+        $local = $storage->ensureLocalForOeuvre($oeuvreId, $posterUrlInput);
+        if ($local !== '') {
+            $this->updatePosterUrl($oeuvreId, $local);
+
+            return;
+        }
+
+        $sanitized = SecureUrl::sanitizePosterUrl($posterUrlInput);
+        if ($sanitized !== '') {
+            $this->updatePosterUrl($oeuvreId, $sanitized);
+        }
+    }
+
+    private static function selectGameRow(): string
+    {
+        $edition = self::hasEditionColumns()
+            ? ', oj.physical_supports, oj.digital_stores'
+            : '';
+        $linux = self::hasTestedOnLinuxColumn()
+            ? ', b.tested_on_linux'
+            : '';
+
+        return 'b.id, b.user_id, b.foyer_id, b.oeuvre_id, b.statut, b.support_physique, b.created_at,'
+            . ' o.titre, o.annee, o.poster_url, o.synopsis,'
+            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $edition . $linux;
+    }
+
+    private static function selectGameHistoryExtras(): string
+    {
+        return ','
+            . ' (SELECT MAX(h.date_vue) FROM historique h'
+            . '  WHERE h.film_id = b.id AND h.user_id = :history_user_id) AS derniere_session,'
+            . ' (SELECT MAX(h.note) FROM historique h'
+            . '  WHERE h.film_id = b.id AND h.user_id = :history_user_id'
+            . '    AND h.note IS NOT NULL AND h.note >= 1) AS note_max,'
+            . CatalogSchema::foyerAverageNoteSubquery('b.id', ':foyer_id_rating');
+    }
+
+    private static function selectCatalogRow(): string
+    {
+        $edition = self::hasEditionColumns()
+            ? ', oj.physical_supports, oj.digital_stores'
+            : '';
+
+        return 'o.id AS oeuvre_id, o.titre, o.annee, o.poster_url, o.synopsis,'
+            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $edition;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    private function hydrateGameRow(array $row): array
+    {
+        $row['id'] = (int) ($row['id'] ?? 0);
+        $row['oeuvre_id'] = (int) ($row['oeuvre_id'] ?? 0);
+        $row['annee'] = (int) ($row['annee'] ?? 0);
+        $row['is_digital'] = !empty($row['is_digital']);
+        $row['platform_label'] = GamePlatform::label((string) ($row['platform'] ?? ''));
+        $row['platform_short'] = GamePlatform::shortLabel((string) ($row['platform'] ?? ''));
+        $row['display_label'] = self::displayLabel($row);
+        $row['genre_list'] = GameGenre::parseList((string) ($row['genre'] ?? ''));
+        $row['genre_label'] = GameGenre::displayLabel((string) ($row['genre'] ?? ''));
+        $row['physical_support_list'] = GamePhysicalSupport::parseList((string) ($row['physical_supports'] ?? ''));
+        $row['physical_support_labels'] = GamePhysicalSupport::displayLabels((string) ($row['physical_supports'] ?? ''));
+        $row['digital_store_list'] = GameDigitalStore::parseStoredList((string) ($row['digital_stores'] ?? ''));
+        $row['has_digital_edition'] = GameDigitalStore::hasDigitalEdition(
+            (string) ($row['digital_stores'] ?? ''),
+            !empty($row['is_digital'])
+        );
+        $row['edition_summary'] = self::editionSummary($row);
+        $row['added_at_label'] = self::formatAddedAt((string) ($row['created_at'] ?? ''));
+        $row['is_pc'] = GamePlatform::normalize((string) ($row['platform'] ?? '')) === GamePlatform::PC;
+        $row['tested_on_linux'] = !empty($row['tested_on_linux']);
+
+        return $row;
+    }
+
+    public static function formatAddedAt(string $createdAt): string
+    {
+        $createdAt = trim($createdAt);
+        if ($createdAt === '') {
+            return '';
+        }
+
+        return HistoriqueRepository::formatDateVue(substr($createdAt, 0, 10));
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    private function hydrateCatalogRow(array $row): array
+    {
+        $row['oeuvre_id'] = (int) ($row['oeuvre_id'] ?? 0);
+        $row['annee'] = (int) ($row['annee'] ?? 0);
+        $row['is_digital'] = !empty($row['is_digital']);
+        $row['platform_label'] = GamePlatform::label((string) ($row['platform'] ?? ''));
+        $row['platform_short'] = GamePlatform::shortLabel((string) ($row['platform'] ?? ''));
+        $row['display_label'] = self::displayLabel($row);
+        $row['genre_list'] = GameGenre::parseList((string) ($row['genre'] ?? ''));
+        $row['genre_label'] = GameGenre::displayLabel((string) ($row['genre'] ?? ''));
+        $row['physical_support_list'] = GamePhysicalSupport::parseList((string) ($row['physical_supports'] ?? ''));
+        $row['physical_support_labels'] = GamePhysicalSupport::displayLabels((string) ($row['physical_supports'] ?? ''));
+        $row['digital_store_list'] = GameDigitalStore::parseStoredList((string) ($row['digital_stores'] ?? ''));
+        $row['has_digital_edition'] = GameDigitalStore::hasDigitalEdition(
+            (string) ($row['digital_stores'] ?? ''),
+            !empty($row['is_digital'])
+        );
+        $row['edition_summary'] = self::editionSummary($row);
+
+        return $row;
+    }
+}

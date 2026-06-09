@@ -16,11 +16,20 @@ final class MediaDomainTest extends TestCase
         $this->assertSame(MediaDomain::FILM, MediaDomain::normalize('unknown'));
     }
 
-    public function testCollectionImplementedForFilmAndMagazine(): void
+    public function testCollectionImplementedForFilmMagazineAndGame(): void
     {
         $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::FILM));
         $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::MAGAZINE));
+        $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::JEU));
         $this->assertFalse(MediaDomain::isCollectionImplemented(MediaDomain::BD));
+    }
+
+    public function testGameCollectionPaths(): void
+    {
+        $this->assertSame('/jeux.php', MediaDomain::collectionPath(MediaDomain::JEU));
+        $this->assertSame('/jeux-envies.php', MediaDomain::wishlistPath(MediaDomain::JEU));
+        $this->assertTrue(MediaDomainGuards::isGameOnlyPath('/jeux.php'));
+        $this->assertTrue(MediaDomainGuards::isGameCollectionPath('/jeu.php'));
     }
 
     public function testTabSwitchFromQuizRedirectsToCollectionPage(): void
@@ -59,8 +68,16 @@ final class MediaDomainTest extends TestCase
             MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::MAGAZINE, '/films.php', 'q=test')
         );
         $this->assertSame(
-            '/statistiques.php',
-            MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::FILM, '/statistiques.php')
+            '/magazines.php',
+            MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::MAGAZINE, '/jeux.php')
+        );
+        $this->assertSame(
+            '/jeux.php',
+            MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::JEU, '/films.php', 'q=test')
+        );
+        $this->assertSame(
+            '/films.php',
+            MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::FILM, '/jeux.php')
         );
     }
 }
