@@ -37,7 +37,9 @@ final class FilmRepository
         string $sortBy = 'titre',
         string $sortDir = 'asc',
         string $searchQuery = '',
-        string $kindFilter = ''
+        string $kindFilter = '',
+        ?int $limit = null,
+        int $offset = 0
     ): array {
         if ($this->engine instanceof CatalogFilmRepository) {
             return $this->engine->findAll(
@@ -45,11 +47,22 @@ final class FilmRepository
                 $sortDir,
                 $searchQuery,
                 LibraryStatut::COLLECTION,
-                $kindFilter
+                $kindFilter,
+                $limit,
+                $offset
             );
         }
 
-        return $this->engine->findAll($sortBy, $sortDir, $searchQuery, $kindFilter);
+        return $this->engine->findAll($sortBy, $sortDir, $searchQuery, $kindFilter, $limit, $offset);
+    }
+
+    public function countCollectionFiltered(string $searchQuery = '', string $kindFilter = ''): int
+    {
+        if ($this->engine instanceof CatalogFilmRepository) {
+            return $this->engine->countCollectionFiltered($searchQuery, $kindFilter);
+        }
+
+        return $this->engine->countCollectionFiltered($searchQuery, $kindFilter);
     }
 
     /** Films sur la liste de souhaits (catalogue uniquement). */

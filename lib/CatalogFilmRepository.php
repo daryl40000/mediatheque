@@ -57,7 +57,9 @@ final class CatalogFilmRepository
         string $sortDir = 'asc',
         string $searchQuery = '',
         string $statut = LibraryStatut::COLLECTION,
-        string $kindFilter = ''
+        string $kindFilter = '',
+        ?int $limit = null,
+        int $offset = 0
     ): array {
         if (!isset(self::COLLECTION_SORT_COLUMNS[$sortBy])) {
             $sortBy = 'titre';
@@ -70,6 +72,51 @@ final class CatalogFilmRepository
         $sql = 'SELECT ' . CatalogSchema::selectFilmRow() . $this->collectionRatingSelectSql($includeFoyerAverage)
              . ' FROM ' . CatalogSchema::JOIN;
 
+        $params = [];
+        $whereParts = $this->collectionWhereParts($searchQuery, $statut, $kindFilter, $params);
+
+        $sql .= ' WHERE ' . implode(' AND ', $whereParts);
+        $sql .= ' ORDER BY ' . $orderExpr . ' ' . $direction;
+        if ($sortBy !== 'titre') {
+            $sql .= ', o.titre COLLATE FRENCH_NOCASE ASC';
+        }
+        if ($limit !== null && $limit > 0) {
+            $sql .= ' LIMIT ' . $limit . ' OFFSET ' . max(0, $offset);
+        }
+
+        $this->appendCollectionRatingParams($params, $includeFoyerAverage);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
+    }
+
+    public function countCollectionFiltered(
+        string $searchQuery = '',
+        string $kindFilter = '',
+        string $statut = LibraryStatut::COLLECTION
+    ): int {
+        $params = [];
+        $whereParts = $this->collectionWhereParts($searchQuery, $statut, $kindFilter, $params);
+
+        $stmt = $this->db->prepare(
+            'SELECT COUNT(*) FROM ' . CatalogSchema::JOIN . ' WHERE ' . implode(' AND ', $whereParts)
+        );
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @return list<string>
+     */
+    private function collectionWhereParts(
+        string $searchQuery,
+        string $statut,
+        string $kindFilter,
+        array &$params
+    ): array {
         [$userWhere, $params] = CatalogSchema::libraryFilter($this->foyerId(), $this->userId(), $statut);
         $whereParts = [$userWhere];
 
@@ -85,17 +132,7 @@ final class CatalogFilmRepository
 
         CatalogSchema::applyMediaDomainFilter($whereParts, $params);
 
-        $sql .= ' WHERE ' . implode(' AND ', $whereParts);
-        $sql .= ' ORDER BY ' . $orderExpr . ' ' . $direction;
-        if ($sortBy !== 'titre') {
-            $sql .= ', o.titre COLLATE FRENCH_NOCASE ASC';
-        }
-
-        $this->appendCollectionRatingParams($params, $includeFoyerAverage);
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
-
-        return $stmt->fetchAll();
+        return $whereParts;
     }
 
     /**

@@ -5,6 +5,10 @@
 /** @var string $query */
 /** @var bool $searched */
 /** @var int $totalCount */
+/** @var int $listTotal */
+/** @var int $page */
+/** @var int $totalPages */
+/** @var int $perPage */
 /** @var list<string> $existingSagas */
 /** @var bool $hasTmdbKey */
 
@@ -15,6 +19,10 @@ $isGridView = \Moncine\CollectionViewMode::isGrid($viewMode);
 $hasTmdbKey = $hasTmdbKey ?? false;
 $searched = $searched ?? false;
 $totalCount = (int) ($totalCount ?? count($films));
+$listTotal = (int) ($listTotal ?? $totalCount);
+$page = max(1, (int) ($page ?? 1));
+$totalPages = max(1, (int) ($totalPages ?? 1));
+$perPage = (int) ($perPage ?? count($films));
 $resultCount = count($films);
 $existingSagas = $existingSagas ?? [];
 
@@ -147,21 +155,27 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
     ?>
     <?php if ($searched || $kindFilter !== \Moncine\ContentKindFilter::ALL): ?>
         <p class="stats">
-            <?= $resultCount ?> résultat<?= $resultCount > 1 ? 's' : '' ?>
+            <?= $listTotal ?> résultat<?= $listTotal > 1 ? 's' : '' ?>
             <?php if ($kindFilter !== \Moncine\ContentKindFilter::ALL): ?>
                 (<?= Moncine\View::escape(mb_strtolower($kindLabel)) ?>)
             <?php endif; ?>
             <?php if ($searched): ?>
                 pour « <?= Moncine\View::escape($query) ?> »
             <?php endif; ?>
-            <?php if ($totalCount > $resultCount && !$searched && $kindFilter !== \Moncine\ContentKindFilter::ALL): ?>
-                — sur <?= $totalCount ?> au total
-            <?php elseif ($searched && $totalCount > $resultCount): ?>
+            <?php if ($totalCount > $listTotal && ($searched || $kindFilter !== \Moncine\ContentKindFilter::ALL)): ?>
                 (sur <?= $totalCount ?> film<?= $totalCount > 1 ? 's' : '' ?> au total)
+            <?php endif; ?>
+            <?php if ($totalPages > 1): ?>
+                — page <?= $page ?> / <?= $totalPages ?>
             <?php endif; ?>
         </p>
     <?php else: ?>
-        <p class="stats"><?= $totalCount ?> film<?= $totalCount > 1 ? 's' : '' ?></p>
+        <p class="stats">
+            <?= $totalCount ?> film<?= $totalCount > 1 ? 's' : '' ?>
+            <?php if ($totalPages > 1): ?>
+                — page <?= $page ?> / <?= $totalPages ?>
+            <?php endif; ?>
+        </p>
     <?php endif; ?>
 
     <p class="hint collection-page__hint">
@@ -174,7 +188,7 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
 
     <?php if ($totalCount === 0): ?>
         <p>Aucun film. <a href="/import.php">Importer un CSV</a>.</p>
-    <?php elseif ($films === []): ?>
+    <?php elseif ($listTotal === 0): ?>
         <p class="alert alert-warning">
             <?php if ($searched): ?>
                 Aucun film ne correspond à « <?= Moncine\View::escape($query) ?> ».
@@ -186,6 +200,11 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
             <a href="<?= Moncine\View::escape(Moncine\View::filmsCollectionUrl($searched ? '' : $query, $sortBy, $sortDir, $kindFilter, $viewMode)) ?>">Voir tous mes films</a>.
         </p>
     <?php else: ?>
+        <div id="films-collection">
+            <?php
+            $paginationIdSuffix = '-top';
+            require MONCINE_ROOT . '/templates/_films_collection_pagination.php';
+            ?>
         <form method="post" action="/films.php" class="collection-bulk-form" id="collection-bulk-form">
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
             <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
@@ -196,6 +215,9 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
             <?php endif; ?>
             <?php if ($isGridView): ?>
                 <input type="hidden" name="view" value="grid">
+            <?php endif; ?>
+            <?php if ($page > 1): ?>
+                <input type="hidden" name="page" value="<?= $page ?>">
             <?php endif; ?>
 
             <div class="collection-toolbar" id="collection-toolbar" hidden>
@@ -323,6 +345,11 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                 <?php require MONCINE_ROOT . '/templates/_films_collection_list.php'; ?>
             <?php endif; ?>
         </form>
+            <?php
+            $paginationIdSuffix = '-bottom';
+            require MONCINE_ROOT . '/templates/_films_collection_pagination.php';
+            ?>
+        </div>
     <?php endif; ?>
 
 </section>

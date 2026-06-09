@@ -69,8 +69,9 @@ $gridSortLink = static function (string $label, string $column) use (
                                   aria-hidden="true"></span>
                         <?php endif; ?>
                     </div>
-                    <h3 class="collection-grid__title"><?= Moncine\View::escape((string) ($film['titre'] ?? '')) ?></h3>
-                    <p class="collection-grid__meta">
+                    <div class="collection-grid__caption">
+                        <h3 class="collection-grid__title"><?= Moncine\View::escape((string) ($film['titre'] ?? '')) ?></h3>
+                        <p class="collection-grid__meta">
                         <span class="tag tag--kind tag--kind-<?= Moncine\View::escape($kindKey) ?>">
                             <?= Moncine\View::escape(Moncine\ContentKindFilter::listLabel($film)) ?>
                         </span>
@@ -92,7 +93,8 @@ $gridSortLink = static function (string $label, string $column) use (
                                 <span class="collection-grid__support"><?= Moncine\View::escape($supportLabel) ?></span>
                             <?php endif;
                         endif; ?>
-                    </p>
+                        </p>
+                    </div>
                 </a>
             </article>
         </li>

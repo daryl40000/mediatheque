@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.4.3** (2026-05-31)  
+**Version actuelle : 0.4.4** (2026-06-09)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -18,7 +18,7 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 | Phase | Statut | Version cible | Résumé |
 |-------|--------|---------------|--------|
 | **M0** Fondations multi-médias | ✅ **Livré** (0.1.0) | 0.1.0 | Onglets, couleurs, `media_domain`, films filtrés |
-| **M1** Stabilisation films | 🔄 **En cours** | 0.2.0 | QA complète, zéro régression Monciné |
+| **M1** Stabilisation films | ✅ **Livré** (0.4.4) | 0.4.4 | QA prod complète (2026-06-09) ; grille + pagination |
 | **M2** BD / Manga | ⏳ À faire | 0.3.x | Collection BD, séries/tomes |
 | **M3** Livres | ⏳ À faire | 0.4.x | ISBN, auteur, import CSV |
 | **M4** Jeux vidéo | ⏳ À faire | 0.5.x | Catalogue jeux, collection ; lien futur avec sujets magazines |
@@ -106,39 +106,77 @@ Comptes, foyers, envies personnelles et de groupe, catalogue partagé, soumissio
 
 ---
 
-## Phase M1 — Stabilisation films (priorité actuelle)
+## Phase M1 — Stabilisation films ✅ **Clôturée (0.4.4 — 2026-06-09)**
 
-**Objectif :** confirmer que l’onglet Films = Monciné 1.0.0 sans régression.
+**Objectif :** confirmer que l’onglet Films = Monciné 1.0.0 sans régression — **atteint** (QA production complète).
 
-**Version visée :** `0.2.0`
+**Version roadmap d’origine :** `0.2.0` · **Livré dans la lignée Médiathèque :** `0.4.4`
+
+### Suivi QA (tests manuels — production, 2026-06-09)
+
+| Bloc | Statut | Détail |
+|------|--------|--------|
+| A — Prérequis | ✅ | Connexion, onglet Films, admin |
+| B — Navigation & multi-médias | ✅ | Onglets, quiz, menu « Ce soir » |
+| C — Collection | ✅ | Grille homogène (M1-001), recherche, tri, filtres, pagination (M1-002) |
+| D — Fiche film | ✅ | D1–D6 |
+| E — Ajout / suppression | ✅ | E1–E4 |
+| F — Enrichissement | ✅ | F1–F4 (TMDB / OMDB) |
+| G — Envies | ✅ | G1–G3 |
+| H — Quiz « Ce soir » | ✅ | H1–H4 |
+| I — Sagas, personnes, support | ✅ | I1–I3 |
+| J — Statistiques | ✅ | J1–J2 |
+| K — Import / export | ✅ | K1–K3 |
+| L — Prêts | ✅ | L1–L3 |
+| M — Partage visiteur | ✅ | M1–M3 |
+| N — Social | ✅ | N1–N5 |
+| O — Admin catalogue | ✅ | O1–O5 |
+| P — Compte | ✅ | P1–P4 |
+| Q — Inscription | ✅ | Q1–Q2 |
+| R — Listes imprimables | ✅ | R1–R2 |
+
+**Verdict QA fonctionnelle :** aucune régression bloquante constatée sur l’onglet Films en production.
+
+### Anomalies identifiées (corrigées)
+
+| ID | Page / test | Statut | Description |
+|----|-------------|--------|-------------|
+| **M1-001** | `/films.php` — vue grille (C1) | ✅ Validé prod | Tuiles inhomogènes — flex colonne, hauteur titre/notes réservée |
+| **M1-002** | `/films.php` — pagination (C5) | ✅ Validé prod | Pagination **56** vignettes (7×8) / **100** films en liste |
 
 ### Checklist fonctionnelle
 
-- [ ] **Collection** — liste, tri, recherche, filtres type (film/série/doc…)
-- [ ] **Fiche film** — affichage, modification, notes, historique vision
-- [ ] **Ajout / suppression** — collection et envies
-- [ ] **Enrichissement** — TMDB, OMDB, affiches
-- [ ] **Envies** — personnelles, cibles support/EAN, envies du groupe
-- [ ] **Quiz & résultat** — tirage, exclusion, changement d’onglet OK
-- [ ] **Sagas, personnes, support** — navigation et filtres
-- [ ] **Statistiques** — compteurs, temps de vision
-- [ ] **Import / export** — CSV bibliothèque et catalogue
-- [ ] **Prêts** — demande, acceptation, retour
-- [ ] **Partage visiteur** — liens collection / envies
-- [ ] **Social** — amis, groupe, profil public
-- [ ] **Admin** — catalogue, soumissions, maintenance, sauvegarde base
-- [ ] **Compte** — profil, mot de passe, suppression compte
-- [ ] **Inscription** — si activée
+- [x] **Collection** — liste, tri, recherche, filtres type (film/série/doc…) — validé prod 2026-06-09
+- [x] **Fiche film** — affichage, modification, notes, historique vision
+- [x] **Ajout / suppression** — collection et envies
+- [x] **Enrichissement** — TMDB, OMDB, affiches
+- [x] **Envies** — personnelles, cibles support/EAN, envies du groupe
+- [x] **Quiz & résultat** — tirage, exclusion, changement d’onglet OK
+- [x] **Sagas, personnes, support** — navigation et filtres
+- [x] **Statistiques** — compteurs, temps de vision
+- [x] **Import / export** — CSV bibliothèque et catalogue
+- [x] **Prêts** — demande, acceptation, retour
+- [x] **Partage visiteur** — liens collection / envies
+- [x] **Social** — amis, groupe, profil public
+- [x] **Admin** — catalogue, soumissions, maintenance, sauvegarde base
+- [x] **Compte** — profil, mot de passe, suppression compte
+- [x] **Inscription** — si activée
 
 ### Checklist technique
 
-- [ ] Toutes les œuvres existantes ont `media_domain = film` (script de vérif post-migration)
-- [ ] Soumissions catalogue : préciser `media_domain` dans le payload (défaut `film`)
-- [ ] Import catalogue / bibliothèque : forcer ou lire colonne domaine
-- [ ] Suite PHPUnit complète verte
-- [ ] Mise à jour [doc/mediatheque.md](doc/mediatheque.md) après QA
+- [x] **`media_domain = film`** — migration `030` (défaut + `UPDATE`) ; filtre `CatalogSchema::applyMediaDomainFilter()` sur collection films
+- [x] **Soumissions catalogue** — `OeuvreRepository` : `media_domain` depuis `MediaContext` (défaut onglet Films)
+- [x] **Import CSV** — création œuvres via `OeuvreRepository` / contexte Films (domaine `film` implicite)
+- [x] **Tests** — `FilmCollectionPaginationTest` ; suite existante `MediaDomainTest`, intégration films
+- [x] **Documentation** — [doc/mediatheque.md](doc/mediatheque.md) § M1 clôturée
 
-**Critère de sortie M1 :** parcours ci-dessus validés manuellement + tests CI OK → tag `v0.2.0`.
+**Critère de sortie M1 :** ✅ atteint — QA prod (2026-06-09) + correctifs livrés en **0.4.4**.
+
+| Livrable M1 (films) | Version | Détail |
+|---------------------|---------|--------|
+| QA fonctionnelle prod | ✅ 0.4.4 | Blocs A–R validés (2026-06-09) |
+| Grille homogène | ✅ 0.4.4 | Tuiles alignées (M1-001) |
+| Pagination collection | ✅ 0.4.4 | 56 vignettes (7×8) / 100 en liste (M1-002) |
 
 ---
 
@@ -373,11 +411,10 @@ flowchart TB
 
 ## Prochaine action (équipe / développement)
 
-1. **Tagger** `v0.4.3` (année sujet choisie à la saisie).  
-2. **Exécuter la checklist M1** (films) et corriger les anomalies.  
-3. **Poursuivre M5** (polish magazines) ou **démarrer M4** (catalogue jeux) selon priorité — le pont sujets ↔ jeux viendra **après M4**.  
-4. Continuer la saisie des **sujets magazine en prod** : compatible avec le lien catalogue futur (voir § Pont Magazines ↔ Jeux).  
-5. Installer **poppler-utils** sur les serveurs qui importent des PDF magazines.
+1. **Tagger** `v0.4.4` (clôture M1 : grille + pagination films).  
+2. **Poursuivre M5** (polish magazines) ou **démarrer M4** (catalogue jeux) selon priorité.  
+3. Continuer la saisie des **sujets magazine en prod** (compatible pont jeux futur).  
+4. Installer **poppler-utils** sur les serveurs qui importent des PDF magazines.
 
 ---
 
@@ -388,10 +425,11 @@ flowchart TB
 | Domaine média | `lib/MediaDomain.php`, `lib/MediaContext.php`, `lib/MediaDomainGuards.php` |
 | SQL | `sql/migrations/030_media_domain.sql` |
 | Collection films | `lib/FilmRepository.php`, `lib/CatalogFilmRepository.php` |
+| Grille Mes films | `templates/_films_collection_grid.php`, `lib/FilmCollectionPagination.php`, `www/assets/css/style.css` |
 | Sous-types films | `lib/MoncineContentKind.php` (film / série / spectacle) |
 | PDF futur | `lib/MediaStorage.php`, `lib/StoredObjectRepository.php` |
 | Sujets magazines | `lib/MagazineSubject.php`, `lib/MagazineSubjectRepository.php`, `doc/magazines.md` §11 |
 | UI | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | **Conventions dev** | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : 0.4.3 — 2026-05-31.*
+*Dernière mise à jour : 0.4.4 — 2026-06-09 (M1 clôturée).*

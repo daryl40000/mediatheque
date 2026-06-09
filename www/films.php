@@ -13,6 +13,7 @@ MediaDomainGuards::renderCollectionPageOrExit();
 
 use Moncine\CatalogAdmin;
 use Moncine\CollectionViewMode;
+use Moncine\FilmCollectionPagination;
 use Moncine\MediaContext;
 use Moncine\MediaDomain;
 use Moncine\UserContext;
@@ -32,6 +33,7 @@ $sortDir = (string) ($_GET['dir'] ?? $_POST['dir'] ?? 'asc');
 $query = trim((string) ($_GET['q'] ?? $_POST['q'] ?? ''));
 $kindFilter = \Moncine\ContentKindFilter::normalize((string) ($_GET['kind'] ?? $_POST['kind'] ?? ''));
 $viewMode = CollectionViewMode::normalize((string) ($_GET['view'] ?? $_POST['view'] ?? ''));
+$requestedPage = max(1, (int) ($_GET['page'] ?? $_POST['page'] ?? 1));
 
 $repo = new FilmRepository();
 
@@ -46,7 +48,7 @@ function moncine_films_bulk_redirect(string $redirectUrl, array $params): never
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $redirectUrl = View::filmsCollectionUrl($query, $sortBy, $sortDir, $kindFilter, $viewMode);
+    $redirectUrl = View::filmsCollectionUrl($query, $sortBy, $sortDir, $kindFilter, $viewMode, $requestedPage);
     Csrf::rejectUnlessValid($_POST, $redirectUrl);
 
     $filmIds = FilmRepository::parseBulkFilmIds($_POST);
@@ -136,8 +138,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     exit;
 }
 
-$films = $repo->findAll($sortBy, $sortDir, $query, $kindFilter);
 $totalCount = $repo->count();
+$listTotal = $repo->countCollectionFiltered($query, $kindFilter);
+$pagination = FilmCollectionPagination::resolve($requestedPage, $listTotal, $viewMode);
+$page = $pagination['page'];
+$perPage = $pagination['perPage'];
+$totalPages = $pagination['totalPages'];
+$offset = $pagination['offset'];
+
+$films = $repo->findAll($sortBy, $sortDir, $query, $kindFilter, $perPage, $offset);
 $existingSagas = $repo->distinctSagas();
 
 View::render('films', [
@@ -150,6 +159,10 @@ View::render('films', [
     'viewMode' => $viewMode,
     'searched' => $query !== '',
     'totalCount' => $totalCount,
+    'listTotal' => $listTotal,
+    'page' => $page,
+    'totalPages' => $totalPages,
+    'perPage' => $perPage,
     'existingSagas' => $existingSagas,
     'hasTmdbKey' => FilmEnricher::canEnrich(),
     'canManageCatalog' => UserContext::canManageCatalog(),

@@ -63,25 +63,29 @@ $gridSortLink = static function (string $label, string $column) use ($sortBy, $s
                                   aria-hidden="true"></span>
                         <?php endif; ?>
                     </div>
-                    <h3 class="collection-grid__title"><?= Moncine\View::escape($film['titre']) ?></h3>
-                    <p class="collection-grid__meta">
-                        <span class="tag tag--kind tag--kind-<?= Moncine\View::escape($kindKey) ?>">
-                            <?= Moncine\View::escape(\Moncine\ContentKindFilter::listLabel($film)) ?>
-                        </span>
-                        <?php if ($annee > 0): ?>
-                            <span class="collection-grid__year"><?= $annee ?></span>
-                        <?php endif; ?>
-                        <?php
-                        $showFoyerAverage = true;
-                        $layout = 'inline';
-                        ob_start();
-                        require MONCINE_ROOT . '/templates/_film_ratings.php';
-                        $ratingsHtml = trim((string) ob_get_clean());
-                        if ($ratingsHtml !== '' && $ratingsHtml !== '—'):
+                    <div class="collection-grid__caption">
+                        <h3 class="collection-grid__title"><?= Moncine\View::escape($film['titre']) ?></h3>
+                        <p class="collection-grid__meta">
+                            <span class="tag tag--kind tag--kind-<?= Moncine\View::escape($kindKey) ?>">
+                                <?= Moncine\View::escape(\Moncine\ContentKindFilter::listLabel($film)) ?>
+                            </span>
+                            <?php if ($annee > 0): ?>
+                                <span class="collection-grid__year"><?= $annee ?></span>
+                            <?php endif; ?>
+                        </p>
+                        <div class="collection-grid__ratings">
+                            <?php
+                            $showFoyerAverage = true;
+                            $layout = 'stacked';
+                            ob_start();
+                            require MONCINE_ROOT . '/templates/_film_ratings.php';
+                            $ratingsHtml = trim((string) ob_get_clean());
+                            if ($ratingsHtml !== '' && $ratingsHtml !== '—') {
+                                echo $ratingsHtml;
+                            }
                             ?>
-                            <span class="collection-grid__note"><?= $ratingsHtml ?></span>
-                        <?php endif; ?>
-                    </p>
+                        </div>
+                    </div>
                 </a>
             </article>
         </li>

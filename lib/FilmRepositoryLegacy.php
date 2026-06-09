@@ -39,7 +39,9 @@ final class FilmRepositoryLegacy
         string $sortBy = 'titre',
         string $sortDir = 'asc',
         string $searchQuery = '',
-        string $kindFilter = ''
+        string $kindFilter = '',
+        ?int $limit = null,
+        int $offset = 0
     ): array {
         if (!isset(self::COLLECTION_SORT_COLUMNS[$sortBy])) {
             $sortBy = 'titre';
@@ -54,6 +56,46 @@ final class FilmRepositoryLegacy
              FROM films f';
 
         $params = [];
+        $whereParts = $this->legacyCollectionWhereParts($searchQuery, $kindFilter, $params);
+        if ($whereParts !== []) {
+            $sql .= ' WHERE ' . implode(' AND ', $whereParts);
+        }
+
+        $sql .= ' ORDER BY ' . $orderExpr . ' ' . $direction;
+        if ($sortBy !== 'titre') {
+            $sql .= ', f.titre COLLATE FRENCH_NOCASE ASC';
+        }
+        if ($limit !== null && $limit > 0) {
+            $sql .= ' LIMIT ' . $limit . ' OFFSET ' . max(0, $offset);
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return $stmt->fetchAll();
+    }
+
+    public function countCollectionFiltered(string $searchQuery = '', string $kindFilter = ''): int
+    {
+        $params = [];
+        $whereParts = $this->legacyCollectionWhereParts($searchQuery, $kindFilter, $params);
+        $sql = 'SELECT COUNT(*) FROM films f';
+        if ($whereParts !== []) {
+            $sql .= ' WHERE ' . implode(' AND ', $whereParts);
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * @param array<string, mixed> $params
+     * @return list<string>
+     */
+    private function legacyCollectionWhereParts(string $searchQuery, string $kindFilter, array &$params): array
+    {
         $whereParts = [];
         $searchWhere = self::collectionSearchWhereSql($searchQuery, $params);
         if ($searchWhere !== '') {
@@ -63,19 +105,8 @@ final class FilmRepositoryLegacy
         if ($kindWhere !== '') {
             $whereParts[] = $kindWhere;
         }
-        if ($whereParts !== []) {
-            $sql .= ' WHERE ' . implode(' AND ', $whereParts);
-        }
 
-        $sql .= ' ORDER BY ' . $orderExpr . ' ' . $direction;
-        if ($sortBy !== 'titre') {
-            $sql .= ', f.titre COLLATE FRENCH_NOCASE ASC';
-        }
-
-        $stmt = $this->db->prepare($sql);
-        $stmt->execute($params);
-
-        return $stmt->fetchAll();
+        return $whereParts;
     }
 
     /**

@@ -9,6 +9,26 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.4.4] — 2026-06-09
+
+**Films — clôture phase M1 (stabilisation Monciné)**
+
+### Ajouté
+
+- **Pagination Mes films** : **56** vignettes par page (7 lignes × 8 colonnes) ou **100** films en mode liste ; navigation Première / Préc. / Suiv. / Dernière + saut de page (`FilmCollectionPagination`).
+
+### Modifié
+
+- **Grille Mes films** : tuiles de hauteur uniforme (titre sur 2 lignes, zone notes réservée, carte flex).
+- **ROADMAP** : phase **M1 clôturée** — QA production complète (blocs A–R, 2026-06-09).
+
+### Corrigé
+
+- Tuiles inhomogènes en vue vignettes (notes VOUS/FOYER, titres courts vs longs) — M1-001.
+- Chargement de toute la collection d’un coup sur grosses dvdthèques — M1-002.
+
+---
+
 ## [0.4.3] — 2026-05-31
 
 **Magazines — année du sujet choisie à la saisie**

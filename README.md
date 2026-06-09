@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.4.3**
+**Version : 0.4.4**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -38,7 +38,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné ; l’on
 
 | Version cible | Contenu |
 |---------------|---------|
-| **0.2.x (M1)** | Stabilisation films, tests de non-régression |
+| **0.4.4 (M1 ✅)** | Stabilisation films : QA prod, grille homogène, pagination collection |
 | **0.3.x (M2)** | BD / Manga |
 | **0.4.x (M3)** | Livres |
 | **0.5.x (M4)** | Jeux vidéo |
@@ -185,6 +185,7 @@ Les données (base, affiches, PDF, sessions) sont stockées dans le dossier **`d
 | **Recherche par sujet** | **Recherche par sujet** (`/magazines-recherche.php`) — tests, previews, dossiers, interviews ; tags de série et année du numéro (**0.4.0**, Interview **0.4.2**) |
 | **Filtre hors-série** | Liste numéros d’une série → bouton **Hors-série** (**0.4.2**) |
 | **Nettoyage sujets (admin)** | **Maintenance catalogue** → **Sujets magazines** — orphelins et doublons après faute de frappe (**0.4.2**) |
+| **Pagination collection** | Mes films — 56 vignettes (7×8) ou 100 en liste par page (**0.4.4**) |
 | **Année du sujet** | Menu déroulant sur la fiche numéro (défaut = année du magazine, modifiable) (**0.4.3**) |
 
 Pour importer de **gros PDF**, utilisez toujours **`./start-dev.sh`** plutôt que le serveur PHP minimal.

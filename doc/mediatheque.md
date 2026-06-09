@@ -1,6 +1,6 @@
 # Médiathèque — guide du fork
 
-**Version : 0.4.3** · **Date : 2026-05-31**
+**Version : 0.4.4** · **Date : 2026-06-09**
 
 Ce document décrit ce qu’est la **Médiathèque**, ce qui a été livré en **0.1.0**, et comment cela s’articule avec **Monciné**.
 
@@ -45,6 +45,12 @@ Depuis **0.4.1** : **recherche FTS** (texte intégral SQLite) dans les numéros 
 Depuis **0.4.2** : catégorie **Interview** ; filtre **Hors-série** sur la liste des numéros ; **maintenance admin** des sujets orphelins / doublons (`/maintenance-magazine-sujets.php`) ; correctif conservation du flag hors-série lors d’une mise à jour partielle.
 
 Depuis **0.4.3** : **année du sujet** choisie via un menu déroulant à l’ajout (par défaut l’année du numéro).
+
+Depuis **0.4.4** : phase **M1 (stabilisation films) clôturée** — QA production complète sur l’onglet Films ; **pagination** Mes films (56 vignettes ou 100 en liste) ; **grille** homogène.
+
+### Phase M1 — stabilisation films ✅ (0.4.4)
+
+Objectif : confirmer que l’onglet **Films** = Monciné sans régression. **Atteint** le 2026-06-09 (tests manuels A–R validés en production). Détail : [ROADMAP.md](../ROADMAP.md) § M1.
 
 ### Pages réservées aux films
 
@@ -114,7 +120,7 @@ Voir `.gitignore` :
 
 Points essentiels :
 
-- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.4.3**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.4.4**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
 - **`media_domain`** (onglet Films/BD/…) ≠ **`moncine_kind`** (film/série/spectacle dans l’onglet Films).
 - Nouveau code multi-médias : `MediaDomain`, `MediaContext`, `CatalogSchema::applyMediaDomainFilter()`.
 
@@ -124,7 +130,7 @@ Points essentiels :
 
 Voir [ROADMAP.md](../ROADMAP.md) :
 
-- **M1** — Valider qu’aucune régression sur les films  
+- **M1** — ✅ Stabilisation films (**0.4.4**, QA prod 2026-06-09)  
 - **M2–M4** — BD, livres, jeux (catalogue `oeuvre_jeu`)  
 - **M5** — magazines : suite (polish) — voir [magazines.md](magazines.md) pour l’existant (sujets, FTS **0.4.1**)  
 - **Pont Magazines ↔ Jeux** — après M4 : lien optionnel sujet magazine → fiche jeu ; **données déjà saisies en prod conservées** (ROADMAP § Pont Magazines ↔ Jeux)  

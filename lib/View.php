@@ -239,13 +239,14 @@ final class View
         return self::filmsCollectionUrl($searchQuery, $column, $dir, $kindFilter, $viewMode);
     }
 
-    /** Lien vers la collection (recherche, tri, filtre catégorie, mode d’affichage). */
+    /** Lien vers la collection (recherche, tri, filtre catégorie, mode d’affichage, page). */
     public static function filmsCollectionUrl(
         string $searchQuery = '',
         string $sortBy = 'titre',
         string $sortDir = 'asc',
         string $kindFilter = '',
-        string $viewMode = ''
+        string $viewMode = '',
+        int $page = 1
     ): string {
         $params = [];
         $searchQuery = trim($searchQuery);
@@ -264,6 +265,9 @@ final class View
         }
         if (CollectionViewMode::isGrid($viewMode)) {
             $params['view'] = CollectionViewMode::GRID;
+        }
+        if ($page > 1) {
+            $params['page'] = (string) $page;
         }
 
         return $params === [] ? '/films.php' : '/films.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
