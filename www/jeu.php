@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\GameAttachmentRepository;
 use Moncine\GameRepository;
 use Moncine\HistoriqueRepository;
 use Moncine\LibraryStatut;
@@ -35,6 +36,7 @@ if ($game === null) {
         'gameId' => 0,
         'isWishlist' => false,
         'listBackUrl' => '/jeux.php',
+        'attachments' => [],
     ]);
     exit;
 }
@@ -47,6 +49,9 @@ $noteSur10 = $isWishlist ? null : $historique->getNoteSur10($bibId);
 $noteFoyerMoyenne = $isWishlist ? null : $historique->getFoyerAverageNote($bibId);
 
 $saved = isset($_GET['saved']);
+$attachments = GameAttachmentRepository::isAvailable()
+    ? (new GameAttachmentRepository())->listForBibliotheque($bibId)
+    : [];
 $magazineCoverage = MagazineGameLink::isAvailable()
     ? (new MagazineGameLink())->listMagazineCoverageForGame((int) ($game['oeuvre_id'] ?? 0), $userId, $foyerId)
     : [];
@@ -63,4 +68,5 @@ View::render('jeu', [
     'noteSur10' => $noteSur10,
     'noteFoyerMoyenne' => $noteFoyerMoyenne,
     'addedAtLabel' => GameRepository::formatAddedAt((string) ($game['created_at'] ?? '')),
+    'attachments' => $attachments,
 ]);

@@ -9,6 +9,30 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.5.1] — 2026-05-31
+
+**Jeux vidéo — enrichissements M4 (fichiers, affichage, Linux tri-état)**
+
+Compléments à la **0.5.0** : vue vignettes, fichiers attachés, icônes support image, et distinction « testé » / « non supporté » sous Linux.
+
+### Ajouté
+
+- **Migration 042** : table `game_attachment` — fichiers joints sur la fiche jeu (abandonware, patch, archive…) ; limite **350 Mo** (comme les PDF magazines).
+- **Migration 043** : colonne `bibliotheque.linux_not_supported` — alternative à « testé sur Linux » (mutuellement exclusif).
+- **Vue vignettes** sur `/jeux.php` : bascule Liste / Vignettes (`?view=grid`), comme la collection films.
+- **Icônes support** : images dans `www/assets/img/game-editions/` (`cd_dvd`, `steam`, `gog`, `epic`) avec repli SVG si fichier absent — classe `GameEditionIcons`.
+- **Endpoints fichiers jeu** : `/enregistrer-fichier-jeu.php`, `/supprimer-fichier-jeu.php` ; téléchargement via `media-object.php`.
+- **Classe** `GameAttachmentRepository` ; sous-dossier stockage `MediaStorage::SUBDIR_GAMES`.
+- **Tests** : `GameEditionIconsTest`.
+
+### Modifié
+
+- **Badge Linux** : deux cases au formulaire (« Testé sur Linux » / « Linux non supporté ») ; pingouin barré (barre rouge) sur fiche et listes.
+- **Liste Mes jeux** : colonne support avec icônes image ; templates `_games_collection_grid.php` / `_games_collection_list.php`.
+- **Fiche jeu** : panneau fichiers attachés (`_game_attachments_panel.php`).
+
+---
+
 ## [0.5.0] — 2026-06-10
 
 **Jeux vidéo — phase M4 (MVP livré)**

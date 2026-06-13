@@ -30,6 +30,27 @@ final class UploadLimits
         return defined('MONCINE_PDF_MAX_BYTES') ? (int) MONCINE_PDF_MAX_BYTES : 350 * 1024 * 1024;
     }
 
+    /** Fichiers joints jeux (même plafond que les PDF magazines). */
+    public static function maxAttachmentBytes(): int
+    {
+        return self::maxPdfBytes();
+    }
+
+    public static function maxAttachmentBytesLabel(): string
+    {
+        return self::formatBytesLabel(self::maxAttachmentBytes());
+    }
+
+    public static function attachmentTooLargeApplicationMessage(): string
+    {
+        return 'Fichier trop volumineux (maximum ' . self::maxAttachmentBytesLabel() . ' autorisé par l’application).';
+    }
+
+    public static function phpAllowsAttachmentUpload(): bool
+    {
+        return self::phpAllowsUploadOfSize(self::maxAttachmentBytes(), 512 * 1024);
+    }
+
     public static function maxPosterBytes(): int
     {
         return defined('MONCINE_POSTER_MAX_BYTES') ? (int) MONCINE_POSTER_MAX_BYTES : 10 * 1024 * 1024;
@@ -245,7 +266,7 @@ final class UploadLimits
             . 'Avec Nginx, vérifiez aussi <code>client_max_body_size</code>.';
     }
 
-    private static function formatBytesLabel(int $bytes): string
+    public static function formatBytesLabel(int $bytes): string
     {
         if ($bytes >= 1024 * 1024) {
             return (string) (int) round($bytes / (1024 * 1024)) . ' Mo';

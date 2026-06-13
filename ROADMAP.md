@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.5.0** (2026-06-10)  
+**Version actuelle : 0.5.1** (2026-05-31)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -21,7 +21,7 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 | **M1** Stabilisation films | ✅ **Livré** (0.4.4) | 0.4.4 | QA prod complète (2026-06-09) ; grille + pagination |
 | **M2** BD / Manga | ⏸️ Repoussé | 0.3.x | Après M4 (priorité jeux + synergie magazines) |
 | **M3** Livres | ⏸️ Repoussé | 0.4.x | Après M4 |
-| **M4** Jeux vidéo | ✅ **MVP livré** (0.5.0) | 0.5.0 | Collection, envies, pont magazine, accueil, badge Linux |
+| **M4** Jeux vidéo | ✅ **MVP livré** (0.5.0+) | 0.5.1 | Collection, envies, pont magazine, fichiers, vignettes, Linux tri-état |
 | **M5** Magazines | 🔄 **En cours** | 0.4.x → 0.6.0 | Séries, numéros, PDF, sujets/tests, FTS (**0.4.1**) |
 | **M6** Transversal | ⏳ À faire | 0.9.x | Prêts, partage, stats par domaine |
 | **M7** Identité & polish | ⏳ À faire | 1.0.0 | Branding, doc finale, déploiement |
@@ -443,4 +443,4 @@ flowchart TB
 | UI | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | **Conventions dev** | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : 0.5.0 — 2026-06-10 (M4 MVP jeux livré).*
+*Dernière mise à jour : 0.5.1 — 2026-05-31 (M4 enrichissements jeux).*

@@ -175,6 +175,7 @@ CREATE TABLE IF NOT EXISTS bibliotheque (
     saison_label TEXT DEFAULT '',
     ean TEXT DEFAULT '',
     tested_on_linux INTEGER NOT NULL DEFAULT 0,
+    linux_not_supported INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 
@@ -462,6 +463,18 @@ CREATE TABLE IF NOT EXISTS oeuvre_jeu (
 CREATE INDEX IF NOT EXISTS idx_oeuvre_jeu_platform ON oeuvre_jeu(platform);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_jeu_studio ON oeuvre_jeu(studio COLLATE NOCASE);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_jeu_genre ON oeuvre_jeu(genre COLLATE NOCASE);
+
+CREATE TABLE IF NOT EXISTS game_attachment (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bibliotheque_id INTEGER NOT NULL REFERENCES bibliotheque(id) ON DELETE CASCADE,
+    stored_object_id INTEGER NOT NULL REFERENCES stored_objects(id) ON DELETE CASCADE,
+    label TEXT NOT NULL DEFAULT '',
+    original_filename TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_game_attachment_bib ON game_attachment(bibliotheque_id);
+CREATE UNIQUE INDEX IF NOT EXISTS idx_game_attachment_object ON game_attachment(stored_object_id);
 
 CREATE TABLE IF NOT EXISTS magazine_subject (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

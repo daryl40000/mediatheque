@@ -103,6 +103,22 @@ final class GameRepository
         return false;
     }
 
+    public static function hasLinuxNotSupportedColumn(): bool
+    {
+        $stmt = Database::getInstance()->query('PRAGMA table_info(bibliotheque)');
+        if ($stmt === false) {
+            return false;
+        }
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (($row['name'] ?? '') === 'linux_not_supported') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Exemplaires / éditions depuis un formulaire POST.
      *
@@ -128,12 +144,30 @@ final class GameRepository
         ];
     }
 
-    /** Case « testé sur Linux » (jeux PC uniquement). */
-    public static function testedOnLinuxFromPost(array $post): bool
+    /** Cases Linux (jeux PC uniquement, mutuellement exclusives). */
+    public static function linuxFlagsFromPost(array $post): array
     {
         $platform = GamePlatform::normalize((string) ($post['platform'] ?? ''));
+        if ($platform !== GamePlatform::PC) {
+            return [
+                'tested_on_linux' => false,
+                'linux_not_supported' => false,
+            ];
+        }
 
-        return $platform === GamePlatform::PC && !empty($post['tested_on_linux']);
+        $notSupported = !empty($post['linux_not_supported']);
+        $tested = !$notSupported && !empty($post['tested_on_linux']);
+
+        return [
+            'tested_on_linux' => $tested,
+            'linux_not_supported' => $notSupported,
+        ];
+    }
+
+    /** @deprecated Utiliser linuxFlagsFromPost() */
+    public static function testedOnLinuxFromPost(array $post): bool
+    {
+        return self::linuxFlagsFromPost($post)['tested_on_linux'];
     }
 
     /**
@@ -233,24 +267,41 @@ final class GameRepository
             return 'Seuls les jeux PC peuvent être marqués comme testés sous Linux.';
         }
 
-        $this->saveTestedOnLinuxFlag(
+        $this->saveLinuxFlags(
             $bibId,
             GamePlatform::normalize((string) ($game['platform'] ?? '')),
-            $testedOnLinux
+            $testedOnLinux,
+            false
         );
 
         return true;
     }
 
-    private function saveTestedOnLinuxFlag(int $bibId, string $platform, bool $testedOnLinux): void
+    private function saveLinuxFlags(int $bibId, string $platform, bool $testedOnLinux, bool $linuxNotSupported): void
     {
         if (!self::hasTestedOnLinuxColumn() || $bibId <= 0) {
             return;
         }
 
-        $value = $platform === GamePlatform::PC && $testedOnLinux ? 1 : 0;
-        $this->db->prepare('UPDATE bibliotheque SET tested_on_linux = ? WHERE id = ?')
-            ->execute([$value, $bibId]);
+        if ($platform !== GamePlatform::PC) {
+            $testedOnLinux = false;
+            $linuxNotSupported = false;
+        } elseif ($testedOnLinux && $linuxNotSupported) {
+            $linuxNotSupported = false;
+        }
+
+        $sql = 'UPDATE bibliotheque SET tested_on_linux = ?';
+        $params = [$testedOnLinux ? 1 : 0];
+
+        if (self::hasLinuxNotSupportedColumn()) {
+            $sql .= ', linux_not_supported = ?';
+            $params[] = $linuxNotSupported ? 1 : 0;
+        }
+
+        $sql .= ' WHERE id = ?';
+        $params[] = $bibId;
+
+        $this->db->prepare($sql)->execute($params);
     }
 
     /**
@@ -437,10 +488,11 @@ final class GameRepository
                 'support_physique' => trim((string) ($data['support_physique'] ?? '')),
             ]);
 
-            $this->saveTestedOnLinuxFlag(
+            $this->saveLinuxFlags(
                 $bibId,
                 $platform,
-                !empty($data['tested_on_linux'])
+                !empty($data['tested_on_linux']),
+                !empty($data['linux_not_supported'])
             );
 
             $this->db->commit();
@@ -526,10 +578,11 @@ final class GameRepository
                 ]);
             }
 
-            $this->saveTestedOnLinuxFlag(
+            $this->saveLinuxFlags(
                 $bibId,
                 $platform,
-                !empty($data['tested_on_linux'])
+                !empty($data['tested_on_linux']),
+                !empty($data['linux_not_supported'])
             );
 
             $this->db->commit();
@@ -678,7 +731,7 @@ final class GameRepository
             ? ', oj.physical_supports, oj.digital_stores'
             : '';
         $linux = self::hasTestedOnLinuxColumn()
-            ? ', b.tested_on_linux'
+            ? ', b.tested_on_linux' . (self::hasLinuxNotSupportedColumn() ? ', b.linux_not_supported' : '')
             : '';
 
         return 'b.id, b.user_id, b.foyer_id, b.oeuvre_id, b.statut, b.support_physique, b.created_at,'
@@ -730,9 +783,14 @@ final class GameRepository
             !empty($row['is_digital'])
         );
         $row['edition_summary'] = self::editionSummary($row);
+        $row['edition_icon_keys'] = GameEditionIcons::iconKeys($row);
         $row['added_at_label'] = self::formatAddedAt((string) ($row['created_at'] ?? ''));
         $row['is_pc'] = GamePlatform::normalize((string) ($row['platform'] ?? '')) === GamePlatform::PC;
         $row['tested_on_linux'] = !empty($row['tested_on_linux']);
+        $row['linux_not_supported'] = !empty($row['linux_not_supported']);
+        $row['linux_badge'] = $row['tested_on_linux']
+            ? 'supported'
+            : ($row['linux_not_supported'] ? 'unsupported' : '');
 
         return $row;
     }

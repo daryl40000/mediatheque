@@ -52,6 +52,8 @@ final class MediaDomainGuards
         '/modifier-jeu.php',
         '/enregistrer-jeu.php',
         '/enregistrer-modification-jeu.php',
+        '/enregistrer-fichier-jeu.php',
+        '/supprimer-fichier-jeu.php',
         '/rechercher-jeux-catalogue.php',
     ];
 

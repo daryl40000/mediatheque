@@ -18,6 +18,7 @@ final class MediaStorage
 {
     public const SUBDIR_OBJECTS = 'objects';
     public const SUBDIR_MAGAZINES = 'magazines';
+    public const SUBDIR_GAMES = 'games';
     public const SUBDIR_BOOKS = 'books';
     public const SUBDIR_EXPORTS = 'exports';
     public const SUBDIR_TMP = 'tmp';
@@ -26,6 +27,7 @@ final class MediaStorage
     public const SUBDIRS = [
         'object' => self::SUBDIR_OBJECTS,
         'magazine' => self::SUBDIR_MAGAZINES,
+        'game' => self::SUBDIR_GAMES,
         'book' => self::SUBDIR_BOOKS,
         'export' => self::SUBDIR_EXPORTS,
         'tmp' => self::SUBDIR_TMP,

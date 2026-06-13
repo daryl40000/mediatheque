@@ -41,6 +41,7 @@ $foyerId = UserContext::currentFoyerId();
 $repo = new GameRepository();
 
 $editions = GameRepository::editionPayloadFromPost($_POST);
+$linuxFlags = GameRepository::linuxFlagsFromPost($_POST);
 
 $result = $repo->updateCatalog($bibId, array_merge([
     'titre' => (string) ($_POST['titre'] ?? ''),
@@ -50,7 +51,8 @@ $result = $repo->updateCatalog($bibId, array_merge([
     'genre' => GameGenre::normalizeFromPost($_POST['genres'] ?? []),
     'platform' => (string) ($_POST['platform'] ?? ''),
     'synopsis' => (string) ($_POST['synopsis'] ?? ''),
-    'tested_on_linux' => GameRepository::testedOnLinuxFromPost($_POST),
+    'tested_on_linux' => $linuxFlags['tested_on_linux'],
+    'linux_not_supported' => $linuxFlags['linux_not_supported'],
 ], $editions), $userId, $foyerId);
 
 if ($result !== true) {

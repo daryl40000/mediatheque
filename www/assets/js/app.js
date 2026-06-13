@@ -935,6 +935,23 @@ function initGameEditionFields() {
             linuxField.hidden = !isPc;
         };
 
+        const testedBox = form.querySelector('[data-linux-tested]');
+        const notSupportedBox = form.querySelector('[data-linux-not-supported]');
+        const syncLinuxChecks = (changed) => {
+            if (!testedBox || !notSupportedBox) {
+                return;
+            }
+            if (changed === testedBox && testedBox.checked) {
+                notSupportedBox.checked = false;
+            }
+            if (changed === notSupportedBox && notSupportedBox.checked) {
+                testedBox.checked = false;
+            }
+        };
+
+        testedBox?.addEventListener('change', () => syncLinuxChecks(testedBox));
+        notSupportedBox?.addEventListener('change', () => syncLinuxChecks(notSupportedBox));
+
         platformSelect?.addEventListener('change', refreshLinuxField);
         refreshLinuxField();
     });

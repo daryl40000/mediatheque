@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\Auth;
 use Moncine\CatalogAdmin;
+use Moncine\GameAttachmentRepository;
 use Moncine\LocalFilesystemObjectStorage;
 use Moncine\MagazineRepository;
 use Moncine\MediaStorage;
@@ -33,7 +34,9 @@ if ($userId <= 0) {
 $foyerId = UserContext::currentFoyerId();
 $canAccess = CatalogAdmin::canAccess()
     || (MagazineRepository::isAvailable()
-        && (new MagazineRepository())->userCanAccessStoredObject($id, $userId, $foyerId));
+        && (new MagazineRepository())->userCanAccessStoredObject($id, $userId, $foyerId))
+    || (GameAttachmentRepository::isAvailable()
+        && (new GameAttachmentRepository())->userCanAccessStoredObject($id, $userId, $foyerId));
 
 if (!$canAccess) {
     http_response_code(403);

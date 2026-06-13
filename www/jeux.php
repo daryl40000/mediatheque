@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\CollectionViewMode;
 use Moncine\GameRepository;
 use Moncine\LibraryStatut;
 use Moncine\MediaContext;
@@ -26,6 +27,7 @@ if (MediaContext::current() !== MediaDomain::JEU) {
 $query = trim((string) ($_GET['q'] ?? ''));
 $sortBy = (string) ($_GET['sort'] ?? 'titre');
 $sortDir = (string) ($_GET['dir'] ?? 'asc');
+$viewMode = CollectionViewMode::normalize((string) ($_GET['view'] ?? ''));
 
 $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
@@ -39,6 +41,7 @@ if (!GameRepository::isAvailable()) {
         'query' => $query,
         'sortBy' => $sortBy,
         'sortDir' => $sortDir,
+        'viewMode' => $viewMode,
         'moduleError' => 'Le module jeux n’est pas encore disponible. Rechargez la page dans quelques secondes.',
     ]);
     exit;
@@ -60,5 +63,6 @@ View::render('jeux', [
     'query' => $query,
     'sortBy' => $sortBy,
     'sortDir' => $sortDir,
+    'viewMode' => $viewMode,
     'moduleError' => '',
 ]);

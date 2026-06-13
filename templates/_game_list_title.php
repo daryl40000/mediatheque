@@ -12,11 +12,11 @@ $titre = (string) ($game['display_label'] ?? $game['titre'] ?? '');
     <a href="<?= Moncine\View::escape(Moncine\View::gameUrl($bibId)) ?>">
         <?= Moncine\View::escape($titre) ?>
     </a>
-    <?php if (!empty($game['tested_on_linux'])): ?>
+    <?php if ((string) ($game['linux_badge'] ?? '') !== '' || !empty($game['tested_on_linux']) || !empty($game['linux_not_supported'])): ?>
         <?php
         $size = 'sm';
         $plain = true;
-        require MONCINE_ROOT . '/templates/_game_linux_badge.php';
+        require MONCINE_ROOT . '/templates/_game_linux_badge_if_set.php';
         ?>
     <?php endif; ?>
 </span>

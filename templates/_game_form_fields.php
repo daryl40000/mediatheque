@@ -46,17 +46,31 @@ $consoleStoreLabel = $consoleStoreKey !== null
 
 <?php
 $testedOnLinux = !empty($gameRow['tested_on_linux']);
+$linuxNotSupported = !empty($gameRow['linux_not_supported']);
 $linuxFieldAvailable = Moncine\GameRepository::hasTestedOnLinuxColumn();
 $showLinuxFieldInitially = $linuxFieldAvailable && $selectedPlatform === Moncine\GamePlatform::PC;
 ?>
 <?php if ($linuxFieldAvailable): ?>
     <div class="game-linux-field" data-game-linux-field<?= $showLinuxFieldInitially ? '' : ' hidden' ?>>
-        <label class="checkbox-inline game-linux-form__label">
-            <input type="checkbox" name="tested_on_linux" value="1"
-                <?= $testedOnLinux ? ' checked' : '' ?>>
-            Testé sur Linux
-        </label>
-        <p class="hint">Affiche un badge Linux sur la fiche (jeux PC uniquement).</p>
+        <fieldset class="game-linux-fieldset">
+            <legend class="visually-hidden">Compatibilité Linux</legend>
+            <label class="checkbox-inline game-linux-form__label">
+                <input type="checkbox" name="tested_on_linux" value="1" data-linux-tested
+                    <?= $testedOnLinux ? ' checked' : '' ?>>
+                Testé sur Linux
+            </label>
+            <?php if (Moncine\GameRepository::hasLinuxNotSupportedColumn()): ?>
+                <label class="checkbox-inline game-linux-form__label">
+                    <input type="checkbox" name="linux_not_supported" value="1" data-linux-not-supported
+                        <?= $linuxNotSupported ? ' checked' : '' ?>>
+                    Linux non supporté
+                </label>
+            <?php endif; ?>
+        </fieldset>
+        <p class="hint">
+            Jeux PC uniquement — cochez une seule option pour indiquer si le jeu a été testé sous Linux.
+            Sans case cochée, le statut Linux reste inconnu.
+        </p>
     </div>
 <?php endif; ?>
 

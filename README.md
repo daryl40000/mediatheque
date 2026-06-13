@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.5.0**
+**Version : 0.5.1**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -26,7 +26,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné ; l’on
 |---------|------------|
 | Multi-médias | Onglets Films / BD / Livres / Jeux / Magazines + thème couleur |
 | Magazines | Séries, numéros, couvertures, PDF, sommaire, recherche OCR 6 pages, tags support (**0.2.0+**, détail [doc/magazines.md](doc/magazines.md)) |
-| Jeux vidéo | Collection, envies, notes, statistiques, pont magazine, badge Linux (**0.5.0+**, détail [doc/jeux.md](doc/jeux.md)) |
+| Jeux vidéo | Collection, envies, notes, statistiques, pont magazine, fichiers attachés, vue vignettes, badges Linux (**0.5.0+**, détail [doc/jeux.md](doc/jeux.md)) |
 | Collection & envies | Mes films, Mes envies, sagas, statistiques, **questionnaire du soir**, **listes imprimables** |
 | Prêts | Demandes entre amis, réservation, validation et retour (`/mes-prets.php`) |
 | Stockage médias | Fichiers volumineux hors `www/` (PDF magazines par numéro) |
@@ -40,6 +40,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné ; l’on
 
 | Version cible | Contenu |
 |---------------|---------|
+| **0.5.1 (M4 ✅)** | Jeux : fichiers attachés, vue vignettes, icônes support, Linux testé / non supporté |
 | **0.5.0 (M4 ✅)** | Jeux vidéo : collection, envies, pont magazine, accueil dédié, badge Linux |
 | **0.4.4 (M1 ✅)** | Stabilisation films : QA prod, grille homogène, pagination collection |
 | **0.3.x (M2)** | BD / Manga |

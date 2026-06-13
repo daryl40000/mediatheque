@@ -37,6 +37,7 @@ $foyerId = UserContext::currentFoyerId();
 $repo = new GameRepository();
 
 $editions = GameRepository::editionPayloadFromPost($_POST);
+$linuxFlags = GameRepository::linuxFlagsFromPost($_POST);
 
 $result = $repo->createWithLibrary(array_merge([
     'titre' => (string) ($_POST['titre'] ?? ''),
@@ -47,7 +48,8 @@ $result = $repo->createWithLibrary(array_merge([
     'platform' => (string) ($_POST['platform'] ?? ''),
     'synopsis' => (string) ($_POST['synopsis'] ?? ''),
     'poster_url' => '',
-    'tested_on_linux' => GameRepository::testedOnLinuxFromPost($_POST),
+    'tested_on_linux' => $linuxFlags['tested_on_linux'],
+    'linux_not_supported' => $linuxFlags['linux_not_supported'],
 ], $editions), $statut, $userId, $foyerId);
 
 if (!is_int($result)) {

@@ -3864,6 +3864,25 @@ body.media-domain--magazine.page-wide .container--wide {
     border-radius: 999px;
     vertical-align: middle;
     box-shadow: 0 0 0 1px rgba(135, 206, 235, 0.35);
+    position: relative;
+}
+
+.game-linux-badge--unsupported {
+    background: #64748b;
+    box-shadow: 0 0 0 1px rgba(100, 116, 139, 0.45);
+}
+
+.game-linux-fieldset {
+    border: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+}
+
+.game-linux-fieldset legend {
+    margin: 0;
 }
 
 .game-linux-badge--md {
@@ -3916,6 +3935,110 @@ td .game-linux-badge--plain {
 
 .game-detail__delete-form {
     margin: 0;
+}
+
+.collection-grid__title--game {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.collection-grid__linux-badge {
+    display: inline-flex;
+    flex-shrink: 0;
+}
+
+.collection-grid__meta--game-editions {
+    margin-top: 0.15rem;
+}
+
+.magazine-tag--game-platform {
+    background: rgba(149, 117, 205, 0.2);
+    border-color: rgba(149, 117, 205, 0.45);
+}
+
+.collection-grid-bar--games {
+    margin-bottom: 0.75rem;
+}
+
+.game-edition-icons {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+}
+
+.game-edition-icons__item {
+    display: inline-flex;
+    line-height: 0;
+}
+
+.game-edition-icons__text {
+    font-size: 0.85rem;
+}
+
+.game-edition-icon {
+    width: 1.35rem;
+    height: 1.35rem;
+    border-radius: 999px;
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.game-edition-icon--img {
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: none;
+    background: transparent;
+}
+
+.game-attachments-panel {
+    margin: 1.5rem 0;
+    padding: 1rem 1.1rem;
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    background: var(--surface);
+}
+
+.game-attachments-panel__title {
+    margin: 0 0 0.65rem;
+    font-size: 1.05rem;
+}
+
+.game-attachments-list {
+    list-style: none;
+    margin: 0 0 1rem;
+    padding: 0;
+}
+
+.game-attachments-list__item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem 0.75rem;
+    padding: 0.45rem 0;
+    border-bottom: 1px solid var(--border);
+}
+
+.game-attachments-list__item:last-child {
+    border-bottom: none;
+}
+
+.game-attachments-list__link {
+    font-weight: 600;
+}
+
+.game-attachments-list__meta {
+    margin: 0;
+}
+
+.game-attachments-list__delete {
+    margin-left: auto;
+}
+
+.game-attachments-form {
+    margin-top: 0.75rem;
+    max-width: 32rem;
 }
 
 .game-linux-panel {

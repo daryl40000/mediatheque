@@ -721,8 +721,12 @@ final class View
         ], '', '&', PHP_QUERY_RFC3986);
     }
 
-    public static function gamesCollectionUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string
-    {
+    public static function gamesCollectionUrl(
+        string $query = '',
+        string $sort = 'titre',
+        string $dir = 'asc',
+        string $viewMode = ''
+    ): string {
         $params = [];
         if ($query !== '') {
             $params['q'] = $query;
@@ -732,6 +736,9 @@ final class View
         }
         if ($dir !== 'asc') {
             $params['dir'] = $dir;
+        }
+        if (CollectionViewMode::isGrid($viewMode)) {
+            $params['view'] = CollectionViewMode::GRID;
         }
 
         return $params === [] ? '/jeux.php' : '/jeux.php?' . http_build_query($params);
@@ -758,14 +765,15 @@ final class View
         string $column,
         string $currentSort,
         string $currentDir,
-        string $searchQuery = ''
+        string $searchQuery = '',
+        string $viewMode = ''
     ): string {
         $dir = 'asc';
         if ($currentSort === $column && strtolower($currentDir) === 'asc') {
             $dir = 'desc';
         }
 
-        return self::gamesCollectionUrl($searchQuery, $column, $dir);
+        return self::gamesCollectionUrl($searchQuery, $column, $dir, $viewMode);
     }
 
     public static function gamesWishlistSortUrl(

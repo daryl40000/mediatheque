@@ -16,6 +16,14 @@ $isWishlist = $isWishlist ?? false;
 $listBackUrl = $listBackUrl ?? '/jeux.php';
 $addedAtLabel = $addedAtLabel ?? '';
 $testedOnLinux = !empty($game['tested_on_linux']);
+$linuxNotSupported = !empty($game['linux_not_supported']);
+$linuxBadge = (string) ($game['linux_badge'] ?? '');
+if ($linuxBadge === '' && $testedOnLinux) {
+    $linuxBadge = 'supported';
+}
+if ($linuxBadge === '' && $linuxNotSupported) {
+    $linuxBadge = 'unsupported';
+}
 ?>
 <section class="collection-page">
     <?php if ($game === null): ?>
@@ -48,6 +56,15 @@ $testedOnLinux = !empty($game['tested_on_linux']);
         <?php if (!empty($_GET['delete_error'])): ?>
             <p class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['delete_error']) ?></p>
         <?php endif; ?>
+        <?php if (isset($_GET['attachment']) && (string) $_GET['attachment'] === '1'): ?>
+            <div class="alert alert-success">Fichier ajouté.</div>
+        <?php endif; ?>
+        <?php if (isset($_GET['attachment_deleted']) && (string) $_GET['attachment_deleted'] === '1'): ?>
+            <div class="alert alert-success">Fichier supprimé.</div>
+        <?php endif; ?>
+        <?php if (!empty($_GET['attachment_error'])): ?>
+            <p class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['attachment_error']) ?></p>
+        <?php endif; ?>
 
         <?php if ($isWishlist): ?>
             <p class="hint film-wishlist-badge">Ce jeu est dans vos envies (pas encore dans votre collection).</p>
@@ -70,11 +87,11 @@ $testedOnLinux = !empty($game['tested_on_linux']);
                 <header class="film-detail__heading">
                     <h1 class="game-detail__title-row">
                         <span><?= Moncine\View::escape((string) ($game['titre'] ?? 'Jeu')) ?></span>
-                        <?php if ($testedOnLinux): ?>
+                        <?php if ($linuxBadge !== ''): ?>
                             <?php
                             $size = 'md';
                             $plain = true;
-                            require MONCINE_ROOT . '/templates/_game_linux_badge.php';
+                            require MONCINE_ROOT . '/templates/_game_linux_badge_if_set.php';
                             ?>
                         <?php endif; ?>
                         <?php if ((int) ($game['annee'] ?? 0) > 0): ?>
@@ -154,6 +171,13 @@ $testedOnLinux = !empty($game['tested_on_linux']);
                         <h2>Description</h2>
                         <p><?= nl2br(Moncine\View::escape((string) $game['synopsis'])) ?></p>
                     </section>
+                <?php endif; ?>
+
+                <?php if (Moncine\GameAttachmentRepository::isAvailable()): ?>
+                    <?php
+                    $attachments = $attachments ?? [];
+                    require MONCINE_ROOT . '/templates/_game_attachments_panel.php';
+                    ?>
                 <?php endif; ?>
 
                 <section aria-labelledby="game-magazine-heading">
