@@ -58,11 +58,10 @@ $mediaCssVars = implode('; ', [
     <header class="site-header" id="site-header">
         <div class="container site-header__inner">
             <div class="site-header__brand">
-                <a href="/" class="logo">
-                    <img class="logo__img" src="/assets/img/logo.png"
-                         alt="<?= Moncine\View::escape(MONCINE_APP_NAME) ?>"
-                         width="56" height="56" decoding="async">
-                </a>
+                <?php
+                $logoClass = '';
+                require MONCINE_ROOT . '/templates/_site_logo.php';
+                ?>
                 <?php if ($profileUrl !== ''): ?>
                     <?php
                     $profileLabel = 'Mon profil';
