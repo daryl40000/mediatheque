@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initMagazineSeriesTagsField();
     initTagsBadgeFields();
     initGameEditionFields();
+    initGameExtensionFields();
     initShareLinkCopy();
 
     const params = new URLSearchParams(window.location.search);
@@ -984,5 +985,132 @@ function initGameEditionFields() {
         platformSelect?.addEventListener('change', refresh);
         digitalToggle?.addEventListener('change', refresh);
         refresh();
+    });
+}
+
+/** Extensions jeux : checkbox + autocomplétion du jeu de base (catalogue). */
+function initGameExtensionFields() {
+    document.querySelectorAll('form').forEach((form) => {
+        const root = form.querySelector('[data-game-extension-root]');
+        if (!root) {
+            return;
+        }
+
+        const toggle = root.querySelector('[data-game-extension-toggle]');
+        const panel = root.querySelector('[data-game-extension-panel]');
+        const input = root.querySelector('[data-game-extension-search]');
+        const list = root.querySelector('[data-game-extension-list]');
+        const oeuvreIdInput = root.querySelector('[data-game-extension-oeuvre-id]');
+        const clearBtn = root.querySelector('[data-game-extension-clear]');
+        const hint = root.querySelector('#base_game_hint');
+        const hintLabel = root.querySelector('#base_game_hint_label');
+        const catalogUrl = form.getAttribute('data-game-catalog-url') || '/rechercher-jeux-catalogue.php';
+
+        if (!toggle || !panel || !input || !list || !oeuvreIdInput) {
+            return;
+        }
+
+        let debounceTimer = null;
+
+        const closeList = () => {
+            list.hidden = true;
+            list.innerHTML = '';
+        };
+
+        const setHint = (label) => {
+            if (!hint || !hintLabel) {
+                return;
+            }
+            const text = String(label || '').trim();
+            hintLabel.textContent = text;
+            hint.hidden = text === '';
+        };
+
+        const clearSelection = () => {
+            oeuvreIdInput.value = '';
+            setHint('');
+        };
+
+        const refreshPanel = () => {
+            const on = Boolean(toggle.checked);
+            panel.hidden = !on;
+            if (!on) {
+                closeList();
+                clearSelection();
+            }
+        };
+
+        const render = (items) => {
+            list.innerHTML = '';
+            if (!Array.isArray(items) || items.length === 0) {
+                closeList();
+                return;
+            }
+            items.slice(0, 12).forEach((item) => {
+                const titre = item.display_label || item.titre || '';
+                const el = document.createElement('div');
+                el.className = 'catalog-title-autocomplete__option catalog-title-autocomplete__option--game';
+                el.setAttribute('role', 'option');
+                const label = document.createElement('span');
+                label.className = 'catalog-title-autocomplete__option-label';
+                label.textContent = titre;
+                el.appendChild(label);
+                el.addEventListener('mousedown', (event) => {
+                    event.preventDefault();
+                    input.value = item.titre || item.display_label || '';
+                    oeuvreIdInput.value = String(item.oeuvre_id || '');
+                    setHint(item.display_label || item.titre || '');
+                    closeList();
+                    input.focus();
+                });
+                list.appendChild(el);
+            });
+            list.hidden = false;
+        };
+
+        const fetchSuggestions = async () => {
+            const q = String(input.value || '').trim();
+            if (q.length < 2) {
+                closeList();
+                return;
+            }
+            try {
+                const url = catalogUrl + (catalogUrl.includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(q);
+                const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                if (!res.ok) {
+                    closeList();
+                    return;
+                }
+                const data = await res.json();
+                render(data.results || []);
+            } catch {
+                closeList();
+            }
+        };
+
+        toggle.addEventListener('change', refreshPanel);
+        clearBtn?.addEventListener('click', () => {
+            input.value = '';
+            clearSelection();
+            closeList();
+            input.focus();
+        });
+
+        input.addEventListener('input', () => {
+            clearSelection();
+            closeList();
+            window.clearTimeout(debounceTimer);
+            debounceTimer = window.setTimeout(fetchSuggestions, 180);
+        });
+
+        input.addEventListener('blur', () => {
+            window.setTimeout(() => closeList(), 150);
+        });
+
+        // Initial state (édition)
+        refreshPanel();
+        if (String(oeuvreIdInput.value || '').trim() !== '') {
+            setHint(input.value);
+        }
     });
 }

@@ -9,8 +9,12 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\CatalogAdmin;
 use Moncine\CatalogListContext;
+use Moncine\GameRepository;
+use Moncine\MagazineRepository;
+use Moncine\MediaDomain;
 use Moncine\OeuvreEanRepository;
 use Moncine\TmdbConfig;
+use Moncine\UserContext;
 use Moncine\View;
 
 CatalogAdmin::denyUnlessAccess();
@@ -38,6 +42,26 @@ if ($detail === null) {
 }
 
 $oeuvre = $detail['oeuvre'];
+
+$domain = MediaDomain::normalize((string) ($oeuvre['media_domain'] ?? MediaDomain::FILM));
+$userId = UserContext::currentUserId();
+$foyerId = UserContext::currentFoyerId();
+if ($domain === MediaDomain::JEU) {
+    $bibId = GameRepository::isAvailable()
+        ? (new GameRepository())->findLibraryBibIdForCatalogOeuvre($oeuvreId, $userId, $foyerId)
+        : null;
+    if ($bibId !== null && $bibId > 0) {
+        header('Location: ' . View::gameUrl($bibId));
+        exit;
+    }
+}
+if ($domain === MediaDomain::MAGAZINE) {
+    $bibId = (new MagazineRepository())->findLibraryBibIdForCatalogOeuvre($oeuvreId, $userId, $foyerId);
+    if ($bibId !== null && $bibId > 0) {
+        header('Location: ' . View::magazineIssueUrl($bibId));
+        exit;
+    }
+}
 
 $enrichStatus = null;
 $enrichMessage = '';

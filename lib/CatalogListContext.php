@@ -63,20 +63,19 @@ final class CatalogListContext
             return $this->backUrl();
         }
 
-        $params = ['id' => (string) $oeuvreId];
-        if ($this->search !== '') {
-            $params['catalog_q'] = $this->search;
-        }
-        if ($this->sortBy !== 'titre') {
-            $params['catalog_sort'] = $this->sortBy;
-        }
-        if ($this->sortDir === 'desc') {
-            $params['catalog_dir'] = 'desc';
-        }
-        if ($this->page > 1) {
-            $params['catalog_page'] = (string) $this->page;
+        $oeuvre = (new OeuvreRepository())->findByIdForAdmin($oeuvreId);
+        if ($oeuvre === null) {
+            return $this->backUrl();
         }
 
-        return '/oeuvre.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986) . '#catalog-oeuvre-nav';
+        $url = View::catalogOeuvreUrl(
+            $oeuvre,
+            $this->search,
+            $this->sortBy,
+            $this->sortDir,
+            $this->page
+        );
+
+        return str_contains($url, 'oeuvre.php') ? $url . '#catalog-oeuvre-nav' : $url;
     }
 }

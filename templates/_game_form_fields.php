@@ -28,11 +28,51 @@ $consoleStoreKey = Moncine\GameDigitalStore::consoleStoreForPlatform($selectedPl
 $consoleStoreLabel = $consoleStoreKey !== null
     ? Moncine\GameDigitalStore::label($consoleStoreKey)
     : '';
+
+$isExtension = !empty($gameRow['is_extension']);
+$baseGameOeuvreId = (int) ($gameRow['base_game_oeuvre_id'] ?? 0);
+$baseGameLabel = trim((string) ($gameRow['base_game_label'] ?? ''));
 ?>
 <label for="titre">Titre du jeu <span class="required">*</span></label>
 <input type="text" name="titre" id="titre" required maxlength="200"
        value="<?= Moncine\View::escape((string) ($gameRow['titre'] ?? '')) ?>"
        placeholder="Ex. Elden Ring, Gran Turismo 7">
+
+<?php if (Moncine\GameRepository::hasExtensionColumns()): ?>
+    <fieldset class="game-extension-fieldset" data-game-extension-root>
+        <legend>Type de fiche</legend>
+
+        <label class="checkbox-inline">
+            <input type="checkbox" name="is_extension" value="1" data-game-extension-toggle
+                <?= $isExtension ? ' checked' : '' ?>>
+            Cette fiche est une extension (DLC / add-on)
+        </label>
+
+        <div class="game-extension-panel" data-game-extension-panel<?= $isExtension ? '' : ' hidden' ?>>
+            <label for="base_game_query">Jeu de base (catalogue) <span class="required">*</span></label>
+            <div class="catalog-title-autocomplete">
+                <input type="search" id="base_game_query" name="base_game_query" maxlength="200"
+                       value="<?= Moncine\View::escape($baseGameLabel) ?>"
+                       placeholder="Tapez le titre du jeu…"
+                       autocomplete="off"
+                       class="catalog-title-autocomplete__input"
+                       data-game-extension-search>
+                <div class="catalog-title-autocomplete__list" role="listbox" hidden data-game-extension-list></div>
+            </div>
+            <input type="hidden" name="base_game_oeuvre_id" id="base_game_oeuvre_id"
+                   value="<?= $baseGameOeuvreId > 0 ? $baseGameOeuvreId : '' ?>"
+                   data-game-extension-oeuvre-id>
+
+            <p class="hint" id="base_game_hint"<?= $baseGameLabel !== '' ? '' : ' hidden' ?>>
+                Jeu sélectionné : <strong id="base_game_hint_label"><?= Moncine\View::escape($baseGameLabel) ?></strong>
+                <button type="button" class="btn btn-sm btn-secondary" data-game-extension-clear>Effacer</button>
+            </p>
+            <p class="hint">
+                Une extension est une fiche jeu à part entière, mais elle pointe vers un jeu de base du catalogue.
+            </p>
+        </div>
+    </fieldset>
+<?php endif; ?>
 
 <label for="platform">Plateforme principale</label>
 <select name="platform" id="platform" data-game-platform-select>

@@ -541,6 +541,19 @@ final class MagazineRepository
         return $fallbackBibId;
     }
 
+    /** Id bibliothèque pour une fiche catalogue magazine, ou null. */
+    public function findLibraryBibIdForCatalogOeuvre(int $oeuvreId, int $userId, int $foyerId): ?int
+    {
+        $bibId = $this->resolveIssueBibIdForRedirect($oeuvreId, $userId, $foyerId);
+        if ($bibId <= 0) {
+            return null;
+        }
+
+        $issue = $this->findIssueByBibId($bibId, $userId, $foyerId);
+
+        return $issue !== null ? $bibId : null;
+    }
+
     /**
      * Crée un numéro catalogue + entrée bibliothèque.
      *

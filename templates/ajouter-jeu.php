@@ -32,7 +32,8 @@
             <div class="alert alert-warning"><?= Moncine\View::escape($saveError) ?></div>
         <?php endif; ?>
 
-        <form method="post" action="/enregistrer-jeu.php" class="import-form" enctype="multipart/form-data">
+        <form method="post" action="/enregistrer-jeu.php" class="import-form" enctype="multipart/form-data"
+              data-game-catalog-url="/rechercher-jeux-catalogue.php">
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
             <input type="hidden" name="statut" value="<?= Moncine\View::escape($statut) ?>">
 

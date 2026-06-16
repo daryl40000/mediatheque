@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.5.1** · **Date : 2026-05-31**
+**Version : 0.5.2** · **Date : 2026-06-16**
 
 ## Objectif
 

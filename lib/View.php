@@ -92,9 +92,16 @@ final class View
         return UserProfile::displayName($user);
     }
 
-    /** Libellé affiché pour la catégorie d’une fiche (film, série, spectacle…). */
+    /** Libellé affiché pour la catégorie d’une fiche (film, série, jeu, magazine…). */
     public static function contentKindLabel(array $film): string
     {
+        if (CatalogSchema::hasMediaDomainColumn()) {
+            $domain = MediaDomain::normalize((string) ($film['media_domain'] ?? MediaDomain::FILM));
+            if ($domain !== MediaDomain::FILM) {
+                return MediaDomain::label($domain);
+            }
+        }
+
         $moncineKind = MoncineContentKind::normalize((string) ($film['moncine_kind'] ?? ''));
         if ($moncineKind === MoncineContentKind::SERIE) {
             return MoncineContentKind::label(MoncineContentKind::SERIE);
@@ -424,6 +431,48 @@ final class View
         }
 
         return '/ajouter-film.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    /** Fiche d’une œuvre dans le catalogue partagé (films) ou fiche collection selon le domaine. */
+    public static function catalogOeuvreUrl(
+        array $oeuvre,
+        string $catalogSearch = '',
+        string $catalogSort = 'titre',
+        string $catalogDir = 'asc',
+        int $catalogPage = 1
+    ): string {
+        $oeuvreId = (int) ($oeuvre['id'] ?? $oeuvre['oeuvre_id'] ?? 0);
+        if ($oeuvreId <= 0) {
+            return self::catalogueUrl($catalogSearch, $catalogSort, $catalogDir, $catalogPage);
+        }
+
+        $domain = CatalogSchema::hasMediaDomainColumn()
+            ? MediaDomain::normalize((string) ($oeuvre['media_domain'] ?? MediaDomain::FILM))
+            : MediaDomain::FILM;
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $bibId = match ($domain) {
+            MediaDomain::JEU => GameRepository::isAvailable()
+                ? (new GameRepository())->findLibraryBibIdForCatalogOeuvre($oeuvreId, $userId, $foyerId)
+                : null,
+            MediaDomain::MAGAZINE => (new MagazineRepository())->findLibraryBibIdForCatalogOeuvre(
+                $oeuvreId,
+                $userId,
+                $foyerId
+            ),
+            default => null,
+        };
+
+        if ($bibId !== null && $bibId > 0) {
+            return match ($domain) {
+                MediaDomain::JEU => self::gameUrl($bibId),
+                MediaDomain::MAGAZINE => self::magazineIssueUrl($bibId),
+                default => self::oeuvreUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
+            };
+        }
+
+        return self::oeuvreUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage);
     }
 
     /** Fiche d’une œuvre dans le catalogue partagé. */

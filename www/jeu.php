@@ -56,10 +56,33 @@ $magazineCoverage = MagazineGameLink::isAvailable()
     ? (new MagazineGameLink())->listMagazineCoverageForGame((int) ($game['oeuvre_id'] ?? 0), $userId, $foyerId)
     : [];
 
+$baseGame = null;
+$extensions = [];
+if (GameRepository::hasExtensionColumns()) {
+    $oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
+    $baseGameOeuvreId = (int) ($game['base_game_oeuvre_id'] ?? 0);
+    $isExtension = !empty($game['is_extension']);
+
+    if ($isExtension && $baseGameOeuvreId > 0) {
+        $baseGame = $repo->findCatalogByOeuvreId($baseGameOeuvreId);
+        if ($baseGame !== null) {
+            $baseBibId = $repo->findLibraryBibIdForCatalogOeuvre($baseGameOeuvreId, $userId, $foyerId);
+            $baseGame['library_bib_id'] = $baseBibId ?? 0;
+            $baseGame['library_url'] = $baseBibId !== null && $baseBibId > 0 ? View::gameUrl($baseBibId) : '';
+        }
+    }
+
+    if (!$isExtension && $oeuvreId > 0) {
+        $extensions = $repo->listExtensionsForBaseGame($oeuvreId, $userId, $foyerId);
+    }
+}
+
 View::render('jeu', [
     'pageTitle' => (string) ($game['titre'] ?? 'Jeu'),
     'game' => $game,
     'magazineCoverage' => $magazineCoverage,
+    'baseGame' => $baseGame,
+    'extensions' => $extensions,
     'saved' => $saved,
     'canManageCatalog' => UserContext::canManageCatalog(),
     'gameId' => $bibId,

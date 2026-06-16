@@ -38,6 +38,51 @@ final class OeuvreRepository
         return $row ?: null;
     }
 
+    /** Fiche catalogue admin : tous domaines média (sans filtre d’onglet actif). */
+    public function findByIdForAdmin(int $id): ?array
+    {
+        if ($id <= 0) {
+            return null;
+        }
+        $stmt = $this->db->prepare('SELECT * FROM oeuvres WHERE id = ?');
+        $stmt->execute([$id]);
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
+    public function findByTitreRealisateurAndDomain(
+        string $titre,
+        string $realisateur,
+        string $mediaDomain
+    ): ?array {
+        if (CatalogSchema::hasMediaDomainColumn()) {
+            $stmt = $this->db->prepare(
+                'SELECT * FROM oeuvres WHERE titre = ? AND realisateur = ? AND media_domain = ?'
+            );
+            $stmt->execute([$titre, $realisateur, MediaDomain::normalize($mediaDomain)]);
+        } else {
+            $stmt = $this->db->prepare(
+                'SELECT * FROM oeuvres WHERE titre = ? AND realisateur = ?'
+            );
+            $stmt->execute([$titre, $realisateur]);
+        }
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
+    public function updateMediaDomain(int $id, string $mediaDomain): void
+    {
+        if ($id <= 0 || !CatalogSchema::hasMediaDomainColumn()) {
+            return;
+        }
+        $stmt = $this->db->prepare(
+            'UPDATE oeuvres SET media_domain = ?, updated_at = datetime(\'now\') WHERE id = ?'
+        );
+        $stmt->execute([MediaDomain::normalize($mediaDomain), $id]);
+    }
+
     public function findByTitreAndRealisateur(string $titre, string $realisateur): ?array
     {
         if (CatalogSchema::hasMediaDomainColumn()) {
@@ -252,14 +297,44 @@ final class OeuvreRepository
     }
 
     /**
-     * Toutes les œuvres du catalogue (export admin).
+     * Toutes les œuvres du catalogue (export admin), avec extensions jeu / magazine.
      *
      * @return list<array<string, mixed>>
      */
     public function findAllForExport(): array
     {
+        $joins = '';
+        $gameTable = Database::getInstance()->query(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'oeuvre_jeu' LIMIT 1"
+        )->fetchColumn();
+        $magTable = Database::getInstance()->query(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'oeuvre_magazine' LIMIT 1"
+        )->fetchColumn();
+
+        if ($gameTable) {
+            $joins .= ' LEFT JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id';
+        }
+        if ($magTable) {
+            $joins .= ' LEFT JOIN oeuvre_magazine om ON om.oeuvre_id = o.id';
+        }
+
+        $select = 'o.*';
+        if ($gameTable) {
+            $select .= ', oj.studio AS jeu_studio, oj.editeur AS jeu_editeur, oj.genre AS jeu_genre,'
+                . ' oj.platform AS jeu_platform, oj.is_digital AS jeu_is_digital,'
+                . ' oj.physical_supports AS jeu_physical_supports, oj.digital_stores AS jeu_digital_stores,'
+                . ' oj.is_extension AS jeu_is_extension, oj.base_game_oeuvre_id AS jeu_base_game_oeuvre_id';
+        }
+        if ($magTable) {
+            $select .= ', om.series_id AS mag_series_id, om.numero AS mag_numero,'
+                . ' om.numero_ordre AS mag_numero_ordre, om.date_parution AS mag_date_parution,'
+                . ' om.sommaire AS mag_sommaire, om.pages AS mag_pages,'
+                . ' om.est_hors_serie AS mag_est_hors_serie';
+        }
+
         $stmt = $this->db->query(
-            'SELECT * FROM oeuvres ORDER BY titre COLLATE FRENCH_NOCASE, realisateur COLLATE FRENCH_NOCASE'
+            'SELECT ' . $select . ' FROM oeuvres o' . $joins
+            . ' ORDER BY o.titre COLLATE FRENCH_NOCASE, o.realisateur COLLATE FRENCH_NOCASE'
         );
 
         return $stmt->fetchAll() ?: [];

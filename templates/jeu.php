@@ -9,6 +9,8 @@
 /** @var int|null $noteSur10 */
 /** @var float|null $noteFoyerMoyenne */
 /** @var string $addedAtLabel */
+/** @var array<string, mixed>|null $baseGame */
+/** @var list<array<string, mixed>> $extensions */
 
 $canManageCatalog = $canManageCatalog ?? false;
 $gameId = (int) ($gameId ?? 0);
@@ -165,6 +167,50 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                 </dl>
 
                 <?php require MONCINE_ROOT . '/templates/_game_editions_display.php'; ?>
+
+                <?php
+                $baseGame = $baseGame ?? null;
+                $extensions = $extensions ?? [];
+                $isExtension = !empty($game['is_extension']);
+                ?>
+
+                <?php if ($isExtension): ?>
+                    <section class="film-promote-panel">
+                        <h2>Extension</h2>
+                        <?php if (is_array($baseGame) && (int) ($baseGame['oeuvre_id'] ?? 0) > 0): ?>
+                            <p class="hint">
+                                Extension de :
+                                <?php if (trim((string) ($baseGame['library_url'] ?? '')) !== ''): ?>
+                                    <a href="<?= Moncine\View::escape((string) $baseGame['library_url']) ?>">
+                                        <strong><?= Moncine\View::escape((string) ($baseGame['titre'] ?? '')) ?></strong>
+                                    </a>
+                                <?php else: ?>
+                                    <strong><?= Moncine\View::escape((string) ($baseGame['titre'] ?? '')) ?></strong>
+                                    <span class="hint">(jeu de base non présent dans votre bibliothèque)</span>
+                                <?php endif; ?>
+                            </p>
+                        <?php else: ?>
+                            <p class="hint">Jeu de base non renseigné.</p>
+                        <?php endif; ?>
+                    </section>
+                <?php else: ?>
+                    <?php if ($extensions !== []): ?>
+                        <section class="film-promote-panel">
+                            <h2>Extensions</h2>
+                            <p class="hint">Extensions reliées à ce jeu dans votre bibliothèque :</p>
+                            <ul class="magazine-subject-results" role="list">
+                                <?php foreach ($extensions as $ext): ?>
+                                    <li class="magazine-subject-results__item" role="listitem">
+                                        <a href="<?= Moncine\View::escape(Moncine\View::gameUrl((int) ($ext['bib_id'] ?? 0))) ?>"
+                                           class="magazine-subject-results__link">
+                                            <strong><?= Moncine\View::escape((string) ($ext['display_label'] ?? $ext['titre'] ?? '')) ?></strong>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </section>
+                    <?php endif; ?>
+                <?php endif; ?>
 
                 <?php if (trim((string) ($game['synopsis'] ?? '')) !== ''): ?>
                     <section>

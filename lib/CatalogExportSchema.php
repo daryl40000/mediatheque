@@ -33,7 +33,7 @@ final class CatalogExportSchema
         'tmdb_id' => 'TMDB ID',
         'tmdb_media_type' => 'Type TMDB',
         'moncine_kind' => 'Catégorie Moncine',
-    ];
+    ] + CatalogDomainExtensions::EXTENSION_COLUMNS;
 
     /** @var array<string, list<string>> */
     public const COLUMN_ALIASES = [
@@ -77,7 +77,7 @@ final class CatalogExportSchema
             'type contenu',
             'categorie',
         ],
-    ];
+    ] + CatalogDomainExtensions::COLUMN_ALIASES;
 
     /** @return list<string> */
     public static function headers(): array
@@ -88,9 +88,12 @@ final class CatalogExportSchema
     /** @return list<string> */
     public static function oeuvreDatabaseFields(): array
     {
+        $extensionKeys = array_keys(CatalogDomainExtensions::EXTENSION_COLUMNS);
+
         return array_values(array_filter(
             array_keys(self::COLUMNS),
             static fn (string $key): bool => $key !== 'oeuvre_id'
+                && !in_array($key, $extensionKeys, true)
         ));
     }
 
@@ -104,6 +107,9 @@ final class CatalogExportSchema
         $kind = MoncineContentKind::normalize((string) ($oeuvre['moncine_kind'] ?? ''));
 
         foreach (self::COLUMNS as $key => $_label) {
+            if (array_key_exists($key, CatalogDomainExtensions::EXTENSION_COLUMNS)) {
+                continue;
+            }
             $row[] = match ($key) {
                 'oeuvre_id' => (string) (int) ($oeuvre['id'] ?? $oeuvre['oeuvre_id'] ?? 0),
                 'duree_min' => CollectionExportSchema::formatDureeForExport((int) ($oeuvre['duree_min'] ?? 0)),
@@ -116,7 +122,7 @@ final class CatalogExportSchema
             };
         }
 
-        return $row;
+        return array_merge($row, CatalogDomainExtensions::extensionValuesForExport($oeuvre));
     }
 
     public static function columnLabelsText(): string

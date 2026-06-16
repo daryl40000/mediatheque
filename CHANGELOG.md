@@ -9,6 +9,24 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.5.2] — 2026-06-16
+
+**Catalogue admin multi-médias + extensions de jeux**
+
+Correctifs et améliorations autour du **catalogue partagé** : affichage et liens adaptés aux domaines (films / jeux / magazines), export/import conservant `media_domain` et les champs spécifiques, et ajout d’une notion d’**extension** (DLC / add-on) pour les jeux.
+
+### Ajouté
+
+- **Migration 044** : extensions jeux dans `oeuvre_jeu` (`is_extension`, `base_game_oeuvre_id`).
+- **Extensions jeux (UI)** : dans le formulaire jeu, une case « Extension » + champ « Jeu de base » avec **auto-complétion** sur le catalogue.
+- **Liens croisés** : fiche extension → lien vers le jeu de base ; fiche jeu de base → liste des extensions.
+- **Catalogue export/import enrichi** : colonne **`media_domain`** + colonnes spécifiques jeux/magazines (incluant extension et jeu de base).
+
+### Corrigé
+
+- **Catalogue (admin)** : jeux et magazines n’apparaissent plus comme des films ; le lien ne renvoie plus systématiquement vers la fiche film.
+- **Import catalogue** : préservation du domaine média (`film` / `jeu` / `magazine`) et reconstruction des tables spécialisées (ex. `oeuvre_jeu`, `oeuvre_magazine`).
+
 ## [0.5.1] — 2026-05-31
 
 **Jeux vidéo — enrichissements M4 (fichiers, affichage, Linux tri-état)**

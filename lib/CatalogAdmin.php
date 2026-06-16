@@ -168,7 +168,7 @@ final class CatalogAdmin
             return null;
         }
 
-        $oeuvre = $this->oeuvres->findById($oeuvreId);
+        $oeuvre = $this->oeuvres->findByIdForAdmin($oeuvreId);
         if ($oeuvre === null) {
             return null;
         }
@@ -311,6 +311,7 @@ final class CatalogAdmin
         }
 
         $realisateur = trim((string) ($data['realisateur'] ?? ''));
+        $mediaDomain = MediaDomain::normalize((string) ($data['media_domain'] ?? MediaDomain::FILM));
         $oeuvreId = max(0, (int) ($data['oeuvre_id'] ?? 0));
         $importSet = $importedColumns !== [] ? array_flip($importedColumns) : null;
 
@@ -326,9 +327,14 @@ final class CatalogAdmin
 
         $payload['titre'] = $titre;
         $payload['realisateur'] = $realisateur;
+        $payload['media_domain'] = $mediaDomain;
 
         if ($oeuvreId > 0) {
-            $duplicate = $this->oeuvres->findByTitreAndRealisateur($titre, $realisateur);
+            $duplicate = $this->oeuvres->findByTitreRealisateurAndDomain(
+                $titre,
+                $realisateur,
+                $mediaDomain
+            );
             if ($duplicate !== null && (int) ($duplicate['id'] ?? 0) !== $oeuvreId) {
                 $wrongId = (int) $duplicate['id'];
                 if ($this->oeuvres->countBibliothequeLinks($wrongId) > 0) {
@@ -342,32 +348,39 @@ final class CatalogAdmin
                 $duplicate = null;
             }
 
-            $existing = $this->oeuvres->findById($oeuvreId);
+            $existing = $this->oeuvres->findByIdForAdmin($oeuvreId);
             if ($existing === null) {
                 $this->oeuvres->insertWithId($oeuvreId, $this->completeOeuvrePayload($payload));
                 $this->cachePosterIfRemote($oeuvreId, (string) ($payload['poster_url'] ?? ''));
+                CatalogDomainExtensions::importForOeuvre($oeuvreId, $data, $importedColumns);
 
                 return;
             }
 
             $fields = array_keys($payload);
             $this->oeuvres->update($oeuvreId, $payload, $fields);
+            $this->oeuvres->updateMediaDomain($oeuvreId, $mediaDomain);
             $this->cachePosterIfRemote($oeuvreId, (string) ($payload['poster_url'] ?? $existing['poster_url'] ?? ''));
+            CatalogDomainExtensions::importForOeuvre($oeuvreId, $data, $importedColumns);
 
             return;
         }
 
-        $duplicate = $this->oeuvres->findByTitreAndRealisateur($titre, $realisateur);
+        $duplicate = $this->oeuvres->findByTitreRealisateurAndDomain($titre, $realisateur, $mediaDomain);
         if ($duplicate !== null) {
             $fields = array_keys($payload);
-            $this->oeuvres->update((int) $duplicate['id'], $payload, $fields);
-            $this->cachePosterIfRemote((int) $duplicate['id'], (string) ($payload['poster_url'] ?? ''));
+            $dupId = (int) $duplicate['id'];
+            $this->oeuvres->update($dupId, $payload, $fields);
+            $this->oeuvres->updateMediaDomain($dupId, $mediaDomain);
+            $this->cachePosterIfRemote($dupId, (string) ($payload['poster_url'] ?? ''));
+            CatalogDomainExtensions::importForOeuvre($dupId, $data, $importedColumns);
 
             return;
         }
 
         $newId = $this->oeuvres->insert($this->completeOeuvrePayload($payload));
         $this->cachePosterIfRemote($newId, (string) ($payload['poster_url'] ?? ''));
+        CatalogDomainExtensions::importForOeuvre($newId, $data, $importedColumns);
     }
 
     /**
@@ -387,6 +400,10 @@ final class CatalogAdmin
                 'moncine_kind' => MoncineContentKind::FILM,
                 default => '',
             };
+        }
+
+        if (!array_key_exists('media_domain', $payload)) {
+            $payload['media_domain'] = MediaDomain::FILM;
         }
 
         return $payload;
@@ -462,7 +479,6 @@ final class CatalogAdmin
     {
         $parts = [];
         $params = [];
-        CatalogSchema::applyMediaDomainFilter($parts, $params);
 
         $search = trim($search);
         if ($search !== '') {

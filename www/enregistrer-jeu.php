@@ -48,6 +48,8 @@ $result = $repo->createWithLibrary(array_merge([
     'platform' => (string) ($_POST['platform'] ?? ''),
     'synopsis' => (string) ($_POST['synopsis'] ?? ''),
     'poster_url' => '',
+    'is_extension' => !empty($_POST['is_extension']),
+    'base_game_oeuvre_id' => (int) ($_POST['base_game_oeuvre_id'] ?? 0),
     'tested_on_linux' => $linuxFlags['tested_on_linux'],
     'linux_not_supported' => $linuxFlags['linux_not_supported'],
 ], $editions), $statut, $userId, $foyerId);

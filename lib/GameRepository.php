@@ -87,6 +87,31 @@ final class GameRepository
         return false;
     }
 
+    public static function hasExtensionColumns(): bool
+    {
+        if (!self::tableExists()) {
+            return false;
+        }
+
+        $stmt = Database::getInstance()->query('PRAGMA table_info(oeuvre_jeu)');
+        if ($stmt === false) {
+            return false;
+        }
+
+        $hasIsExtension = false;
+        $hasBase = false;
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (($row['name'] ?? '') === 'is_extension') {
+                $hasIsExtension = true;
+            }
+            if (($row['name'] ?? '') === 'base_game_oeuvre_id') {
+                $hasBase = true;
+            }
+        }
+
+        return $hasIsExtension && $hasBase;
+    }
+
     public static function hasTestedOnLinuxColumn(): bool
     {
         $stmt = Database::getInstance()->query('PRAGMA table_info(bibliotheque)');
@@ -371,7 +396,90 @@ final class GameRepository
         $stmt->execute($params);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return $row !== false ? $this->hydrateGameRow($row) : null;
+        if ($row === false) {
+            return null;
+        }
+
+        $game = $this->hydrateGameRow($row);
+        if (self::hasExtensionColumns()) {
+            $baseId = (int) ($game['base_game_oeuvre_id'] ?? 0);
+            if (!empty($game['is_extension']) && $baseId > 0) {
+                $base = $this->findCatalogByOeuvreId($baseId);
+                if ($base !== null) {
+                    $game['base_game_label'] = (string) ($base['display_label'] ?? $base['titre'] ?? '');
+                    $game['base_game_titre'] = (string) ($base['titre'] ?? '');
+                }
+            }
+        }
+
+        return $game;
+    }
+
+    /**
+     * Liste des extensions d’un jeu de base présentes dans la bibliothèque (collection du foyer ou envies).
+     *
+     * @return list<array{bib_id:int, oeuvre_id:int, titre:string, annee:int, platform_short:string, display_label:string}>
+     */
+    public function listExtensionsForBaseGame(int $baseOeuvreId, int $userId, int $foyerId): array
+    {
+        if (!self::isAvailable() || !self::hasExtensionColumns() || $baseOeuvreId <= 0) {
+            return [];
+        }
+
+        $params = [
+            'base_id' => $baseOeuvreId,
+            'domain' => MediaDomain::JEU,
+            'collection' => LibraryStatut::COLLECTION,
+            'wishlist' => LibraryStatut::WISHLIST,
+            'foyer_id' => $foyerId,
+            'user_id' => $userId,
+        ];
+
+        $stmt = $this->db->prepare(
+            'SELECT b.id AS bib_id, o.id AS oeuvre_id, o.titre, o.annee, oj.platform'
+            . ' FROM bibliotheque b'
+            . ' INNER JOIN oeuvres o ON o.id = b.oeuvre_id'
+            . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . ' WHERE o.media_domain = :domain'
+            . ' AND oj.is_extension = 1'
+            . ' AND oj.base_game_oeuvre_id = :base_id'
+            . ' AND ('
+            . '   (b.statut = :collection AND b.foyer_id = :foyer_id)'
+            . '   OR (b.statut = :wishlist AND b.user_id = :user_id)'
+            . ' )'
+            . ' ORDER BY o.titre COLLATE FRENCH_NOCASE ASC, o.annee ASC'
+        );
+        $stmt->execute($params);
+
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $oeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+            $titre = (string) ($row['titre'] ?? '');
+            $platformShort = GamePlatform::shortLabel((string) ($row['platform'] ?? ''));
+            $annee = (int) ($row['annee'] ?? 0);
+            $label = $titre;
+            $parts = [];
+            if ($platformShort !== '') {
+                $parts[] = $platformShort;
+            }
+            if ($annee > 0) {
+                $parts[] = (string) $annee;
+            }
+            if ($parts !== []) {
+                $label = $titre . ' (' . implode(' · ', $parts) . ')';
+            }
+
+            $out[] = [
+                'bib_id' => (int) ($row['bib_id'] ?? 0),
+                'oeuvre_id' => $oeuvreId,
+                'titre' => $titre,
+                'annee' => $annee,
+                'platform_short' => $platformShort,
+                'display_label' => $label,
+            ];
+        }
+
+        return $out;
     }
 
     /** Fiche catalogue jeu (indépendamment du contexte média actif).
@@ -441,6 +549,11 @@ final class GameRepository
         $digitalStores = (string) ($data['digital_stores'] ?? '');
         $isDigital = !empty($data['is_digital'])
             || GameDigitalStore::hasDigitalEdition($digitalStores, !empty($data['is_digital']));
+        $isExtension = !empty($data['is_extension']);
+        $baseGameOeuvreId = max(0, (int) ($data['base_game_oeuvre_id'] ?? 0));
+        if ($isExtension && $baseGameOeuvreId <= 0) {
+            return 'Pour une extension, choisissez un jeu de base dans le catalogue.';
+        }
 
         $this->db->beginTransaction();
         try {
@@ -457,8 +570,12 @@ final class GameRepository
                 $this->db->prepare(
                     'INSERT INTO oeuvre_jeu (
                         oeuvre_id, studio, editeur, genre, platform, is_digital,
-                        physical_supports, digital_stores
-                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+                        physical_supports, digital_stores'
+                        . (self::hasExtensionColumns() ? ', is_extension, base_game_oeuvre_id' : '')
+                        . '
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?'
+                        . (self::hasExtensionColumns() ? ', ?, ?' : '')
+                        . ')'
                 )->execute([
                     $oeuvreId,
                     trim((string) ($data['studio'] ?? '')),
@@ -468,11 +585,19 @@ final class GameRepository
                     $isDigital ? 1 : 0,
                     $physicalSupports,
                     $digitalStores,
+                    ...(self::hasExtensionColumns()
+                        ? [$isExtension ? 1 : 0, $isExtension ? $baseGameOeuvreId : null]
+                        : []),
                 ]);
             } else {
                 $this->db->prepare(
-                    'INSERT INTO oeuvre_jeu (oeuvre_id, studio, editeur, genre, platform, is_digital)
-                     VALUES (?, ?, ?, ?, ?, ?)'
+                    'INSERT INTO oeuvre_jeu (
+                        oeuvre_id, studio, editeur, genre, platform, is_digital'
+                        . (self::hasExtensionColumns() ? ', is_extension, base_game_oeuvre_id' : '')
+                        . '
+                     ) VALUES (?, ?, ?, ?, ?, ?'
+                        . (self::hasExtensionColumns() ? ', ?, ?' : '')
+                        . ')'
                 )->execute([
                     $oeuvreId,
                     trim((string) ($data['studio'] ?? '')),
@@ -480,6 +605,9 @@ final class GameRepository
                     GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
                     $platform,
                     $isDigital ? 1 : 0,
+                    ...(self::hasExtensionColumns()
+                        ? [$isExtension ? 1 : 0, $isExtension ? $baseGameOeuvreId : null]
+                        : []),
                 ]);
             }
 
@@ -539,6 +667,11 @@ final class GameRepository
         $digitalStores = (string) ($data['digital_stores'] ?? '');
         $isDigital = !empty($data['is_digital'])
             || GameDigitalStore::hasDigitalEdition($digitalStores, false);
+        $isExtension = !empty($data['is_extension']);
+        $baseGameOeuvreId = max(0, (int) ($data['base_game_oeuvre_id'] ?? 0));
+        if ($isExtension && $baseGameOeuvreId <= 0) {
+            return 'Pour une extension, choisissez un jeu de base dans le catalogue.';
+        }
 
         $this->db->beginTransaction();
         try {
@@ -552,8 +685,9 @@ final class GameRepository
                 $this->db->prepare(
                     'UPDATE oeuvre_jeu SET
                         studio = ?, editeur = ?, genre = ?, platform = ?, is_digital = ?,
-                        physical_supports = ?, digital_stores = ?
-                     WHERE oeuvre_id = ?'
+                        physical_supports = ?, digital_stores = ?'
+                        . (self::hasExtensionColumns() ? ', is_extension = ?, base_game_oeuvre_id = ?' : '')
+                        . ' WHERE oeuvre_id = ?'
                 )->execute([
                     trim((string) ($data['studio'] ?? '')),
                     trim((string) ($data['editeur'] ?? '')),
@@ -562,18 +696,25 @@ final class GameRepository
                     $isDigital ? 1 : 0,
                     $physicalSupports,
                     $digitalStores,
+                    ...(self::hasExtensionColumns()
+                        ? [$isExtension ? 1 : 0, $isExtension ? $baseGameOeuvreId : null]
+                        : []),
                     $oeuvreId,
                 ]);
             } else {
                 $this->db->prepare(
-                    'UPDATE oeuvre_jeu SET studio = ?, editeur = ?, genre = ?, platform = ?, is_digital = ?
-                     WHERE oeuvre_id = ?'
+                    'UPDATE oeuvre_jeu SET studio = ?, editeur = ?, genre = ?, platform = ?, is_digital = ?'
+                    . (self::hasExtensionColumns() ? ', is_extension = ?, base_game_oeuvre_id = ?' : '')
+                    . ' WHERE oeuvre_id = ?'
                 )->execute([
                     trim((string) ($data['studio'] ?? '')),
                     trim((string) ($data['editeur'] ?? '')),
                     GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
                     $platform,
                     $isDigital ? 1 : 0,
+                    ...(self::hasExtensionColumns()
+                        ? [$isExtension ? 1 : 0, $isExtension ? $baseGameOeuvreId : null]
+                        : []),
                     $oeuvreId,
                 ]);
             }
@@ -730,13 +871,16 @@ final class GameRepository
         $edition = self::hasEditionColumns()
             ? ', oj.physical_supports, oj.digital_stores'
             : '';
+        $extension = self::hasExtensionColumns()
+            ? ', oj.is_extension, oj.base_game_oeuvre_id'
+            : '';
         $linux = self::hasTestedOnLinuxColumn()
             ? ', b.tested_on_linux' . (self::hasLinuxNotSupportedColumn() ? ', b.linux_not_supported' : '')
             : '';
 
         return 'b.id, b.user_id, b.foyer_id, b.oeuvre_id, b.statut, b.support_physique, b.created_at,'
             . ' o.titre, o.annee, o.poster_url, o.synopsis,'
-            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $edition . $linux;
+            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $edition . $extension . $linux;
     }
 
     private static function selectGameHistoryExtras(): string
@@ -755,9 +899,12 @@ final class GameRepository
         $edition = self::hasEditionColumns()
             ? ', oj.physical_supports, oj.digital_stores'
             : '';
+        $extension = self::hasExtensionColumns()
+            ? ', oj.is_extension, oj.base_game_oeuvre_id'
+            : '';
 
         return 'o.id AS oeuvre_id, o.titre, o.annee, o.poster_url, o.synopsis,'
-            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $edition;
+            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $edition . $extension;
     }
 
     /**
@@ -770,6 +917,8 @@ final class GameRepository
         $row['oeuvre_id'] = (int) ($row['oeuvre_id'] ?? 0);
         $row['annee'] = (int) ($row['annee'] ?? 0);
         $row['is_digital'] = !empty($row['is_digital']);
+        $row['is_extension'] = !empty($row['is_extension']);
+        $row['base_game_oeuvre_id'] = (int) ($row['base_game_oeuvre_id'] ?? 0);
         $row['platform_label'] = GamePlatform::label((string) ($row['platform'] ?? ''));
         $row['platform_short'] = GamePlatform::shortLabel((string) ($row['platform'] ?? ''));
         $row['display_label'] = self::displayLabel($row);
@@ -814,6 +963,8 @@ final class GameRepository
         $row['oeuvre_id'] = (int) ($row['oeuvre_id'] ?? 0);
         $row['annee'] = (int) ($row['annee'] ?? 0);
         $row['is_digital'] = !empty($row['is_digital']);
+        $row['is_extension'] = !empty($row['is_extension']);
+        $row['base_game_oeuvre_id'] = (int) ($row['base_game_oeuvre_id'] ?? 0);
         $row['platform_label'] = GamePlatform::label((string) ($row['platform'] ?? ''));
         $row['platform_short'] = GamePlatform::shortLabel((string) ($row['platform'] ?? ''));
         $row['display_label'] = self::displayLabel($row);

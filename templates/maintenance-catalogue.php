@@ -158,7 +158,7 @@
                                 <td><?= Moncine\View::escape((string) ($oeuvre['realisateur'] ?? '')) ?></td>
                                 <td><?= (int) ($oeuvre['library_count'] ?? 0) ?></td>
                                 <td>
-                                    <a href="<?= Moncine\View::escape(Moncine\View::oeuvreUrl((int) ($oeuvre['id'] ?? 0))) ?>"
+                                    <a href="<?= Moncine\View::escape(Moncine\View::catalogOeuvreUrl($oeuvre)) ?>"
                                        class="btn btn-sm btn-secondary">Compléter</a>
                                 </td>
                             </tr>

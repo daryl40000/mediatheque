@@ -202,7 +202,7 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                             <?php $sortHeader('Titre', 'titre'); ?>
                             <?php $sortHeader('Réalisateur', 'realisateur'); ?>
                             <?php $sortHeader('Année', 'annee'); ?>
-                            <th scope="col">Type</th>
+                            <th scope="col">Média</th>
                             <th scope="col">Bibliothèques</th>
                             <th scope="col">Actions</th>
                         </tr>
@@ -215,8 +215,8 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                             <tr>
                                 <td><?= $oeuvreId ?></td>
                                 <td>
-                                    <a href="<?= Moncine\View::escape(Moncine\View::oeuvreUrl(
-                                        $oeuvreId,
+                                    <a href="<?= Moncine\View::escape(Moncine\View::catalogOeuvreUrl(
+                                        $oeuvre,
                                         $search,
                                         $sortBy,
                                         $sortDir,

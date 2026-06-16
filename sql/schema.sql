@@ -457,12 +457,16 @@ CREATE TABLE IF NOT EXISTS oeuvre_jeu (
     platform TEXT NOT NULL DEFAULT '',
     is_digital INTEGER NOT NULL DEFAULT 0,
     physical_supports TEXT NOT NULL DEFAULT '',
-    digital_stores TEXT NOT NULL DEFAULT ''
+    digital_stores TEXT NOT NULL DEFAULT '',
+    is_extension INTEGER NOT NULL DEFAULT 0,
+    base_game_oeuvre_id INTEGER DEFAULT NULL REFERENCES oeuvres(id) ON DELETE SET NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_oeuvre_jeu_platform ON oeuvre_jeu(platform);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_jeu_studio ON oeuvre_jeu(studio COLLATE NOCASE);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_jeu_genre ON oeuvre_jeu(genre COLLATE NOCASE);
+CREATE INDEX IF NOT EXISTS idx_oeuvre_jeu_is_extension ON oeuvre_jeu(is_extension);
+CREATE INDEX IF NOT EXISTS idx_oeuvre_jeu_base_game ON oeuvre_jeu(base_game_oeuvre_id);
 
 CREATE TABLE IF NOT EXISTS game_attachment (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

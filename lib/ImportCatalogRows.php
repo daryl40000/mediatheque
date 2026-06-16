@@ -95,6 +95,20 @@ final class ImportCatalogRows
 
         $data['moncine_kind'] = $moncineKind;
 
+        if (isset($map['media_domain'])) {
+            $domainRaw = ImportFilmRows::getCell($row, $map, 'media_domain');
+            $data['media_domain'] = $domainRaw !== ''
+                ? MediaDomain::normalize($domainRaw)
+                : MediaDomain::FILM;
+        }
+
+        foreach (array_keys(CatalogDomainExtensions::EXTENSION_COLUMNS) as $extensionKey) {
+            if ($extensionKey === 'media_domain' || !isset($map[$extensionKey])) {
+                continue;
+            }
+            $data[$extensionKey] = ImportFilmRows::getCell($row, $map, $extensionKey);
+        }
+
         return $data;
     }
 
