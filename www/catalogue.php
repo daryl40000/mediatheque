@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\CatalogAdmin;
 use Moncine\Csrf;
+use Moncine\GameRepository;
 use Moncine\View;
 
 CatalogAdmin::denyUnlessAccess();
@@ -66,4 +67,6 @@ View::render('catalogue', [
     'saveError' => trim((string) ($_GET['save_error'] ?? '')),
     'deleteError' => trim((string) ($_GET['delete_error'] ?? '')),
     'hasTmdbKey' => \Moncine\FilmEnricher::canEnrich(),
+    'gameModuleAvailable' => GameRepository::isAvailable(),
+    'knownGenres' => GameRepository::isAvailable() ? (new GameRepository())->listKnownGenres() : [],
 ]);

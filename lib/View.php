@@ -450,29 +450,81 @@ final class View
             ? MediaDomain::normalize((string) ($oeuvre['media_domain'] ?? MediaDomain::FILM))
             : MediaDomain::FILM;
 
-        $userId = UserContext::currentUserId();
-        $foyerId = UserContext::currentFoyerId();
-        $bibId = match ($domain) {
-            MediaDomain::JEU => GameRepository::isAvailable()
-                ? (new GameRepository())->findLibraryBibIdForCatalogOeuvre($oeuvreId, $userId, $foyerId)
-                : null,
-            MediaDomain::MAGAZINE => (new MagazineRepository())->findLibraryBibIdForCatalogOeuvre(
-                $oeuvreId,
-                $userId,
-                $foyerId
-            ),
-            default => null,
-        };
+        return self::catalogOeuvreDetailUrl(
+            $oeuvreId,
+            $domain,
+            $catalogSearch,
+            $catalogSort,
+            $catalogDir,
+            $catalogPage
+        );
+    }
 
-        if ($bibId !== null && $bibId > 0) {
-            return match ($domain) {
-                MediaDomain::JEU => self::gameUrl($bibId),
-                MediaDomain::MAGAZINE => self::magazineIssueUrl($bibId),
-                default => self::oeuvreUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
-            };
+    public static function catalogOeuvreDetailUrl(
+        int $oeuvreId,
+        string $mediaDomain,
+        string $catalogSearch = '',
+        string $catalogSort = 'titre',
+        string $catalogDir = 'asc',
+        int $catalogPage = 1
+    ): string {
+        return match (MediaDomain::normalize($mediaDomain)) {
+            MediaDomain::JEU => self::oeuvreJeuUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
+            MediaDomain::MAGAZINE => self::oeuvreMagazineUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
+            default => self::oeuvreUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
+        };
+    }
+
+    /** Fiche catalogue admin — jeu vidéo. */
+    public static function oeuvreJeuUrl(
+        int $oeuvreId,
+        string $catalogSearch = '',
+        string $catalogSort = 'titre',
+        string $catalogDir = 'asc',
+        int $catalogPage = 1
+    ): string {
+        return self::catalogOeuvrePageUrl('/oeuvre-jeu.php', $oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage);
+    }
+
+    /** Fiche catalogue admin — numéro de magazine. */
+    public static function oeuvreMagazineUrl(
+        int $oeuvreId,
+        string $catalogSearch = '',
+        string $catalogSort = 'titre',
+        string $catalogDir = 'asc',
+        int $catalogPage = 1
+    ): string {
+        return self::catalogOeuvrePageUrl('/oeuvre-magazine.php', $oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage);
+    }
+
+    private static function catalogOeuvrePageUrl(
+        string $path,
+        int $oeuvreId,
+        string $catalogSearch,
+        string $catalogSort,
+        string $catalogDir,
+        int $catalogPage
+    ): string {
+        if ($oeuvreId <= 0) {
+            return self::catalogueUrl($catalogSearch, $catalogSort, $catalogDir, $catalogPage);
         }
 
-        return self::oeuvreUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage);
+        $params = ['id' => (string) $oeuvreId];
+        $catalogSearch = trim($catalogSearch);
+        if ($catalogSearch !== '') {
+            $params['catalog_q'] = $catalogSearch;
+        }
+        if ($catalogSort !== '' && $catalogSort !== 'titre') {
+            $params['catalog_sort'] = $catalogSort;
+        }
+        if (strtolower($catalogDir) === 'desc') {
+            $params['catalog_dir'] = 'desc';
+        }
+        if ($catalogPage > 1) {
+            $params['catalog_page'] = (string) $catalogPage;
+        }
+
+        return $path . '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986) . '#catalog-oeuvre-nav';
     }
 
     /** Fiche d’une œuvre dans le catalogue partagé. */
@@ -774,7 +826,8 @@ final class View
         string $query = '',
         string $sort = 'titre',
         string $dir = 'asc',
-        string $viewMode = ''
+        string $viewMode = '',
+        ?GameListFilter $filter = null
     ): string {
         $params = [];
         if ($query !== '') {
@@ -789,8 +842,11 @@ final class View
         if (CollectionViewMode::isGrid($viewMode)) {
             $params['view'] = CollectionViewMode::GRID;
         }
+        foreach (($filter ?? GameListFilter::empty())->toQueryParams() as $key => $value) {
+            $params[$key] = $value;
+        }
 
-        return $params === [] ? '/jeux.php' : '/jeux.php?' . http_build_query($params);
+        return $params === [] ? '/jeux.php' : '/jeux.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
     }
 
     public static function gamesWishlistUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string
@@ -815,14 +871,15 @@ final class View
         string $currentSort,
         string $currentDir,
         string $searchQuery = '',
-        string $viewMode = ''
+        string $viewMode = '',
+        ?GameListFilter $filter = null
     ): string {
         $dir = 'asc';
         if ($currentSort === $column && strtolower($currentDir) === 'asc') {
             $dir = 'desc';
         }
 
-        return self::gamesCollectionUrl($searchQuery, $column, $dir, $viewMode);
+        return self::gamesCollectionUrl($searchQuery, $column, $dir, $viewMode, $filter);
     }
 
     public static function gamesWishlistSortUrl(

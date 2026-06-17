@@ -7,12 +7,14 @@
  * @var string $sortDir
  * @var string $query
  * @var string $viewMode
+ * @var Moncine\GameListFilter $listFilter
  */
-$gridSortLink = static function (string $label, string $column) use ($sortBy, $sortDir, $query, $viewMode): void {
+$listFilter = $listFilter ?? Moncine\GameListFilter::empty();
+$gridSortLink = static function (string $label, string $column) use ($sortBy, $sortDir, $query, $viewMode, $listFilter): void {
     $active = $sortBy === $column;
     $class = 'collection-grid-sort__link' . ($active ? ' is-active' : '');
     ?>
-    <a href="<?= Moncine\View::escape(Moncine\View::gamesSortUrl($column, $sortBy, $sortDir, $query, $viewMode)) ?>"
+    <a href="<?= Moncine\View::escape(Moncine\View::gamesSortUrl($column, $sortBy, $sortDir, $query, $viewMode, $listFilter)) ?>"
        class="<?= $class ?>">
         <?= Moncine\View::escape($label) ?><?= Moncine\View::filmsSortIndicator($column, $sortBy, $sortDir) ?>
     </a>

@@ -26,6 +26,7 @@ final class MoncineContentKind
 
     /** Choix du formulaire (alignés sur la colonne Type de Mes films). */
     public const FORM_DOCUMENTAIRE = 'documentaire';
+    public const FORM_JEU_VIDEO = 'jeu_video';
 
     /** @return array<string, string> */
     public static function formChoices(): array
@@ -36,6 +37,19 @@ final class MoncineContentKind
             self::FORM_DOCUMENTAIRE => 'Documentaire',
             self::SPECTACLE => 'Spectacle',
         ];
+    }
+
+    /** Catégories du formulaire admin catalogue (films + jeux vidéo). */
+    public static function catalogAdminFormChoices(): array
+    {
+        return array_merge(self::formChoices(), [
+            self::FORM_JEU_VIDEO => 'Jeu vidéo',
+        ]);
+    }
+
+    public static function isJeuVideoFormValue(string $formValue): bool
+    {
+        return trim($formValue) === self::FORM_JEU_VIDEO;
     }
 
     public static function normalize(string $raw): string

@@ -6,20 +6,24 @@
 /** @var string $viewMode */
 /** @var int $totalCount */
 /** @var string $moduleError */
+/** @var Moncine\GameListFilter $listFilter */
 
 $sortBy = $sortBy ?? 'titre';
 $sortDir = $sortDir ?? 'asc';
 $viewMode = Moncine\CollectionViewMode::normalize($viewMode ?? '');
+$listFilter = $listFilter ?? Moncine\GameListFilter::empty();
 $isGridView = Moncine\CollectionViewMode::isGrid($viewMode);
+$filterActive = $listFilter->isActive();
+$filterLabel = $listFilter->activeLabel();
 
-$sortHeader = static function (string $label, string $column) use ($sortBy, $sortDir, $query, $viewMode): void {
+$sortHeader = static function (string $label, string $column) use ($sortBy, $sortDir, $query, $viewMode, $listFilter): void {
     $active = $sortBy === $column;
     $aria = $active
         ? (strtolower($sortDir) === 'desc' ? 'descending' : 'ascending')
         : 'none';
     ?>
     <th class="<?= $active ? 'sorted' : '' ?>" aria-sort="<?= $aria ?>">
-        <a href="<?= Moncine\View::escape(Moncine\View::gamesSortUrl($column, $sortBy, $sortDir, $query, $viewMode)) ?>">
+        <a href="<?= Moncine\View::escape(Moncine\View::gamesSortUrl($column, $sortBy, $sortDir, $query, $viewMode, $listFilter)) ?>">
             <?= Moncine\View::escape($label) ?><?= Moncine\View::filmsSortIndicator($column, $sortBy, $sortDir) ?>
         </a>
     </th>
@@ -36,6 +40,7 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
         <div class="collection-page__actions">
             <a href="/ajouter-jeu.php" class="btn btn-accent">Ajouter un jeu</a>
             <a href="/jeux-envies.php" class="btn btn-secondary">Mes envies jeux</a>
+            <a href="/statistiques.php" class="btn btn-secondary">Statistiques jeux</a>
         </div>
     </header>
 
@@ -51,6 +56,15 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
         </div>
     <?php endif; ?>
 
+    <?php if ($filterActive): ?>
+        <div class="alert alert-info collection-filter-banner">
+            Filtre actif : <strong><?= Moncine\View::escape($filterLabel) ?></strong>.
+            <a href="<?= Moncine\View::escape(Moncine\View::gamesCollectionUrl($query, $sortBy, $sortDir, $viewMode)) ?>">
+                Afficher toute la collection
+            </a>
+        </div>
+    <?php endif; ?>
+
     <form method="get" action="/jeux.php" class="collection-search">
         <label for="jeux_q">Rechercher</label>
         <div class="collection-search__row">
@@ -62,9 +76,13 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
             <?php if ($isGridView): ?>
                 <input type="hidden" name="view" value="grid">
             <?php endif; ?>
+            <?php foreach ($listFilter->toQueryParams() as $filterKey => $filterValue): ?>
+                <input type="hidden" name="<?= Moncine\View::escape((string) $filterKey) ?>"
+                       value="<?= Moncine\View::escape((string) $filterValue) ?>">
+            <?php endforeach; ?>
             <button type="submit" class="btn btn-secondary btn-sm">Rechercher</button>
             <?php if ($query !== ''): ?>
-                <a href="<?= Moncine\View::escape(Moncine\View::gamesCollectionUrl('', $sortBy, $sortDir, $viewMode)) ?>"
+                <a href="<?= Moncine\View::escape(Moncine\View::gamesCollectionUrl('', $sortBy, $sortDir, $viewMode, $listFilter)) ?>"
                    class="btn btn-secondary btn-sm">Effacer la recherche</a>
             <?php endif; ?>
         </div>
@@ -76,7 +94,7 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
             $modeActive = $viewMode === $modeKey;
             $modeClass = 'ui-pill-bar__item' . ($modeActive ? ' ui-pill--active' : '');
             ?>
-            <a href="<?= Moncine\View::escape(Moncine\View::gamesCollectionUrl($query, $sortBy, $sortDir, $modeKey)) ?>"
+            <a href="<?= Moncine\View::escape(Moncine\View::gamesCollectionUrl($query, $sortBy, $sortDir, $modeKey, $listFilter)) ?>"
                class="<?= $modeClass ?>"<?= $modeActive ? ' aria-current="true"' : '' ?>>
                 <?= Moncine\View::escape($modeLabel) ?>
             </a>
@@ -84,7 +102,16 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
     </nav>
 
     <?php if ($totalCount === 0): ?>
-        <p class="hint">Aucun jeu dans votre collection pour l’instant.</p>
+        <p class="hint">
+            <?php if ($filterActive || $query !== ''): ?>
+                Aucun jeu ne correspond à ce filtre.
+                <a href="<?= Moncine\View::escape(Moncine\View::gamesCollectionUrl('', $sortBy, $sortDir, $viewMode)) ?>">
+                    Voir toute la collection
+                </a>.
+            <?php else: ?>
+                Aucun jeu dans votre collection pour l’instant.
+            <?php endif; ?>
+        </p>
     <?php else: ?>
         <p class="hint">
             <?= (int) $totalCount ?> jeu<?= $totalCount > 1 ? 'x' : '' ?> trouvé<?= $totalCount > 1 ? 's' : '' ?>.

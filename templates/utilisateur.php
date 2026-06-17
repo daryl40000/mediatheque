@@ -8,9 +8,11 @@
  * @var bool $profileDomainImplemented
  * @var array<string, int> $stats
  * @var list<array<string, mixed>> $lastViewed
+ * @var list<array<string, mixed>> $lastNoted
  * @var list<array<string, mixed>> $lastCollection
  * @var list<array<string, mixed>> $lastWishlist
  * @var list<array<string, mixed>> $listFilms
+ * @var list<array<string, mixed>> $listGames
  * @var list<array<string, mixed>> $listMagazineSeries
  * @var list<array<string, mixed>> $listViewings
  * @var string $listMode
@@ -27,6 +29,8 @@ use Moncine\MediaDomain;
 $profileDomain = MediaDomain::normalize($profileDomain ?? MediaDomain::FILM);
 $profileNav = $profileNav ?? MediaDomain::navLabels($profileDomain);
 $isMagazineProfile = MediaDomain::isMagazine($profileDomain);
+$isGameProfile = MediaDomain::isGame($profileDomain);
+$isFilmProfile = !$isMagazineProfile && !$isGameProfile;
 $profileDomainImplemented = !empty($profileDomainImplemented);
 ?>
 <section class="account-page social-profile-page">
@@ -64,6 +68,11 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
             ?>
         <?php elseif ($isMagazineProfile): ?>
             <?php require MONCINE_ROOT . '/templates/_user_public_magazine_series_grid.php'; ?>
+        <?php elseif ($isGameProfile): ?>
+            <?php
+            $games = $listGames ?? [];
+            require MONCINE_ROOT . '/templates/_user_public_games_grid.php';
+            ?>
         <?php else: ?>
             <?php
             $films = $listFilms ?? [];
@@ -104,14 +113,22 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                     La consultation du profil pour les <strong><?= Moncine\View::escape(MediaDomain::label($profileDomain)) ?></strong>
                     n’est pas encore disponible.
                 </p>
-                <p class="hint">Utilisez les onglets Films ou Magazines pour voir ce que cette personne partage déjà.</p>
+                <p class="hint">Utilisez les onglets Films, Jeux ou Magazines pour voir ce que cette personne partage déjà.</p>
             </section>
         <?php else: ?>
             <section class="social-profile-stats" aria-labelledby="social-stats-heading">
                 <h2 id="social-stats-heading">Statistiques — <?= Moncine\View::escape(MediaDomain::label($profileDomain)) ?></h2>
                 <dl class="social-profile-stats__list">
                     <div>
-                        <dt><?= $isMagazineProfile ? 'Séries en collection' : 'Films en collection' ?></dt>
+                        <dt>
+                            <?php if ($isMagazineProfile): ?>
+                                Séries en collection
+                            <?php elseif ($isGameProfile): ?>
+                                Jeux en collection
+                            <?php else: ?>
+                                Films en collection
+                            <?php endif; ?>
+                        </dt>
                         <dd>
                             <a href="<?= Moncine\View::escape(
                                 Moncine\View::userProfileListUrl($targetUserId, 'collection', 'titre', 'titre', 'asc', null, $profileDomain)
@@ -127,7 +144,15 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                         </div>
                     <?php endif; ?>
                     <div>
-                        <dt><?= $isMagazineProfile ? 'Séries dans les envies' : 'Films dans les envies' ?></dt>
+                        <dt>
+                            <?php if ($isMagazineProfile): ?>
+                                Séries dans les envies
+                            <?php elseif ($isGameProfile): ?>
+                                Jeux dans les envies
+                            <?php else: ?>
+                                Films dans les envies
+                            <?php endif; ?>
+                        </dt>
                         <dd>
                             <a href="<?= Moncine\View::escape(
                                 Moncine\View::userProfileListUrl($targetUserId, 'envies', 'titre', 'titre', 'asc', null, $profileDomain)
@@ -136,7 +161,7 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                             </a>
                         </dd>
                     </div>
-                    <?php if (!$isMagazineProfile): ?>
+                    <?php if ($isFilmProfile): ?>
                         <div>
                             <dt>Films déjà vus</dt>
                             <dd>
@@ -165,11 +190,20 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                                 </a>
                             </dd>
                         </div>
+                    <?php elseif ($isGameProfile): ?>
+                        <div>
+                            <dt>Jeux notés</dt>
+                            <dd><?= (int) ($stats['games_noted_count'] ?? 0) ?></dd>
+                        </div>
+                        <div>
+                            <dt>Jeux notés en <?= (int) ($stats['year'] ?? (int) date('Y')) ?></dt>
+                            <dd><?= (int) ($stats['games_noted_year_count'] ?? 0) ?></dd>
+                        </div>
                     <?php endif; ?>
                 </dl>
             </section>
 
-            <?php if (!$isMagazineProfile): ?>
+            <?php if ($isFilmProfile): ?>
                 <section class="social-profile-section" aria-labelledby="social-last-viewed-heading">
                     <h2 id="social-last-viewed-heading">5 derniers films vus</h2>
                     <?php
@@ -178,12 +212,28 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                     require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
                     ?>
                 </section>
+            <?php elseif ($isGameProfile): ?>
+                <section class="social-profile-section" aria-labelledby="social-last-noted-heading">
+                    <h2 id="social-last-noted-heading">5 derniers jeux notés</h2>
+                    <?php
+                    $films = $lastNoted ?? [];
+                    $emptyHint = 'Aucune note enregistrée pour le moment.';
+                    $linkToGame = true;
+                    require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
+                    ?>
+                </section>
             <?php endif; ?>
 
             <?php if ($isSelf || (int) ($stats['collection_count'] ?? 0) > 0): ?>
                 <section class="social-profile-section" aria-labelledby="social-last-collection-heading">
                     <h2 id="social-last-collection-heading">
-                        <?= $isMagazineProfile ? '5 dernières séries ajoutées à la collection' : '5 derniers ajouts à la collection' ?>
+                        <?php if ($isMagazineProfile): ?>
+                            5 dernières séries ajoutées à la collection
+                        <?php elseif ($isGameProfile): ?>
+                            5 derniers jeux ajoutés à la collection
+                        <?php else: ?>
+                            5 derniers ajouts à la collection
+                        <?php endif; ?>
                     </h2>
                     <?php if ($isMagazineProfile): ?>
                         <?php
@@ -195,7 +245,10 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                     <?php else: ?>
                         <?php
                         $films = $lastCollection ?? [];
-                        $emptyHint = 'Aucun film dans la collection pour le moment.';
+                        $emptyHint = $isGameProfile
+                            ? 'Aucun jeu dans la collection pour le moment.'
+                            : 'Aucun film dans la collection pour le moment.';
+                        $linkToGame = $isGameProfile;
                         require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
                         ?>
                     <?php endif; ?>
@@ -204,7 +257,13 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
 
             <section class="social-profile-section" aria-labelledby="social-last-wishlist-heading">
                 <h2 id="social-last-wishlist-heading">
-                    <?= $isMagazineProfile ? '5 dernières séries ajoutées aux envies' : '5 derniers ajouts aux envies' ?>
+                    <?php if ($isMagazineProfile): ?>
+                        5 dernières séries ajoutées aux envies
+                    <?php elseif ($isGameProfile): ?>
+                        5 derniers jeux ajoutés aux envies
+                    <?php else: ?>
+                        5 derniers ajouts aux envies
+                    <?php endif; ?>
                 </h2>
                 <?php if ($isMagazineProfile): ?>
                     <?php
@@ -216,7 +275,10 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                 <?php else: ?>
                     <?php
                     $films = $lastWishlist;
-                    $emptyHint = 'Aucun film dans les envies pour le moment.';
+                    $emptyHint = $isGameProfile
+                        ? 'Aucun jeu dans les envies pour le moment.'
+                        : 'Aucun film dans les envies pour le moment.';
+                    $linkToGame = $isGameProfile;
                     require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
                     ?>
                 <?php endif; ?>

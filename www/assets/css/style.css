@@ -2887,6 +2887,19 @@ body.media-domain--magazine.page-wide .container--wide {
     line-height: 1.15;
 }
 
+.stat-card__link {
+    color: inherit;
+    text-decoration: none;
+}
+
+.stat-card__link:hover {
+    text-decoration: underline;
+}
+
+.collection-filter-banner {
+    margin-bottom: 1rem;
+}
+
 .stat-card__value--duration {
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;

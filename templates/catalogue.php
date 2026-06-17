@@ -13,6 +13,8 @@
  * @var string $saveError
  * @var string $deleteError
  * @var bool $hasTmdbKey
+ * @var bool $gameModuleAvailable
+ * @var list<string> $knownGenres
  */
 
 $admin = new Moncine\CatalogAdmin();
@@ -66,29 +68,36 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
     <details class="catalog-admin-panel"<?= ($added || $saveError !== '') ? ' open' : '' ?>>
         <summary class="catalog-admin-panel__summary">Ajouter une œuvre au catalogue</summary>
         <div class="catalog-admin-panel__body">
-            <p class="hint">
-                Cette action n’ajoute pas le film à vos films : elle crée seulement la fiche catalogue.
-                Utilisez l’autocomplétion pour éviter les doublons (titre — réalisateur).
-            </p>
-
-            <?php if (!$hasTmdbKey): ?>
-                <p class="alert alert-info">
-                    <a href="/import.php">Configurez une clé API TMDB</a> pour enrichir les fiches après création.
-                </p>
-            <?php endif; ?>
-
-            <form method="post" action="/enregistrer-catalogue.php" class="film-edit-form import-form catalog-admin-form">
+            <form method="post" action="/enregistrer-catalogue.php"
+                  class="film-edit-form import-form catalog-admin-form"
+                  data-game-catalog-url="/rechercher-jeux-catalogue.php">
                 <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
                 <input type="hidden" name="catalog_q" value="<?= Moncine\View::escape($search) ?>">
 
                 <fieldset>
-                    <legend>Informations principales</legend>
-
+                    <legend>Catégorie</legend>
                     <?php
                     $fieldPrefix = 'add';
                     $film = [];
+                    $categoryChoices = Moncine\MoncineContentKind::catalogAdminFormChoices();
                     require MONCINE_ROOT . '/templates/_film_content_kind_fields.php';
                     ?>
+                </fieldset>
+
+                <div class="js-catalog-admin-film-only" data-catalog-panel="film">
+                    <p class="hint js-catalog-admin-film-hint">
+                        Cette action n’ajoute pas le film à vos films : elle crée seulement la fiche catalogue.
+                        Utilisez l’autocomplétion pour éviter les doublons (titre — réalisateur).
+                    </p>
+
+                    <?php if (!$hasTmdbKey): ?>
+                        <p class="alert alert-info js-catalog-admin-tmdb-hint">
+                            <a href="/import.php">Configurez une clé API TMDB</a> pour enrichir les fiches après création.
+                        </p>
+                    <?php endif; ?>
+
+                    <fieldset>
+                        <legend>Informations principales — film / série</legend>
 
                     <label for="add_titre">Titre <span class="required">*</span></label>
                     <input type="hidden" name="oeuvre_id" id="add_oeuvre_id" value="">
@@ -146,6 +155,39 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                 $cancelUrl = '/catalogue.php' . ($search !== '' ? '?q=' . rawurlencode($search) : '');
                 require MONCINE_ROOT . '/templates/_film_save_actions.php';
                 ?>
+                </div>
+
+                <div class="js-catalog-admin-game-only is-hidden" data-catalog-panel="game" hidden>
+                    <p class="hint js-catalog-admin-game-hint">
+                        Cette action crée seulement la fiche catalogue jeu (sans l’ajouter à votre collection).
+                        Utilisez l’autocomplétion pour éviter les doublons.
+                    </p>
+
+                    <?php if (empty($gameModuleAvailable)): ?>
+                        <p class="alert alert-warning">
+                            Le module jeux n’est pas encore disponible. Rechargez la page dans quelques secondes.
+                        </p>
+                    <?php else: ?>
+                        <fieldset>
+                            <legend>Informations principales — jeu vidéo</legend>
+                            <?php
+                            $fieldPrefix = 'add_game';
+                            $game = null;
+                            $platformChoices = Moncine\GamePlatform::choices();
+                            $knownGenres = $knownGenres ?? [];
+                            require MONCINE_ROOT . '/templates/_catalog_admin_game_form_fields.php';
+                            ?>
+                        </fieldset>
+
+                        <div class="form-actions form-actions--split">
+                            <button type="submit" name="save_mode" value="save" class="btn btn-primary">
+                                Ajouter le jeu au catalogue
+                            </button>
+                            <a href="/catalogue.php<?= $search !== '' ? '?q=' . rawurlencode($search) : '' ?>"
+                               class="btn btn-ghost">Annuler</a>
+                        </div>
+                    <?php endif; ?>
+                </div>
             </form>
         </div>
     </details>

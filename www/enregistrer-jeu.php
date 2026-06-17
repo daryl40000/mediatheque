@@ -38,21 +38,29 @@ $repo = new GameRepository();
 
 $editions = GameRepository::editionPayloadFromPost($_POST);
 $linuxFlags = GameRepository::linuxFlagsFromPost($_POST);
-
-$result = $repo->createWithLibrary(array_merge([
-    'titre' => (string) ($_POST['titre'] ?? ''),
-    'annee' => (int) ($_POST['annee'] ?? 0),
-    'studio' => (string) ($_POST['studio'] ?? ''),
-    'editeur' => (string) ($_POST['editeur'] ?? ''),
-    'genre' => GameGenre::normalizeFromPost($_POST['genres'] ?? []),
+$libraryDetails = array_merge($editions, $linuxFlags, [
     'platform' => (string) ($_POST['platform'] ?? ''),
-    'synopsis' => (string) ($_POST['synopsis'] ?? ''),
-    'poster_url' => '',
-    'is_extension' => !empty($_POST['is_extension']),
-    'base_game_oeuvre_id' => (int) ($_POST['base_game_oeuvre_id'] ?? 0),
-    'tested_on_linux' => $linuxFlags['tested_on_linux'],
-    'linux_not_supported' => $linuxFlags['linux_not_supported'],
-], $editions), $statut, $userId, $foyerId);
+]);
+
+$oeuvreId = max(0, (int) ($_POST['oeuvre_id'] ?? 0));
+if ($oeuvreId > 0) {
+    $result = $repo->addFromCatalogOeuvre($oeuvreId, $statut, $userId, $foyerId, $libraryDetails);
+} else {
+    $result = $repo->createWithLibrary(array_merge([
+        'titre' => (string) ($_POST['titre'] ?? ''),
+        'annee' => (int) ($_POST['annee'] ?? 0),
+        'studio' => (string) ($_POST['studio'] ?? ''),
+        'editeur' => (string) ($_POST['editeur'] ?? ''),
+        'genre' => GameGenre::normalizeFromPost($_POST['genres'] ?? []),
+        'platform' => (string) ($_POST['platform'] ?? ''),
+        'synopsis' => (string) ($_POST['synopsis'] ?? ''),
+        'poster_url' => '',
+        'is_extension' => !empty($_POST['is_extension']),
+        'base_game_oeuvre_id' => (int) ($_POST['base_game_oeuvre_id'] ?? 0),
+        'tested_on_linux' => $linuxFlags['tested_on_linux'],
+        'linux_not_supported' => $linuxFlags['linux_not_supported'],
+    ], $editions), $statut, $userId, $foyerId);
+}
 
 if (!is_int($result)) {
     header('Location: ' . $returnUrl . '&error=' . rawurlencode((string) $result));
@@ -60,15 +68,15 @@ if (!is_int($result)) {
 }
 
 $game = $repo->findByBibId($result, $userId, $foyerId);
-$oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
+$resolvedOeuvreId = (int) ($game['oeuvre_id'] ?? $oeuvreId);
 
 $uploadedBinary = null;
-if ($oeuvreId > 0 && isset($_FILES['cover_file']) && (int) ($_FILES['cover_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+if ($resolvedOeuvreId > 0 && isset($_FILES['cover_file']) && (int) ($_FILES['cover_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
     $uploadedBinary = (string) file_get_contents((string) $_FILES['cover_file']['tmp_name']);
 }
 
-if ($oeuvreId > 0) {
-    $repo->savePoster($oeuvreId, (string) ($_POST['poster_url'] ?? ''), $uploadedBinary);
+if ($resolvedOeuvreId > 0 && $oeuvreId <= 0) {
+    $repo->savePoster($resolvedOeuvreId, (string) ($_POST['poster_url'] ?? ''), $uploadedBinary);
 }
 
 header('Location: ' . View::gameUrl($result) . '&saved=1');

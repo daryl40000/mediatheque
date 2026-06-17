@@ -196,6 +196,91 @@ final class GameRepository
     }
 
     /**
+     * Données catalogue jeu depuis un formulaire POST (sans bibliothèque).
+     *
+     * @param array<string, mixed> $post
+     * @return array<string, mixed>
+     */
+    public static function catalogPayloadFromPost(array $post): array
+    {
+        return [
+            'oeuvre_id' => max(0, (int) ($post['oeuvre_id'] ?? 0)),
+            'titre' => trim((string) ($post['titre'] ?? '')),
+            'annee' => max(0, (int) ($post['annee'] ?? 0)),
+            'studio' => trim((string) ($post['studio'] ?? '')),
+            'editeur' => trim((string) ($post['editeur'] ?? '')),
+            'genre' => GameGenre::normalizeFromPost($post['genres'] ?? []),
+            'platform' => GamePlatform::normalize((string) ($post['platform'] ?? '')),
+            'synopsis' => trim((string) ($post['synopsis'] ?? '')),
+            'poster_url' => SecureUrl::sanitizePosterUrl((string) ($post['poster_url'] ?? '')),
+            'is_extension' => !empty($post['is_extension']),
+            'base_game_oeuvre_id' => max(0, (int) ($post['base_game_oeuvre_id'] ?? 0)),
+        ];
+    }
+
+    /**
+     * Crée une fiche jeu dans le catalogue partagé (sans entrée bibliothèque).
+     *
+     * @param array<string, mixed> $data
+     * @return int|string ID œuvre ou message d’erreur
+     */
+    public function createCatalogOnly(array $data): int|string
+    {
+        if (!self::isAvailable()) {
+            return 'Module jeux non disponible.';
+        }
+
+        if (max(0, (int) ($data['oeuvre_id'] ?? 0)) > 0) {
+            return 'Ce jeu est déjà au catalogue. Utilisez la liste ci-dessous pour le consulter.';
+        }
+
+        $titre = trim((string) ($data['titre'] ?? ''));
+        if ($titre === '') {
+            return 'Le titre est obligatoire.';
+        }
+
+        $existing = (new OeuvreRepository())->findByTitreRealisateurAndDomain(
+            $titre,
+            '',
+            MediaDomain::JEU
+        );
+        if ($existing !== null) {
+            return 'Un jeu avec ce titre existe déjà au catalogue.';
+        }
+
+        $platform = GamePlatform::normalize((string) ($data['platform'] ?? ''));
+        $isExtension = !empty($data['is_extension']);
+        $baseGameOeuvreId = max(0, (int) ($data['base_game_oeuvre_id'] ?? 0));
+        if ($isExtension && $baseGameOeuvreId <= 0) {
+            return 'Pour une extension, choisissez un jeu de base dans le catalogue.';
+        }
+
+        $this->db->beginTransaction();
+        try {
+            $oeuvreId = (new OeuvreRepository())->insert([
+                'titre' => $titre,
+                'realisateur' => '',
+                'annee' => max(0, (int) ($data['annee'] ?? 0)),
+                'synopsis' => trim((string) ($data['synopsis'] ?? '')),
+                'poster_url' => trim((string) ($data['poster_url'] ?? '')),
+                'media_domain' => MediaDomain::JEU,
+            ]);
+
+            $this->insertCatalogGameRow($oeuvreId, $data, $platform, false, $isExtension, $baseGameOeuvreId);
+
+            $this->db->commit();
+
+            return $oeuvreId;
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            return 'Erreur lors de l’enregistrement du jeu au catalogue.';
+        }
+    }
+
+    /**
      * Jeux présents dans la bibliothèque (collection ou envies).
      *
      * @return list<array<string, mixed>>
@@ -206,7 +291,8 @@ final class GameRepository
         string $statut = LibraryStatut::COLLECTION,
         string $sortBy = 'titre',
         string $sortDir = 'asc',
-        string $searchQuery = ''
+        string $searchQuery = '',
+        ?GameListFilter $filter = null
     ): array {
         if (!self::isAvailable()) {
             return [];
@@ -236,6 +322,8 @@ final class GameRepository
             $params['q_studio'] = LikePattern::containsFragment($searchQuery);
             $params['q_genre'] = LikePattern::containsFragment($searchQuery);
         }
+
+        ($filter ?? GameListFilter::empty())->applyToSql($where, $params);
 
         $sql = 'SELECT ' . self::selectGameRow() . self::selectGameHistoryExtras()
             . ' FROM bibliotheque b'
@@ -523,6 +611,127 @@ final class GameRepository
     }
 
     /**
+     * Ajoute une fiche jeu catalogue à la bibliothèque (sans formulaire détaillé).
+     *
+     * @return int|string bib_id ou message d’erreur
+     */
+    public function addFromCatalogOeuvre(
+        int $oeuvreId,
+        string $statut,
+        int $userId,
+        int $foyerId,
+        array $libraryDetails = []
+    ): int|string {
+        if (!self::isAvailable()) {
+            return 'Module jeux non disponible.';
+        }
+
+        if ($this->findCatalogByOeuvreId($oeuvreId) === null) {
+            return 'Ce jeu n’existe pas dans le catalogue.';
+        }
+
+        $statut = LibraryStatut::normalize($statut);
+        $bibRepo = new BibliothequeRepository();
+        $library = $bibRepo->findByOeuvreId($oeuvreId, $userId, $foyerId);
+        if ($library !== null) {
+            $bibId = (int) ($library['id'] ?? 0);
+            $currentStatut = (string) ($library['statut'] ?? LibraryStatut::COLLECTION);
+            if ($currentStatut === $statut) {
+                return 'Ce jeu existe déjà dans « ' . LibraryStatut::label($statut) . ' ».';
+            }
+
+            $update = ['statut' => $statut];
+            if ($statut === LibraryStatut::COLLECTION) {
+                $update['foyer_id'] = $foyerId;
+            } else {
+                $update['foyer_id'] = null;
+            }
+            $bibRepo->update($bibId, $update);
+        } else {
+            $bibId = $bibRepo->insert($userId, $foyerId, $oeuvreId, [
+                'statut' => $statut,
+                'support_physique' => '',
+            ]);
+        }
+
+        $this->applyLibraryDetailsAfterCatalogAttach($bibId, $oeuvreId, $libraryDetails);
+
+        return $bibId;
+    }
+
+    /**
+     * Complète une entrée bibliothèque après rattachement au catalogue (Linux, éditions).
+     *
+     * @param array<string, mixed> $details
+     */
+    private function applyLibraryDetailsAfterCatalogAttach(int $bibId, int $oeuvreId, array $details): void
+    {
+        if ($bibId <= 0 || $details === []) {
+            return;
+        }
+
+        $game = $this->findCatalogByOeuvreId($oeuvreId);
+        if ($game === null) {
+            return;
+        }
+
+        $platform = GamePlatform::normalize((string) ($details['platform'] ?? $game['platform'] ?? ''));
+        if (array_key_exists('tested_on_linux', $details) || array_key_exists('linux_not_supported', $details)) {
+            $this->saveLinuxFlags(
+                $bibId,
+                $platform,
+                !empty($details['tested_on_linux']),
+                !empty($details['linux_not_supported'])
+            );
+        }
+
+        if (!self::hasEditionColumns()) {
+            return;
+        }
+
+        $physicalSupports = (string) ($details['physical_supports'] ?? '');
+        $digitalStores = (string) ($details['digital_stores'] ?? '');
+        $isDigital = !empty($details['is_digital'])
+            || GameDigitalStore::hasDigitalEdition($digitalStores, false);
+
+        if ($physicalSupports === '' && $digitalStores === '' && !$isDigital) {
+            return;
+        }
+
+        $this->db->prepare(
+            'UPDATE oeuvre_jeu SET physical_supports = ?, digital_stores = ?, is_digital = ? WHERE oeuvre_id = ?'
+        )->execute([
+            $physicalSupports,
+            $digitalStores,
+            $isDigital ? 1 : 0,
+            $oeuvreId,
+        ]);
+    }
+
+    /**
+     * Extensions catalogue rattachées à un jeu de base (toutes fiches, pas seulement la bibliothèque).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function listCatalogExtensionsForBaseGame(int $baseOeuvreId): array
+    {
+        if (!self::isAvailable() || !self::hasExtensionColumns() || $baseOeuvreId <= 0) {
+            return [];
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT ' . self::selectCatalogRow()
+            . ' FROM oeuvres o'
+            . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . ' WHERE o.media_domain = ? AND oj.is_extension = 1 AND oj.base_game_oeuvre_id = ?'
+            . ' ORDER BY o.titre COLLATE FRENCH_NOCASE ASC, o.annee ASC'
+        );
+        $stmt->execute([MediaDomain::JEU, $baseOeuvreId]);
+
+        return array_map([$this, 'hydrateCatalogRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+    }
+
+    /**
      * Crée une fiche jeu catalogue + entrée bibliothèque.
      *
      * @param array<string, mixed> $data
@@ -566,50 +775,7 @@ final class GameRepository
                 'media_domain' => MediaDomain::JEU,
             ]);
 
-            if (self::hasEditionColumns()) {
-                $this->db->prepare(
-                    'INSERT INTO oeuvre_jeu (
-                        oeuvre_id, studio, editeur, genre, platform, is_digital,
-                        physical_supports, digital_stores'
-                        . (self::hasExtensionColumns() ? ', is_extension, base_game_oeuvre_id' : '')
-                        . '
-                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?'
-                        . (self::hasExtensionColumns() ? ', ?, ?' : '')
-                        . ')'
-                )->execute([
-                    $oeuvreId,
-                    trim((string) ($data['studio'] ?? '')),
-                    trim((string) ($data['editeur'] ?? '')),
-                    GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
-                    $platform,
-                    $isDigital ? 1 : 0,
-                    $physicalSupports,
-                    $digitalStores,
-                    ...(self::hasExtensionColumns()
-                        ? [$isExtension ? 1 : 0, $isExtension ? $baseGameOeuvreId : null]
-                        : []),
-                ]);
-            } else {
-                $this->db->prepare(
-                    'INSERT INTO oeuvre_jeu (
-                        oeuvre_id, studio, editeur, genre, platform, is_digital'
-                        . (self::hasExtensionColumns() ? ', is_extension, base_game_oeuvre_id' : '')
-                        . '
-                     ) VALUES (?, ?, ?, ?, ?, ?'
-                        . (self::hasExtensionColumns() ? ', ?, ?' : '')
-                        . ')'
-                )->execute([
-                    $oeuvreId,
-                    trim((string) ($data['studio'] ?? '')),
-                    trim((string) ($data['editeur'] ?? '')),
-                    GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
-                    $platform,
-                    $isDigital ? 1 : 0,
-                    ...(self::hasExtensionColumns()
-                        ? [$isExtension ? 1 : 0, $isExtension ? $baseGameOeuvreId : null]
-                        : []),
-                ]);
-            }
+            $this->insertCatalogGameRow($oeuvreId, $data, $platform, $isDigital, $isExtension, $baseGameOeuvreId);
 
             $bibId = (new BibliothequeRepository())->insert($userId, $foyerId, $oeuvreId, [
                 'statut' => $statut,
@@ -725,6 +891,98 @@ final class GameRepository
                 !empty($data['tested_on_linux']),
                 !empty($data['linux_not_supported'])
             );
+
+            $this->db->commit();
+
+            return true;
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            return 'Erreur lors de la mise à jour du jeu.';
+        }
+    }
+
+    /**
+     * Met à jour le catalogue d’un jeu à partir de son identifiant œuvre (admin, sans bib_id).
+     *
+     * @param array<string, mixed> $data
+     * @return true|string
+     */
+    public function updateCatalogByOeuvreId(int $oeuvreId, array $data): bool|string
+    {
+        if (!self::isAvailable()) {
+            return 'Module jeux non disponible.';
+        }
+
+        $game = $this->findCatalogByOeuvreId($oeuvreId);
+        if ($game === null) {
+            return 'Jeu introuvable dans le catalogue.';
+        }
+
+        $titre = trim((string) ($data['titre'] ?? ''));
+        if ($titre === '') {
+            return 'Le titre est obligatoire.';
+        }
+
+        $platform = GamePlatform::normalize((string) ($data['platform'] ?? ''));
+        $physicalSupports = (string) ($data['physical_supports'] ?? '');
+        $digitalStores = (string) ($data['digital_stores'] ?? '');
+        $isDigital = !empty($data['is_digital'])
+            || GameDigitalStore::hasDigitalEdition($digitalStores, false);
+        $isExtension = !empty($data['is_extension']);
+        $baseGameOeuvreId = max(0, (int) ($data['base_game_oeuvre_id'] ?? 0));
+        if ($isExtension && $baseGameOeuvreId <= 0) {
+            return 'Pour une extension, choisissez un jeu de base dans le catalogue.';
+        }
+
+        $this->db->beginTransaction();
+        try {
+            (new OeuvreRepository())->update($oeuvreId, [
+                'titre' => $titre,
+                'annee' => max(0, (int) ($data['annee'] ?? 0)),
+                'synopsis' => trim((string) ($data['synopsis'] ?? '')),
+                'poster_url' => SecureUrl::sanitizePosterUrl(trim((string) ($data['poster_url'] ?? ''))),
+            ], ['titre', 'annee', 'synopsis', 'poster_url']);
+
+            if (self::hasEditionColumns()) {
+                $this->db->prepare(
+                    'UPDATE oeuvre_jeu SET
+                        studio = ?, editeur = ?, genre = ?, platform = ?, is_digital = ?,
+                        physical_supports = ?, digital_stores = ?'
+                        . (self::hasExtensionColumns() ? ', is_extension = ?, base_game_oeuvre_id = ?' : '')
+                        . ' WHERE oeuvre_id = ?'
+                )->execute([
+                    trim((string) ($data['studio'] ?? '')),
+                    trim((string) ($data['editeur'] ?? '')),
+                    GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
+                    $platform,
+                    $isDigital ? 1 : 0,
+                    $physicalSupports,
+                    $digitalStores,
+                    ...(self::hasExtensionColumns()
+                        ? [$isExtension ? 1 : 0, $isExtension ? $baseGameOeuvreId : null]
+                        : []),
+                    $oeuvreId,
+                ]);
+            } else {
+                $this->db->prepare(
+                    'UPDATE oeuvre_jeu SET studio = ?, editeur = ?, genre = ?, platform = ?, is_digital = ?'
+                    . (self::hasExtensionColumns() ? ', is_extension = ?, base_game_oeuvre_id = ?' : '')
+                    . ' WHERE oeuvre_id = ?'
+                )->execute([
+                    trim((string) ($data['studio'] ?? '')),
+                    trim((string) ($data['editeur'] ?? '')),
+                    GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
+                    $platform,
+                    $isDigital ? 1 : 0,
+                    ...(self::hasExtensionColumns()
+                        ? [$isExtension ? 1 : 0, $isExtension ? $baseGameOeuvreId : null]
+                        : []),
+                    $oeuvreId,
+                ]);
+            }
 
             $this->db->commit();
 
@@ -905,6 +1163,68 @@ final class GameRepository
 
         return 'o.id AS oeuvre_id, o.titre, o.annee, o.poster_url, o.synopsis,'
             . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $edition . $extension;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     */
+    private function insertCatalogGameRow(
+        int $oeuvreId,
+        array $data,
+        string $platform,
+        bool $isDigital,
+        bool $isExtension,
+        int $baseGameOeuvreId
+    ): void {
+        $physicalSupports = (string) ($data['physical_supports'] ?? '');
+        $digitalStores = (string) ($data['digital_stores'] ?? '');
+
+        if (self::hasEditionColumns()) {
+            $this->db->prepare(
+                'INSERT INTO oeuvre_jeu (
+                    oeuvre_id, studio, editeur, genre, platform, is_digital,
+                    physical_supports, digital_stores'
+                    . (self::hasExtensionColumns() ? ', is_extension, base_game_oeuvre_id' : '')
+                    . '
+                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?'
+                    . (self::hasExtensionColumns() ? ', ?, ?' : '')
+                    . ')'
+            )->execute([
+                $oeuvreId,
+                trim((string) ($data['studio'] ?? '')),
+                trim((string) ($data['editeur'] ?? '')),
+                GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
+                $platform,
+                $isDigital ? 1 : 0,
+                $physicalSupports,
+                $digitalStores,
+                ...(self::hasExtensionColumns()
+                    ? [$isExtension ? 1 : 0, $isExtension ? $baseGameOeuvreId : null]
+                    : []),
+            ]);
+
+            return;
+        }
+
+        $this->db->prepare(
+            'INSERT INTO oeuvre_jeu (
+                oeuvre_id, studio, editeur, genre, platform, is_digital'
+                . (self::hasExtensionColumns() ? ', is_extension, base_game_oeuvre_id' : '')
+                . '
+             ) VALUES (?, ?, ?, ?, ?, ?'
+                . (self::hasExtensionColumns() ? ', ?, ?' : '')
+                . ')'
+        )->execute([
+            $oeuvreId,
+            trim((string) ($data['studio'] ?? '')),
+            trim((string) ($data['editeur'] ?? '')),
+            GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
+            $platform,
+            $isDigital ? 1 : 0,
+            ...(self::hasExtensionColumns()
+                ? [$isExtension ? 1 : 0, $isExtension ? $baseGameOeuvreId : null]
+                : []),
+        ]);
     }
 
     /**

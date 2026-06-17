@@ -20,7 +20,8 @@
     <?php else: ?>
         <h1>Ajouter — <?= Moncine\View::escape($statutLabel) ?></h1>
         <p class="lead">
-            Créez une fiche jeu réutilisable pour le pont avec les sujets magazine (tests, previews, interviews).
+            Tapez le titre du jeu : si une fiche existe déjà au catalogue partagé, choisissez-la dans la liste.
+            Sinon, complétez le formulaire pour créer une nouvelle fiche.
         </p>
         <p><a href="/ajouter-jeu.php" class="btn btn-secondary btn-sm">← Changer de destination</a></p>
 
@@ -38,7 +39,8 @@
             <input type="hidden" name="statut" value="<?= Moncine\View::escape($statut) ?>">
 
             <?php
-            $game = null;
+            $game = is_array($prefillGame ?? null) ? $prefillGame : null;
+            $useCatalogAutocomplete = $moduleAvailable;
             require MONCINE_ROOT . '/templates/_game_form_fields.php';
             ?>
 

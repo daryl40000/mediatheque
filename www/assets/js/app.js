@@ -25,6 +25,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initCollectionBulkSelection();
     initContentKindFields();
     initCatalogTitleAutocomplete();
+    initCatalogAdminCategoryFields();
+    initCatalogGameTitleAutocomplete();
     initMagazineSubjectAutocompleteFields();
     initMagazineSeriesTagsField();
     initTagsBadgeFields();
@@ -485,6 +487,253 @@ function initCatalogTitleAutocomplete() {
     });
 }
 
+/** Bascule film / jeu vidéo dans le formulaire admin catalogue. */
+function initCatalogAdminCategoryFields() {
+    const form = document.querySelector('.catalog-admin-form');
+    if (!form) {
+        return;
+    }
+
+    const select = form.querySelector('.js-content-kind-select');
+    const filmPanel = form.querySelector('[data-catalog-panel="film"]');
+    const gamePanel = form.querySelector('[data-catalog-panel="game"]');
+    if (!select || !filmPanel || !gamePanel) {
+        return;
+    }
+
+    const setPanelDisabled = (panel, disabled) => {
+        panel.querySelectorAll('input, select, textarea, button').forEach((el) => {
+            if (el === select) {
+                return;
+            }
+            el.disabled = disabled;
+        });
+    };
+
+    const sync = () => {
+        const isGame = select.value === 'jeu_video';
+        filmPanel.classList.toggle('is-hidden', isGame);
+        gamePanel.classList.toggle('is-hidden', !isGame);
+        gamePanel.hidden = !isGame;
+        setPanelDisabled(filmPanel, isGame);
+        setPanelDisabled(gamePanel, !isGame);
+
+        const filmTitre = document.getElementById('add_titre');
+        const gameTitre = document.getElementById('add_game_titre');
+        if (filmTitre) {
+            filmTitre.required = !isGame;
+        }
+        if (gameTitre) {
+            gameTitre.required = isGame;
+        }
+    };
+
+    select.addEventListener('change', sync);
+    sync();
+}
+
+/**
+ * Autocomplétion du titre — catalogue jeux (ajout collection ou admin catalogue).
+ */
+function initCatalogGameTitleAutocomplete() {
+    document.querySelectorAll('[data-game-catalog-autocomplete]').forEach((root) => {
+        initGameCatalogAutocompleteRoot(root);
+    });
+}
+
+function initGameCatalogAutocompleteRoot(root) {
+    const input = root.querySelector('.catalog-title-autocomplete__input');
+    const list = root.querySelector('.catalog-title-autocomplete__list');
+    const oeuvreIdInput = document.getElementById(root.dataset.oeuvreIdInput || 'add_game_oeuvre_id');
+    const searchUrl = root.getAttribute('data-search-url') || '/rechercher-jeux-catalogue.php';
+    const fieldMap = {
+        annee: root.dataset.anneeInput || 'add_game_annee',
+        studio: root.dataset.studioInput || 'add_game_studio',
+        platform: root.dataset.platformInput || 'add_game_platform',
+        editeur: root.dataset.editeurInput || '',
+        synopsis: root.dataset.synopsisInput || '',
+    };
+
+    if (!input || !list) {
+        return;
+    }
+
+    let debounceTimer = null;
+    let activeIndex = -1;
+    let lastResults = [];
+    const optionIdPrefix = 'game-catalog-option-' + (root.id || Math.random().toString(36).slice(2, 8));
+
+    const setExpanded = (open) => {
+        input.setAttribute('aria-expanded', open ? 'true' : 'false');
+    };
+
+    const closeList = () => {
+        list.hidden = true;
+        list.innerHTML = '';
+        activeIndex = -1;
+        lastResults = [];
+        setExpanded(false);
+    };
+
+    const clearCatalogLink = () => {
+        if (oeuvreIdInput) {
+            oeuvreIdInput.value = '';
+        }
+    };
+
+    const fillFieldById = (id, value) => {
+        if (!id) {
+            return;
+        }
+        const el = document.getElementById(id);
+        if (!el) {
+            return;
+        }
+        el.value = value ?? '';
+        el.dispatchEvent(new Event('change', { bubbles: true }));
+    };
+
+    const applySelection = (item) => {
+        if (!item) {
+            return;
+        }
+
+        if (oeuvreIdInput) {
+            oeuvreIdInput.value = String(item.oeuvre_id ?? '');
+        }
+        input.value = item.titre ?? item.display_label ?? '';
+
+        fillFieldById(fieldMap.annee, item.annee > 0 ? String(item.annee) : '');
+        fillFieldById(fieldMap.studio, item.studio ?? '');
+        fillFieldById(fieldMap.editeur, item.editeur ?? '');
+        fillFieldById(fieldMap.synopsis, item.synopsis ?? '');
+        if (item.platform) {
+            fillFieldById(fieldMap.platform, item.platform);
+        }
+
+        closeList();
+    };
+
+    const renderResults = (results) => {
+        lastResults = results;
+        list.innerHTML = '';
+
+        if (results.length === 0) {
+            closeList();
+            return;
+        }
+
+        results.forEach((item, index) => {
+            const li = document.createElement('li');
+            li.className = 'catalog-title-autocomplete__option catalog-title-autocomplete__option--game';
+            li.setAttribute('role', 'option');
+            li.id = optionIdPrefix + '-' + index;
+            li.dataset.index = String(index);
+
+            const main = document.createElement('span');
+            main.className = 'catalog-title-autocomplete__option-label';
+            main.textContent = item.display_label ?? item.titre ?? '';
+
+            li.appendChild(main);
+
+            if (item.in_library) {
+                const badge = document.createElement('span');
+                badge.className = 'catalog-title-autocomplete__badge';
+                badge.textContent = 'Déjà dans votre bibliothèque';
+                li.appendChild(badge);
+            }
+
+            li.addEventListener('mousedown', (event) => {
+                event.preventDefault();
+                applySelection(item);
+            });
+
+            list.appendChild(li);
+        });
+
+        list.hidden = false;
+        setExpanded(true);
+        activeIndex = -1;
+    };
+
+    const fetchSuggestions = async (query) => {
+        const url = searchUrl + '?q=' + encodeURIComponent(query);
+        const response = await fetch(url, {
+            headers: { Accept: 'application/json' },
+            credentials: 'same-origin',
+        });
+        if (!response.ok) {
+            return [];
+        }
+        const data = await response.json();
+        return Array.isArray(data.results) ? data.results : [];
+    };
+
+    const scheduleSearch = () => {
+        if (debounceTimer !== null) {
+            clearTimeout(debounceTimer);
+        }
+        debounceTimer = setTimeout(async () => {
+            debounceTimer = null;
+            const query = input.value.trim();
+            if (query.length < 2) {
+                closeList();
+                return;
+            }
+            try {
+                const results = await fetchSuggestions(query);
+                renderResults(results);
+            } catch {
+                closeList();
+            }
+        }, 280);
+    };
+
+    input.addEventListener('input', () => {
+        clearCatalogLink();
+        scheduleSearch();
+    });
+
+    input.addEventListener('keydown', (event) => {
+        if (list.hidden || lastResults.length === 0) {
+            return;
+        }
+
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            activeIndex = Math.min(activeIndex + 1, lastResults.length - 1);
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            activeIndex = Math.max(activeIndex - 1, 0);
+        } else if (event.key === 'Enter' && activeIndex >= 0) {
+            event.preventDefault();
+            applySelection(lastResults[activeIndex]);
+            return;
+        } else if (event.key === 'Escape') {
+            closeList();
+            return;
+        } else {
+            return;
+        }
+
+        list.querySelectorAll('.catalog-title-autocomplete__option').forEach((el, i) => {
+            const selected = i === activeIndex;
+            el.classList.toggle('is-active', selected);
+            el.setAttribute('aria-selected', selected ? 'true' : 'false');
+        });
+        if (activeIndex >= 0) {
+            const activeEl = document.getElementById(optionIdPrefix + '-' + activeIndex);
+            activeEl?.scrollIntoView({ block: 'nearest' });
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!root.contains(event.target)) {
+            closeList();
+        }
+    });
+}
+
 /** Affiche les champs « saison » quand la catégorie Série est choisie. */
 function initContentKindFields() {
     document.querySelectorAll('.js-content-kind-select').forEach((select) => {
@@ -495,7 +744,8 @@ function initContentKindFields() {
         }
         const sync = () => {
             const isSerie = select.value === 'serie';
-            block.classList.toggle('is-hidden', !isSerie);
+            const isGame = select.value === 'jeu_video';
+            block.classList.toggle('is-hidden', !isSerie || isGame);
         };
         select.addEventListener('change', sync);
         sync();

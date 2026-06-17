@@ -9,6 +9,8 @@
 $game = $game ?? null;
 $platformChoices = $platformChoices ?? Moncine\GamePlatform::choices();
 $knownGenres = $knownGenres ?? [];
+$useCatalogAutocomplete = $useCatalogAutocomplete ?? false;
+$gameFormFieldPrefix = $gameFormFieldPrefix ?? '';
 
 $gameRow = is_array($game) ? $game : [];
 $selectedPlatform = (string) ($gameRow['platform'] ?? '');
@@ -32,13 +34,42 @@ $consoleStoreLabel = $consoleStoreKey !== null
 $isExtension = !empty($gameRow['is_extension']);
 $baseGameOeuvreId = (int) ($gameRow['base_game_oeuvre_id'] ?? 0);
 $baseGameLabel = trim((string) ($gameRow['base_game_label'] ?? ''));
+$titreFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_titre' : 'titre';
+$oeuvreIdFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_oeuvre_id' : 'oeuvre_id';
 ?>
-<label for="titre">Titre du jeu <span class="required">*</span></label>
-<input type="text" name="titre" id="titre" required maxlength="200"
+<label for="<?= Moncine\View::escape($titreFieldId) ?>">Titre du jeu <span class="required">*</span></label>
+<?php if ($useCatalogAutocomplete): ?>
+    <input type="hidden" name="oeuvre_id" id="<?= Moncine\View::escape($oeuvreIdFieldId) ?>"
+           value="<?= (int) ($gameRow['oeuvre_id'] ?? 0) > 0 ? (int) $gameRow['oeuvre_id'] : '' ?>">
+    <div class="catalog-title-autocomplete"
+         id="add-game-title-autocomplete"
+         data-game-catalog-autocomplete
+         data-search-url="/rechercher-jeux-catalogue.php"
+         data-oeuvre-id-input="<?= Moncine\View::escape($oeuvreIdFieldId) ?>"
+         data-annee-input="annee"
+         data-studio-input="studio"
+         data-platform-input="platform">
+        <input type="text" name="titre" id="<?= Moncine\View::escape($titreFieldId) ?>" required maxlength="200"
+               class="catalog-title-autocomplete__input"
+               autocomplete="off" autocapitalize="off" spellcheck="false"
+               placeholder="Tapez le titre — choisissez dans le catalogue si proposé"
+               value="<?= Moncine\View::escape((string) ($gameRow['titre'] ?? '')) ?>"
+               aria-autocomplete="list" aria-controls="add-game-title-suggestions"
+               aria-expanded="false">
+        <ul class="catalog-title-autocomplete__list" id="add-game-title-suggestions"
+            role="listbox" hidden></ul>
+    </div>
+    <p class="hint catalog-title-autocomplete__hint">
+        Les suggestions affichent <strong>titre (plateforme · année)</strong>.
+        Choisir une ligne réutilise la fiche catalogue partagée.
+    </p>
+<?php else: ?>
+<input type="text" name="titre" id="<?= Moncine\View::escape($titreFieldId) ?>" required maxlength="200"
        value="<?= Moncine\View::escape((string) ($gameRow['titre'] ?? '')) ?>"
        placeholder="Ex. Elden Ring, Gran Turismo 7">
+<?php endif; ?>
 
-<?php if (Moncine\GameRepository::hasExtensionColumns()): ?>
+<?php if (Moncine\GameRepository::hasExtensionColumns() && !$useCatalogAutocomplete): ?>
     <fieldset class="game-extension-fieldset" data-game-extension-root>
         <legend>Type de fiche</legend>
 

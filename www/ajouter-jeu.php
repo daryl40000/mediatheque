@@ -25,6 +25,13 @@ if (!$showChoice) {
     $statut = '';
 }
 
+$repo = new GameRepository();
+$prefillOeuvreId = max(0, (int) ($_GET['oeuvre_id'] ?? 0));
+$prefillGame = null;
+if ($prefillOeuvreId > 0 && GameRepository::isAvailable()) {
+    $prefillGame = $repo->findCatalogByOeuvreId($prefillOeuvreId);
+}
+
 View::render('ajouter-jeu', [
     'pageTitle' => $showChoice ? 'Ajouter un jeu' : 'Ajouter — ' . LibraryStatut::label($statut),
     'showChoice' => $showChoice,
@@ -32,6 +39,8 @@ View::render('ajouter-jeu', [
     'statutLabel' => $showChoice ? '' : LibraryStatut::label($statut),
     'platformChoices' => GamePlatform::choices(),
     'moduleAvailable' => GameRepository::isAvailable(),
-    'knownGenres' => GameRepository::isAvailable() ? (new GameRepository())->listKnownGenres() : [],
+    'knownGenres' => GameRepository::isAvailable() ? $repo->listKnownGenres() : [],
     'saveError' => trim((string) ($_GET['error'] ?? '')),
+    'prefillOeuvreId' => $prefillGame !== null ? $prefillOeuvreId : 0,
+    'prefillGame' => $prefillGame,
 ]);

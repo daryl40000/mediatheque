@@ -76,6 +76,6 @@ final class CatalogListContext
             $this->page
         );
 
-        return str_contains($url, 'oeuvre.php') ? $url . '#catalog-oeuvre-nav' : $url;
+        return str_contains($url, '#') ? $url : $url . '#catalog-oeuvre-nav';
     }
 }

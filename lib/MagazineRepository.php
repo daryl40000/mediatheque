@@ -554,6 +554,175 @@ final class MagazineRepository
         return $issue !== null ? $bibId : null;
     }
 
+    /** Fiche catalogue magazine (indépendamment de la bibliothèque).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function findCatalogIssueByOeuvreId(int $oeuvreId): ?array
+    {
+        if (!self::isAvailable() || $oeuvreId <= 0) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT o.id AS oeuvre_id, o.titre, o.poster_url,
+                    om.series_id, om.numero, om.numero_ordre, om.date_parution, om.sommaire,
+                    om.pages, om.est_hors_serie, om.stored_object_id,
+                    s.titre AS series_titre, s.publication_type, s.editeur, s.issn,
+                    s.poster_url AS series_poster_url, s.tags AS series_tags
+             FROM oeuvres o
+             INNER JOIN oeuvre_magazine om ON om.oeuvre_id = o.id
+             INNER JOIN series s ON s.id = om.series_id
+             WHERE o.id = ? AND o.media_domain = ?
+             LIMIT 1'
+        );
+        $stmt->execute([$oeuvreId, MediaDomain::MAGAZINE]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row !== false ? $row : null;
+    }
+
+    /**
+     * Ajoute un numéro catalogue à la bibliothèque (sans formulaire détaillé).
+     *
+     * @return int|string bib_id ou message d’erreur
+     */
+    public function addFromCatalogOeuvre(int $oeuvreId, string $statut, int $userId, int $foyerId): int|string
+    {
+        if (!self::isAvailable()) {
+            return 'Module magazines non disponible.';
+        }
+
+        $issue = $this->findCatalogIssueByOeuvreId($oeuvreId);
+        if ($issue === null) {
+            return 'Ce numéro n’existe pas dans le catalogue.';
+        }
+
+        $statut = LibraryStatut::normalize($statut);
+        $bibRepo = new BibliothequeRepository();
+        $library = $bibRepo->findByOeuvreId($oeuvreId, $userId, $foyerId);
+        if ($library !== null) {
+            $bibId = (int) ($library['id'] ?? 0);
+            $currentStatut = (string) ($library['statut'] ?? LibraryStatut::COLLECTION);
+            if ($currentStatut === $statut) {
+                return 'Ce numéro existe déjà dans « ' . LibraryStatut::label($statut) . ' ».';
+            }
+
+            $update = ['statut' => $statut];
+            if ($statut === LibraryStatut::COLLECTION) {
+                $update['foyer_id'] = $foyerId;
+            } else {
+                $update['foyer_id'] = null;
+            }
+            $bibRepo->update($bibId, $update);
+
+            return $bibId;
+        }
+
+        $seriesId = (int) ($issue['series_id'] ?? 0);
+        $hasPdf = (int) ($issue['stored_object_id'] ?? 0) > 0;
+        $support = MagazineSupport::formatTagsForStorage(false, $hasPdf);
+
+        $this->db->beginTransaction();
+        try {
+            $bibId = $bibRepo->insert($userId, $foyerId, $oeuvreId, [
+                'statut' => $statut,
+                'support_physique' => $support,
+            ]);
+            $seriesResult = $this->registerSeriesInLibrary($seriesId, $statut, $userId, $foyerId);
+            if ($seriesResult !== true) {
+                throw new \RuntimeException((string) $seriesResult);
+            }
+
+            $this->db->commit();
+
+            return $bibId;
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            return 'Impossible d’ajouter le numéro à votre bibliothèque.';
+        }
+    }
+
+    /**
+     * Met à jour un numéro catalogue à partir de son identifiant œuvre (admin).
+     *
+     * @param array<string, mixed> $data
+     * @return true|string
+     */
+    public function updateCatalogByOeuvreId(int $oeuvreId, array $data): bool|string
+    {
+        $issue = $this->findCatalogIssueByOeuvreId($oeuvreId);
+        if ($issue === null) {
+            return 'Numéro introuvable dans le catalogue.';
+        }
+
+        $seriesId = (int) ($issue['series_id'] ?? 0);
+        $numero = trim((string) ($data['numero'] ?? $issue['numero'] ?? ''));
+        if ($numero === '') {
+            return 'Le numéro est obligatoire.';
+        }
+
+        $series = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE);
+        $seriesTitre = trim((string) ($series['titre'] ?? $issue['series_titre'] ?? ''));
+        $titre = $seriesTitre !== '' ? $seriesTitre . ' — n°' . $numero : (string) ($issue['titre'] ?? '');
+
+        $numeroOrdre = (float) ($data['numero_ordre'] ?? $issue['numero_ordre'] ?? 0);
+        if ($numeroOrdre <= 0) {
+            $numeroOrdre = is_numeric($numero)
+                ? (float) $numero
+                : $this->maxNumeroOrdreForSeries($seriesId) + 1;
+        }
+
+        $horsSerie = array_key_exists('est_hors_serie', $data)
+            ? !empty($data['est_hors_serie'])
+            : !empty($issue['est_hors_serie']);
+        if ($horsSerie && $numeroOrdre === (float) (int) $numeroOrdre) {
+            $numeroOrdre += 0.5;
+        }
+
+        $dateParution = trim((string) ($data['date_parution'] ?? $issue['date_parution'] ?? ''));
+        $sommaire = trim((string) ($data['sommaire'] ?? $issue['sommaire'] ?? ''));
+        $pages = max(0, (int) ($data['pages'] ?? $issue['pages'] ?? 0));
+        $posterUrl = SecureUrl::sanitizePosterUrl(trim((string) ($data['poster_url'] ?? $issue['poster_url'] ?? '')));
+
+        $this->db->beginTransaction();
+        try {
+            (new OeuvreRepository())->update($oeuvreId, [
+                'titre' => $titre,
+                'poster_url' => $posterUrl,
+            ], ['titre', 'poster_url']);
+
+            $this->db->prepare(
+                'UPDATE oeuvre_magazine SET
+                    numero = ?, numero_ordre = ?, date_parution = ?, sommaire = ?,
+                    pages = ?, est_hors_serie = ?
+                 WHERE oeuvre_id = ?'
+            )->execute([
+                $numero,
+                $numeroOrdre,
+                $dateParution !== '' ? $dateParution : null,
+                $sommaire,
+                $pages,
+                $horsSerie ? 1 : 0,
+                $oeuvreId,
+            ]);
+
+            $this->db->commit();
+            MagazineIssueFts::upsert($oeuvreId);
+
+            return true;
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            return 'Impossible de mettre à jour le numéro.';
+        }
+    }
+
     /**
      * Crée un numéro catalogue + entrée bibliothèque.
      *

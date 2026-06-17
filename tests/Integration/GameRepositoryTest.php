@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Moncine\Tests\Integration;
 
 use Moncine\GameDigitalStore;
+use Moncine\GameListFilter;
 use Moncine\GamePhysicalSupport;
 use Moncine\GamePlatform;
 use Moncine\GameRepository;
@@ -319,5 +320,103 @@ final class GameRepositoryTest extends MoncineTestCase
     {
         $this->assertSame('16-05-2024', GameRepository::formatAddedAt('2024-05-16 10:00:00'));
         $this->assertSame('', GameRepository::formatAddedAt(''));
+    }
+
+    public function testCollectionStatsExcludeExtensions(): void
+    {
+        if (!GameRepository::hasExtensionColumns()) {
+            $this->markTestSkipped('Colonnes extensions non disponibles.');
+        }
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new GameRepository();
+
+        $baseBibId = $repo->createWithLibrary([
+            'titre' => 'Base Game Stats Test',
+            'platform' => GamePlatform::PC,
+            'genre' => 'Aventure',
+            'annee' => 1998,
+            'is_digital' => true,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($baseBibId);
+
+        $baseGame = $repo->findByBibId($baseBibId, $userId, $foyerId);
+        $this->assertNotNull($baseGame);
+
+        $extensionBibId = $repo->createWithLibrary([
+            'titre' => 'Extension Stats Test',
+            'platform' => GamePlatform::PC,
+            'genre' => 'Aventure',
+            'annee' => 1999,
+            'is_extension' => true,
+            'base_game_oeuvre_id' => (int) $baseGame['oeuvre_id'],
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($extensionBibId);
+
+        $stats = (new \Moncine\GameCollectionStats())->getDashboard($userId, $foyerId);
+
+        $this->assertSame(1, $stats['collection_count']);
+        $this->assertSame(1, $stats['extension_count']);
+        $this->assertSame(1, $stats['digital_count']);
+
+        $baseOnly = $repo->listInLibrary(
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'titre',
+            'asc',
+            '',
+            GameListFilter::excludingExtensions()
+        );
+        $this->assertCount(1, $baseOnly);
+        $this->assertSame('Base Game Stats Test', $baseOnly[0]['titre']);
+
+        $extensionsOnly = $repo->listInLibrary(
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'titre',
+            'asc',
+            '',
+            GameListFilter::forExtensionsOnly()
+        );
+        $this->assertCount(1, $extensionsOnly);
+        $this->assertSame('Extension Stats Test', $extensionsOnly[0]['titre']);
+
+        $byPlatform = $repo->listInLibrary(
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'titre',
+            'asc',
+            '',
+            GameListFilter::forPlatform(GamePlatform::PC)
+        );
+        $this->assertCount(1, $byPlatform);
+
+        $byGenre = $repo->listInLibrary(
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'titre',
+            'asc',
+            '',
+            GameListFilter::forGenre('aventure')
+        );
+        $this->assertCount(1, $byGenre);
+        $this->assertSame('Base Game Stats Test', $byGenre[0]['titre']);
+
+        $byDecade = $repo->listInLibrary(
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'titre',
+            'asc',
+            '',
+            GameListFilter::forDecade(1990)
+        );
+        $this->assertCount(1, $byDecade);
+        $this->assertSame('Base Game Stats Test', $byDecade[0]['titre']);
     }
 }

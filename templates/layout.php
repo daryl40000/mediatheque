@@ -17,11 +17,11 @@ $notificationsAvailable = NotificationService::isAvailable() && $currentUserId >
 $unreadNotifications = $notificationsAvailable
     ? (new NotificationService())->countUnread($currentUserId)
     : 0;
-$profileUrl = $currentUserId > 0 ? Moncine\View::userProfileUrl($currentUserId) : '';
 $currentPath = parse_url((string) ($_SERVER['REQUEST_URI'] ?? '/'), PHP_URL_PATH) ?: '/';
 $mediaDomain = isset($pageMediaDomain)
     ? Moncine\MediaDomain::normalize((string) $pageMediaDomain)
     : Moncine\MediaContext::current();
+$profileUrl = $currentUserId > 0 ? Moncine\View::userProfileUrl($currentUserId, $mediaDomain) : '';
 $mediaNav = Moncine\MediaContext::navLabels();
 $mediaTheme = Moncine\MediaDomain::theme($mediaDomain);
 $collectionPath = Moncine\MediaDomain::collectionPath($mediaDomain);

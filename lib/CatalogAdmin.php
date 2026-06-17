@@ -243,6 +243,28 @@ final class CatalogAdmin
     }
 
     /**
+     * Crée un jeu vidéo dans le catalogue partagé (sans bibliothèque).
+     *
+     * @param array<string, mixed> $data
+     * @return int|string ID œuvre ou message d’erreur
+     */
+    public function createGameOeuvre(array $data): int|string
+    {
+        if (!GameRepository::isAvailable()) {
+            return 'Module jeux non disponible.';
+        }
+
+        $oeuvreId = (new GameRepository())->createCatalogOnly($data);
+        if (!is_int($oeuvreId)) {
+            return $oeuvreId;
+        }
+
+        $this->cachePosterIfRemote($oeuvreId, (string) ($data['poster_url'] ?? ''));
+
+        return $oeuvreId;
+    }
+
+    /**
      * Supprime une œuvre du catalogue (et les entrées bibliothèque liées, en cascade).
      *
      * @return true|string

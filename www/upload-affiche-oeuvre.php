@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\CatalogAdmin;
 use Moncine\Csrf;
+use Moncine\OeuvreRepository;
 use Moncine\UploadLimits;
 use Moncine\View;
 
@@ -25,9 +26,12 @@ $catalogSort = (string) ($_POST['catalog_sort'] ?? 'titre');
 $catalogDir = (string) ($_POST['catalog_dir'] ?? 'asc');
 $catalogPage = max(1, (int) ($_POST['catalog_page'] ?? 1));
 
-$returnUrl = $oeuvreId > 0
-    ? View::oeuvreUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage)
-    : View::catalogueUrl($catalogSearch, $catalogSort, $catalogDir, $catalogPage);
+$oeuvre = $oeuvreId > 0 ? (new OeuvreRepository())->findByIdForAdmin($oeuvreId) : null;
+$returnUrl = $oeuvre !== null
+    ? View::catalogOeuvreUrl($oeuvre, $catalogSearch, $catalogSort, $catalogDir, $catalogPage)
+    : ($oeuvreId > 0
+        ? View::oeuvreUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage)
+        : View::catalogueUrl($catalogSearch, $catalogSort, $catalogDir, $catalogPage));
 
 $sep = str_contains($returnUrl, '?') ? '&' : '?';
 

@@ -359,8 +359,18 @@ final class UserPublicProfileService
         $stmt->execute($wishParams);
         $wishlistCount = (int) $stmt->fetchColumn();
 
-        $filmsVus = $this->countDistinctViewedFilms($userId);
-        $filmsVusYear = $this->countDistinctViewedFilms($userId, $year);
+        $filmsVus = MediaDomain::isGame($mediaDomain)
+            ? 0
+            : $this->countDistinctViewedFilms($userId);
+        $filmsVusYear = MediaDomain::isGame($mediaDomain)
+            ? 0
+            : $this->countDistinctViewedFilms($userId, $year);
+        $gamesNoted = MediaDomain::isGame($mediaDomain)
+            ? $this->countDistinctNotedGames($userId)
+            : 0;
+        $gamesNotedYear = MediaDomain::isGame($mediaDomain)
+            ? $this->countDistinctNotedGames($userId, $year)
+            : 0;
 
         return [
             'media_domain' => $mediaDomain,
@@ -369,6 +379,8 @@ final class UserPublicProfileService
             'issue_count' => 0,
             'films_vus_count' => $filmsVus,
             'films_vus_year_count' => $filmsVusYear,
+            'games_noted_count' => $gamesNoted,
+            'games_noted_year_count' => $gamesNotedYear,
             'year' => $year,
         ];
     }
@@ -648,6 +660,10 @@ final class UserPublicProfileService
         string $sortDir,
         string $mediaDomain
     ): array {
+        if (MediaDomain::isGame($mediaDomain) && GameRepository::isAvailable()) {
+            return $this->listGamesForUser($foyerId, $userId, $statut, $sortBy, $sortDir);
+        }
+
         $sortColumns = [
             'titre' => 'o.titre COLLATE FRENCH_NOCASE',
             'annee' => 'o.annee',
@@ -672,6 +688,56 @@ final class UserPublicProfileService
         $stmt->execute($params);
 
         return $stmt->fetchAll() ?: [];
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    private function listGamesForUser(
+        int $foyerId,
+        int $userId,
+        string $statut,
+        string $sortBy,
+        string $sortDir
+    ): array {
+        $sortColumns = [
+            'titre' => 'o.titre COLLATE FRENCH_NOCASE',
+            'annee' => 'o.annee',
+            'studio' => 'oj.studio COLLATE FRENCH_NOCASE',
+            'platform' => 'oj.platform COLLATE NOCASE',
+            'genre' => 'oj.genre COLLATE FRENCH_NOCASE',
+        ];
+        if (!isset($sortColumns[$sortBy])) {
+            $sortBy = 'titre';
+        }
+        $direction = strtolower($sortDir) === 'desc' ? 'DESC' : 'ASC';
+
+        [$userWhere, $params] = CatalogSchema::libraryFilter($foyerId, $userId, $statut);
+        $params['profile_media_domain'] = MediaDomain::JEU;
+
+        $sql = 'SELECT b.id, b.user_id, b.foyer_id, b.oeuvre_id, b.statut, b.created_at,
+                       o.titre, o.annee, o.poster_url,
+                       oj.platform, oj.studio, oj.genre, oj.is_digital
+                FROM bibliotheque b
+                INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+                INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id
+                WHERE ' . $userWhere . ' AND o.media_domain = :profile_media_domain
+                ORDER BY ' . $sortColumns[$sortBy] . ' ' . $direction;
+        if ($sortBy !== 'titre') {
+            $sql .= ', o.titre COLLATE FRENCH_NOCASE ASC';
+        }
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        foreach ($rows as &$row) {
+            $row['platform_label'] = GamePlatform::label((string) ($row['platform'] ?? ''));
+            $row['platform_short'] = GamePlatform::shortLabel((string) ($row['platform'] ?? ''));
+        }
+        unset($row);
+
+        return $rows;
     }
 
     /**
@@ -704,6 +770,32 @@ final class UserPublicProfileService
         if (CatalogSchema::hasMediaDomainColumn()) {
             $sql .= ' AND o.media_domain = ?';
             $params[] = MediaDomain::FILM;
+        }
+        if ($year !== null && $year > 0) {
+            $sql .= ' AND h.date_vue >= ? AND h.date_vue < ?';
+            $params[] = $year . '-01-01';
+            $params[] = ($year + 1) . '-01-01';
+        }
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    private function countDistinctNotedGames(int $userId, ?int $year = null): int
+    {
+        if ($userId <= 0) {
+            return 0;
+        }
+
+        $sql = 'SELECT COUNT(DISTINCT h.film_id) FROM historique h
+                INNER JOIN bibliotheque b ON b.id = h.film_id
+                INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+                WHERE h.user_id = ? AND h.note IS NOT NULL';
+        $params = [$userId];
+        if (CatalogSchema::hasMediaDomainColumn()) {
+            $sql .= ' AND o.media_domain = ?';
+            $params[] = MediaDomain::JEU;
         }
         if ($year !== null && $year > 0) {
             $sql .= ' AND h.date_vue >= ? AND h.date_vue < ?';

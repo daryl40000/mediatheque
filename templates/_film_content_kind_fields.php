@@ -4,10 +4,12 @@
  *
  * @var array<string, mixed>|null $film
  * @var string $fieldPrefix
+ * @var array<string, string>|null $categoryChoices
  */
 
 $fieldPrefix = $fieldPrefix ?? 'edit';
 $film = $film ?? null;
+$categoryChoices = $categoryChoices ?? Moncine\MoncineContentKind::formChoices();
 
 $currentFormValue = Moncine\MoncineContentKind::FILM;
 if ($film !== null) {
@@ -27,7 +29,7 @@ $isSerie = $currentFormValue === Moncine\MoncineContentKind::SERIE
 ?>
 <label for="<?= Moncine\View::escape($selectId) ?>">Catégorie</label>
 <select name="content_kind" id="<?= Moncine\View::escape($selectId) ?>" class="js-content-kind-select">
-    <?php foreach (Moncine\MoncineContentKind::formChoices() as $value => $label): ?>
+    <?php foreach ($categoryChoices as $value => $label): ?>
         <option value="<?= Moncine\View::escape($value) ?>"<?= $currentFormValue === $value ? ' selected' : '' ?>>
             <?= Moncine\View::escape($label) ?>
         </option>

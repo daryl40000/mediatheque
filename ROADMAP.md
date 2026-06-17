@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.5.2** (2026-06-16)  
+**Version actuelle : 0.5.3** (2026-06-16)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---

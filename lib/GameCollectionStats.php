@@ -29,19 +29,22 @@ final class GameCollectionStats
             return $this->emptyDashboard();
         }
 
-        $collectionCount = $this->countByStatut($userId, $foyerId, LibraryStatut::COLLECTION);
+        $totalInLibrary = $this->countByStatut($userId, $foyerId, LibraryStatut::COLLECTION);
+        $extensionCount = $this->countExtensions($userId, $foyerId);
+        $collectionCount = max(0, $totalInLibrary - $extensionCount);
         $wishlistCount = $this->countByStatut($userId, $foyerId, LibraryStatut::WISHLIST);
         $digitalCount = $this->countBySupport($userId, $foyerId, true);
         $physicalCount = $this->countBySupport($userId, $foyerId, false);
         $platformBreakdown = $this->platformBreakdown($userId, $foyerId, $collectionCount);
-        $genreBreakdown = $this->genreBreakdown($userId, $foyerId, 8);
-        $decadeBreakdown = $this->decadeBreakdown($userId, $foyerId);
+        $genreBreakdown = $this->genreBreakdown($userId, $foyerId, 8, $collectionCount);
+        $decadeBreakdown = $this->decadeBreakdown($userId, $foyerId, $collectionCount);
         $magazineLinksCount = MagazineGameLink::isAvailable()
             ? $this->countMagazineLinksInLibrary($userId, $foyerId)
             : 0;
 
         return [
             'collection_count' => $collectionCount,
+            'extension_count' => $extensionCount,
             'wishlist_count' => $wishlistCount,
             'digital_count' => $digitalCount,
             'physical_count' => $physicalCount,
@@ -62,6 +65,7 @@ final class GameCollectionStats
     {
         return [
             'collection_count' => 0,
+            'extension_count' => 0,
             'wishlist_count' => 0,
             'digital_count' => 0,
             'physical_count' => 0,
@@ -91,13 +95,16 @@ final class GameCollectionStats
         return (int) $stmt->fetchColumn();
     }
 
-    private function countBySupport(int $userId, int $foyerId, bool $digital): int
+    private function countExtensions(int $userId, int $foyerId): int
     {
+        if (!GameRepository::hasExtensionColumns()) {
+            return 0;
+        }
+
         $params = [
             'game_domain' => MediaDomain::JEU,
             'collection' => LibraryStatut::COLLECTION,
             'foyer_id' => $foyerId,
-            'is_digital' => $digital ? 1 : 0,
         ];
 
         $stmt = $this->db->prepare(
@@ -108,7 +115,34 @@ final class GameCollectionStats
              WHERE o.media_domain = :game_domain
                AND b.statut = :collection
                AND b.foyer_id = :foyer_id
+               AND oj.is_extension = 1'
+        );
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    private function countBySupport(int $userId, int $foyerId, bool $digital): int
+    {
+        $params = [
+            'game_domain' => MediaDomain::JEU,
+            'collection' => LibraryStatut::COLLECTION,
+            'foyer_id' => $foyerId,
+            'is_digital' => $digital ? 1 : 0,
+        ];
+
+        $extensionSql = $this->extensionExcludeSql();
+
+        $stmt = $this->db->prepare(
+            'SELECT COUNT(*)
+             FROM bibliotheque b
+             INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+             INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id
+             WHERE o.media_domain = :game_domain
+               AND b.statut = :collection
+               AND b.foyer_id = :foyer_id
                AND oj.is_digital = :is_digital'
+            . $extensionSql
         );
         $stmt->execute($params);
 
@@ -116,10 +150,12 @@ final class GameCollectionStats
     }
 
     /**
-     * @return array{items: list<array{key: string, label: string, count: int, percent: float}>, max: int}
+     * @return array{items: list<array{key: string, label: string, count: int, percent: float, url: string}>, max: int}
      */
     private function platformBreakdown(int $userId, int $foyerId, int $total): array
     {
+        $extensionSql = $this->extensionExcludeSql();
+
         $stmt = $this->db->prepare(
             'SELECT oj.platform AS platform_key, COUNT(*) AS game_count
              FROM bibliotheque b
@@ -127,8 +163,9 @@ final class GameCollectionStats
              INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id
              WHERE o.media_domain = :game_domain
                AND b.statut = :collection
-               AND b.foyer_id = :foyer_id
-             GROUP BY oj.platform
+               AND b.foyer_id = :foyer_id'
+            . $extensionSql
+            . ' GROUP BY oj.platform
              ORDER BY game_count DESC, oj.platform COLLATE NOCASE ASC'
         );
         $stmt->execute([
@@ -137,27 +174,36 @@ final class GameCollectionStats
             'foyer_id' => $foyerId,
         ]);
 
-        return $this->buildBreakdownRows($stmt->fetchAll(PDO::FETCH_ASSOC), $total, 'platform_key', static function (string $key): string {
-            $label = GamePlatform::label($key);
+        return $this->buildBreakdownRows(
+            $stmt->fetchAll(PDO::FETCH_ASSOC),
+            $total,
+            'platform_key',
+            static function (string $key): string {
+                $label = GamePlatform::label($key);
 
-            return $label !== '' ? $label : 'Non renseignée';
-        });
+                return $label !== '' ? $label : 'Non renseignée';
+            },
+            static function (string $key): string {
+                if ($key === '') {
+                    return View::gamesCollectionUrl(filter: GameListFilter::forPlatform('_none'));
+                }
+
+                return View::gamesCollectionUrl(filter: GameListFilter::forPlatform($key));
+            }
+        );
     }
 
     /**
-     * @return array{items: list<array{key: string, label: string, count: int, percent: float}>, max: int}
+     * @return array{items: list<array{key: string, label: string, count: int, percent: float, url: string}>, max: int}
      */
-    private function genreBreakdown(int $userId, int $foyerId, int $limit): array
+    private function genreBreakdown(int $userId, int $foyerId, int $limit, int $total): array
     {
-        if (!GameRepository::isAvailable()) {
+        if (!GameRepository::isAvailable() || $total <= 0) {
             return ['items' => [], 'max' => 1];
         }
 
         $limit = max(1, min($limit, 20));
-        $total = $this->countByStatut($userId, $foyerId, LibraryStatut::COLLECTION);
-        if ($total <= 0) {
-            return ['items' => [], 'max' => 1];
-        }
+        $extensionSql = $this->extensionExcludeSql();
 
         $stmt = $this->db->prepare(
             'SELECT oj.genre
@@ -168,6 +214,7 @@ final class GameCollectionStats
                AND b.statut = :collection
                AND b.foyer_id = :foyer_id
                AND TRIM(oj.genre) != \'\''
+            . $extensionSql
         );
         $stmt->execute([
             'game_domain' => MediaDomain::JEU,
@@ -203,11 +250,13 @@ final class GameCollectionStats
                 continue;
             }
             $max = max($max, $count);
+            $key = mb_strtolower((string) ($entry['label'] ?? ''));
             $items[] = [
-                'key' => mb_strtolower((string) ($entry['label'] ?? '')),
+                'key' => $key,
                 'label' => (string) ($entry['label'] ?? ''),
                 'count' => $count,
                 'percent' => round(($count / $total) * 100, 1),
+                'url' => View::gamesCollectionUrl(filter: GameListFilter::forGenre($key)),
             ];
         }
 
@@ -215,10 +264,12 @@ final class GameCollectionStats
     }
 
     /**
-     * @return array{items: list<array{key: string, label: string, count: int, percent: float}>, max: int}
+     * @return array{items: list<array{key: string, label: string, count: int, percent: float, url: string}>, max: int}
      */
-    private function decadeBreakdown(int $userId, int $foyerId): array
+    private function decadeBreakdown(int $userId, int $foyerId, int $total): array
     {
+        $extensionSql = $this->extensionExcludeSql();
+
         $stmt = $this->db->prepare(
             'SELECT (CAST(o.annee AS INTEGER) / 10) * 10 AS decade_start, COUNT(*) AS game_count
              FROM bibliotheque b
@@ -227,8 +278,9 @@ final class GameCollectionStats
              WHERE o.media_domain = :game_domain
                AND b.statut = :collection
                AND b.foyer_id = :foyer_id
-               AND o.annee >= 1970
-             GROUP BY decade_start
+               AND o.annee >= 1970'
+            . $extensionSql
+            . ' GROUP BY decade_start
              ORDER BY decade_start DESC'
         );
         $stmt->execute([
@@ -237,16 +289,27 @@ final class GameCollectionStats
             'foyer_id' => $foyerId,
         ]);
 
-        $total = $this->countByStatut($userId, $foyerId, LibraryStatut::COLLECTION);
+        return $this->buildBreakdownRows(
+            $stmt->fetchAll(PDO::FETCH_ASSOC),
+            $total,
+            'decade_start',
+            static function (string $key): string {
+                $start = (int) $key;
+                if ($start <= 0) {
+                    return 'Année inconnue';
+                }
 
-        return $this->buildBreakdownRows($stmt->fetchAll(PDO::FETCH_ASSOC), $total, 'decade_start', static function (string $key): string {
-            $start = (int) $key;
-            if ($start <= 0) {
-                return 'Année inconnue';
+                return $start . '–' . ($start + 9);
+            },
+            static function (string $key): string {
+                $start = (int) $key;
+                if ($start <= 0) {
+                    return '';
+                }
+
+                return View::gamesCollectionUrl(filter: GameListFilter::forDecade($start));
             }
-
-            return $start . '–' . ($start + 9);
-        });
+        );
     }
 
     /** Nombre de sujets magazine reliés à des jeux présents dans la collection. */
@@ -274,13 +337,28 @@ final class GameCollectionStats
         return (int) $stmt->fetchColumn();
     }
 
+    private function extensionExcludeSql(): string
+    {
+        if (!GameRepository::hasExtensionColumns()) {
+            return '';
+        }
+
+        return ' AND (oj.is_extension = 0 OR oj.is_extension IS NULL)';
+    }
+
     /**
      * @param list<array<string, mixed>> $rows
      * @param callable(string): string $labelFn
-     * @return array{items: list<array{key: string, label: string, count: int, percent: float}>, max: int}
+     * @param callable(string): string $urlFn
+     * @return array{items: list<array{key: string, label: string, count: int, percent: float, url: string}>, max: int}
      */
-    private function buildBreakdownRows(array $rows, int $total, string $keyField, callable $labelFn): array
-    {
+    private function buildBreakdownRows(
+        array $rows,
+        int $total,
+        string $keyField,
+        callable $labelFn,
+        callable $urlFn
+    ): array {
         $items = [];
         $max = 1;
 
@@ -297,6 +375,7 @@ final class GameCollectionStats
                 'label' => $labelFn($key),
                 'count' => $count,
                 'percent' => $total > 0 ? round(($count / $total) * 100, 1) : 0.0,
+                'url' => $urlFn($key),
             ];
         }
 

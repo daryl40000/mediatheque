@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.5.2**
+**Version : 0.5.3**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)

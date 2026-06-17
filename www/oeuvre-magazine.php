@@ -1,6 +1,6 @@
 <?php
 /**
- * Fiche d’une œuvre du catalogue partagé (administration).
+ * Fiche catalogue — numéro de magazine (administration).
  */
 
 declare(strict_types=1);
@@ -9,17 +9,15 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\CatalogAdmin;
 use Moncine\CatalogListContext;
+use Moncine\MagazineRepository;
 use Moncine\MediaDomain;
-use Moncine\OeuvreEanRepository;
-use Moncine\TmdbConfig;
+use Moncine\PublicationType;
+use Moncine\UserContext;
 use Moncine\View;
 
 CatalogAdmin::denyUnlessAccess();
 
 $oeuvreId = (int) ($_GET['id'] ?? 0);
-$admin = new CatalogAdmin();
-$detail = $oeuvreId > 0 ? $admin->findOeuvreDetail($oeuvreId) : null;
-
 $catalogListContext = CatalogListContext::fromQuery($_GET);
 $catalogSearch = $catalogListContext->search();
 $catalogSort = $catalogListContext->sortBy();
@@ -27,43 +25,50 @@ $catalogDir = $catalogListContext->sortDir();
 $catalogPage = $catalogListContext->page();
 $catalogueBackUrl = $catalogListContext->backUrl();
 
+$admin = new CatalogAdmin();
+$detail = $oeuvreId > 0 ? $admin->findOeuvreDetail($oeuvreId) : null;
+
 if ($detail === null) {
-    View::render('oeuvre', [
-        'pageTitle' => 'Œuvre introuvable',
-        'oeuvre' => null,
+    View::render('oeuvre-magazine', [
+        'pageTitle' => 'Numéro introuvable',
+        'issue' => null,
         'library' => null,
         'libraryCount' => 0,
+        'catalogListContext' => $catalogListContext,
         'catalogueBackUrl' => $catalogueBackUrl,
+        'dateLabel' => '—',
     ]);
     exit;
 }
 
 $oeuvre = $detail['oeuvre'];
-
 $domain = MediaDomain::normalize((string) ($oeuvre['media_domain'] ?? MediaDomain::FILM));
-if ($domain === MediaDomain::JEU) {
-    header('Location: ' . View::oeuvreJeuUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage));
-    exit;
-}
-if ($domain === MediaDomain::MAGAZINE) {
-    header('Location: ' . View::oeuvreMagazineUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage));
+if ($domain !== MediaDomain::MAGAZINE) {
+    header('Location: ' . View::catalogOeuvreDetailUrl(
+        $oeuvreId,
+        $domain,
+        $catalogSearch,
+        $catalogSort,
+        $catalogDir,
+        $catalogPage
+    ));
     exit;
 }
 
-$enrichStatus = null;
-$enrichMessage = '';
-if (isset($_GET['enrich'])) {
-    $enrichStatus = match ((string) $_GET['enrich']) {
-        'ok' => 'ok',
-        'not_found' => 'not_found',
-        default => 'error',
-    };
-    $enrichMessage = (string) ($_GET['enrich_msg'] ?? '');
-    $refreshed = $admin->findOeuvreDetail($oeuvreId);
-    if ($refreshed !== null) {
-        $oeuvre = $refreshed['oeuvre'];
-        $detail = $refreshed;
-    }
+$repo = new MagazineRepository();
+$issue = MagazineRepository::isAvailable() ? $repo->findCatalogIssueByOeuvreId($oeuvreId) : null;
+
+if ($issue === null) {
+    View::render('oeuvre-magazine', [
+        'pageTitle' => 'Numéro introuvable',
+        'issue' => null,
+        'library' => null,
+        'libraryCount' => 0,
+        'catalogListContext' => $catalogListContext,
+        'catalogueBackUrl' => $catalogueBackUrl,
+        'dateLabel' => '—',
+    ]);
+    exit;
 }
 
 $saveError = (string) ($_GET['save_error'] ?? '');
@@ -72,23 +77,35 @@ $editOpen = isset($_GET['edit']) || $saveError !== '';
 $posterUploadOpen = $posterUploadError !== '';
 
 if (isset($_GET['poster_uploaded']) && (string) $_GET['poster_uploaded'] === '1') {
-    $refreshed = $admin->findOeuvreDetail($oeuvreId);
+    $refreshed = $repo->findCatalogIssueByOeuvreId($oeuvreId);
     if ($refreshed !== null) {
-        $oeuvre = $refreshed['oeuvre'];
-        $detail = $refreshed;
+        $issue = $refreshed;
     }
 }
 
 $oeuvreNav = $admin->getOeuvreNavigation($oeuvreId, $catalogSearch, $catalogSort, $catalogDir);
-$oeuvreEans = (new OeuvreEanRepository())->listForOeuvre($oeuvreId);
+$library = $detail['library'];
+$libraryBibId = null;
+if ($library !== null) {
+    $libraryBibId = $repo->findLibraryBibIdForCatalogOeuvre(
+        $oeuvreId,
+        UserContext::currentUserId(),
+        UserContext::currentFoyerId()
+    );
+}
 
-View::render('oeuvre', [
-    'pageTitle' => (string) ($oeuvre['titre'] ?? 'Œuvre catalogue'),
+$dateLabel = PublicationType::formatParutionDate(
+    (string) ($issue['publication_type'] ?? ''),
+    (string) ($issue['date_parution'] ?? '')
+);
+
+View::render('oeuvre-magazine', [
+    'pageTitle' => (string) ($issue['titre'] ?? 'Numéro catalogue'),
     'catalogListContext' => $catalogListContext,
     'oeuvreNav' => $oeuvreNav,
-    'oeuvre' => $oeuvre,
-    'oeuvreEans' => $oeuvreEans,
-    'library' => $detail['library'],
+    'issue' => $issue,
+    'library' => $library,
+    'libraryBibId' => $libraryBibId,
     'libraryCount' => (int) $detail['library_count'],
     'catalogueBackUrl' => $catalogueBackUrl,
     'catalogSearch' => $catalogSearch,
@@ -96,18 +113,11 @@ View::render('oeuvre', [
     'catalogDir' => $catalogDir,
     'catalogPage' => $catalogPage,
     'oeuvreId' => $oeuvreId,
+    'dateLabel' => $dateLabel,
     'saved' => isset($_GET['saved']) && (string) $_GET['saved'] === '1',
     'saveError' => $saveError,
     'posterUploadError' => $posterUploadError,
     'posterUploaded' => isset($_GET['poster_uploaded']) && (string) $_GET['poster_uploaded'] === '1',
     'editOpen' => $editOpen,
     'posterUploadOpen' => $posterUploadOpen,
-    'hasTmdbKey' => TmdbConfig::hasApiKey(),
-    'enrichStatus' => $enrichStatus,
-    'enrichMessage' => $enrichMessage,
-    'returnPage' => 'oeuvre',
-    'currentTmdbId' => (int) ($oeuvre['tmdb_id'] ?? 0),
-    'currentTmdbMediaType' => (string) ($oeuvre['tmdb_media_type'] ?? ''),
-    'currentTmdbTvKind' => (string) ($oeuvre['tmdb_tv_kind'] ?? ''),
-    'updated' => isset($_GET['updated']) && (string) $_GET['updated'] === '1',
 ]);

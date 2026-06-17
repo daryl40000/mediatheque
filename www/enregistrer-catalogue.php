@@ -11,6 +11,8 @@ use Moncine\CatalogAdmin;
 use Moncine\Csrf;
 use Moncine\FilmEnricher;
 use Moncine\FilmManualEdit;
+use Moncine\GameRepository;
+use Moncine\MoncineContentKind;
 use Moncine\View;
 
 CatalogAdmin::denyUnlessAccess();
@@ -27,22 +29,39 @@ if ($search !== '') {
 }
 
 $withEnrich = ((string) ($_POST['save_mode'] ?? 'save')) === 'enrich';
+$contentKind = (string) ($_POST['content_kind'] ?? '');
 
 Csrf::rejectUnlessValid($_POST, $backUrl);
 
+$sep = str_contains($backUrl, '?') ? '&' : '?';
+
+if (MoncineContentKind::isJeuVideoFormValue($contentKind)) {
+    if (!GameRepository::isAvailable()) {
+        header('Location: ' . $backUrl . $sep . 'save_error=' . rawurlencode('Module jeux non disponible.'));
+        exit;
+    }
+
+    $oeuvreId = (new CatalogAdmin())->createGameOeuvre(GameRepository::catalogPayloadFromPost($_POST));
+    if (!is_int($oeuvreId)) {
+        header('Location: ' . $backUrl . $sep . 'save_error=' . rawurlencode((string) $oeuvreId));
+        exit;
+    }
+
+    header('Location: ' . $backUrl . $sep . 'added=1');
+    exit;
+}
+
 $parsed = FilmManualEdit::parseFromPost($_POST);
 if (!$parsed['ok']) {
-    header('Location: ' . $backUrl . (str_contains($backUrl, '?') ? '&' : '?') . 'save_error=' . rawurlencode($parsed['error']));
+    header('Location: ' . $backUrl . $sep . 'save_error=' . rawurlencode($parsed['error']));
     exit;
 }
 
 $oeuvreId = (new CatalogAdmin())->createOeuvre($parsed['data']);
 if (!is_int($oeuvreId)) {
-    header('Location: ' . $backUrl . (str_contains($backUrl, '?') ? '&' : '?') . 'save_error=' . rawurlencode((string) $oeuvreId));
+    header('Location: ' . $backUrl . $sep . 'save_error=' . rawurlencode((string) $oeuvreId));
     exit;
 }
-
-$sep = str_contains($backUrl, '?') ? '&' : '?';
 
 if ($withEnrich) {
     $params = ['added' => '1'];

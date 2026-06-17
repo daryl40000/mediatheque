@@ -9,6 +9,34 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+---
+
+## [0.5.3] — 2026-06-16
+
+**Catalogue jeux/magazines, profil public jeux et ajout par autocomplétion**
+
+Fiches catalogue adaptées aux **jeux** et **magazines**, statistiques jeux enrichies, profil utilisateur cohérent pour l’onglet Jeux, et rattachement d’un jeu existant au catalogue lors de l’ajout à la collection.
+
+### Ajouté
+
+- **Fiches catalogue dédiées** : `/oeuvre-jeu.php` et `/oeuvre-magazine.php` (plateforme, studio, série, numéro… — sans TMDB ni champs film).
+- **Édition admin** depuis ces fiches ; **ajout à la bibliothèque** (collection / envies) pour jeux et magazines via `/ajouter-oeuvre-bibliotheque.php`.
+- **Autocomplétion à l’ajout d’un jeu** (`/ajouter-jeu.php`) : recherche dans le catalogue partagé, comme pour les films.
+- **Catalogue admin** : catégorie « Jeu vidéo » à l’ajout ; formulaire et enregistrement catalogue seul.
+- **Statistiques jeux** : carte extensions, comptage hors extensions, filtres **cliquables** vers `/jeux.php` (plateforme, genre, décennie, support).
+- **Profil public** : onglet Jeux avec stats, grilles et libellés adaptés (plus le contenu films).
+- **Classe** `GameListFilter` ; template `_user_public_games_grid.php`.
+
+### Modifié
+
+- **Liens catalogue** : jeux et magazines pointent toujours vers leur fiche catalogue (`View::catalogOeuvreDetailUrl`) ; `/oeuvre.php` redirige selon le domaine.
+- **Upload affiche** : retour vers la bonne fiche catalogue après envoi.
+- **Navigation** précédent/suivant du catalogue : URLs par domaine média.
+
+### Corrigé
+
+- **Layout** : `$mediaDomain` calculé avant l’URL du profil public (évite une erreur PHP).
+
 ## [0.5.2] — 2026-06-16
 
 **Catalogue admin multi-médias + extensions de jeux**

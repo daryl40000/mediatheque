@@ -48,9 +48,11 @@ $emptyRenderData = static function (string $accessDenied, int $httpCode = 403) u
         'pageMediaDomain' => $profileDomain,
         'stats' => [],
         'lastViewed' => [],
+        'lastNoted' => [],
         'lastCollection' => [],
         'lastWishlist' => [],
         'listFilms' => [],
+        'listGames' => [],
         'listMagazineSeries' => [],
         'listViewings' => [],
         'listMode' => '',
@@ -79,6 +81,7 @@ $displayName = UserProfile::displayName($user);
 $profileNav = MediaDomain::navLabels($profileDomain);
 $profileDomainImplemented = MediaDomain::isCollectionImplemented($profileDomain);
 $isMagazineProfile = MediaDomain::isMagazine($profileDomain);
+$isGameProfile = MediaDomain::isGame($profileDomain);
 
 $areFriends = false;
 if (!$isSelf && FriendshipRepository::isAvailable()) {
@@ -86,6 +89,7 @@ if (!$isSelf && FriendshipRepository::isAvailable()) {
 }
 
 $listFilms = [];
+$listGames = [];
 $listMagazineSeries = [];
 $listViewings = [];
 $listMode = '';
@@ -99,25 +103,29 @@ if ($anneeParam > 0) {
 if ($profileDomainImplemented) {
     if ($liste === 'collection') {
         $listMode = 'collection';
-        $listTitle = $isMagazineProfile
+        $listTitle = $isMagazineProfile || $isGameProfile
             ? $profileNav['collection'] . ' — ' . $displayName
             : 'Films de ' . $displayName;
         if ($isMagazineProfile) {
             $listMagazineSeries = $profile->listCollection($targetUserId, $sortBy, $sortDir, $profileDomain);
+        } elseif ($isGameProfile) {
+            $listGames = $profile->listCollection($targetUserId, $sortBy, $sortDir, $profileDomain);
         } else {
             $listFilms = $profile->listCollection($targetUserId, $sortBy, $sortDir, $profileDomain);
         }
     } elseif ($liste === 'envies') {
         $listMode = 'envies';
-        $listTitle = $isMagazineProfile
+        $listTitle = $isMagazineProfile || $isGameProfile
             ? $profileNav['wishlist'] . ' — ' . $displayName
             : 'Envies de ' . $displayName;
         if ($isMagazineProfile) {
             $listMagazineSeries = $profile->listWishlist($targetUserId, $sortBy, $sortDir, $profileDomain);
+        } elseif ($isGameProfile) {
+            $listGames = $profile->listWishlist($targetUserId, $sortBy, $sortDir, $profileDomain);
         } else {
             $listFilms = $profile->listWishlist($targetUserId, $sortBy, $sortDir, $profileDomain);
         }
-    } elseif ($liste === 'vus' && !$isMagazineProfile) {
+    } elseif ($liste === 'vus' && !$isMagazineProfile && !$isGameProfile) {
         $listMode = 'vus';
         $listTitle = $yearFilter !== null
             ? 'Films vus en ' . $yearFilter . ' — ' . $displayName
@@ -132,7 +140,7 @@ $loanUi = [
     'myRequests' => [],
     'reservedByOthers' => [],
 ];
-if ($listMode === 'collection' && !$isSelf && $areFriends && !$isMagazineProfile) {
+if ($listMode === 'collection' && !$isSelf && $areFriends && !$isMagazineProfile && !$isGameProfile) {
     if (LoanRepository::tableExists()) {
         $loanUi['activeLoans'] = (new LoanRepository())->mapActiveLoansByBibliothequeId($targetUserId);
     }
@@ -156,7 +164,12 @@ View::render('utilisateur', [
     'profileDomainImplemented' => $profileDomainImplemented,
     'pageMediaDomain' => $profileDomain,
     'stats' => $listMode === '' && $profileDomainImplemented ? $profile->getStats($targetUserId, $profileDomain) : [],
-    'lastViewed' => $listMode === '' && !$isMagazineProfile ? $profile->lastViewedFilms($targetUserId, 5) : [],
+    'lastViewed' => $listMode === '' && !$isMagazineProfile && !$isGameProfile
+        ? $profile->lastViewedFilms($targetUserId, 5)
+        : [],
+    'lastNoted' => $listMode === '' && $isGameProfile
+        ? $profile->lastNotedGames($targetUserId, 5)
+        : [],
     'lastCollection' => $listMode === '' && $profileDomainImplemented
         ? $profile->lastCollectionFilms($targetUserId, 5, $profileDomain)
         : [],
@@ -164,6 +177,7 @@ View::render('utilisateur', [
         ? $profile->lastWishlistFilms($targetUserId, 5, $profileDomain)
         : [],
     'listFilms' => $listFilms,
+    'listGames' => $listGames,
     'listMagazineSeries' => $listMagazineSeries,
     'listViewings' => $listViewings,
     'listMode' => $listMode,
