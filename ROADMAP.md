@@ -13,61 +13,82 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ---
 
-## État des phases (suivi)
+## Où en est-on ? (synthèse 0.5.3)
 
-| Phase | Statut | Version cible | Résumé |
-|-------|--------|---------------|--------|
-| **M0** Fondations multi-médias | ✅ **Livré** (0.1.0) | 0.1.0 | Onglets, couleurs, `media_domain`, films filtrés |
-| **M1** Stabilisation films | ✅ **Livré** (0.4.4) | 0.4.4 | QA prod complète (2026-06-09) ; grille + pagination |
-| **M2** BD / Manga | ⏸️ Repoussé | 0.3.x | Après M4 (priorité jeux + synergie magazines) |
-| **M3** Livres | ⏸️ Repoussé | 0.4.x | Après M4 |
-| **M4** Jeux vidéo | ✅ **MVP livré** (0.5.0+) | 0.5.1 | Collection, envies, pont magazine, fichiers, vignettes, Linux tri-état |
-| **M5** Magazines | 🔄 **En cours** | 0.4.x → 0.6.0 | Séries, numéros, PDF, sujets/tests, FTS (**0.4.1**) |
-| **M6** Transversal | ⏳ À faire | 0.9.x | Prêts, partage, stats par domaine |
-| **M7** Identité & polish | ⏳ À faire | 1.0.0 | Branding, doc finale, déploiement |
+| Domaine | Statut | Versions | Parcours catalogue → collection |
+|---------|--------|----------|----------------------------------|
+| **Films** | ✅ Production | 0.4.4+ | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`) |
+| **Jeux** | ✅ Utilisable | 0.5.0 → **0.5.3** | Complet (fiches `/oeuvre-jeu.php`, autocomplétion à l’ajout) |
+| **Magazines** | 🔄 Avancé (~85 %) | 0.2.x → 0.4.x | Partiel (fiche `/oeuvre-magazine.php` ✅ ; autocomplétion à l’ajout ⏳) |
+| **BD / Manga** | ⏸️ Repoussé | — | — |
+| **Livres** | ⏸️ Repoussé | — | — |
+
+### Phases (suivi)
+
+| Phase | Statut | Version livrée | Suite |
+|-------|--------|----------------|-------|
+| **M0** Fondations multi-médias | ✅ Livré | 0.1.0 | — |
+| **M1** Stabilisation films | ✅ Livré | 0.4.4 | Maintenance seulement |
+| **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.5.3** | Polish non bloquant (voir M4) |
+| **M5** Magazines | 🔄 En cours | 0.4.3 → **0.6.0** cible | Parité catalogue + profil public |
+| **Pont** Magazines ↔ Jeux | 🔄 Partiel | 0.5.0+ | Rattachement rétroactif |
+| **M2** BD / Manga | ⏸️ Repoussé | 0.6.x+ (indicatif) | Après M5 stabilisée |
+| **M3** Livres | ⏸️ Repoussé | 0.7.x+ (indicatif) | Après M2 ou en parallèle |
+| **M6** Transversal | ⏳ À faire | 0.9.0 | Après 3 domaines alignés |
+| **M7** Identité & polish | ⏳ À faire | 1.0.0 | Fin |
 
 ---
 
-## Livré en 0.1.0 (phase M0)
+## Prochaines étapes (par priorité)
 
-### Données
+### Priorité 1 — Consolidation **0.5.3** (court terme)
 
-- [x] Migration **`030_media_domain.sql`** — colonne `oeuvres.media_domain` (défaut `film`)
-- [x] Index `idx_oeuvres_media_domain`
-- [x] Schéma frais `sql/schema.sql` aligné
-- [x] Règle foyer : **même foyer**, collections **séparées par domaine** (filtrage sur `oeuvres`)
+1. **QA prod 0.5.3** : fiches `/oeuvre-jeu.php`, `/oeuvre-magazine.php`, autocomplétion ajout jeu, profil public jeux, statistiques cliquables, extensions catalogue.
+2. **Tag Git** `v0.5.3` après validation.
 
-### Code PHP
+### Priorité 2 — **M5** : aligner magazines sur films / jeux (**0.5.4 → 0.6.0**)
 
-- [x] `MediaDomain` — constantes, couleurs, libellés navigation
-- [x] `MediaContext` — domaine actif en session
-- [x] `MediaDomainGuards` — page « bientôt », pages réservées aux films, URL après changement d’onglet
-- [x] `CatalogSchema::applyMediaDomainFilter()` — filtre SQL central
-- [x] Dépôts mis à jour : collection, catalogue admin, bibliothèque, envies groupe, partage, profil public
+3. **Autocomplétion catalogue** à l’ajout d’un numéro (`/ajouter-numero-magazine.php`) — même logique que les jeux (0.5.3).
+4. **Parité fiche catalogue** : vérifier édition admin, navigation catalogue, export/import magazine.
+5. **Profil public** onglet Magazines (comme profil jeux en 0.5.3).
 
-### Interface
+### Priorité 3 — **Pont magazine ↔ jeu** (finir le transversal)
 
-- [x] Onglets `templates/_media_domain_tabs.php` + `www/set-media-domain.php`
-- [x] Thème CSS par domaine (accent, barre, en-tête, fond)
-- [x] Pastille couleur par onglet ; onglet actif mis en évidence
-- [x] Libellés dynamiques (Mes films / Mes BD…)
-- [x] « Ce soir » masqué hors onglet Films
+6. **Rattachement rétroactif** : outil admin pour lier les sujets existants (`magazine_subject.catalog_oeuvre_id`).
+7. **Recherche globale** : remonter numéros / sujets via le titre catalogue jeu.
+8. Documenter les cas ambigus (homonymes ; lien toujours optionnel).
 
-### Qualité
+### Priorité 4 — Polish **M4** (non bloquant)
 
-- [x] Tests `MediaDomainTest` (unitaire + intégration)
-- [x] Correctifs : quiz ↔ changement d’onglet, `$foyer` sur page compte
-- [x] `.gitignore` données locales et graine volumineuse
+9. Plateformes configurables en admin (au lieu de la liste fixe `GamePlatform`).
+10. Flag « non prêtable » pour exemplaires dématérialisés.
+11. Vérification prod migrations **039–044**.
 
-### Palette couleurs (0.1.0)
+### Priorité 5 — **M6** Transversal (films + jeux + magazines alignés)
 
-| Domaine | Accent | Usage |
-|---------|--------|--------|
-| Films | `#adb5bd` (gris) | Dvdthèque — neutre |
-| BD / Manga | `#f06292` (rose) | — |
-| Livres | `#64b5f6` (bleu) | — |
-| Jeux | `#9575cd` (violet) | — |
-| Magazines | `#4db6ac` (vert d’eau) | — |
+12. Statistiques par domaine (libellés « vu » / « joué » / « lu »).
+13. Partage visiteur avec paramètre `media_domain`.
+14. Import / export CSV par domaine.
+15. Prêts : règles par type de média (physique uniquement ; pas de prêt PDF/démat).
+
+### Priorité 6 — Nouveaux onglets **M2 / M3**
+
+16. **M2 BD/Manga** — schéma `oeuvre_bd`, formulaires, collection.
+17. **M3 Livres** — schéma `oeuvre_livre`, ISBN.
+
+### Priorité 7 — **M7 → 1.0.0**
+
+18. Documentation par média, déploiement, polish identité (namespace `Moncine\` conservé jusqu’alors).
+
+```mermaid
+flowchart LR
+  A[QA 0.5.3] --> B[M5 parité catalogue]
+  B --> C[Pont rétroactif]
+  C --> D[Polish M4]
+  D --> E[M6 transversal]
+  E --> F[M2 BD / M3 Livres]
+  F --> G[M7 v1.0.0]
+```
 
 ---
 
@@ -97,273 +118,200 @@ Comptes, foyers, envies personnelles et de groupe, catalogue partagé, soumissio
 
 | Élément | Films | BD/Manga | Livres | Jeux | Magazines |
 |---------|-------|----------|--------|------|-----------|
-| Enrichissement | TMDB / OMDB | Manuel (+ API plus tard) | ISBN / Open Library | IGDB | — |
+| Enrichissement | TMDB / OMDB | Manuel (+ API plus tard) | ISBN / Open Library | Manuel (IGDB plus tard) | — |
 | Métadonnées clés | Réalisateur, acteurs | Série, tome, auteurs | Auteur, ISBN | Plateforme, éditeur | N°, parution |
 | Support exemplaire | DVD, Blu-ray… | Album, relié… | Broché, poche… | Boîte, démat… | **PDF** |
 | Outil dédié | Quiz « Ce soir » | — | — | — | Lecteur + recherche PDF |
-| Lien inter-domaines | — | — | — | **Tests magazine → fiche jeu** (M4+) | **Sujets → catalogue jeu** (M4+) |
-| Sagas | Sagas films | Séries BD | Collections | Franchises | Titre de revue |
+| Lien inter-domaines | — | — | — | Tests magazine → fiche jeu | Sujets → catalogue jeu |
+| Sagas | Sagas films | Séries BD | Collections | Franchises + extensions | Titre de revue |
+
+### Palette couleurs (M0)
+
+| Domaine | Accent |
+|---------|--------|
+| Films | `#adb5bd` (gris) |
+| BD / Manga | `#f06292` (rose) |
+| Livres | `#64b5f6` (bleu) |
+| Jeux | `#9575cd` (violet) |
+| Magazines | `#4db6ac` (vert d’eau) |
 
 ---
 
-## Phase M1 — Stabilisation films ✅ **Clôturée (0.4.4 — 2026-06-09)**
+## Phases livrées
 
-**Objectif :** confirmer que l’onglet Films = Monciné 1.0.0 sans régression — **atteint** (QA production complète).
+### M0 — Fondations multi-médias ✅ (0.1.0)
 
-**Version roadmap d’origine :** `0.2.0` · **Livré dans la lignée Médiathèque :** `0.4.4`
+- Migration `030_media_domain.sql`, onglets, `MediaDomain` / `MediaContext` / `MediaDomainGuards`
+- Thème CSS par domaine, collections séparées par `media_domain` dans le même foyer
+- Tests `MediaDomainTest`
 
-### Suivi QA (tests manuels — production, 2026-06-09)
+### M1 — Stabilisation films ✅ (0.4.4 — QA prod 2026-06-09)
 
-| Bloc | Statut | Détail |
-|------|--------|--------|
-| A — Prérequis | ✅ | Connexion, onglet Films, admin |
-| B — Navigation & multi-médias | ✅ | Onglets, quiz, menu « Ce soir » |
-| C — Collection | ✅ | Grille homogène (M1-001), recherche, tri, filtres, pagination (M1-002) |
-| D — Fiche film | ✅ | D1–D6 |
-| E — Ajout / suppression | ✅ | E1–E4 |
-| F — Enrichissement | ✅ | F1–F4 (TMDB / OMDB) |
-| G — Envies | ✅ | G1–G3 |
-| H — Quiz « Ce soir » | ✅ | H1–H4 |
-| I — Sagas, personnes, support | ✅ | I1–I3 |
-| J — Statistiques | ✅ | J1–J2 |
-| K — Import / export | ✅ | K1–K3 |
-| L — Prêts | ✅ | L1–L3 |
-| M — Partage visiteur | ✅ | M1–M3 |
-| N — Social | ✅ | N1–N5 |
-| O — Admin catalogue | ✅ | O1–O5 |
-| P — Compte | ✅ | P1–P4 |
-| Q — Inscription | ✅ | Q1–Q2 |
-| R — Listes imprimables | ✅ | R1–R2 |
+**Objectif atteint :** onglet Films = Monciné 1.0.0 sans régression bloquante.
 
-**Verdict QA fonctionnelle :** aucune régression bloquante constatée sur l’onglet Films en production.
+| Bloc QA | Statut |
+|---------|--------|
+| Navigation, collection, fiche, ajout/suppression | ✅ |
+| Enrichissement TMDB/OMDB, envies, quiz | ✅ |
+| Sagas, stats, import/export, prêts, partage, social, admin | ✅ |
 
-### Anomalies identifiées (corrigées)
+Correctifs M1 livrés : grille homogène (M1-001), pagination 56 vignettes / 100 liste (M1-002).
 
-| ID | Page / test | Statut | Description |
-|----|-------------|--------|-------------|
-| **M1-001** | `/films.php` — vue grille (C1) | ✅ Validé prod | Tuiles inhomogènes — flex colonne, hauteur titre/notes réservée |
-| **M1-002** | `/films.php` — pagination (C5) | ✅ Validé prod | Pagination **56** vignettes (7×8) / **100** films en liste |
-
-### Checklist fonctionnelle
-
-- [x] **Collection** — liste, tri, recherche, filtres type (film/série/doc…) — validé prod 2026-06-09
-- [x] **Fiche film** — affichage, modification, notes, historique vision
-- [x] **Ajout / suppression** — collection et envies
-- [x] **Enrichissement** — TMDB, OMDB, affiches
-- [x] **Envies** — personnelles, cibles support/EAN, envies du groupe
-- [x] **Quiz & résultat** — tirage, exclusion, changement d’onglet OK
-- [x] **Sagas, personnes, support** — navigation et filtres
-- [x] **Statistiques** — compteurs, temps de vision
-- [x] **Import / export** — CSV bibliothèque et catalogue
-- [x] **Prêts** — demande, acceptation, retour
-- [x] **Partage visiteur** — liens collection / envies
-- [x] **Social** — amis, groupe, profil public
-- [x] **Admin** — catalogue, soumissions, maintenance, sauvegarde base
-- [x] **Compte** — profil, mot de passe, suppression compte
-- [x] **Inscription** — si activée
-
-### Checklist technique
-
-- [x] **`media_domain = film`** — migration `030` (défaut + `UPDATE`) ; filtre `CatalogSchema::applyMediaDomainFilter()` sur collection films
-- [x] **Soumissions catalogue** — `OeuvreRepository` : `media_domain` depuis `MediaContext` (défaut onglet Films)
-- [x] **Import CSV** — création œuvres via `OeuvreRepository` / contexte Films (domaine `film` implicite)
-- [x] **Tests** — `FilmCollectionPaginationTest` ; suite existante `MediaDomainTest`, intégration films
-- [x] **Documentation** — [doc/mediatheque.md](doc/mediatheque.md) § M1 clôturée
-
-**Critère de sortie M1 :** ✅ atteint — QA prod (2026-06-09) + correctifs livrés en **0.4.4**.
-
-| Livrable M1 (films) | Version | Détail |
-|---------------------|---------|--------|
-| QA fonctionnelle prod | ✅ 0.4.4 | Blocs A–R validés (2026-06-09) |
-| Grille homogène | ✅ 0.4.4 | Tuiles alignées (M1-001) |
-| Pagination collection | ✅ 0.4.4 | 56 vignettes (7×8) / 100 en liste (M1-002) |
+Détail complet : archives QA dans l’historique git avant cette réorganisation.
 
 ---
 
-## Phase M2 — BD / Manga
+## M4 — Jeux vidéo ✅ Livré (0.5.3)
 
-**Version visée :** `0.3.0`
+**Documentation :** [doc/jeux.md](doc/jeux.md)
+
+### Livré
+
+| Tâche | Version |
+|-------|---------|
+| Schéma `oeuvre_jeu`, exemplaires, Linux (`039`–`043`) | 0.5.0 |
+| Extensions DLC / add-on (`044`, `is_extension`, `base_game_oeuvre_id`) | 0.5.2 |
+| Collection, envies, notes, accueil `home-jeu.php` | 0.5.0 |
+| Fichiers attachés, vue vignettes, icônes support, Linux tri-état | 0.5.1 |
+| API `/rechercher-jeux-catalogue.php` | 0.5.0 |
+| Pont magazine UI (`MagazineGameLink`, section « Revues » sur fiche jeu) | 0.5.0 |
+| Catalogue admin multi-médias, export/import `media_domain` | 0.5.2 |
+| Fiches catalogue `/oeuvre-jeu.php`, édition admin, ajout bibliothèque | 0.5.3 |
+| Autocomplétion à l’ajout collection (`/ajouter-jeu.php`) | 0.5.3 |
+| Statistiques enrichies (`GameCollectionStats`, `GameListFilter`) | 0.5.3 |
+| Profil public onglet Jeux | 0.5.3 |
+
+**Critère de sortie M4 :** ✅ atteint — collection + envies ; catalogue partagé ; pont magazine opérationnel ; parité films sur le parcours principal.
+
+### Polish restant (non bloquant)
+
+| Tâche | Cible |
+|-------|-------|
+| Plateformes configurables (admin) | 0.5.x |
+| Flag « non prêtable » si démat | 0.5.x |
+
+---
+
+## M5 — Magazines 🔄 En cours (cible 0.6.0)
+
+**Documentation :** [doc/magazines.md](doc/magazines.md)
+
+### Livré
+
+| Tâche | Version |
+|-------|---------|
+| Séries + numéros (`series`, `oeuvre_magazine`) | 0.2.0 |
+| Upload / lecture PDF, tags papier/PDF | 0.2.1 |
+| Texte PDF, couverture auto (Poppler) | 0.2.1 |
+| Sujets tests/previews, FTS globale | 0.4.0–0.4.1 |
+| Maintenance sujets, hors-série, année sujet | 0.4.2–0.4.3 |
+| Fiche catalogue `/oeuvre-magazine.php`, ajout bibliothèque | 0.5.3 |
+
+### En cours / à faire
+
+| Tâche | Cible |
+|-------|-------|
+| Autocomplétion catalogue à l’ajout numéro | 0.5.4+ |
+| Profil public onglet Magazines | 0.6.0 |
+| Parité complète export/import / navigation catalogue | 0.6.0 |
+
+**Critère de sortie M5 :** onglet magazines aussi fluide que films/jeux sur tout le parcours catalogue → collection.
+
+---
+
+## Pont Magazines ↔ Jeux vidéo 🔄 Partiel
+
+Relier optionnellement un sujet magazine à une fiche jeu catalogue (`magazine_subject.catalog_oeuvre_id` → `oeuvres` jeu).
+
+### Livré
+
+| Tâche | Version |
+|-------|---------|
+| Migration `catalog_oeuvre_id` | 0.5.0 |
+| Autocomplétion jeux à l’ajout d’un sujet test/preview/interview | 0.5.0 |
+| Affichage croisé fiche jeu ↔ sujets / numéros | 0.5.0 |
+| Fiches catalogue jeux partagées (`/oeuvre-jeu.php`) | 0.5.3 |
+
+### À faire
+
+| Tâche | Cible |
+|-------|-------|
+| Rattachement rétroactif sujets existants (outil admin) | 0.6.0 |
+| Recherche globale par titre catalogue jeu | 0.6.0 |
+
+**Règles inchangées :** lien optionnel ; sujets sans lien restent valides ; tags série (PS5, PC…) = contexte revue, pas identité du jeu.
+
+---
+
+## M2 — BD / Manga ⏸️ Repoussé
+
+**Version visée (indicatif) :** 0.6.x+
 
 | Tâche | Détail |
 |-------|--------|
-| Schéma | Table `oeuvre_bd` (ou équivalent) : série, tome, scénariste, dessinateur, éditeur, type manga/bd/comics |
-| Formulaires | Ajout / édition œuvre BD ; masquer champs « réalisateur TMDB » |
-| Collection | `findAll` / fiche / envies avec `media_domain = bd` |
-| Séries | Réutiliser `saga` ou champ série dédié |
-| Affiches | `PosterStorage` (évent. sous-dossier `posters/bd/`) |
-| Import | CSV BD documenté (`doc/import-bd.md`) |
-| Enrichissement | Optionnel : AniList / BNF (phase ultérieure) |
+| Schéma | Table `oeuvre_bd` : série, tome, scénariste, dessinateur, éditeur |
+| Formulaires | Ajout / édition ; masquer champs film/TMDB |
+| Collection | `media_domain = bd` |
+| Import | `doc/import-bd.md` |
 
 **Critère de sortie :** onglet BD utilisable sans API externe.
 
 ---
 
-## Phase M3 — Livres
+## M3 — Livres ⏸️ Repoussé
 
-**Version visée :** `0.4.0`
+**Version visée (indicatif) :** 0.7.x+
 
 | Tâche | Détail |
 |-------|--------|
-| Schéma | `oeuvre_livre` : auteur(s), ISBN, pages, éditeur, collection |
-| Stockage | `MediaStorage::SUBDIR_BOOKS` pour pièces jointes futures |
-| Formulaires & listes | Domaine `livre` |
-| Import | `doc/import-livres.md` + colonnes CSV |
+| Schéma | `oeuvre_livre` : auteur(s), ISBN, pages, éditeur |
+| Stockage | `MediaStorage::SUBDIR_BOOKS` |
+| Import | `doc/import-livres.md` |
 
-**Critère de sortie :** livres papier en collection (pas d’obligation ebook).
-
----
-
-## Phase M4 — Jeux vidéo
-
-**Version livrée :** `0.5.0` (2026-06-10) — **✅ MVP livré** (priorité sur M2/M3 pour synergie magazines)
-
-| Tâche | Détail | Statut |
-|-------|--------|--------|
-| Schéma | `039`–`041` — `oeuvre_jeu`, exemplaires, `catalog_oeuvre_id`, `tested_on_linux` | ✅ |
-| Catalogue | `oeuvres` + `media_domain = jeu` ; fiche jeu partagée | ✅ |
-| Collection | `/jeux.php`, `/jeux-envies.php`, ajout, modification admin | ✅ |
-| Accueil | `home-jeu.php` — activité récente, raccourcis | ✅ |
-| API | `/rechercher-jeux-catalogue.php` (autocomplétion) | ✅ |
-| Pont magazine | `MagazineGameLink`, autocomplétion sujet, affichage croisé | ✅ |
-| Parité films | Notes, suppression, envie → collection, tri liste | ✅ |
-| Linux PC | Case formulaire + badge Tux (listes + fiche) | ✅ |
-| Statistiques | `GameCollectionStats` | ✅ |
-| Saisie numéro | Autocomplétion jeux à l’ajout d’un sujet test/preview | ✅ 0.5.0 |
-| Exemplaire | Boîte, édition ; flag « non prêtable » si démat | ⏳ |
-| Listes | Plateformes configurables (admin) | ⏳ (liste fixe `GamePlatform`) |
-| Rattachement rétroactif sujets | Matcher libellés existants → fiches jeu | ⏳ M5+ |
-
-**Critère de sortie MVP :** ✅ collection + envies jeux ; fiches consultables ; pont magazine opérationnel (UI + affichage).
-
-**Documentation :** [doc/jeux.md](doc/jeux.md)
+**Critère de sortie :** livres papier en collection.
 
 ---
 
-## Pont Magazines ↔ Jeux vidéo (transversal M4 + M5)
+## M6 — Fonctions transverses ⏳
 
-**Version visée :** `0.5.x` ou `0.6.x` — **après** le catalogue jeux (M4) et les sujets magazines (M5 ✅ depuis 0.4.0).
-
-### Contexte
-
-Les **sujets magazines** (`magazine_subject`, tests / previews / interviews…) sont aujourd’hui identifiés par :
-
-- catégorie (Test, Preview, Comparatif, Dossier, Interview) ;
-- **libellé** saisi (ex. « Gran Turismo 7 ») ;
-- **tag de série** (`series.tags` → champ `detail`, ex. PS5) ;
-- **année** du numéro (`parution_year`).
-
-Les **tags de série** (PC, PS5…) décrivent le **contexte de la revue**, pas l’identité du jeu. Le **lien catalogue** portera sur le **libellé du sujet** (jeu testé), pas sur ces tags.
-
-### Objectif
-
-Relier optionnellement un sujet magazine à une **fiche jeu du catalogue** (`oeuvres.id`, `media_domain = jeu`) pour :
-
-- depuis un **jeu** : lister tests, previews et interviews parus dans les magazines ;
-- depuis un **sujet / numéro** : ouvrir la fiche jeu canonique ;
-- réduire les doublons d’orthographe tout en gardant année + tag plateforme sur l’article.
-
-### Modèle cible (anticipation)
-
-| Élément | Décision |
-|---------|----------|
-| Lien | Colonne nullable `magazine_subject.catalog_oeuvre_id` → `oeuvres(id)` (jeu uniquement) |
-| Saisie | Autocomplétion catalogue jeux à l’ajout d’un sujet **Test / Preview / Interview** ; saisie libre conservée |
-| Unicité actuelle | Inchangée : `(category, label, detail, parution_year)` — plusieurs sujets peuvent pointer vers **le même** jeu |
-| Données prod existantes | **Non bloquantes** : sujets déjà saisis restent valides ; rattachement progressif (migration assistée ou UI admin) |
-| Hors périmètre jeu | Dossiers, comparatifs matériel, sujets voiture… restent en texte libre sans lien catalogue |
-
-### Tâches prévues
-
-| Tâche | Phase | Détail |
-|-------|-------|--------|
-| Migration | M4+ | `catalog_oeuvre_id` nullable + index ; contrôle `media_domain = jeu` |
-| Saisie fiche numéro | M5+ | Autocomplétion jeux (API JSON) en complément de l’autocomplétion sujets existants |
-| Fiche jeu | M4 | Section « Revues » : numéros / sujets liés dans la bibliothèque du foyer |
-| Fiche sujet magazine | M5+ | Lien vers fiche jeu si `catalog_oeuvre_id` renseigné |
-| Rattachement rétroactif | M5+ | Outil ou script : matcher libellés existants → fiches jeu (revue manuelle des cas ambigus) |
-| Recherche | M5+ | FTS / recherche globale : remonter aussi par titre catalogue jeu |
-
-### Compatibilité des données déjà en production
-
-- Les sujets créés **sans** lien catalogue continueront de fonctionner (recherche, fiche sujet, export).
-- Pas de ressaisie obligatoire : le lien est un **enrichissement** optionnel.
-- Doublons texte proches déjà limités (`normalizeLabelKey`, autocomplétion) ; le catalogue jeu renforce la cohérence **sans supprimer** l’historique magazine (année, tag PS5/PC, catégorie test vs preview).
-
-**Critère de sortie :** depuis une fiche jeu, voir les parutions magazine liées ; depuis un sujet test, ouvrir la fiche jeu ; rattachement possible sur les sujets existants.
-
----
-
-## Phase M5 — Magazines (PDF)
-
-**Version livrée partiellement :** `0.2.0` → `0.2.1` · **Version visée complète :** `0.6.0`
-
-| Tâche | Statut | Détail |
-|-------|--------|--------|
-| Modèle séries + numéros | ✅ 0.2.0 | `series`, `oeuvre_magazine`, sommaire |
-| Upload PDF | ✅ 0.2.1 | `magazines/{revue}/{année}/…`, limites dev 350 Mo |
-| Lecture PDF | ✅ | `media-object.php`, bouton sur fiche |
-| Tags support papier / PDF | ✅ 0.2.1 | `MagazineSupport`, sync à l’import |
-| Recherche série (n°, date, sommaire) | ✅ 0.2.1 | Paramètre `q` |
-| Texte PDF (6 pages) | ✅ 0.2.1 | `pdftotext` → `pdf_text_preview` |
-| Couverture / pages auto | ✅ 0.2.1 | `pdftoppm`, `pdfinfo` |
-| Recherche FTS globale | ✅ 0.4.1 | `magazine_issue_fts`, `magazine_subject_fts` (FTS5) |
-| Sujets (tests, previews…) | ✅ 0.4.0 | `magazine_subject`, tags série, recherche par sujet |
-| Recherche globale Mes magazines | ✅ 0.4.1 | Sujets + sommaires + PDF sur `/magazines.php` |
-| Autocomplétion & fusion libellés | ✅ 0.4.1 | Saisie sujet ; orthographes proches (« After Life » / « Afterlife ») |
-| Filtre hors-série (liste numéros) | ✅ 0.4.2 | `possession=hors_serie` |
-| Maintenance sujets (orphelins, fusion) | ✅ 0.4.2 | `/maintenance-magazine-sujets.php` |
-| Année sujet (menu déroulant) | ✅ 0.4.3 | Défaut = année du numéro, modifiable à l’ajout |
-| **Lien sujet → catalogue jeu** | ⏳ M4+ | Voir § Pont Magazines ↔ Jeux ; **données prod actuelles compatibles** |
-
-**Doc :** [doc/magazines.md](doc/magazines.md) · **Infra :** `stored_objects`, `StoredObjectDelivery`, Poppler optionnel.
-
----
-
-## Phase M6 — Fonctions transverses
-
-**Version visée :** `0.9.0` — après au moins **deux** domaines en production.
+**Version visée :** 0.9.0 — après films, jeux et magazines alignés.
 
 | Module | Adaptation |
 |--------|------------|
-| Statistiques | Filtre domaine ; libellés « lu » / « joué » selon média |
+| Statistiques | Filtre domaine ; libellés selon média |
 | Prêts | Physique uniquement ; pas de prêt PDF/démat |
-| Partage | Paramètre domaine dans le lien ; libellés |
+| Partage | Paramètre domaine dans le lien |
 | Import / export | Schéma CSV par domaine |
 | Soumissions | Formulaire selon onglet actif |
 | Listes imprimables | Colonnes par domaine |
 | Notifications | Types par domaine |
-| Profil public | Collection du domaine consulté |
-| **Pont magazine ↔ jeu** | Navigation croisée sujets / fiches jeu (après M4) |
+| Profil public | Déjà partiel (jeux 0.5.3) ; généraliser |
 | Maintenance | Stats et nettoyage PDF orphelins |
 
 ---
 
-## Phase M7 — Identité & version 1.0.0
-
-**Version visée :** `1.0.0` Médiathèque (multi-médias abouti)
+## M7 — Identité & version 1.0.0 ⏳
 
 | Tâche | Détail |
 |-------|--------|
-| Nom & logo | Affichage « Médiathèque » (déjà en 0.1.0) ; assets si besoin |
-| Variables env | Alias `MEDIATHEQUE_*` optionnels, doc migration |
-| Namespace PHP | Garder `Moncine\` sauf décision contraire (gros refactor) |
+| Nom & logo | « Médiathèque » (déjà en place) |
+| Variables env | Alias `MEDIATHEQUE_*` optionnels |
+| Namespace PHP | Garder `Moncine\` sauf décision contraire |
 | Documentation | Guide par média dans `doc/` |
-| Install seed | Exemples CSV/ZIP par domaine (optionnel) |
 | Déploiement | Notes YunoHost / serveur classique |
 
 ---
 
-## Décisions actées (M0)
+## Décisions actées
 
 | Sujet | Décision |
 |-------|----------|
-| Métadonnées spécifiques | **Tables filles** (`oeuvre_bd`, …) — pas de gros JSON |
-| URL / onglet | **Session** + `set-media-domain.php` (pas de `/bd/` dans l’URL pour l’instant) |
+| Métadonnées spécifiques | **Tables filles** (`oeuvre_jeu`, `oeuvre_magazine`, …) — pas de gros JSON |
+| URL / onglet | **Session** + `set-media-domain.php` |
 | Foyer | **Une collection par domaine** dans le même foyer |
 | Quiz | **Films uniquement** |
-| Couleur Films | **Gris** (distinct des autres onglets) |
-| Code Monciné | Namespace **`Moncine\`**, constantes **`MONCINE_*`**, **`moncine.db`** — **ne pas renommer avant M7** → [doc/conventions-techniques.md](doc/conventions-techniques.md) |
-| Sujets magazine vs catalogue | **Texte libre d’abord** (0.4.x) ; **lien optionnel** vers `oeuvres` jeu plus tard — pas de rupture des données prod |
+| Code Monciné | Namespace **`Moncine\`**, **`MONCINE_*`**, **`moncine.db`** — ne pas renommer avant M7 → [doc/conventions-techniques.md](doc/conventions-techniques.md) |
+| Sujets magazine vs catalogue | Lien **optionnel** vers jeu ; pas de rupture des données prod |
 
 ---
 
@@ -371,22 +319,20 @@ Relier optionnellement un sujet magazine à une **fiche jeu du catalogue** (`oeu
 
 ```mermaid
 flowchart TB
-  M0[M0 ✅ 0.1.0] --> M1[M1 Stabilisation films]
-  M1 --> M2[M2 BD]
-  M1 --> M3[M3 Livres]
-  M1 --> M4[M4 Jeux]
-  M1 --> M5[M5 Magazines]
-  M2 --> M6[M6 Transversal]
-  M3 --> M6
+  M0[M0 ✅ 0.1.0] --> M1[M1 ✅ Films]
+  M1 --> M4[M4 ✅ Jeux 0.5.3]
+  M1 --> M5[M5 🔄 Magazines]
+  M4 --> XPont[Pont ↔ jeu partiel]
+  M5 --> XPont
+  XPont --> M6[M6 Transversal]
   M4 --> M6
   M5 --> M6
-  M4 --> XPont[Pont sujets ↔ jeu]
-  M5 --> XPont
-  XPont --> M6
+  M1 --> M2[M2 BD repoussé]
+  M1 --> M3[M3 Livres repoussé]
+  M2 --> M6
+  M3 --> M6
   M6 --> M7[M7 v1.0.0]
 ```
-
-**Parallèle possible après M1 :** M2, M3, M4. **M5** peut avancer en parallèle (peu de dépendances aux autres domaines). Le **pont sujets magazine ↔ catalogue jeu** dépend de **M4 (catalogue jeux)** et de **M5 (sujets ✅)** — implémentation après les deux.
 
 ---
 
@@ -398,33 +344,21 @@ flowchart TB
 | Multiplication `if (domaine)` | `MediaDomain`, `CatalogSchema`, guards |
 | PDF lourds | Hors `www/`, limites upload, FTS optionnelle |
 | APIs instables | Saisie manuelle d’abord |
-| Confusion Monciné / Médiathèque | CHANGELOG, doc/mediatheque.md, version 0.1.0 |
-| Sujets magazine sans lien jeu | Lien **optionnel** ; saisie prod 0.4.x conservée ; rattachement progressif (§ Pont Magazines ↔ Jeux) |
+| Sujets magazine sans lien jeu | Lien optionnel ; rattachement progressif |
 
 ---
 
-## Estimation (indicative)
+## Estimation (indicative, mise à jour 0.5.3)
 
-| Phase | Effort | Version |
-|-------|--------|---------|
-| M0 | ✅ fait | 0.1.0 |
-| M1 | 1 semaine | 0.2.0 |
-| M2 | 2 semaines | 0.3.0 |
-| M3 | 1–2 semaines | 0.4.0 |
-| M4 | 1–2 semaines | 0.5.0 |
-| Pont magazine ↔ jeu | 1 semaine (après M4) | 0.5.x–0.6.x |
-| M5 | 3–4 semaines | 0.6.0 |
+| Phase | Effort restant | Version |
+|-------|----------------|---------|
+| M0, M1, M4 (cœur) | ✅ fait | 0.1.0 → **0.5.3** |
+| M5 fin + parité catalogue | ~2 semaines | 0.6.0 |
+| Pont rétroactif | ~1 semaine | 0.6.0 |
+| Polish M4 | quelques jours | 0.5.x |
 | M6 | 2–3 semaines | 0.9.0 |
+| M2 + M3 | 3–4 semaines | 0.6.x–0.8.x |
 | M7 | 1 semaine | 1.0.0 |
-
----
-
-## Prochaine action (équipe / développement)
-
-1. **Tester M4 en prod** : migrations 039–041, onglet Jeux, ajout jeux, pont magazine.  
-2. **Pont magazine (suite)** : rattachement rétroactif sujets existants, recherche globale par titre jeu (M5+).  
-3. **M2/M3** — BD et livres (repoussés après M4).  
-4. Tag Git **`v0.5.0`** après validation.
 
 ---
 
@@ -433,14 +367,14 @@ flowchart TB
 | Sujet | Fichiers |
 |-------|----------|
 | Domaine média | `lib/MediaDomain.php`, `lib/MediaContext.php`, `lib/MediaDomainGuards.php` |
-| SQL | `sql/migrations/030_media_domain.sql` |
 | Collection films | `lib/FilmRepository.php`, `lib/CatalogFilmRepository.php` |
-| Grille Mes films | `templates/_films_collection_grid.php`, `lib/FilmCollectionPagination.php`, `www/assets/css/style.css` |
-| Sous-types films | `lib/MoncineContentKind.php` (film / série / spectacle) |
-| PDF futur | `lib/MediaStorage.php`, `lib/StoredObjectRepository.php` |
-| Sujets magazines | `lib/MagazineSubject.php`, `lib/MagazineSubjectRepository.php`, `doc/magazines.md` §11 |
-| Jeux vidéo (M4) | `lib/GameRepository.php`, `lib/MagazineGameLink.php`, `doc/jeux.md` |
-| UI | `templates/_media_domain_tabs.php`, `templates/layout.php` |
-| **Conventions dev** | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
+| Jeux (M4) | `lib/GameRepository.php`, `lib/GameListFilter.php`, `lib/GameCollectionStats.php`, `doc/jeux.md` |
+| Fiches catalogue jeux | `www/oeuvre-jeu.php`, `templates/oeuvre-jeu.php` |
+| Magazines (M5) | `lib/MagazineRepository.php`, `doc/magazines.md` |
+| Fiches catalogue magazines | `www/oeuvre-magazine.php`, `templates/oeuvre-magazine.php` |
+| Pont magazine ↔ jeu | `lib/MagazineGameLink.php`, `lib/MagazineSubjectRepository.php` |
+| Catalogue admin | `lib/CatalogAdmin.php`, `lib/View.php` (`catalogOeuvreDetailUrl`) |
+| UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
+| Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : 0.5.1 — 2026-05-31 (M4 enrichissements jeux).*
+*Dernière mise à jour : **0.5.3** — 2026-06-16 (réorganisation roadmap ; catalogue jeux/magazines, autocomplétion ajout jeu).*
