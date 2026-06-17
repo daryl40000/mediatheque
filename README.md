@@ -7,7 +7,7 @@
 
 **Médiathèque** est l’évolution de **[Monciné](CHANGELOG.md)** : une application web pour gérer **plusieurs types de médias** (films, BD/manga, livres, jeux vidéo, magazines) dans une seule interface, avec des **onglets** et une **couleur par média**.
 
-En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné ; l’onglet **Magazines** permet de gérer des séries et numéros (PDF, recherche, tags papier/PDF). L’onglet **Jeux** est utilisable depuis **0.5.0** (collection, envies, pont magazine). Les onglets BD et Livres affichent « Bientôt disponible ».
+En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. L’onglet **Magazines** gère séries et numéros (PDF, recherche FTS, sujets tests/previews). L’onglet **Jeux** est **pleinement utilisable** depuis **0.5.0** (collection, envies, statistiques, pont magazine) et **0.5.3** (fiches catalogue dédiées, autocomplétion à l’ajout). Les onglets **BD** et **Livres** affichent encore « Bientôt disponible ».
 
 | Document | Contenu |
 |----------|---------|
@@ -20,35 +20,50 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné ; l’on
 
 ---
 
-## Fonctionnalités (onglet Films — v0.1.0)
+## Fonctionnalités par onglet
 
-| Domaine | Disponible |
-|---------|------------|
-| Multi-médias | Onglets Films / BD / Livres / Jeux / Magazines + thème couleur |
-| Magazines | Séries, numéros, couvertures, PDF, sommaire, recherche OCR 6 pages, tags support (**0.2.0+**, détail [doc/magazines.md](doc/magazines.md)) |
-| Jeux vidéo | Collection, envies, notes, statistiques, pont magazine, fichiers attachés, vue vignettes, badges Linux (**0.5.0+**, détail [doc/jeux.md](doc/jeux.md)) |
-| Collection & envies | Mes films, Mes envies, sagas, statistiques, **questionnaire du soir**, **listes imprimables** |
-| Prêts | Demandes entre amis, réservation, validation et retour (`/mes-prets.php`) |
-| Stockage médias | Fichiers volumineux hors `www/` (PDF magazines par numéro) |
-| Foyers & famille | Collection partagée par foyer ; envies et historique personnels |
-| Catalogue partagé | Fiches œuvres, enrichissement TMDB / OMDB, affiches |
-| Comptes | Connexion, rôles admin/utilisateur, inscription publique optionnelle |
-| Social | Amis, groupe famille, envies du groupe, partage visiteur, **profil public multi-onglets** (films + magazines) |
-| EAN | Codes-barres multiples par œuvre catalogue |
+| Domaine | Statut | Points clés |
+|---------|--------|-------------|
+| **Multi-médias** | ✅ | Onglets Films / BD / Livres / Jeux / Magazines + thème couleur par domaine |
+| **Films** | ✅ Production | Collection, envies, TMDB/OMDB, quiz « Ce soir », prêts, sagas, listes imprimables (**0.4.4+**) |
+| **Jeux vidéo** | ✅ Utilisable | Collection, envies, notes, stats, extensions DLC, fichiers attachés, Linux tri-état, pont magazine, **fiche catalogue** `/oeuvre-jeu.php`, **autocomplétion** à l’ajout (**0.5.3**, [doc/jeux.md](doc/jeux.md)) |
+| **Magazines** | 🔄 Avancé | Séries, numéros, PDF, sommaire, FTS, sujets tests/previews, **fiche catalogue** `/oeuvre-magazine.php` (**0.2.x–0.4.x**, [doc/magazines.md](doc/magazines.md)) |
+| **BD / Livres** | ⏸️ Bientôt | Onglets présents, contenu à venir (M2 / M3) |
+| **Transversal** | Partiel | Catalogue partagé multi-domaines, foyers, amis, partage visiteur, profil public (films + magazines + **jeux**) |
 
-### Prochaines versions (résumé)
+**Commun à tous les onglets actifs :** prêts entre amis (physique), import/export, comptes et foyers, codes EAN catalogue, soumissions au catalogue, notifications.
 
-| Version cible | Contenu |
-|---------------|---------|
-| **0.5.1 (M4 ✅)** | Jeux : fichiers attachés, vue vignettes, icônes support, Linux testé / non supporté |
-| **0.5.0 (M4 ✅)** | Jeux vidéo : collection, envies, pont magazine, accueil dédié, badge Linux |
-| **0.4.4 (M1 ✅)** | Stabilisation films : QA prod, grille homogène, pagination collection |
-| **0.3.x (M2)** | BD / Manga |
-| **0.4.x (M3)** | Livres |
-| **0.6.x (M5)** | Magazines (PDF, lecteur, recherche) — suite polish |
-| **1.0.0 (M6–M7)** | Fonctions transverses + identité « Médiathèque » aboutie |
+### Catalogue partagé (admin)
 
-Détail phase par phase : [ROADMAP.md](ROADMAP.md).
+| Domaine | Fiche catalogue | Ajout à ma collection |
+|---------|-----------------|------------------------|
+| Film | `/oeuvre.php` | Autocomplétion titre + réalisateur |
+| Jeu | `/oeuvre-jeu.php` | Autocomplétion titre (plateforme · année) |
+| Magazine | `/oeuvre-magazine.php` | Depuis la fiche catalogue (autocomplétion à l’ajout : prochaine étape M5) |
+
+### Prochaines étapes (résumé)
+
+Voir le détail dans [ROADMAP.md](ROADMAP.md).
+
+| Priorité | Contenu | Version cible |
+|----------|---------|---------------|
+| 1 | QA et tag **v0.5.3** | 0.5.3 |
+| 2 | Magazines : autocomplétion à l’ajout, profil public, parité catalogue | 0.5.4 → **0.6.0** |
+| 3 | Pont magazine ↔ jeu : rattachement rétroactif des sujets | 0.6.0 |
+| 4 | Polish jeux (plateformes admin, non prêtable si démat) | 0.5.x |
+| 5 | Transversal multi-domaines (stats, partage, import/export) | **0.9.0** |
+| 6 | BD / Manga, Livres | 0.6.x+ |
+| 7 | Identité Médiathèque aboutie | **1.0.0** |
+
+### Versions récentes livrées
+
+| Version | Contenu |
+|---------|---------|
+| **0.5.3** | Fiches catalogue jeux/magazines, autocomplétion ajout jeu, stats jeux, profil public jeux |
+| **0.5.2** | Catalogue admin multi-médias, extensions jeux (DLC), export/import `media_domain` |
+| **0.5.1** | Jeux : fichiers attachés, vignettes, Linux testé / non supporté |
+| **0.5.0** | Jeux vidéo : collection, envies, pont magazine |
+| **0.4.4** | Films : QA prod, grille homogène, pagination collection |
 
 ---
 
@@ -62,6 +77,8 @@ Détail phase par phase : [ROADMAP.md](ROADMAP.md).
 | `lib/MediaDomain.php` / `lib/MediaContext.php` | Onglets et filtre `media_domain` |
 | `lib/Auth.php` | Connexion, pages publiques |
 | `lib/FilmRepository.php` | Collection films (façade catalogue) |
+| `lib/GameRepository.php` | Collection jeux + catalogue partagé jeux |
+| `lib/MagazineRepository.php` | Numéros magazines + catalogue |
 | `lib/CatalogSchema.php` | Jointures œuvres + bibliothèque + filtre domaine |
 | `www/*.php` | Une page = un contrôleur léger |
 | `templates/layout.php` | Menu, onglets média, thème |
@@ -83,7 +100,7 @@ mediatheque/
 ├── templates/        vues HTML
 ├── sql/
 │   ├── schema.sql    schéma complet (install fraîche)
-│   └── migrations/   001 … 030 (media_domain)
+│   └── migrations/   001 … 044 (extensions jeux, media_domain, …)
 ├── data/             base SQLite, clés API (non versionné)
 ├── tests/            PHPUnit
 ├── doc/              documentation
@@ -170,8 +187,9 @@ Les données (base, affiches, PDF, sessions) sont stockées dans le dossier **`d
 
 - **Onglets** en haut : chaque type de média a sa couleur et ses menus (**Ma collection**, **Mes envies**, **Statistiques**, etc.).
 - **Films** : dvdthèque complète (collection, envies, visions, prêts entre amis, questionnaire du soir…).
-- **Magazines** (version 0.2.x) : séries → numéros → fiche détaillée ; détail dans [doc/magazines.md](doc/magazines.md).
-- **BD, Livres, Jeux** : onglets présents mais marqués **« Bientôt disponible »** pour l’instant.
+- **Jeux** (**0.5.3**) : collection (`/jeux.php`), envies, statistiques, ajout avec autocomplétion catalogue ; détail [doc/jeux.md](doc/jeux.md).
+- **Magazines** : séries → numéros → fiche détaillée ; détail [doc/magazines.md](doc/magazines.md).
+- **BD, Livres** : onglets présents mais marqués **« Bientôt disponible »**.
 
 #### Parcours magazines (résumé)
 
@@ -193,6 +211,17 @@ Les données (base, affiches, PDF, sessions) sont stockées dans le dossier **`d
 
 Pour importer de **gros PDF**, utilisez toujours **`./start-dev.sh`** plutôt que le serveur PHP minimal.
 
+#### Parcours jeux (résumé)
+
+| Action | Où |
+|--------|-----|
+| Ma collection | Onglet **Jeux** → **Mes jeux** (`/jeux.php`) |
+| Mes envies | **Mes envies jeux** (`/jeux-envies.php`) |
+| Ajouter un jeu | **Ajouter un jeu** — tapez le titre : si le jeu est au catalogue, choisissez-le dans la liste (**0.5.3**) |
+| Fiche d’un jeu possédé | Cliquez sur un titre → `/jeu.php` (notes, fichiers, lien magazines) |
+| Statistiques | **Statistiques** dans l’onglet Jeux (plateformes, genres, extensions…) |
+| Catalogue admin | Compte admin → **Catalogue** → fiche `/oeuvre-jeu.php` pour les jeux |
+
 #### Parcours films (résumé)
 
 | Action | Où |
@@ -212,12 +241,13 @@ Visible par les **amis** et les **membres du même groupe** :
 | Onglet profil | Contenu |
 |---------------|---------|
 | **Films** | Statistiques, 5 derniers vus/ajouts, listes collection / envies / visions, demandes de prêt |
-| **Magazines** | Statistiques séries et numéros, listes collection / envies, **numéros par série** (lecture seule) |
-| **BD, Livres, Jeux** | Message « bientôt disponible » sur le profil |
+| **Magazines** | Statistiques séries et numéros, listes collection / envies, numéros par série (lecture seule) |
+| **Jeux** | Statistiques, 5 derniers jeux notés, grilles collection / envies (**0.5.3**) |
+| **BD, Livres** | Message « bientôt disponible » sur le profil |
 
 Sur l’onglet **Magazines** du profil : cliquez une **série** → liste des numéros (`/utilisateur-serie-magazine.php`) → fiche numéro avec sommaire (`/utilisateur-numero-magazine.php`). Les **PDF ne sont pas partagés** (couvertures et texte uniquement).
 
-Paramètre d’URL : `?id=…&domain=magazine` (Films par défaut si omis).
+Paramètre d’URL : `?id=…&domain=film|magazine|jeu` (Films par défaut si omis).
 
 ### 7. Mise à jour du logiciel
 
@@ -279,7 +309,7 @@ composer test
 | | Monciné | Médiathèque |
 |---|---------|-------------|
 | Version production films | **1.0.0** | — |
-| Version fork multi-médias | — | **0.1.0** (films OK) |
+| Version fork multi-médias | — | **0.5.3** (films, jeux, magazines avancés) |
 | Nom affiché | Monciné | Médiathèque |
 | Code PHP | `Moncine\` | `Moncine\` (inchangé — voir [conventions-techniques.md](doc/conventions-techniques.md)) |
 
