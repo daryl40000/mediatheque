@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\GameAttachmentRepository;
 use Moncine\GameRepository;
 use Moncine\HistoriqueRepository;
+use Moncine\IgdbConfig;
 use Moncine\LibraryStatut;
 use Moncine\MagazineGameLink;
 use Moncine\MediaDomainGuards;
@@ -49,6 +50,21 @@ $noteSur10 = $isWishlist ? null : $historique->getNoteSur10($bibId);
 $noteFoyerMoyenne = $isWishlist ? null : $historique->getFoyerAverageNote($bibId);
 
 $saved = isset($_GET['saved']);
+$enrichStatus = null;
+$enrichMessage = '';
+if (isset($_GET['enrich'])) {
+    $enrichStatus = match ((string) $_GET['enrich']) {
+        'ok' => 'ok',
+        'not_found' => 'not_found',
+        default => 'error',
+    };
+    $enrichMessage = (string) ($_GET['enrich_msg'] ?? '');
+    $refreshed = $repo->findByBibId($bibId, $userId, $foyerId);
+    if ($refreshed !== null) {
+        $game = $refreshed;
+    }
+}
+
 $attachments = GameAttachmentRepository::isAvailable()
     ? (new GameAttachmentRepository())->listForBibliotheque($bibId)
     : [];
@@ -99,7 +115,7 @@ if (GameRepository::hasRemakeColumns()) {
 }
 
 View::render('jeu', [
-    'pageTitle' => (string) ($game['titre'] ?? 'Jeu'),
+    'pageTitle' => (string) ($game['display_titre'] ?? $game['titre'] ?? 'Jeu'),
     'game' => $game,
     'magazineCoverage' => $magazineCoverage,
     'baseGame' => $baseGame,
@@ -108,6 +124,11 @@ View::render('jeu', [
     'remakes' => $remakes,
     'saved' => $saved,
     'canManageCatalog' => UserContext::canManageCatalog(),
+    'showIgdbEnrich' => UserContext::canManageCatalog() && GameRepository::hasIgdbColumns(),
+    'hasIgdbCredentials' => IgdbConfig::hasCredentials() && GameRepository::hasIgdbColumns(),
+    'enrichStatus' => $enrichStatus,
+    'enrichMessage' => $enrichMessage,
+    'currentIgdbId' => (int) ($game['igdb_id'] ?? 0),
     'gameId' => $bibId,
     'isWishlist' => $isWishlist,
     'listBackUrl' => $listBackUrl,

@@ -46,7 +46,7 @@ $gridSortLink = static function (string $label, string $column) use ($sortBy, $s
                     <div class="collection-grid__poster-wrap">
                         <?php if ($posterSrc !== ''): ?>
                             <img class="collection-grid__poster" src="<?= $posterSrc ?>"
-                                 alt="Jaquette de <?= Moncine\View::escape((string) ($game['titre'] ?? '')) ?>"
+                                 alt="Jaquette de <?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? '')) ?>"
                                  width="140" height="210" loading="lazy" decoding="async">
                         <?php else: ?>
                             <span class="collection-grid__poster collection-grid__poster--empty"
@@ -55,7 +55,7 @@ $gridSortLink = static function (string $label, string $column) use ($sortBy, $s
                     </div>
                     <div class="collection-grid__caption">
                         <h3 class="collection-grid__title collection-grid__title--game">
-                            <span><?= Moncine\View::escape((string) ($game['titre'] ?? '')) ?></span>
+                            <span><?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? '')) ?></span>
                             <?php if ((string) ($game['linux_badge'] ?? '') !== '' || !empty($game['tested_on_linux']) || !empty($game['linux_not_supported'])): ?>
                                 <span class="collection-grid__linux-badge">
                                     <?php

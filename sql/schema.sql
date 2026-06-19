@@ -461,7 +461,13 @@ CREATE TABLE IF NOT EXISTS oeuvre_jeu (
     is_extension INTEGER NOT NULL DEFAULT 0,
     base_game_oeuvre_id INTEGER DEFAULT NULL REFERENCES oeuvres(id) ON DELETE SET NULL,
     is_remake INTEGER NOT NULL DEFAULT 0,
-    original_game_oeuvre_id INTEGER DEFAULT NULL REFERENCES oeuvres(id) ON DELETE SET NULL
+    original_game_oeuvre_id INTEGER DEFAULT NULL REFERENCES oeuvres(id) ON DELETE SET NULL,
+    igdb_id INTEGER NOT NULL DEFAULT 0,
+    igdb_enriched_at TEXT DEFAULT NULL,
+    franchise TEXT NOT NULL DEFAULT '',
+    game_mode TEXT NOT NULL DEFAULT '',
+    theme TEXT NOT NULL DEFAULT '',
+    alternative_names TEXT NOT NULL DEFAULT ''
 );
 
 CREATE INDEX IF NOT EXISTS idx_oeuvre_jeu_platform ON oeuvre_jeu(platform);

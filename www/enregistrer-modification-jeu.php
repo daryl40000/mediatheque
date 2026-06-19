@@ -45,10 +45,15 @@ $linuxFlags = GameRepository::linuxFlagsFromPost($_POST);
 
 $result = $repo->updateCatalog($bibId, array_merge([
     'titre' => (string) ($_POST['titre'] ?? ''),
+    'titre_original' => (string) ($_POST['titre_original'] ?? ''),
     'annee' => (int) ($_POST['annee'] ?? 0),
     'studio' => (string) ($_POST['studio'] ?? ''),
     'editeur' => (string) ($_POST['editeur'] ?? ''),
     'genre' => GameGenre::normalizeFromPost($_POST['genres'] ?? []),
+    'franchise' => (string) ($_POST['franchise'] ?? ''),
+    'game_mode' => GameGenre::normalizeInput((string) ($_POST['game_mode'] ?? '')),
+    'theme' => GameGenre::normalizeInput((string) ($_POST['theme'] ?? '')),
+    'alternative_names' => GameGenre::normalizeInput((string) ($_POST['alternative_names'] ?? '')),
     'platform' => (string) ($_POST['platform'] ?? ''),
     'synopsis' => (string) ($_POST['synopsis'] ?? ''),
     'is_extension' => !empty($_POST['is_extension']),

@@ -11,6 +11,28 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.5.5] — 2026-06-16
+
+**Enrichissement jeux via IGDB (comme TMDB pour les films)**
+
+Complétion automatique des fiches jeux depuis [IGDB](https://www.igdb.com/) (via compte Twitch Developer) : jaquette locale, titres FR/EN, studio, éditeur, genres, franchise, modes, thèmes et acronymes.
+
+### Ajouté
+
+- **Migrations 046–047** : `igdb_id`, `igdb_enriched_at`, `franchise`, `game_mode`, `theme`, `alternative_names` sur `oeuvre_jeu`.
+- **Enrichissement IGDB** : `IgdbClient`, `IgdbConfig`, `GameEnricher`, `GameCatalogEnrichment` — lot sur `/import.php`, fiche catalogue `/oeuvre-jeu.php`, fiche bibliothèque `/jeu.php` (admin).
+- **Titres bilingues** : titre français (`oeuvres.titre`) + titre anglais IGDB (`oeuvres.titre_original`) ; affichage FR prioritaire, EN en secours.
+- **Traductions FR** : `IgdbGenreMap`, `IgdbGameModeMap`, `IgdbThemeMap` (tags modes et thèmes comme les genres).
+- **Acronymes seuls** : `IgdbAlternativeNameFilter` (ex. GTA, FF — pas les titres complets).
+- **UI** : panneaux enrichissement (`_enrich_game_panel.php`), métadonnées IGDB sur fiches (`_game_igdb_metadata_display.php`), handlers `enrichir-jeux.php`, `enrichir-jeu.php`, `enrichir-oeuvre-jeu.php`.
+- **Refactor jeux** : `GameSchema`, `GameRelations`, `GameRowMapper`, `GameLinkedGamesQuery`, `GameRelatedSections`, `GameTitle` ; allègement de `GameRepository`.
+- **Tests** : `IgdbGenreMapTest`, `IgdbMetadataMapsTest`, `GameTitleTest`, `GameRelationsTest`, `GameRelatedSectionsTest`.
+
+### Modifié
+
+- **Affichage titres jeux** : listes et fiches utilisent `display_titre` (FR si présent, sinon EN).
+- **Formulaires admin** : champs franchise, modes, thèmes, acronymes éditables après enrichissement.
+
 ## [0.5.4] — 2026-06-16
 
 **Remakes jeux, liens visuels extensions/remakes et recherche tolérante**

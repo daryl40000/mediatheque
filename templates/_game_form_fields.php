@@ -40,7 +40,7 @@ $originalGameLabel = trim((string) ($gameRow['original_game_label'] ?? ''));
 $titreFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_titre' : 'titre';
 $oeuvreIdFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_oeuvre_id' : 'oeuvre_id';
 ?>
-<label for="<?= Moncine\View::escape($titreFieldId) ?>">Titre du jeu <span class="required">*</span></label>
+<label for="<?= Moncine\View::escape($titreFieldId) ?>">Titre du jeu (français) <span class="required">*</span></label>
 <?php if ($useCatalogAutocomplete): ?>
     <input type="hidden" name="oeuvre_id" id="<?= Moncine\View::escape($oeuvreIdFieldId) ?>"
            value="<?= (int) ($gameRow['oeuvre_id'] ?? 0) > 0 ? (int) $gameRow['oeuvre_id'] : '' ?>">
@@ -72,6 +72,15 @@ $oeuvreIdFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_oeuvre
        value="<?= Moncine\View::escape((string) ($gameRow['titre'] ?? '')) ?>"
        placeholder="Ex. Elden Ring, Gran Turismo 7">
 <?php endif; ?>
+
+<?php
+$titreOriginalFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_titre_original' : 'titre_original';
+?>
+<label for="<?= Moncine\View::escape($titreOriginalFieldId) ?>">Titre anglais (IGDB)</label>
+<input type="text" name="titre_original" id="<?= Moncine\View::escape($titreOriginalFieldId) ?>" maxlength="200"
+       value="<?= Moncine\View::escape((string) ($gameRow['titre_original'] ?? '')) ?>"
+       placeholder="Ex. The Witcher 3: Wild Hunt">
+<p class="hint">Renseigné automatiquement par IGDB. Affiché seulement si le titre français ci-dessus est vide.</p>
 
 <?php if (Moncine\GameRepository::hasExtensionColumns() || Moncine\GameRepository::hasRemakeColumns()): ?>
     <fieldset class="game-extension-fieldset" data-game-type-fieldset>
@@ -206,6 +215,29 @@ $showLinuxFieldInitially = $linuxFieldAvailable && $selectedPlatform === Moncine
 $genreTagsList = $gameRow['genre_list'] ?? Moncine\GameGenre::parseList((string) ($gameRow['genre'] ?? ''));
 require MONCINE_ROOT . '/templates/_game_genre_tags_field.php';
 ?>
+
+<?php if (Moncine\GameRepository::hasIgdbMetadataColumns()): ?>
+<label for="franchise">Franchise (IGDB)</label>
+<input type="text" name="franchise" id="franchise" maxlength="120"
+       value="<?= Moncine\View::escape((string) ($gameRow['franchise'] ?? '')) ?>"
+       placeholder="Ex. The Witcher, Final Fantasy">
+
+<label for="game_mode">Modes de jeu (IGDB)</label>
+<input type="text" name="game_mode" id="game_mode" maxlength="200"
+       value="<?= Moncine\View::escape((string) ($gameRow['game_mode'] ?? '')) ?>"
+       placeholder="Ex. Solo, Multijoueur, Coopératif">
+
+<label for="theme">Thèmes (IGDB)</label>
+<input type="text" name="theme" id="theme" maxlength="200"
+       value="<?= Moncine\View::escape((string) ($gameRow['theme'] ?? '')) ?>"
+       placeholder="Ex. Fantasy, Monde ouvert, Horreur">
+
+<label for="alternative_names">Acronymes (IGDB)</label>
+<input type="text" name="alternative_names" id="alternative_names" maxlength="120"
+       value="<?= Moncine\View::escape((string) ($gameRow['alternative_names'] ?? '')) ?>"
+       placeholder="Ex. GTA, FF, TLoZ">
+<p class="hint">Séparez plusieurs valeurs par des virgules. Rempli automatiquement par l’enrichissement IGDB.</p>
+<?php endif; ?>
 
 <fieldset class="game-editions-fieldset" data-game-editions-root>
     <legend>Exemplaires possédés</legend>

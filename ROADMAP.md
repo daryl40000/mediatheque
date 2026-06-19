@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.5.4** (2026-06-16)  
+**Version actuelle : 0.5.5** (2026-06-16)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -13,12 +13,12 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ---
 
-## Où en est-on ? (synthèse 0.5.4)
+## Où en est-on ? (synthèse 0.5.5)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
 | **Films** | ✅ Production | 0.4.4+ | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`) |
-| **Jeux** | ✅ Utilisable | 0.5.0 → **0.5.4** | Complet (extensions, remakes, autocomplétion, recherche tolérante) |
+| **Jeux** | ✅ Utilisable | 0.5.0 → **0.5.5** | Complet (extensions, remakes, autocomplétion, recherche tolérante, **IGDB**) |
 | **Magazines** | 🔄 Avancé (~85 %) | 0.2.x → 0.4.x | Partiel (fiche `/oeuvre-magazine.php` ✅ ; autocomplétion à l’ajout ⏳) |
 | **BD / Manga** | ⏸️ Repoussé | — | — |
 | **Livres** | ⏸️ Repoussé | — | — |
@@ -29,7 +29,7 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 |-------|--------|----------------|-------|
 | **M0** Fondations multi-médias | ✅ Livré | 0.1.0 | — |
 | **M1** Stabilisation films | ✅ Livré | 0.4.4 | Maintenance seulement |
-| **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.5.4** | Polish non bloquant (voir M4) |
+| **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.5.5** | Polish non bloquant (voir M4) |
 | **M5** Magazines | 🔄 En cours | 0.4.3 → **0.6.0** cible | Parité catalogue + profil public |
 | **Pont** Magazines ↔ Jeux | 🔄 Partiel | 0.5.0+ | Rattachement rétroactif |
 | **M2** BD / Manga | ⏸️ Repoussé | 0.6.x+ (indicatif) | Après M5 stabilisée |
@@ -40,6 +40,11 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.5.5** — enrichissement IGDB jeux (2026-06-16)
+
+- Enrichissement catalogue jeux via IGDB (comme TMDB pour les films) : jaquette locale, titres FR/EN, studio, éditeur, genres, franchise, modes, thèmes, acronymes.
+- Migrations **046–047** ; refactor modules jeux (`GameSchema`, `GameRowMapper`, …).
 
 ### ✅ Consolidation **0.5.4** — livré (2026-06-16)
 

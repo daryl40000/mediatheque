@@ -1,6 +1,6 @@
 # Médiathèque — guide du fork
 
-**Version : 0.5.4** · **Date : 2026-06-16**
+**Version : 0.5.5** · **Date : 2026-06-16**
 
 Ce document décrit ce qu’est la **Médiathèque**, ce qui a été livré en **0.1.0**, et comment cela s’articule avec **Monciné**.
 

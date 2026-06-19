@@ -33,10 +33,10 @@
                 <tr>
                     <td class="col-poster">
                         <a href="<?= Moncine\View::escape($gameUrl) ?>" class="films-table__poster-link"
-                           title="Voir la fiche : <?= Moncine\View::escape((string) ($game['titre'] ?? '')) ?>">
+                           title="Voir la fiche : <?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? '')) ?>">
                             <?php if ($posterSrc !== ''): ?>
                                 <img class="films-table__poster" src="<?= $posterSrc ?>"
-                                     alt="Jaquette de <?= Moncine\View::escape((string) ($game['titre'] ?? '')) ?>"
+                                     alt="Jaquette de <?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? '')) ?>"
                                      width="44" height="66" loading="lazy" decoding="async">
                             <?php else: ?>
                                 <span class="films-table__poster films-table__poster--empty" aria-hidden="true"></span>

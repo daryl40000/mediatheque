@@ -31,7 +31,7 @@ foreach ($games as $game) {
     $bibId = $repo->findLibraryBibIdForCatalogOeuvre($oeuvreId, $userId, $foyerId);
     $results[] = [
         'oeuvre_id' => $oeuvreId,
-        'titre' => (string) ($game['titre'] ?? ''),
+        'titre' => (string) ($game['display_titre'] ?? GameRowMapper::displayTitle($game)),
         'display_label' => (string) ($game['display_label'] ?? ''),
         'annee' => (int) ($game['annee'] ?? 0),
         'platform' => (string) ($game['platform'] ?? ''),

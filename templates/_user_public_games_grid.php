@@ -36,7 +36,7 @@ $sortLink = static function (string $label, string $column) use ($targetUserId, 
     <ul class="collection-grid collection-grid--games social-profile-grid" role="list">
         <?php foreach ($games as $game):
             $posterSrc = Moncine\View::posterSrc($game['poster_url'] ?? null);
-            $titre = (string) ($game['titre'] ?? '');
+            $titre = (string) ($game['display_titre'] ?? $game['titre'] ?? '');
             $annee = (int) ($game['annee'] ?? 0);
             $platformShort = (string) ($game['platform_short'] ?? '');
             ?>

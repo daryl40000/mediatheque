@@ -64,7 +64,7 @@ define('MONCINE_APP_NAME', 'Médiathèque');
 
 // Version applicative (semver du fork Médiathèque)
 // Identifiants techniques MONCINE_* / namespace Moncine\ : voir doc/conventions-techniques.md
-define('MONCINE_PACKAGE_VERSION', '0.5.4');
+define('MONCINE_PACKAGE_VERSION', '0.5.5');
 
 // Derrière un reverse proxy de confiance (YunoHost / Nginx) : 1 pour utiliser X-Real-IP / X-Forwarded-For.
 $trustProxy = getenv('MONCINE_TRUST_PROXY');
@@ -82,6 +82,9 @@ define('MONCINE_CSV_DELIMITER', ';');
 
 // Clé API TMDB (synopsis en français) : variable d'environnement ou fichier data/tmdb_api_key.txt
 define('MONCINE_TMDB_KEY_FILE', MONCINE_DATA . '/tmdb_api_key.txt');
+
+// Identifiants IGDB (Twitch Developer) : MONCINE_IGDB_CLIENT_ID / MONCINE_IGDB_CLIENT_SECRET ou data/igdb_credentials.json
+define('MONCINE_IGDB_CREDENTIALS_FILE', MONCINE_DATA . '/igdb_credentials.json');
 
 // Films traités par clic sur « Enrichir » (évite les timeouts PHP)
 define('MONCINE_ENRICH_BATCH_SIZE', 8);

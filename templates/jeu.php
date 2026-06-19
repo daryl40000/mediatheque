@@ -82,13 +82,13 @@ if ($linuxBadge === '' && $linuxNotSupported) {
         <article class="film-detail<?= $posterSrc !== '' ? ' film-detail--with-poster' : '' ?>">
             <?php if ($posterSrc !== ''): ?>
                 <img class="film-poster film-poster--large" src="<?= $posterSrc ?>"
-                     alt="Jaquette de <?= Moncine\View::escape((string) ($game['titre'] ?? '')) ?>">
+                     alt="Jaquette de <?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? '')) ?>">
             <?php endif; ?>
 
             <div class="film-detail__body">
                 <header class="film-detail__heading">
                     <h1 class="game-detail__title-row">
-                        <span><?= Moncine\View::escape((string) ($game['titre'] ?? 'Jeu')) ?></span>
+                        <span><?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? 'Jeu')) ?></span>
                         <?php if ($linuxBadge !== ''): ?>
                             <?php
                             $size = 'md';
@@ -140,6 +140,8 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                         </dd>
                     <?php endif; ?>
 
+                    <?php require MONCINE_ROOT . '/templates/_game_igdb_metadata_display.php'; ?>
+
                     <?php if ($addedAtLabel !== ''): ?>
                         <dt><?= $isWishlist ? 'Envie ajoutée le' : 'Ajouté le' ?></dt>
                         <dd><?= Moncine\View::escape($addedAtLabel) ?></dd>
@@ -169,76 +171,14 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                 <?php require MONCINE_ROOT . '/templates/_game_editions_display.php'; ?>
 
                 <?php
-                $baseGame = $baseGame ?? null;
-                $extensions = $extensions ?? [];
-                $originalGame = $originalGame ?? null;
-                $remakes = $remakes ?? [];
-                $isExtension = !empty($game['is_extension']);
-                $isRemake = !empty($game['is_remake']);
-
-                $gameRelatedSections = [];
-                if ($isExtension && is_array($baseGame) && (int) ($baseGame['oeuvre_id'] ?? 0) > 0) {
-                    $gameRelatedSections[] = [
-                        'title' => 'Jeu de base',
-                        'items' => [[
-                            'url' => trim((string) ($baseGame['library_url'] ?? '')),
-                            'poster_url' => $baseGame['poster_url'] ?? null,
-                            'annee' => (int) ($baseGame['annee'] ?? 0),
-                            'titre' => (string) ($baseGame['titre'] ?? ''),
-                        ]],
-                    ];
-                } elseif ($isRemake && is_array($originalGame) && (int) ($originalGame['oeuvre_id'] ?? 0) > 0) {
-                    $gameRelatedSections[] = [
-                        'title' => 'Jeu d\'origine',
-                        'items' => [[
-                            'url' => trim((string) ($originalGame['library_url'] ?? '')),
-                            'poster_url' => $originalGame['poster_url'] ?? null,
-                            'annee' => (int) ($originalGame['annee'] ?? 0),
-                            'titre' => (string) ($originalGame['titre'] ?? ''),
-                        ]],
-                    ];
-                } else {
-                    if ($extensions !== []) {
-                        $extensionItems = [];
-                        foreach ($extensions as $ext) {
-                            if (!is_array($ext)) {
-                                continue;
-                            }
-                            $extensionItems[] = [
-                                'url' => Moncine\View::gameUrl((int) ($ext['bib_id'] ?? 0)),
-                                'poster_url' => $ext['poster_url'] ?? null,
-                                'annee' => (int) ($ext['annee'] ?? 0),
-                                'titre' => (string) ($ext['titre'] ?? ''),
-                            ];
-                        }
-                        if ($extensionItems !== []) {
-                            $gameRelatedSections[] = [
-                                'title' => 'Extensions',
-                                'items' => $extensionItems,
-                            ];
-                        }
-                    }
-                    if ($remakes !== []) {
-                        $remakeItems = [];
-                        foreach ($remakes as $remake) {
-                            if (!is_array($remake)) {
-                                continue;
-                            }
-                            $remakeItems[] = [
-                                'url' => Moncine\View::gameUrl((int) ($remake['bib_id'] ?? 0)),
-                                'poster_url' => $remake['poster_url'] ?? null,
-                                'annee' => (int) ($remake['annee'] ?? 0),
-                                'titre' => (string) ($remake['titre'] ?? ''),
-                            ];
-                        }
-                        if ($remakeItems !== []) {
-                            $gameRelatedSections[] = [
-                                'title' => 'Remakes',
-                                'items' => $remakeItems,
-                            ];
-                        }
-                    }
-                }
+                $gameRelatedSections = Moncine\GameRelatedSections::build(
+                    $game,
+                    $baseGame ?? null,
+                    $originalGame ?? null,
+                    $extensions ?? [],
+                    $remakes ?? [],
+                    static fn (array $row): string => Moncine\View::gameUrl((int) ($row['bib_id'] ?? 0)),
+                );
                 require MONCINE_ROOT . '/templates/_game_related_posters.php';
                 ?>
 
@@ -253,6 +193,14 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                     <?php
                     $attachments = $attachments ?? [];
                     require MONCINE_ROOT . '/templates/_game_attachments_panel.php';
+                    ?>
+                <?php endif; ?>
+
+                <?php if (!empty($showIgdbEnrich)): ?>
+                    <?php
+                    $enrichTarget = 'game';
+                    $entityId = $gameId;
+                    require MONCINE_ROOT . '/templates/_enrich_game_panel.php';
                     ?>
                 <?php endif; ?>
 
@@ -308,8 +256,8 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                     <?php
                     $deleteTitle = $isWishlist ? 'Retirer des envies' : 'Supprimer de mes jeux';
                     $deleteConfirm = $isWishlist
-                        ? 'Retirer « ' . (string) ($game['titre'] ?? '') . ' » de vos envies ?'
-                        : 'Supprimer définitivement « ' . (string) ($game['titre'] ?? '') . ' » ?';
+                        ? 'Retirer « ' . (string) ($game['display_titre'] ?? $game['titre'] ?? '') . ' » de vos envies ?'
+                        : 'Supprimer définitivement « ' . (string) ($game['display_titre'] ?? $game['titre'] ?? '') . ' » ?';
                     ?>
                     <form method="post" action="/supprimer-jeu.php" class="inline-form game-detail__delete-form"
                           onsubmit="return confirm(<?= json_encode($deleteConfirm, JSON_HEX_TAG | JSON_HEX_APOS | JSON_HEX_QUOT | JSON_HEX_AMP) ?>);">

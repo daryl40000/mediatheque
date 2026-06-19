@@ -229,6 +229,100 @@
     <?php endif; ?>
 </section>
 
+<section class="enrich-panel enrich-panel--games">
+    <h2>Enrichir mes jeux (IGDB)</h2>
+    <p class="lead">
+        <strong>IGDB</strong> complète les fiches jeux : jaquette (stockée localement), année,
+        studio, éditeur et genres traduits en français.
+    </p>
+
+    <?php if (empty($igdbModuleReady)): ?>
+        <p class="hint">Migration IGDB non appliquée — relancez la mise à jour de la base de données.</p>
+    <?php else: ?>
+
+    <?php if (!empty($igdbMessage)): ?>
+        <div class="alert alert-success"><?= Moncine\View::escape($igdbMessage) ?></div>
+    <?php endif; ?>
+    <?php if (!empty($igdbEnrichMessage)): ?>
+        <div class="alert alert-success"><?= Moncine\View::escape($igdbEnrichMessage) ?></div>
+    <?php endif; ?>
+
+    <p class="hint">
+        Créez une application <strong>Confidential</strong> sur
+        <a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noopener">dev.twitch.tv</a>
+        puis copiez le Client ID et le Client Secret.
+    </p>
+
+    <?php if (!$hasIgdbCredentials): ?>
+        <form method="post" action="/enrichir-jeux.php" class="import-form">
+            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+            <input type="hidden" name="action" value="save_igdb_credentials">
+            <label for="igdb_client_id">Client ID Twitch / IGDB</label>
+            <input type="text" name="igdb_client_id" id="igdb_client_id" required autocomplete="off">
+            <label for="igdb_client_secret">Client Secret</label>
+            <input type="password" name="igdb_client_secret" id="igdb_client_secret" required autocomplete="off">
+            <button type="submit" class="btn btn-secondary">Enregistrer les identifiants IGDB</button>
+        </form>
+    <?php else: ?>
+        <?php if (!empty($igdbCredentialsFromEnvironment)): ?>
+            <p class="hint">Identifiants actifs via <code>MONCINE_IGDB_CLIENT_ID</code> et <code>MONCINE_IGDB_CLIENT_SECRET</code>.</p>
+        <?php else: ?>
+            <p class="hint">✓ Identifiants IGDB enregistrés sur le serveur.</p>
+        <?php endif; ?>
+
+        <?php if (!empty($canManageCatalog)): ?>
+        <form method="post" action="/enrichir-jeux.php" class="import-form enrich-actions">
+            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+            <input type="hidden" name="action" value="enrichir_jeux">
+            <p class="hint">
+                Environ <?= (int) $enrichBatchSize ?> jeu(x) par clic
+                <?php if ((int) ($igdbEnrichPending ?? 0) > 0): ?>
+                    — <?= (int) $igdbEnrichPending ?> restant(s).
+                <?php endif; ?>
+            </p>
+            <div class="export-actions">
+                <button type="submit" class="btn btn-accent">Enrichir mes jeux</button>
+                <label class="checkbox">
+                    <input type="checkbox" name="force_all_jeux" value="1">
+                    Tout retraiter
+                </label>
+            </div>
+        </form>
+        <form method="post" action="/enrichir-jeux.php" class="inline-form">
+            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+            <input type="hidden" name="action" value="test_igdb">
+            <button type="submit" class="btn btn-secondary btn-sm">Tester la connexion IGDB</button>
+        </form>
+
+        <details class="import-columns-help tmdb-key-manage">
+            <summary>Gérer les identifiants IGDB</summary>
+            <?php if (!empty($igdbCredentialsFromEnvironment)): ?>
+                <p class="hint">
+                    Modifiez les variables d’environnement IGDB dans PHP-FPM, puis rechargez PHP-FPM.
+                </p>
+            <?php else: ?>
+                <form method="post" action="/enrichir-jeux.php" class="import-form">
+                    <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                    <input type="hidden" name="action" value="save_igdb_credentials">
+                    <label for="igdb_client_id_replace">Nouveau Client ID</label>
+                    <input type="text" name="igdb_client_id" id="igdb_client_id_replace" required autocomplete="off">
+                    <label for="igdb_client_secret_replace">Nouveau Client Secret</label>
+                    <input type="password" name="igdb_client_secret" id="igdb_client_secret_replace" required autocomplete="off">
+                    <button type="submit" class="btn btn-secondary btn-sm">Remplacer</button>
+                </form>
+                <form method="post" action="/enrichir-jeux.php" class="inline-form tmdb-key-clear-form"
+                      onsubmit="return confirm('Supprimer les identifiants IGDB enregistrés ?');">
+                    <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                    <input type="hidden" name="action" value="clear_igdb_credentials">
+                    <button type="submit" class="btn btn-secondary btn-sm">Supprimer</button>
+                </form>
+            <?php endif; ?>
+        </details>
+        <?php endif; ?>
+    <?php endif; ?>
+    <?php endif; ?>
+</section>
+
 <section class="export-panel">
     <h2>Affiches locales</h2>
     <p class="lead">

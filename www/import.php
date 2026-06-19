@@ -12,6 +12,9 @@ use Moncine\Csrf;
 use Moncine\ExportCatalog;
 use Moncine\FilmEnricher;
 use Moncine\FilmRepository;
+use Moncine\GameEnricher;
+use Moncine\GameRepository;
+use Moncine\IgdbConfig;
 use Moncine\ImportCsv;
 use Moncine\ImportOds;
 use Moncine\ImportPostersZip;
@@ -26,6 +29,8 @@ $posterRemapMessage = '';
 $errors = [];
 $tmdbMessage = '';
 $enrichMessage = '';
+$igdbMessage = '';
+$igdbEnrichMessage = '';
 
 if (isset($_GET['export_error'])) {
     $exportErr = (string) $_GET['export_error'];
@@ -84,6 +89,49 @@ if (isset($_GET['enrich_done'])) {
         $enrichMessage .= ' Il reste ' . $remaining . ' film(s) à traiter — relancez le bouton.';
     } else {
         $enrichMessage .= ' Enrichissement terminé pour tous vos films.';
+    }
+}
+
+if (isset($_GET['igdb_saved'])) {
+    $igdbMessage = 'Identifiants IGDB enregistrés — vous pouvez enrichir vos jeux.';
+}
+if (isset($_GET['igdb_error'])) {
+    $errors[] = 'Impossible d\'enregistrer les identifiants IGDB (vérifiez les droits sur le dossier data/).';
+}
+if (isset($_GET['igdb_cleared'])) {
+    $igdbMessage = 'Identifiants IGDB supprimés du serveur.';
+}
+if (isset($_GET['igdb_clear_env'])) {
+    $errors[] = 'Les identifiants IGDB viennent de MONCINE_IGDB_CLIENT_ID / MONCINE_IGDB_CLIENT_SECRET : '
+        . 'modifiez-les dans la configuration du serveur.';
+}
+if (isset($_GET['igdb_clear_error'])) {
+    $errors[] = 'Impossible de supprimer les identifiants IGDB.';
+}
+if (isset($_GET['igdb_test'])) {
+    $msg = (string) ($_GET['igdb_test_msg'] ?? '');
+    $igdbMessage = ($_GET['igdb_test'] === 'ok' ? '✓ ' : '✗ ') . $msg;
+}
+if (isset($_GET['igdb_enrich_done'])) {
+    $processed = (int) ($_GET['igdb_processed'] ?? 0);
+    $enriched = (int) ($_GET['igdb_enriched'] ?? 0);
+    $notFound = (int) ($_GET['igdb_not_found'] ?? 0);
+    $remaining = (int) ($_GET['igdb_remaining'] ?? 0);
+    $igdbEnrichMessage = sprintf(
+        'Lot traité : %d jeu(x), %d enrichi(s), %d introuvable(s) sur IGDB.',
+        $processed,
+        $enriched,
+        $notFound
+    );
+    if (!empty($_SESSION['igdb_enrich_last_errors'])) {
+        $errors = array_merge($errors, $_SESSION['igdb_enrich_last_errors']);
+        unset($_SESSION['igdb_enrich_last_errors']);
+        $igdbEnrichMessage .= ' Détail des erreurs ci-dessous.';
+    }
+    if ($remaining > 0) {
+        $igdbEnrichMessage .= ' Il reste ' . $remaining . ' jeu(x) à traiter — relancez le bouton.';
+    } else {
+        $igdbEnrichMessage .= ' Enrichissement terminé pour tous vos jeux.';
     }
 }
 
@@ -217,6 +265,10 @@ $catalogCount = CatalogAdmin::canAccess() ? (new ExportCatalog())->catalogEntryC
 $enrichPending = (new FilmEnricher())->countPending();
 $hasTmdbKey = TmdbConfig::hasApiKey();
 $tmdbKeyFromEnvironment = TmdbConfig::getKeySource() === TmdbConfig::SOURCE_ENVIRONMENT;
+$igdbEnrichPending = GameRepository::isAvailable() ? (new GameEnricher())->countPending() : 0;
+$hasIgdbCredentials = IgdbConfig::hasCredentials();
+$igdbCredentialsFromEnvironment = IgdbConfig::getCredentialsSource() === IgdbConfig::SOURCE_ENVIRONMENT;
+$igdbModuleReady = GameRepository::hasIgdbColumns();
 
 View::render('import', [
     'pageTitle' => 'Importer',
@@ -234,6 +286,12 @@ View::render('import', [
     'hasTmdbKey' => $hasTmdbKey,
     'tmdbKeyFromEnvironment' => $tmdbKeyFromEnvironment,
     'enrichBatchSize' => MONCINE_ENRICH_BATCH_SIZE,
+    'igdbMessage' => $igdbMessage,
+    'igdbEnrichMessage' => $igdbEnrichMessage,
+    'igdbEnrichPending' => $igdbEnrichPending,
+    'hasIgdbCredentials' => $hasIgdbCredentials,
+    'igdbCredentialsFromEnvironment' => $igdbCredentialsFromEnvironment,
+    'igdbModuleReady' => $igdbModuleReady,
     'phpPostMaxSize' => UploadLimits::postMaxSizeLabel(),
     'phpUploadMaxSize' => UploadLimits::uploadMaxFilesizeLabel(),
     'importEngineBuild' => MONCINE_IMPORT_ENGINE_BUILD,

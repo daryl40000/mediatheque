@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.5.4** · **Date : 2026-06-16**
+**Version : 0.5.5** · **Date : 2026-06-16**
 
 ## Objectif
 
@@ -30,6 +30,12 @@ Gérer une **collection de jeux vidéo** (physiques ou dématérialisés) avec l
 | `base_game_oeuvre_id` | Jeu de base du catalogue (extensions) |
 | `is_remake` | 1 = remake — migration **045** |
 | `original_game_oeuvre_id` | Jeu d’origine du catalogue (remakes) |
+| `igdb_id` | Identifiant IGDB (correction manuelle possible) — migration **046** |
+| `igdb_enriched_at` | Date de la dernière tentative d’enrichissement IGDB |
+| `franchise` | Saga / franchise IGDB (ex. « The Witcher ») — migration **047** |
+| `game_mode` | Modes de jeu traduits (Solo, Multijoueur…) — tags séparés par virgules |
+| `theme` | Thèmes traduits (Fantasy, Monde ouvert…) — tags séparés par virgules |
+| `alternative_names` | Acronymes IGDB uniquement (GTA, FF…) — tags séparés par virgules |
 
 ### Table `game_attachment`
 
@@ -51,7 +57,62 @@ Migrations :
 - `sql/migrations/042_game_attachment.sql` — fichiers attachés ;
 - `sql/migrations/043_bibliotheque_linux_not_supported.sql` — flag « Linux non supporté » ;
 - `sql/migrations/044_oeuvre_jeu_extensions.sql` — extensions (DLC) ;
-- `sql/migrations/045_oeuvre_jeu_remakes.sql` — remakes.
+- `sql/migrations/045_oeuvre_jeu_remakes.sql` — remakes ;
+- `sql/migrations/046_oeuvre_jeu_igdb.sql` — identifiant et date enrichissement IGDB ;
+- `sql/migrations/047_oeuvre_jeu_igdb_metadata.sql` — franchise, modes, thèmes, acronymes.
+
+### Enrichissement IGDB (0.5.5)
+
+Même logique que **TMDB pour les films** : compléter automatiquement les fiches catalogue (et donc la bibliothèque) depuis [IGDB](https://www.igdb.com/).
+
+#### Configuration (une fois)
+
+1. Créer une application **Confidential** sur [dev.twitch.tv/console/apps](https://dev.twitch.tv/console/apps).
+2. Page **Importer** → section **« Enrichir mes jeux (IGDB) »** : enregistrer **Client ID** et **Client Secret**.
+3. Alternative serveur : variables `MONCINE_IGDB_CLIENT_ID` et `MONCINE_IGDB_CLIENT_SECRET`, ou fichier `data/igdb_credentials.json`.
+
+#### Données récupérées
+
+| Champ | Stockage | Remarque |
+|-------|----------|----------|
+| Titre français | `oeuvres.titre` | Via `game_localizations` IGDB si disponible |
+| Titre anglais | `oeuvres.titre_original` | Nom IGDB par défaut |
+| Jaquette | `oeuvres.poster_url` | Téléchargée localement (`PosterStorage`) |
+| Année | `oeuvres.annee` | Première date de sortie |
+| Studio | `oeuvre_jeu.studio` | Développeur |
+| Éditeur | `oeuvre_jeu.editeur` | Éditeur |
+| Genres | `oeuvre_jeu.genre` | Traduits FR (`IgdbGenreMap`) |
+| Franchise | `oeuvre_jeu.franchise` | Première franchise IGDB |
+| Modes | `oeuvre_jeu.game_mode` | Traduits FR (`IgdbGameModeMap`) |
+| Thèmes | `oeuvre_jeu.theme` | Traduits FR (`IgdbThemeMap`) |
+| Acronymes | `oeuvre_jeu.alternative_names` | Filtre acronymes seuls (`IgdbAlternativeNameFilter`) |
+
+**Affichage titre :** le français est montré s’il existe ; sinon le titre anglais. L’anglais reste en base pour une future interface bilingue.
+
+Les champs déjà remplis ne sont **pas écrasés**, sauf correction avec un **identifiant IGDB** précis.
+
+#### Utilisation
+
+| Action | Où |
+|--------|-----|
+| Enrichir ~8 jeux par clic | **Importer** → « Enrichir mes jeux » |
+| Enrichir une fiche catalogue | `/oeuvre-jeu.php` → panneau IGDB (admin) |
+| Enrichir une fiche bibliothèque | `/jeu.php` → panneau IGDB (admin) |
+| Corriger avec un ID IGDB | Coller le numéro ou l’URL `igdb.com/games/…` |
+
+Handlers : `/enrichir-jeux.php` (lot + config), `/enrichir-jeu.php`, `/enrichir-oeuvre-jeu.php`.
+
+#### Classes PHP (IGDB)
+
+| Classe | Rôle |
+|--------|------|
+| `IgdbConfig` | Identifiants Twitch / IGDB (fichier ou env) |
+| `IgdbClient` | OAuth2 + requêtes API v4 |
+| `GameEnricher` | Enrichissement unitaire et par lots |
+| `GameCatalogEnrichment` | Sélection et mise à jour SQL |
+| `GameTitle` | Titre affiché FR / EN |
+| `IgdbGenreMap`, `IgdbGameModeMap`, `IgdbThemeMap` | Traductions EN → FR |
+| `IgdbAlternativeNameFilter` | Ne garde que les acronymes |
 
 ### Extensions et remakes (0.5.2 / 0.5.4)
 
@@ -96,6 +157,10 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | `/jeux.php` | Liste « Mes jeux » (tri colonnes, recherche, vue liste ou vignettes) |
 | `/jeux-envies.php` | Liste des envies jeux |
 | `/jeu.php?id=` | Fiche jeu (+ section « Dans vos magazines », fichiers attachés) |
+| `/oeuvre-jeu.php?id=` | Fiche catalogue jeu (admin : édition, enrichissement IGDB) |
+| `/enrichir-jeux.php` | Enrichissement IGDB par lots + config (POST) |
+| `/enrichir-jeu.php` | Enrichissement IGDB fiche bibliothèque (POST, admin) |
+| `/enrichir-oeuvre-jeu.php` | Enrichissement IGDB fiche catalogue (POST, admin) |
 | `/ajouter-jeu.php` | Formulaire d’ajout (collection ou envie) |
 | `/modifier-jeu.php?id=` | Modification fiche catalogue (admin) |
 | `/rechercher-jeux-catalogue.php` | API JSON autocomplétion catalogue |
@@ -111,6 +176,12 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | Classe | Rôle |
 |--------|------|
 | `GameRepository` | CRUD collection, recherche catalogue, jaquettes, flags Linux, extensions, remakes |
+| `GameEnricher` | Enrichissement IGDB (unitaire et par lots) |
+| `IgdbClient` | Client HTTP API IGDB v4 |
+| `GameTitle` | Titre affiché (français prioritaire, anglais en secours) |
+| `GameSchema` | Détection colonnes / migrations progressives |
+| `GameRowMapper` | Hydratation lignes catalogue et bibliothèque |
+| `GameRelatedSections` | Bandeaux extensions / remakes |
 | `SearchMatch` | Recherche tolérante (accents, casse, faute) pour autocomplétion |
 | `GameAttachmentRepository` | Upload, liste et suppression des fichiers joints |
 | `GameEditionIcons` | URLs des icônes support (images ou repli SVG) |

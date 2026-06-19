@@ -114,6 +114,21 @@ $posterUploadError = (string) ($_GET['poster_error'] ?? '');
 $editOpen = isset($_GET['edit']) || $saveError !== '';
 $posterUploadOpen = $posterUploadError !== '';
 
+$enrichStatus = null;
+$enrichMessage = '';
+if (isset($_GET['enrich'])) {
+    $enrichStatus = match ((string) $_GET['enrich']) {
+        'ok' => 'ok',
+        'not_found' => 'not_found',
+        default => 'error',
+    };
+    $enrichMessage = (string) ($_GET['enrich_msg'] ?? '');
+    $refreshed = $repo->findCatalogByOeuvreId($oeuvreId);
+    if ($refreshed !== null) {
+        $game = $refreshed;
+    }
+}
+
 if (isset($_GET['poster_uploaded']) && (string) $_GET['poster_uploaded'] === '1') {
     $refreshed = $repo->findCatalogByOeuvreId($oeuvreId);
     if ($refreshed !== null) {
@@ -133,7 +148,7 @@ if ($library !== null) {
 }
 
 View::render('oeuvre-jeu', [
-    'pageTitle' => (string) ($game['titre'] ?? 'Jeu catalogue'),
+    'pageTitle' => (string) ($game['display_titre'] ?? $game['titre'] ?? 'Jeu catalogue'),
     'catalogListContext' => $catalogListContext,
     'oeuvreNav' => $oeuvreNav,
     'game' => $game,
@@ -156,6 +171,8 @@ View::render('oeuvre-jeu', [
     'posterUploaded' => isset($_GET['poster_uploaded']) && (string) $_GET['poster_uploaded'] === '1',
     'editOpen' => $editOpen,
     'posterUploadOpen' => $posterUploadOpen,
+    'enrichStatus' => $enrichStatus,
+    'enrichMessage' => $enrichMessage,
     'platformChoices' => GameRepository::isAvailable() ? GamePlatform::choices() : [],
     'knownGenres' => GameRepository::isAvailable() ? $repo->listKnownGenres() : [],
 ]);
