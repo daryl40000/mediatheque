@@ -52,6 +52,7 @@ final class Database
             ]);
             $pdo->exec('PRAGMA foreign_keys = ON');
             FrenchSort::registerCollation($pdo);
+            SearchMatch::registerSqlFunction($pdo);
         } catch (PDOException $e) {
             $msg = str_contains($e->getMessage(), 'could not find driver')
                 ? 'Pilote SQLite manquant (installez php-sqlite3).'

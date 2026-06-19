@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.5.3** (2026-06-16)  
+**Version actuelle : 0.5.4** (2026-06-16)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -13,12 +13,12 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ---
 
-## Où en est-on ? (synthèse 0.5.3)
+## Où en est-on ? (synthèse 0.5.4)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
 | **Films** | ✅ Production | 0.4.4+ | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`) |
-| **Jeux** | ✅ Utilisable | 0.5.0 → **0.5.3** | Complet (fiches `/oeuvre-jeu.php`, autocomplétion à l’ajout) |
+| **Jeux** | ✅ Utilisable | 0.5.0 → **0.5.4** | Complet (extensions, remakes, autocomplétion, recherche tolérante) |
 | **Magazines** | 🔄 Avancé (~85 %) | 0.2.x → 0.4.x | Partiel (fiche `/oeuvre-magazine.php` ✅ ; autocomplétion à l’ajout ⏳) |
 | **BD / Manga** | ⏸️ Repoussé | — | — |
 | **Livres** | ⏸️ Repoussé | — | — |
@@ -29,7 +29,7 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 |-------|--------|----------------|-------|
 | **M0** Fondations multi-médias | ✅ Livré | 0.1.0 | — |
 | **M1** Stabilisation films | ✅ Livré | 0.4.4 | Maintenance seulement |
-| **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.5.3** | Polish non bloquant (voir M4) |
+| **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.5.4** | Polish non bloquant (voir M4) |
 | **M5** Magazines | 🔄 En cours | 0.4.3 → **0.6.0** cible | Parité catalogue + profil public |
 | **Pont** Magazines ↔ Jeux | 🔄 Partiel | 0.5.0+ | Rattachement rétroactif |
 | **M2** BD / Manga | ⏸️ Repoussé | 0.6.x+ (indicatif) | Après M5 stabilisée |
@@ -41,12 +41,12 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ## Prochaines étapes (par priorité)
 
-### Priorité 1 — Consolidation **0.5.3** (court terme)
+### Priorité 1 — Consolidation **0.5.4** (court terme)
 
-1. **QA prod 0.5.3** : fiches `/oeuvre-jeu.php`, `/oeuvre-magazine.php`, autocomplétion ajout jeu, profil public jeux, statistiques cliquables, extensions catalogue.
-2. **Tag Git** `v0.5.3` après validation.
+1. **QA prod 0.5.4** : remakes, affichage extensions/remakes, recherche tolérante, migrations **044–045**.
+2. **Tag Git** `v0.5.4` après validation.
 
-### Priorité 2 — **M5** : aligner magazines sur films / jeux (**0.5.4 → 0.6.0**)
+### Priorité 2 — **M5** : aligner magazines sur films / jeux (**0.6.0**)
 
 3. **Autocomplétion catalogue** à l’ajout d’un numéro (`/ajouter-numero-magazine.php`) — même logique que les jeux (0.5.3).
 4. **Parité fiche catalogue** : vérifier édition admin, navigation catalogue, export/import magazine.
@@ -62,7 +62,7 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 9. Plateformes configurables en admin (au lieu de la liste fixe `GamePlatform`).
 10. Flag « non prêtable » pour exemplaires dématérialisés.
-11. Vérification prod migrations **039–044**.
+11. Vérification prod migrations **039–045**.
 
 ### Priorité 5 — **M6** Transversal (films + jeux + magazines alignés)
 
@@ -82,7 +82,7 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ```mermaid
 flowchart LR
-  A[QA 0.5.3] --> B[M5 parité catalogue]
+  A[QA 0.5.4] --> B[M5 parité catalogue]
   B --> C[Pont rétroactif]
   C --> D[Polish M4]
   D --> E[M6 transversal]
@@ -161,7 +161,7 @@ Détail complet : archives QA dans l’historique git avant cette réorganisatio
 
 ---
 
-## M4 — Jeux vidéo ✅ Livré (0.5.3)
+## M4 — Jeux vidéo ✅ Livré (0.5.4)
 
 **Documentation :** [doc/jeux.md](doc/jeux.md)
 
@@ -178,6 +178,8 @@ Détail complet : archives QA dans l’historique git avant cette réorganisatio
 | Catalogue admin multi-médias, export/import `media_domain` | 0.5.2 |
 | Fiches catalogue `/oeuvre-jeu.php`, édition admin, ajout bibliothèque | 0.5.3 |
 | Autocomplétion à l’ajout collection (`/ajouter-jeu.php`) | 0.5.3 |
+| Extensions DLC + remakes, liens jaquettes | **0.5.4** |
+| Recherche / autocomplétion tolérante (`SearchMatch`) | **0.5.4** |
 | Statistiques enrichies (`GameCollectionStats`, `GameListFilter`) | 0.5.3 |
 | Profil public onglet Jeux | 0.5.3 |
 
@@ -377,4 +379,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.5.3** — 2026-06-16 (réorganisation roadmap ; catalogue jeux/magazines, autocomplétion ajout jeu).*
+*Dernière mise à jour : **0.5.4** — 2026-06-16 (remakes jeux, affichage liens, recherche tolérante).*

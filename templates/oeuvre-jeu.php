@@ -85,24 +85,6 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
                 </header>
 
                 <dl class="film-facts">
-                    <?php if (!empty($game['is_extension']) && is_array($baseGame)): ?>
-                        <dt>Jeu de base</dt>
-                        <dd>
-                            <a href="<?= Moncine\View::escape((string) ($baseGame['library_url'] ?? '')) ?>">
-                                <?= Moncine\View::escape((string) ($baseGame['titre'] ?? '')) ?><?php if ((int) ($baseGame['annee'] ?? 0) > 0): ?> (<?= (int) $baseGame['annee'] ?>)<?php endif; ?>
-                            </a>
-                        </dd>
-                    <?php endif; ?>
-
-                    <?php if (!empty($game['is_remake']) && is_array($originalGame)): ?>
-                        <dt>Jeu d'origine</dt>
-                        <dd>
-                            <a href="<?= Moncine\View::escape((string) ($originalGame['library_url'] ?? '')) ?>">
-                                <?= Moncine\View::escape((string) ($originalGame['titre'] ?? '')) ?><?php if ((int) ($originalGame['annee'] ?? 0) > 0): ?> (<?= (int) $originalGame['annee'] ?>)<?php endif; ?>
-                            </a>
-                        </dd>
-                    <?php endif; ?>
-
                     <?php if ((string) ($game['studio'] ?? '') !== ''): ?>
                         <dt>Studio</dt>
                         <dd><?= Moncine\View::escape((string) $game['studio']) ?></dd>
@@ -133,6 +115,90 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
                     <?php endif; ?>
                 </dl>
 
+                <?php
+                $baseGame = $baseGame ?? null;
+                $originalGame = $originalGame ?? null;
+                $catalogExtensions = $catalogExtensions ?? [];
+                $catalogRemakes = $catalogRemakes ?? [];
+                $gameRelatedSections = [];
+
+                if (!empty($game['is_extension']) && is_array($baseGame) && (int) ($baseGame['oeuvre_id'] ?? 0) > 0) {
+                    $gameRelatedSections[] = [
+                        'title' => 'Jeu de base',
+                        'items' => [[
+                            'url' => trim((string) ($baseGame['library_url'] ?? '')),
+                            'poster_url' => $baseGame['poster_url'] ?? null,
+                            'annee' => (int) ($baseGame['annee'] ?? 0),
+                            'titre' => (string) ($baseGame['titre'] ?? ''),
+                        ]],
+                    ];
+                } elseif (!empty($game['is_remake']) && is_array($originalGame) && (int) ($originalGame['oeuvre_id'] ?? 0) > 0) {
+                    $gameRelatedSections[] = [
+                        'title' => 'Jeu d\'origine',
+                        'items' => [[
+                            'url' => trim((string) ($originalGame['library_url'] ?? '')),
+                            'poster_url' => $originalGame['poster_url'] ?? null,
+                            'annee' => (int) ($originalGame['annee'] ?? 0),
+                            'titre' => (string) ($originalGame['titre'] ?? ''),
+                        ]],
+                    ];
+                } else {
+                    if ($catalogExtensions !== []) {
+                        $extensionItems = [];
+                        foreach ($catalogExtensions as $extension) {
+                            if (!is_array($extension)) {
+                                continue;
+                            }
+                            $extensionItems[] = [
+                                'url' => Moncine\View::oeuvreJeuUrl(
+                                    (int) ($extension['oeuvre_id'] ?? 0),
+                                    $catalogSearch ?? '',
+                                    $catalogSort ?? 'titre',
+                                    $catalogDir ?? 'asc',
+                                    (int) ($catalogPage ?? 1)
+                                ),
+                                'poster_url' => $extension['poster_url'] ?? null,
+                                'annee' => (int) ($extension['annee'] ?? 0),
+                                'titre' => (string) ($extension['titre'] ?? ''),
+                            ];
+                        }
+                        if ($extensionItems !== []) {
+                            $gameRelatedSections[] = [
+                                'title' => 'Extensions',
+                                'items' => $extensionItems,
+                            ];
+                        }
+                    }
+                    if ($catalogRemakes !== []) {
+                        $remakeItems = [];
+                        foreach ($catalogRemakes as $remake) {
+                            if (!is_array($remake)) {
+                                continue;
+                            }
+                            $remakeItems[] = [
+                                'url' => Moncine\View::oeuvreJeuUrl(
+                                    (int) ($remake['oeuvre_id'] ?? 0),
+                                    $catalogSearch ?? '',
+                                    $catalogSort ?? 'titre',
+                                    $catalogDir ?? 'asc',
+                                    (int) ($catalogPage ?? 1)
+                                ),
+                                'poster_url' => $remake['poster_url'] ?? null,
+                                'annee' => (int) ($remake['annee'] ?? 0),
+                                'titre' => (string) ($remake['titre'] ?? ''),
+                            ];
+                        }
+                        if ($remakeItems !== []) {
+                            $gameRelatedSections[] = [
+                                'title' => 'Remakes',
+                                'items' => $remakeItems,
+                            ];
+                        }
+                    }
+                }
+                require MONCINE_ROOT . '/templates/_game_related_posters.php';
+                ?>
+
                 <?php if (!empty($game['synopsis'])): ?>
                     <h2>Description</h2>
                     <p class="film-synopsis"><?= Moncine\View::escape((string) $game['synopsis']) ?></p>
@@ -154,51 +220,6 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
                 $posterUploadOpen = $posterUploadOpen ?? false;
                 require MONCINE_ROOT . '/templates/_oeuvre_poster_upload_form.php';
                 ?>
-
-                <?php if ($catalogExtensions !== []): ?>
-                    <section class="oeuvre-catalog-page__extensions">
-                        <h2>Extensions au catalogue</h2>
-                        <ul class="catalog-extensions-list">
-                            <?php foreach ($catalogExtensions as $extension): ?>
-                                <li>
-                                    <a href="<?= Moncine\View::escape(Moncine\View::oeuvreJeuUrl(
-                                        (int) ($extension['oeuvre_id'] ?? 0),
-                                        $catalogSearch ?? '',
-                                        $catalogSort ?? 'titre',
-                                        $catalogDir ?? 'asc',
-                                        (int) ($catalogPage ?? 1)
-                                    )) ?>">
-                                        <?= Moncine\View::escape((string) ($extension['display_label'] ?? $extension['titre'] ?? '')) ?>
-                                    </a>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </section>
-                <?php endif; ?>
-
-                <?php
-                $catalogRemakes = $catalogRemakes ?? [];
-                if ($catalogRemakes !== []):
-                ?>
-                    <section class="oeuvre-catalog-page__extensions">
-                        <h2>Remakes au catalogue</h2>
-                        <ul class="catalog-extensions-list">
-                            <?php foreach ($catalogRemakes as $remake): ?>
-                                <li>
-                                    <a href="<?= Moncine\View::escape(Moncine\View::oeuvreJeuUrl(
-                                        (int) ($remake['oeuvre_id'] ?? 0),
-                                        $catalogSearch ?? '',
-                                        $catalogSort ?? 'titre',
-                                        $catalogDir ?? 'asc',
-                                        (int) ($catalogPage ?? 1)
-                                    )) ?>">
-                                        <?= Moncine\View::escape((string) ($remake['titre'] ?? '')) ?><?php if ((int) ($remake['annee'] ?? 0) > 0): ?> (<?= (int) $remake['annee'] ?>)<?php endif; ?>
-                                    </a>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    </section>
-                <?php endif; ?>
 
                 <?php
                 $mediaDomain = Moncine\MediaDomain::JEU;

@@ -75,6 +75,14 @@ final class GameRepositoryTest extends MoncineTestCase
         $results = $repo->searchCatalog('Gran Turismo', 10);
         $this->assertNotEmpty($results);
         $this->assertSame('Gran Turismo 7 Test', $results[0]['titre']);
+
+        $accentResults = $repo->searchCatalog('gran turismo', 10);
+        $this->assertNotEmpty($accentResults);
+        $this->assertSame('Gran Turismo 7 Test', $accentResults[0]['titre']);
+
+        $typoResults = $repo->searchCatalog('Gran Turisno', 10);
+        $this->assertNotEmpty($typoResults);
+        $this->assertSame('Gran Turismo 7 Test', $typoResults[0]['titre']);
     }
 
     public function testCollectionStatsDashboard(): void

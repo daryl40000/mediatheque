@@ -41,6 +41,6 @@ final class MagazineFtsQuery
 
         $token = str_replace(['"', "'", '*'], '', $token);
 
-        return trim($token);
+        return SearchMatch::fold(trim($token));
     }
 }

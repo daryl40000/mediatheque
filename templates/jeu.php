@@ -176,86 +176,71 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                 $isExtension = !empty($game['is_extension']);
                 $isRemake = !empty($game['is_remake']);
 
-                $gameLinkLabel = static function (array $linkedGame): string {
-                    $titre = (string) ($linkedGame['titre'] ?? '');
-                    $annee = (int) ($linkedGame['annee'] ?? 0);
-
-                    return $annee > 0 ? $titre . ' (' . $annee . ')' : $titre;
-                };
+                $gameRelatedSections = [];
+                if ($isExtension && is_array($baseGame) && (int) ($baseGame['oeuvre_id'] ?? 0) > 0) {
+                    $gameRelatedSections[] = [
+                        'title' => 'Jeu de base',
+                        'items' => [[
+                            'url' => trim((string) ($baseGame['library_url'] ?? '')),
+                            'poster_url' => $baseGame['poster_url'] ?? null,
+                            'annee' => (int) ($baseGame['annee'] ?? 0),
+                            'titre' => (string) ($baseGame['titre'] ?? ''),
+                        ]],
+                    ];
+                } elseif ($isRemake && is_array($originalGame) && (int) ($originalGame['oeuvre_id'] ?? 0) > 0) {
+                    $gameRelatedSections[] = [
+                        'title' => 'Jeu d\'origine',
+                        'items' => [[
+                            'url' => trim((string) ($originalGame['library_url'] ?? '')),
+                            'poster_url' => $originalGame['poster_url'] ?? null,
+                            'annee' => (int) ($originalGame['annee'] ?? 0),
+                            'titre' => (string) ($originalGame['titre'] ?? ''),
+                        ]],
+                    ];
+                } else {
+                    if ($extensions !== []) {
+                        $extensionItems = [];
+                        foreach ($extensions as $ext) {
+                            if (!is_array($ext)) {
+                                continue;
+                            }
+                            $extensionItems[] = [
+                                'url' => Moncine\View::gameUrl((int) ($ext['bib_id'] ?? 0)),
+                                'poster_url' => $ext['poster_url'] ?? null,
+                                'annee' => (int) ($ext['annee'] ?? 0),
+                                'titre' => (string) ($ext['titre'] ?? ''),
+                            ];
+                        }
+                        if ($extensionItems !== []) {
+                            $gameRelatedSections[] = [
+                                'title' => 'Extensions',
+                                'items' => $extensionItems,
+                            ];
+                        }
+                    }
+                    if ($remakes !== []) {
+                        $remakeItems = [];
+                        foreach ($remakes as $remake) {
+                            if (!is_array($remake)) {
+                                continue;
+                            }
+                            $remakeItems[] = [
+                                'url' => Moncine\View::gameUrl((int) ($remake['bib_id'] ?? 0)),
+                                'poster_url' => $remake['poster_url'] ?? null,
+                                'annee' => (int) ($remake['annee'] ?? 0),
+                                'titre' => (string) ($remake['titre'] ?? ''),
+                            ];
+                        }
+                        if ($remakeItems !== []) {
+                            $gameRelatedSections[] = [
+                                'title' => 'Remakes',
+                                'items' => $remakeItems,
+                            ];
+                        }
+                    }
+                }
+                require MONCINE_ROOT . '/templates/_game_related_posters.php';
                 ?>
-
-                <?php if ($isExtension): ?>
-                    <section class="film-promote-panel">
-                        <h2>Extension</h2>
-                        <?php if (is_array($baseGame) && (int) ($baseGame['oeuvre_id'] ?? 0) > 0): ?>
-                            <p class="hint">
-                                Extension de :
-                                <?php if (trim((string) ($baseGame['library_url'] ?? '')) !== ''): ?>
-                                    <a href="<?= Moncine\View::escape((string) $baseGame['library_url']) ?>">
-                                        <strong><?= Moncine\View::escape($gameLinkLabel($baseGame)) ?></strong>
-                                    </a>
-                                <?php else: ?>
-                                    <strong><?= Moncine\View::escape($gameLinkLabel($baseGame)) ?></strong>
-                                    <span class="hint">(jeu de base non présent dans votre bibliothèque)</span>
-                                <?php endif; ?>
-                            </p>
-                        <?php else: ?>
-                            <p class="hint">Jeu de base non renseigné.</p>
-                        <?php endif; ?>
-                    </section>
-                <?php elseif ($isRemake): ?>
-                    <section class="film-promote-panel">
-                        <h2>Remake</h2>
-                        <?php if (is_array($originalGame) && (int) ($originalGame['oeuvre_id'] ?? 0) > 0): ?>
-                            <p class="hint">
-                                Remake de :
-                                <?php if (trim((string) ($originalGame['library_url'] ?? '')) !== ''): ?>
-                                    <a href="<?= Moncine\View::escape((string) $originalGame['library_url']) ?>">
-                                        <strong><?= Moncine\View::escape($gameLinkLabel($originalGame)) ?></strong>
-                                    </a>
-                                <?php else: ?>
-                                    <strong><?= Moncine\View::escape($gameLinkLabel($originalGame)) ?></strong>
-                                    <span class="hint">(jeu d'origine non présent dans votre bibliothèque)</span>
-                                <?php endif; ?>
-                            </p>
-                        <?php else: ?>
-                            <p class="hint">Jeu d'origine non renseigné.</p>
-                        <?php endif; ?>
-                    </section>
-                <?php else: ?>
-                    <?php if ($extensions !== []): ?>
-                        <section class="film-promote-panel">
-                            <h2>Extensions</h2>
-                            <p class="hint">Extensions reliées à ce jeu dans votre bibliothèque :</p>
-                            <ul class="magazine-subject-results" role="list">
-                                <?php foreach ($extensions as $ext): ?>
-                                    <li class="magazine-subject-results__item" role="listitem">
-                                        <a href="<?= Moncine\View::escape(Moncine\View::gameUrl((int) ($ext['bib_id'] ?? 0))) ?>"
-                                           class="magazine-subject-results__link">
-                                            <strong><?= Moncine\View::escape((string) ($ext['display_label'] ?? $ext['titre'] ?? '')) ?></strong>
-                                        </a>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </section>
-                    <?php endif; ?>
-                    <?php if ($remakes !== []): ?>
-                        <section class="film-promote-panel">
-                            <h2>Remakes</h2>
-                            <p class="hint">Remakes de ce jeu dans votre bibliothèque :</p>
-                            <ul class="magazine-subject-results" role="list">
-                                <?php foreach ($remakes as $remake): ?>
-                                    <li class="magazine-subject-results__item" role="listitem">
-                                        <a href="<?= Moncine\View::escape(Moncine\View::gameUrl((int) ($remake['bib_id'] ?? 0))) ?>"
-                                           class="magazine-subject-results__link">
-                                            <strong><?= Moncine\View::escape((string) ($remake['display_label'] ?? $remake['titre'] ?? '')) ?></strong>
-                                        </a>
-                                    </li>
-                                <?php endforeach; ?>
-                            </ul>
-                        </section>
-                    <?php endif; ?>
-                <?php endif; ?>
 
                 <?php if (trim((string) ($game['synopsis'] ?? '')) !== ''): ?>
                     <section>

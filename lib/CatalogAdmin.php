@@ -504,10 +504,11 @@ final class CatalogAdmin
 
         $search = trim($search);
         if ($search !== '') {
-            $pattern = LikePattern::containsFragment($search);
-            $parts[] = '(LOWER(o.titre) LIKE LOWER(:catalog_search) ESCAPE \'\\\'
-                OR LOWER(o.realisateur) LIKE LOWER(:catalog_search))';
+            $pattern = SearchMatch::foldedContainsPattern($search);
+            $parts[] = '(fold_search(o.titre) LIKE :catalog_search ESCAPE \'\\\'
+                OR fold_search(COALESCE(o.realisateur, \'\')) LIKE :catalog_search_real ESCAPE \'\\\')';
             $params['catalog_search'] = $pattern;
+            $params['catalog_search_real'] = $pattern;
         }
 
         if ($parts === []) {

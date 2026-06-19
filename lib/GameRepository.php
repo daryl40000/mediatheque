@@ -376,10 +376,13 @@ final class GameRepository
 
         $searchQuery = trim($searchQuery);
         if ($searchQuery !== '') {
-            $where[] = '(LOWER(o.titre) LIKE LOWER(:q) ESCAPE \'\\\' OR LOWER(oj.studio) LIKE LOWER(:q_studio) ESCAPE \'\\\' OR LOWER(oj.genre) LIKE LOWER(:q_genre) ESCAPE \'\\\')';
-            $params['q'] = LikePattern::containsFragment($searchQuery);
-            $params['q_studio'] = LikePattern::containsFragment($searchQuery);
-            $params['q_genre'] = LikePattern::containsFragment($searchQuery);
+            $where[] = '(fold_search(o.titre) LIKE :q ESCAPE \'\\\''
+                . ' OR fold_search(COALESCE(oj.studio, \'\')) LIKE :q_studio ESCAPE \'\\\''
+                . ' OR fold_search(COALESCE(oj.genre, \'\')) LIKE :q_genre ESCAPE \'\\\')';
+            $foldedPattern = SearchMatch::foldedContainsPattern($searchQuery);
+            $params['q'] = $foldedPattern;
+            $params['q_studio'] = $foldedPattern;
+            $params['q_genre'] = $foldedPattern;
         }
 
         ($filter ?? GameListFilter::empty())->applyToSql($where, $params);
@@ -488,14 +491,28 @@ final class GameRepository
         }
 
         $limit = max(1, min($limit, 50));
+        $prefetchLimit = min(max($limit * 8, 80), 250);
         $params = ['game_domain' => MediaDomain::JEU];
         $where = ['o.media_domain = :game_domain'];
 
         $query = trim($query);
         if ($query !== '') {
-            $where[] = '(LOWER(o.titre) LIKE LOWER(:q) ESCAPE \'\\\' OR LOWER(oj.studio) LIKE LOWER(:q_studio) ESCAPE \'\\\')';
-            $params['q'] = LikePattern::containsFragment($query);
-            $params['q_studio'] = LikePattern::containsFragment($query);
+            $conditions = [
+                'fold_search(o.titre) LIKE :q_titre ESCAPE \'\\\'',
+                'fold_search(COALESCE(oj.studio, \'\')) LIKE :q_studio ESCAPE \'\\\'',
+            ];
+            $params['q_titre'] = SearchMatch::foldedContainsPattern($query);
+            $params['q_studio'] = SearchMatch::foldedContainsPattern($query);
+
+            $prefixPattern = SearchMatch::foldedPrefixPattern($query, 2);
+            if ($prefixPattern !== '') {
+                $conditions[] = 'fold_search(o.titre) LIKE :q_prefix ESCAPE \'\\\'';
+                $conditions[] = 'fold_search(COALESCE(oj.studio, \'\')) LIKE :q_prefix_studio ESCAPE \'\\\'';
+                $params['q_prefix'] = $prefixPattern;
+                $params['q_prefix_studio'] = $prefixPattern;
+            }
+
+            $where[] = '(' . implode(' OR ', $conditions) . ')';
         }
 
         $sql = 'SELECT ' . self::selectCatalogRow()
@@ -503,12 +520,24 @@ final class GameRepository
             . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
             . ' WHERE ' . implode(' AND ', $where)
             . ' ORDER BY o.titre COLLATE FRENCH_NOCASE ASC'
-            . ' LIMIT ' . $limit;
+            . ' LIMIT ' . ($query !== '' ? $prefetchLimit : $limit);
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-        return array_map([$this, 'hydrateCatalogRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+        if ($query !== '') {
+            $rows = SearchMatch::filterRankLimit(
+                $rows,
+                $query,
+                static fn (array $row): string => (string) ($row['titre'] ?? '')
+                    . ' '
+                    . (string) ($row['studio'] ?? ''),
+                $limit
+            );
+        }
+
+        return array_map([$this, 'hydrateCatalogRow'], $rows);
     }
 
     /** @return array<string, mixed>|null */
@@ -593,7 +622,7 @@ final class GameRepository
         ];
 
         $stmt = $this->db->prepare(
-            'SELECT b.id AS bib_id, o.id AS oeuvre_id, o.titre, o.annee, oj.platform'
+            'SELECT b.id AS bib_id, o.id AS oeuvre_id, o.titre, o.annee, o.poster_url, oj.platform'
             . ' FROM bibliotheque b'
             . ' INNER JOIN oeuvres o ON o.id = b.oeuvre_id'
             . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
@@ -637,7 +666,7 @@ final class GameRepository
         ];
 
         $stmt = $this->db->prepare(
-            'SELECT b.id AS bib_id, o.id AS oeuvre_id, o.titre, o.annee, oj.platform'
+            'SELECT b.id AS bib_id, o.id AS oeuvre_id, o.titre, o.annee, o.poster_url, oj.platform'
             . ' FROM bibliotheque b'
             . ' INNER JOIN oeuvres o ON o.id = b.oeuvre_id'
             . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
@@ -1329,7 +1358,7 @@ final class GameRepository
 
     /**
      * @param array<string, mixed> $row
-     * @return array{bib_id:int, oeuvre_id:int, titre:string, annee:int, platform_short:string, display_label:string}
+     * @return array{bib_id:int, oeuvre_id:int, titre:string, annee:int, poster_url:string, platform_short:string, display_label:string}
      */
     private static function hydrateLinkedLibraryGameRow(array $row): array
     {
@@ -1343,6 +1372,7 @@ final class GameRepository
             'oeuvre_id' => $oeuvreId,
             'titre' => $titre,
             'annee' => $annee,
+            'poster_url' => (string) ($row['poster_url'] ?? ''),
             'platform_short' => $platformShort,
             'display_label' => self::linkedGameDisplayLabel($titre, $annee, $platformShort),
         ];

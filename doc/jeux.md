@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.5.3** · **Date : 2026-06-16**
+**Version : 0.5.4** · **Date : 2026-06-16**
 
 ## Objectif
 
@@ -26,6 +26,10 @@ Gérer une **collection de jeux vidéo** (physiques ou dématérialisés) avec l
 | `is_digital` | 1 = version démat, 0 = physique |
 | `physical_supports` | Supports physiques possédés (CD/DVD, disquette…) |
 | `digital_stores` | Magasins démat (Steam, GOG, Epic…) + URLs |
+| `is_extension` | 1 = extension (DLC / add-on) — migration **044** |
+| `base_game_oeuvre_id` | Jeu de base du catalogue (extensions) |
+| `is_remake` | 1 = remake — migration **045** |
+| `original_game_oeuvre_id` | Jeu d’origine du catalogue (remakes) |
 
 ### Table `game_attachment`
 
@@ -45,7 +49,36 @@ Migrations :
 - `sql/migrations/040_oeuvre_jeu_editions.sql` — exemplaires physiques/démat ;
 - `sql/migrations/041_bibliotheque_tested_on_linux.sql` — flag « testé sur Linux » ;
 - `sql/migrations/042_game_attachment.sql` — fichiers attachés ;
-- `sql/migrations/043_bibliotheque_linux_not_supported.sql` — flag « Linux non supporté ».
+- `sql/migrations/043_bibliotheque_linux_not_supported.sql` — flag « Linux non supporté » ;
+- `sql/migrations/044_oeuvre_jeu_extensions.sql` — extensions (DLC) ;
+- `sql/migrations/045_oeuvre_jeu_remakes.sql` — remakes.
+
+### Extensions et remakes (0.5.2 / 0.5.4)
+
+| Type | Formulaire | Fiche jeu / catalogue |
+|------|------------|------------------------|
+| **Extension (DLC)** | Case « Extension » + autocomplétion jeu de base | Bandeau jaquettes « Extensions » ou lien vers le jeu de base |
+| **Remake** | Case « Remake » + autocomplétion jeu d’origine | Bandeau « Remakes » ou lien vers le jeu d’origine (avec année) |
+
+- Une fiche ne peut pas être **à la fois** extension et remake.
+- À l’**ajout** : les cases Extension / Remake restent visibles tant qu’aucun jeu catalogue n’est sélectionné dans l’autocomplétion du titre.
+- Affichage **discret** : jaquette cliquable + année sous l’image (`templates/_game_related_posters.php`) ; extensions et remakes côte à côte en deux colonnes si les deux existent.
+
+### Recherche et autocomplétion (0.5.4)
+
+Classe **`SearchMatch`** (insensible **casse** et **accents**, **1 faute de frappe** par mot dans l’autocomplétion) :
+
+| Zone | Comportement |
+|------|--------------|
+| Autocomplétion **jeux** (`/rechercher-jeux-catalogue.php`) | accents + 1 faute / mot |
+| Autocomplétion **films** (titre catalogue) | accents + 1 faute / mot |
+| Autocomplétion **sujets magazines** | accents + 1 faute / mot (+ FTS si disponible) |
+| Recherche **Mes jeux** / **Mes films** | accents (sans faute tolérée en liste) |
+| Recherche **catalogue admin** | accents |
+
+Fonction SQL **`fold_search()`** enregistrée au démarrage (`FrenchSort::fold`) pour comparer sans accents dans les requêtes.
+
+Exemples : `demon` → *Démon Souls* ; `eldn ring` → *Elden Ring* ; `gran turismo` → *Gran Turismo*.
 
 ### Lien magazine → jeu
 
@@ -77,7 +110,8 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 
 | Classe | Rôle |
 |--------|------|
-| `GameRepository` | CRUD collection, recherche catalogue, jaquettes, flags Linux |
+| `GameRepository` | CRUD collection, recherche catalogue, jaquettes, flags Linux, extensions, remakes |
+| `SearchMatch` | Recherche tolérante (accents, casse, faute) pour autocomplétion |
 | `GameAttachmentRepository` | Upload, liste et suppression des fichiers joints |
 | `GameEditionIcons` | URLs des icônes support (images ou repli SVG) |
 | `GameGenre` | Genres réutilisables (tags, comme magazines) |

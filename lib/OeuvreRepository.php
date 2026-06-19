@@ -114,23 +114,41 @@ final class OeuvreRepository
         }
 
         $limit = max(1, min(30, $limit));
-        $pattern = LikePattern::containsFragment($query);
+        $prefetchLimit = min(max($limit * 8, 60), 200);
+        $foldedPattern = SearchMatch::foldedContainsPattern($query);
+        $prefixPattern = SearchMatch::foldedPrefixPattern($query, 2);
+
+        $conditions = ['fold_search(titre) LIKE ? ESCAPE \'\\\''];
+        $bind = [$foldedPattern];
+        if ($prefixPattern !== '') {
+            $conditions[] = 'fold_search(titre) LIKE ? ESCAPE \'\\\'';
+            $bind[] = $prefixPattern;
+        }
+
         $domainSql = CatalogSchema::hasMediaDomainColumn()
             ? ' AND media_domain = ?'
             : '';
+        $sqlLimit = $prefetchLimit;
         $stmt = $this->db->prepare(
             'SELECT * FROM oeuvres
-             WHERE LOWER(titre) LIKE LOWER(?) ESCAPE \'\\\'' . $domainSql . '
+             WHERE (' . implode(' OR ', $conditions) . ')' . $domainSql . '
              ORDER BY titre COLLATE FRENCH_NOCASE, realisateur COLLATE FRENCH_NOCASE
-             LIMIT ' . $limit
+             LIMIT ' . $sqlLimit
         );
         if ($domainSql !== '') {
-            $stmt->execute([$pattern, MediaContext::current()]);
-        } else {
-            $stmt->execute([$pattern]);
+            $bind[] = MediaContext::current();
         }
+        $stmt->execute($bind);
+        $rows = $stmt->fetchAll() ?: [];
 
-        return $stmt->fetchAll() ?: [];
+        return SearchMatch::filterRankLimit(
+            $rows,
+            $query,
+            static fn (array $row): string => (string) ($row['titre'] ?? '')
+                . ' '
+                . (string) ($row['realisateur'] ?? ''),
+            $limit
+        );
     }
 
     public function deleteById(int $id): bool

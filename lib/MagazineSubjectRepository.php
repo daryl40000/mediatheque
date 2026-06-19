@@ -75,6 +75,7 @@ final class MagazineSubjectRepository
         }
 
         $limit = max(1, min($limit, 50));
+        $prefetchLimit = min(max($limit * 8, 80), 250);
         $params = [];
         $where = ['1=1'];
 
@@ -96,21 +97,34 @@ final class MagazineSubjectRepository
 
         $query = trim($query);
         if ($query !== '') {
+            $conditions = [
+                'fold_search(ms.label) LIKE :q_label ESCAPE \'\\\'',
+                'fold_search(COALESCE(ms.detail, \'\')) LIKE :q_detail ESCAPE \'\\\'',
+            ];
+            $params['q_label'] = SearchMatch::foldedContainsPattern($query);
+            $params['q_detail'] = SearchMatch::foldedContainsPattern($query);
+
+            $prefixPattern = SearchMatch::foldedPrefixPattern($query, 2);
+            if ($prefixPattern !== '') {
+                $conditions[] = 'fold_search(ms.label) LIKE :q_prefix ESCAPE \'\\\'';
+                $conditions[] = 'fold_search(COALESCE(ms.detail, \'\')) LIKE :q_prefix_detail ESCAPE \'\\\'';
+                $params['q_prefix'] = $prefixPattern;
+                $params['q_prefix_detail'] = $prefixPattern;
+            }
+
             $ftsMatch = MagazineSubjectFts::isAvailable()
                 ? MagazineSubjectFts::matchExpression($query)
                 : '';
             if ($ftsMatch !== '') {
-                $where[] = 'ms.id IN (
+                $conditions[] = 'ms.id IN (
                     SELECT magazine_subject_fts.subject_id
                     FROM magazine_subject_fts
                     WHERE magazine_subject_fts MATCH :subject_fts
                 )';
                 $params['subject_fts'] = $ftsMatch;
-            } else {
-                $where[] = '(LOWER(ms.label) LIKE LOWER(:q) ESCAPE \'\\\' OR LOWER(ms.detail) LIKE LOWER(:q_detail) ESCAPE \'\\\')';
-                $params['q'] = LikePattern::containsFragment($query);
-                $params['q_detail'] = LikePattern::containsFragment($query);
             }
+
+            $where[] = '(' . implode(' OR ', $conditions) . ')';
         }
 
         $sql = 'SELECT ' . self::selectSubjectColumns('ms') . ',
@@ -120,12 +134,23 @@ final class MagazineSubjectRepository
                 WHERE ' . implode(' AND ', $where) . '
                 GROUP BY ms.id
                 ORDER BY ms.parution_year DESC, ms.label COLLATE FRENCH_NOCASE ASC, ms.detail COLLATE FRENCH_NOCASE ASC
-                LIMIT ' . $limit;
+                LIMIT ' . ($query !== '' ? $prefetchLimit : $limit);
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        if ($query !== '') {
+            $rows = SearchMatch::filterRankLimit(
+                $rows,
+                $query,
+                static fn (array $row): string => (string) ($row['label'] ?? '')
+                    . ' '
+                    . (string) ($row['detail'] ?? ''),
+                $limit
+            );
+        }
 
         return array_map(fn (array $row): array => $this->hydrateSubjectRow($row), $rows);
     }

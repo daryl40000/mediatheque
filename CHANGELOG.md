@@ -11,6 +11,33 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.5.4] — 2026-06-16
+
+**Remakes jeux, liens visuels extensions/remakes et recherche tolérante**
+
+Enrichissement du module jeux (remakes, affichage discret des jeux liés) et amélioration globale des champs de recherche / autocomplétion (accents, casse, une faute de frappe par mot).
+
+### Ajouté
+
+- **Migration 045** : remakes jeux dans `oeuvre_jeu` (`is_remake`, `original_game_oeuvre_id`).
+- **Remakes (UI)** : case « Remake » + autocomplétion du jeu d’origine (formulaire ajout / modification / admin catalogue).
+- **Liens croisés remake** : fiche remake → jeu d’origine (année) ; fiche origine → liste des remakes.
+- **Affichage discret** : bandeau jaquettes + année pour extensions et remakes (`_game_related_posters.php`) — deux colonnes si les deux types sont présents.
+- **Classe** `SearchMatch` : recherche insensible accents / casse + distance d’édition (1 faute par mot) ; fonction SQL `fold_search()`.
+- **Tests** : `SearchMatchTest`, tests remakes et recherche catalogue jeux.
+
+### Modifié
+
+- **Export / import catalogue** : colonnes `jeu_is_remake`, `jeu_original_game_oeuvre_id`.
+- **Autocomplétion jeux, films, sujets magazines** : préfiltre SQL plié + classement pertinence (`SearchMatch::filterRankLimit`).
+- **Recherche collection** jeux et films, catalogue admin : `fold_search()` à la place de `LOWER()`.
+- **FTS magazines** : tokens normalisés sans accents.
+
+### Corrigé
+
+- **Ajout jeu** : bloc Extension / Remake visible dès l’ouverture du formulaire (masqué seulement si un jeu catalogue est choisi dans l’autocomplétion titre).
+- **Jaquettes liées** : URL d’affiche des remakes / extensions (double échappement HTML).
+
 ## [0.5.3] — 2026-06-16
 
 **Catalogue jeux/magazines, profil public jeux et ajout par autocomplétion**

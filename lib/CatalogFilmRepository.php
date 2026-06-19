@@ -1671,7 +1671,7 @@ final class CatalogFilmRepository
             return '';
         }
 
-        $pattern = LikePattern::containsFragment($searchQuery);
+        $pattern = SearchMatch::foldedContainsPattern($searchQuery);
         $params['collection_q'] = $pattern;
 
         $fields = [
@@ -1687,7 +1687,7 @@ final class CatalogFilmRepository
 
         $parts = [];
         foreach ($fields as $field) {
-            $parts[] = 'LOWER(' . $field . ') LIKE LOWER(:collection_q) ESCAPE \'\\\'';
+            $parts[] = 'fold_search(' . $field . ') LIKE :collection_q ESCAPE \'\\\'';
         }
 
         return '(' . implode(' OR ', $parts) . ')';
