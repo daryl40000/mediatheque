@@ -41,48 +41,47 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ## Prochaines étapes (par priorité)
 
-### Priorité 1 — Consolidation **0.5.4** (court terme)
+### ✅ Consolidation **0.5.4** — livré (2026-06-16)
 
-1. **QA prod 0.5.4** : remakes, affichage extensions/remakes, recherche tolérante, migrations **044–045**.
-2. **Tag Git** `v0.5.4` après validation.
+- QA prod : remakes, affichage extensions/remakes, recherche tolérante, migrations **044–045**.
+- Tag Git **`v0.5.4`** — publié sur `origin/main`.
 
-### Priorité 2 — **M5** : aligner magazines sur films / jeux (**0.6.0**)
+### Priorité 1 — **M5** : aligner magazines sur films / jeux (**0.6.0**)
 
-3. **Autocomplétion catalogue** à l’ajout d’un numéro (`/ajouter-numero-magazine.php`) — même logique que les jeux (0.5.3).
-4. **Parité fiche catalogue** : vérifier édition admin, navigation catalogue, export/import magazine.
-5. **Profil public** onglet Magazines (comme profil jeux en 0.5.3).
+1. **Autocomplétion catalogue** à l’ajout d’un numéro (`/ajouter-numero-magazine.php`) — même logique que les jeux (0.5.3).
+2. **Parité fiche catalogue** : vérifier édition admin, navigation catalogue, export/import magazine.
+3. **Profil public** onglet Magazines (comme profil jeux en 0.5.3).
 
-### Priorité 3 — **Pont magazine ↔ jeu** (finir le transversal)
+### Priorité 2 — **Pont magazine ↔ jeu** (finir le transversal)
 
-6. **Rattachement rétroactif** : outil admin pour lier les sujets existants (`magazine_subject.catalog_oeuvre_id`).
-7. **Recherche globale** : remonter numéros / sujets via le titre catalogue jeu.
-8. Documenter les cas ambigus (homonymes ; lien toujours optionnel).
+4. **Rattachement rétroactif** : outil admin pour lier les sujets existants (`magazine_subject.catalog_oeuvre_id`).
+5. **Recherche globale** : remonter numéros / sujets via le titre catalogue jeu.
+6. Documenter les cas ambigus (homonymes ; lien toujours optionnel).
 
-### Priorité 4 — Polish **M4** (non bloquant)
+### Priorité 3 — Polish **M4** (non bloquant)
 
-9. Plateformes configurables en admin (au lieu de la liste fixe `GamePlatform`).
-10. Flag « non prêtable » pour exemplaires dématérialisés.
-11. Vérification prod migrations **039–045**.
+7. Plateformes configurables en admin (au lieu de la liste fixe `GamePlatform`).
+8. Flag « non prêtable » pour exemplaires dématérialisés.
 
-### Priorité 5 — **M6** Transversal (films + jeux + magazines alignés)
+### Priorité 4 — **M6** Transversal (films + jeux + magazines alignés)
 
-12. Statistiques par domaine (libellés « vu » / « joué » / « lu »).
-13. Partage visiteur avec paramètre `media_domain`.
-14. Import / export CSV par domaine.
-15. Prêts : règles par type de média (physique uniquement ; pas de prêt PDF/démat).
+9. Statistiques par domaine (libellés « vu » / « joué » / « lu »).
+10. Partage visiteur avec paramètre `media_domain`.
+11. Import / export CSV par domaine.
+12. Prêts : règles par type de média (physique uniquement ; pas de prêt PDF/démat).
 
-### Priorité 6 — Nouveaux onglets **M2 / M3**
+### Priorité 5 — Nouveaux onglets **M2 / M3**
 
-16. **M2 BD/Manga** — schéma `oeuvre_bd`, formulaires, collection.
-17. **M3 Livres** — schéma `oeuvre_livre`, ISBN.
+13. **M2 BD/Manga** — schéma `oeuvre_bd`, formulaires, collection.
+14. **M3 Livres** — schéma `oeuvre_livre`, ISBN.
 
-### Priorité 7 — **M7 → 1.0.0**
+### Priorité 6 — **M7 → 1.0.0**
 
-18. Documentation par média, déploiement, polish identité (namespace `Moncine\` conservé jusqu’alors).
+15. Documentation par média, déploiement, polish identité (namespace `Moncine\` conservé jusqu’alors).
 
 ```mermaid
 flowchart LR
-  A[QA 0.5.4] --> B[M5 parité catalogue]
+  A[QA 0.5.4 ✅] --> B[M5 parité catalogue]
   B --> C[Pont rétroactif]
   C --> D[Polish M4]
   D --> E[M6 transversal]
@@ -322,7 +321,7 @@ Relier optionnellement un sujet magazine à une fiche jeu catalogue (`magazine_s
 ```mermaid
 flowchart TB
   M0[M0 ✅ 0.1.0] --> M1[M1 ✅ Films]
-  M1 --> M4[M4 ✅ Jeux 0.5.3]
+  M1 --> M4[M4 ✅ Jeux 0.5.4]
   M1 --> M5[M5 🔄 Magazines]
   M4 --> XPont[Pont ↔ jeu partiel]
   M5 --> XPont
@@ -350,12 +349,12 @@ flowchart TB
 
 ---
 
-## Estimation (indicative, mise à jour 0.5.3)
+## Estimation (indicative, mise à jour 0.5.4)
 
 | Phase | Effort restant | Version |
 |-------|----------------|---------|
-| M0, M1, M4 (cœur) | ✅ fait | 0.1.0 → **0.5.3** |
-| M5 fin + parité catalogue | ~2 semaines | 0.6.0 |
+| M0, M1, M4 (cœur) + consolidation **v0.5.4** | ✅ fait | 0.1.0 → **0.5.4** |
+| M5 fin + parité catalogue | ~2 semaines | **0.6.0** (priorité actuelle) |
 | Pont rétroactif | ~1 semaine | 0.6.0 |
 | Polish M4 | quelques jours | 0.5.x |
 | M6 | 2–3 semaines | 0.9.0 |
@@ -379,4 +378,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.5.4** — 2026-06-16 (remakes jeux, affichage liens, recherche tolérante).*
+*Dernière mise à jour : **0.5.4** — 2026-06-16 (consolidation QA + tag **v0.5.4** ; priorité **M5 → 0.6.0**).*
