@@ -31,7 +31,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initMagazineSeriesTagsField();
     initTagsBadgeFields();
     initGameEditionFields();
-    initGameExtensionFields();
+    initGameRelationFields();
     initShareLinkCopy();
 
     const params = new URLSearchParams(window.location.search);
@@ -579,6 +579,25 @@ function initGameCatalogAutocompleteRoot(root) {
         if (oeuvreIdInput) {
             oeuvreIdInput.value = '';
         }
+        syncGameTypeFieldsetForCatalogLink();
+    };
+
+    const syncGameTypeFieldsetForCatalogLink = () => {
+        const form = root.closest('form');
+        const typeFieldset = form?.querySelector('[data-game-type-fieldset]');
+        if (!typeFieldset) {
+            return;
+        }
+        const linked = oeuvreIdInput !== null && String(oeuvreIdInput.value || '').trim() !== '';
+        typeFieldset.hidden = linked;
+        if (linked) {
+            typeFieldset.querySelectorAll('[data-game-extension-toggle], [data-game-remake-toggle]').forEach((toggle) => {
+                if (toggle instanceof HTMLInputElement && toggle.checked) {
+                    toggle.checked = false;
+                    toggle.dispatchEvent(new Event('change', { bubbles: true }));
+                }
+            });
+        }
     };
 
     const fillFieldById = (id, value) => {
@@ -612,6 +631,7 @@ function initGameCatalogAutocompleteRoot(root) {
         }
 
         closeList();
+        syncGameTypeFieldsetForCatalogLink();
     };
 
     const renderResults = (results) => {
@@ -732,6 +752,8 @@ function initGameCatalogAutocompleteRoot(root) {
             closeList();
         }
     });
+
+    syncGameTypeFieldsetForCatalogLink();
 }
 
 /** Affiche les champs « saison » quand la catégorie Série est choisie. */
@@ -1238,129 +1260,172 @@ function initGameEditionFields() {
     });
 }
 
-/** Extensions jeux : checkbox + autocomplétion du jeu de base (catalogue). */
-function initGameExtensionFields() {
+/** Extensions / remakes jeux : checkbox + autocomplétion catalogue lié. */
+function initGameRelationFields() {
     document.querySelectorAll('form').forEach((form) => {
-        const root = form.querySelector('[data-game-extension-root]');
-        if (!root) {
-            return;
-        }
-
-        const toggle = root.querySelector('[data-game-extension-toggle]');
-        const panel = root.querySelector('[data-game-extension-panel]');
-        const input = root.querySelector('[data-game-extension-search]');
-        const list = root.querySelector('[data-game-extension-list]');
-        const oeuvreIdInput = root.querySelector('[data-game-extension-oeuvre-id]');
-        const clearBtn = root.querySelector('[data-game-extension-clear]');
-        const hint = root.querySelector('#base_game_hint');
-        const hintLabel = root.querySelector('#base_game_hint_label');
         const catalogUrl = form.getAttribute('data-game-catalog-url') || '/rechercher-jeux-catalogue.php';
 
-        if (!toggle || !panel || !input || !list || !oeuvreIdInput) {
-            return;
-        }
+        const configs = [
+            {
+                root: form.querySelector('[data-game-extension-root]'),
+                toggle: '[data-game-extension-toggle]',
+                panel: '[data-game-extension-panel]',
+                search: '[data-game-extension-search]',
+                list: '[data-game-extension-list]',
+                oeuvreId: '[data-game-extension-oeuvre-id]',
+                clearBtn: '[data-game-extension-clear]',
+                hint: '[data-game-extension-hint], #base_game_hint',
+                hintLabel: '[data-game-extension-hint-label], #base_game_hint_label',
+                oppositeToggle: '[data-game-remake-toggle]',
+                oppositePanel: '[data-game-remake-panel]',
+            },
+            {
+                root: form.querySelector('[data-game-remake-root]'),
+                toggle: '[data-game-remake-toggle]',
+                panel: '[data-game-remake-panel]',
+                search: '[data-game-remake-search]',
+                list: '[data-game-remake-list]',
+                oeuvreId: '[data-game-remake-oeuvre-id]',
+                clearBtn: '[data-game-remake-clear]',
+                hint: '[data-game-remake-hint], #original_game_hint',
+                hintLabel: '[data-game-remake-hint-label], #original_game_hint_label',
+                oppositeToggle: '[data-game-extension-toggle]',
+                oppositePanel: '[data-game-extension-panel]',
+            },
+        ];
 
-        let debounceTimer = null;
-
-        const closeList = () => {
-            list.hidden = true;
-            list.innerHTML = '';
-        };
-
-        const setHint = (label) => {
-            if (!hint || !hintLabel) {
+        configs.forEach((cfg) => {
+            if (!cfg.root) {
                 return;
             }
-            const text = String(label || '').trim();
-            hintLabel.textContent = text;
-            hint.hidden = text === '';
-        };
 
-        const clearSelection = () => {
-            oeuvreIdInput.value = '';
-            setHint('');
-        };
+            const toggle = cfg.root.querySelector(cfg.toggle);
+            const panel = cfg.root.querySelector(cfg.panel);
+            const input = cfg.root.querySelector(cfg.search);
+            const list = cfg.root.querySelector(cfg.list);
+            const oeuvreIdInput = cfg.root.querySelector(cfg.oeuvreId);
+            const clearBtn = cfg.root.querySelector(cfg.clearBtn);
+            const hint = cfg.root.querySelector(cfg.hint) || form.querySelector(cfg.hint);
+            const hintLabel = cfg.root.querySelector(cfg.hintLabel) || form.querySelector(cfg.hintLabel);
 
-        const refreshPanel = () => {
-            const on = Boolean(toggle.checked);
-            panel.hidden = !on;
-            if (!on) {
-                closeList();
-                clearSelection();
-            }
-        };
-
-        const render = (items) => {
-            list.innerHTML = '';
-            if (!Array.isArray(items) || items.length === 0) {
-                closeList();
+            if (!toggle || !panel || !input || !list || !oeuvreIdInput) {
                 return;
             }
-            items.slice(0, 12).forEach((item) => {
-                const titre = item.display_label || item.titre || '';
-                const el = document.createElement('div');
-                el.className = 'catalog-title-autocomplete__option catalog-title-autocomplete__option--game';
-                el.setAttribute('role', 'option');
-                const label = document.createElement('span');
-                label.className = 'catalog-title-autocomplete__option-label';
-                label.textContent = titre;
-                el.appendChild(label);
-                el.addEventListener('mousedown', (event) => {
-                    event.preventDefault();
-                    input.value = item.titre || item.display_label || '';
-                    oeuvreIdInput.value = String(item.oeuvre_id || '');
-                    setHint(item.display_label || item.titre || '');
+
+            let debounceTimer = null;
+
+            const closeList = () => {
+                list.hidden = true;
+                list.innerHTML = '';
+            };
+
+            const setHint = (label) => {
+                if (!hint || !hintLabel) {
+                    return;
+                }
+                const text = String(label || '').trim();
+                hintLabel.textContent = text;
+                hint.hidden = text === '';
+            };
+
+            const clearSelection = () => {
+                oeuvreIdInput.value = '';
+                setHint('');
+            };
+
+            const uncheckOpposite = () => {
+                const opposite = form.querySelector(cfg.oppositeToggle);
+                const oppositePanelEl = form.querySelector(cfg.oppositePanel);
+                if (opposite instanceof HTMLInputElement && opposite.checked) {
+                    opposite.checked = false;
+                }
+                if (oppositePanelEl) {
+                    oppositePanelEl.hidden = true;
+                }
+            };
+
+            const refreshPanel = () => {
+                const on = Boolean(toggle.checked);
+                panel.hidden = !on;
+                if (on) {
+                    uncheckOpposite();
+                } else {
                     closeList();
-                    input.focus();
-                });
-                list.appendChild(el);
-            });
-            list.hidden = false;
-        };
+                    clearSelection();
+                }
+            };
 
-        const fetchSuggestions = async () => {
-            const q = String(input.value || '').trim();
-            if (q.length < 2) {
-                closeList();
-                return;
-            }
-            try {
-                const url = catalogUrl + (catalogUrl.includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(q);
-                const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
-                if (!res.ok) {
+            const render = (items) => {
+                list.innerHTML = '';
+                if (!Array.isArray(items) || items.length === 0) {
                     closeList();
                     return;
                 }
-                const data = await res.json();
-                render(data.results || []);
-            } catch {
+                items.slice(0, 12).forEach((item) => {
+                    const titre = item.display_label || item.titre || '';
+                    const el = document.createElement('div');
+                    el.className = 'catalog-title-autocomplete__option catalog-title-autocomplete__option--game';
+                    el.setAttribute('role', 'option');
+                    const label = document.createElement('span');
+                    label.className = 'catalog-title-autocomplete__option-label';
+                    label.textContent = titre;
+                    el.appendChild(label);
+                    el.addEventListener('mousedown', (event) => {
+                        event.preventDefault();
+                        input.value = item.titre || item.display_label || '';
+                        oeuvreIdInput.value = String(item.oeuvre_id || '');
+                        setHint(item.display_label || item.titre || '');
+                        closeList();
+                        input.focus();
+                    });
+                    list.appendChild(el);
+                });
+                list.hidden = false;
+            };
+
+            const fetchSuggestions = async () => {
+                const q = String(input.value || '').trim();
+                if (q.length < 2) {
+                    closeList();
+                    return;
+                }
+                try {
+                    const url = catalogUrl + (catalogUrl.includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(q);
+                    const res = await fetch(url, { headers: { 'Accept': 'application/json' } });
+                    if (!res.ok) {
+                        closeList();
+                        return;
+                    }
+                    const data = await res.json();
+                    render(data.results || []);
+                } catch {
+                    closeList();
+                }
+            };
+
+            toggle.addEventListener('change', refreshPanel);
+            clearBtn?.addEventListener('click', () => {
+                input.value = '';
+                clearSelection();
                 closeList();
+                input.focus();
+            });
+
+            input.addEventListener('input', () => {
+                clearSelection();
+                closeList();
+                window.clearTimeout(debounceTimer);
+                debounceTimer = window.setTimeout(fetchSuggestions, 180);
+            });
+
+            input.addEventListener('blur', () => {
+                window.setTimeout(() => closeList(), 150);
+            });
+
+            refreshPanel();
+            if (String(oeuvreIdInput.value || '').trim() !== '') {
+                setHint(input.value);
             }
-        };
-
-        toggle.addEventListener('change', refreshPanel);
-        clearBtn?.addEventListener('click', () => {
-            input.value = '';
-            clearSelection();
-            closeList();
-            input.focus();
         });
-
-        input.addEventListener('input', () => {
-            clearSelection();
-            closeList();
-            window.clearTimeout(debounceTimer);
-            debounceTimer = window.setTimeout(fetchSuggestions, 180);
-        });
-
-        input.addEventListener('blur', () => {
-            window.setTimeout(() => closeList(), 150);
-        });
-
-        // Initial state (édition)
-        refreshPanel();
-        if (String(oeuvreIdInput.value || '').trim() !== '') {
-            setHint(input.value);
-        }
     });
 }

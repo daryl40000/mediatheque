@@ -57,6 +57,8 @@ $result = $repo->updateCatalogByOeuvreId($oeuvreId, array_merge([
     'poster_url' => (string) ($_POST['poster_url'] ?? ''),
     'is_extension' => !empty($_POST['is_extension']),
     'base_game_oeuvre_id' => (int) ($_POST['base_game_oeuvre_id'] ?? 0),
+    'is_remake' => !empty($_POST['is_remake']),
+    'original_game_oeuvre_id' => (int) ($_POST['original_game_oeuvre_id'] ?? 0),
 ], $editions));
 
 if ($result !== true) {

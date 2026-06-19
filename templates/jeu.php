@@ -171,7 +171,17 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                 <?php
                 $baseGame = $baseGame ?? null;
                 $extensions = $extensions ?? [];
+                $originalGame = $originalGame ?? null;
+                $remakes = $remakes ?? [];
                 $isExtension = !empty($game['is_extension']);
+                $isRemake = !empty($game['is_remake']);
+
+                $gameLinkLabel = static function (array $linkedGame): string {
+                    $titre = (string) ($linkedGame['titre'] ?? '');
+                    $annee = (int) ($linkedGame['annee'] ?? 0);
+
+                    return $annee > 0 ? $titre . ' (' . $annee . ')' : $titre;
+                };
                 ?>
 
                 <?php if ($isExtension): ?>
@@ -182,15 +192,34 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                                 Extension de :
                                 <?php if (trim((string) ($baseGame['library_url'] ?? '')) !== ''): ?>
                                     <a href="<?= Moncine\View::escape((string) $baseGame['library_url']) ?>">
-                                        <strong><?= Moncine\View::escape((string) ($baseGame['titre'] ?? '')) ?></strong>
+                                        <strong><?= Moncine\View::escape($gameLinkLabel($baseGame)) ?></strong>
                                     </a>
                                 <?php else: ?>
-                                    <strong><?= Moncine\View::escape((string) ($baseGame['titre'] ?? '')) ?></strong>
+                                    <strong><?= Moncine\View::escape($gameLinkLabel($baseGame)) ?></strong>
                                     <span class="hint">(jeu de base non présent dans votre bibliothèque)</span>
                                 <?php endif; ?>
                             </p>
                         <?php else: ?>
                             <p class="hint">Jeu de base non renseigné.</p>
+                        <?php endif; ?>
+                    </section>
+                <?php elseif ($isRemake): ?>
+                    <section class="film-promote-panel">
+                        <h2>Remake</h2>
+                        <?php if (is_array($originalGame) && (int) ($originalGame['oeuvre_id'] ?? 0) > 0): ?>
+                            <p class="hint">
+                                Remake de :
+                                <?php if (trim((string) ($originalGame['library_url'] ?? '')) !== ''): ?>
+                                    <a href="<?= Moncine\View::escape((string) $originalGame['library_url']) ?>">
+                                        <strong><?= Moncine\View::escape($gameLinkLabel($originalGame)) ?></strong>
+                                    </a>
+                                <?php else: ?>
+                                    <strong><?= Moncine\View::escape($gameLinkLabel($originalGame)) ?></strong>
+                                    <span class="hint">(jeu d'origine non présent dans votre bibliothèque)</span>
+                                <?php endif; ?>
+                            </p>
+                        <?php else: ?>
+                            <p class="hint">Jeu d'origine non renseigné.</p>
                         <?php endif; ?>
                     </section>
                 <?php else: ?>
@@ -204,6 +233,22 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                                         <a href="<?= Moncine\View::escape(Moncine\View::gameUrl((int) ($ext['bib_id'] ?? 0))) ?>"
                                            class="magazine-subject-results__link">
                                             <strong><?= Moncine\View::escape((string) ($ext['display_label'] ?? $ext['titre'] ?? '')) ?></strong>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </section>
+                    <?php endif; ?>
+                    <?php if ($remakes !== []): ?>
+                        <section class="film-promote-panel">
+                            <h2>Remakes</h2>
+                            <p class="hint">Remakes de ce jeu dans votre bibliothèque :</p>
+                            <ul class="magazine-subject-results" role="list">
+                                <?php foreach ($remakes as $remake): ?>
+                                    <li class="magazine-subject-results__item" role="listitem">
+                                        <a href="<?= Moncine\View::escape(Moncine\View::gameUrl((int) ($remake['bib_id'] ?? 0))) ?>"
+                                           class="magazine-subject-results__link">
+                                            <strong><?= Moncine\View::escape((string) ($remake['display_label'] ?? $remake['titre'] ?? '')) ?></strong>
                                         </a>
                                     </li>
                                 <?php endforeach; ?>

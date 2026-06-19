@@ -34,6 +34,9 @@ $consoleStoreLabel = $consoleStoreKey !== null
 $isExtension = !empty($gameRow['is_extension']);
 $baseGameOeuvreId = (int) ($gameRow['base_game_oeuvre_id'] ?? 0);
 $baseGameLabel = trim((string) ($gameRow['base_game_label'] ?? ''));
+$isRemake = !empty($gameRow['is_remake']);
+$originalGameOeuvreId = (int) ($gameRow['original_game_oeuvre_id'] ?? 0);
+$originalGameLabel = trim((string) ($gameRow['original_game_label'] ?? ''));
 $titreFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_titre' : 'titre';
 $oeuvreIdFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_oeuvre_id' : 'oeuvre_id';
 ?>
@@ -62,6 +65,7 @@ $oeuvreIdFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_oeuvre
     <p class="hint catalog-title-autocomplete__hint">
         Les suggestions affichent <strong>titre (plateforme · année)</strong>.
         Choisir une ligne réutilise la fiche catalogue partagée.
+        Pour créer une <strong>nouvelle</strong> fiche (extension ou remake), ne sélectionnez pas la liste — saisissez le titre puis cochez le type ci-dessous si besoin.
     </p>
 <?php else: ?>
 <input type="text" name="titre" id="<?= Moncine\View::escape($titreFieldId) ?>" required maxlength="200"
@@ -69,10 +73,12 @@ $oeuvreIdFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_oeuvre
        placeholder="Ex. Elden Ring, Gran Turismo 7">
 <?php endif; ?>
 
-<?php if (Moncine\GameRepository::hasExtensionColumns() && !$useCatalogAutocomplete): ?>
-    <fieldset class="game-extension-fieldset" data-game-extension-root>
+<?php if (Moncine\GameRepository::hasExtensionColumns() || Moncine\GameRepository::hasRemakeColumns()): ?>
+    <fieldset class="game-extension-fieldset" data-game-type-fieldset>
         <legend>Type de fiche</legend>
 
+        <?php if (Moncine\GameRepository::hasExtensionColumns()): ?>
+        <div data-game-extension-root>
         <label class="checkbox-inline">
             <input type="checkbox" name="is_extension" value="1" data-game-extension-toggle
                 <?= $isExtension ? ' checked' : '' ?>>
@@ -102,6 +108,42 @@ $oeuvreIdFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_oeuvre
                 Une extension est une fiche jeu à part entière, mais elle pointe vers un jeu de base du catalogue.
             </p>
         </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if (Moncine\GameRepository::hasRemakeColumns()): ?>
+        <div data-game-remake-root>
+        <label class="checkbox-inline">
+            <input type="checkbox" name="is_remake" value="1" data-game-remake-toggle
+                <?= $isRemake ? ' checked' : '' ?>>
+            Cette fiche est un remake
+        </label>
+
+        <div class="game-extension-panel" data-game-remake-panel<?= $isRemake ? '' : ' hidden' ?>>
+            <label for="original_game_query">Jeu d'origine (catalogue) <span class="required">*</span></label>
+            <div class="catalog-title-autocomplete">
+                <input type="search" id="original_game_query" name="original_game_query" maxlength="200"
+                       value="<?= Moncine\View::escape($originalGameLabel) ?>"
+                       placeholder="Tapez le titre du jeu original…"
+                       autocomplete="off"
+                       class="catalog-title-autocomplete__input"
+                       data-game-remake-search>
+                <div class="catalog-title-autocomplete__list" role="listbox" hidden data-game-remake-list></div>
+            </div>
+            <input type="hidden" name="original_game_oeuvre_id" id="original_game_oeuvre_id"
+                   value="<?= $originalGameOeuvreId > 0 ? $originalGameOeuvreId : '' ?>"
+                   data-game-remake-oeuvre-id>
+
+            <p class="hint" id="original_game_hint"<?= $originalGameLabel !== '' ? '' : ' hidden' ?>>
+                Jeu sélectionné : <strong id="original_game_hint_label"><?= Moncine\View::escape($originalGameLabel) ?></strong>
+                <button type="button" class="btn btn-sm btn-secondary" data-game-remake-clear>Effacer</button>
+            </p>
+            <p class="hint">
+                Un remake est une nouvelle version d’un jeu existant : les deux fiches restent liées dans le catalogue.
+            </p>
+        </div>
+        </div>
+        <?php endif; ?>
     </fieldset>
 <?php endif; ?>
 

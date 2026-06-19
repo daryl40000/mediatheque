@@ -58,8 +58,11 @@ $magazineCoverage = MagazineGameLink::isAvailable()
 
 $baseGame = null;
 $extensions = [];
+$originalGame = null;
+$remakes = [];
+$oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
+
 if (GameRepository::hasExtensionColumns()) {
-    $oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
     $baseGameOeuvreId = (int) ($game['base_game_oeuvre_id'] ?? 0);
     $isExtension = !empty($game['is_extension']);
 
@@ -77,12 +80,32 @@ if (GameRepository::hasExtensionColumns()) {
     }
 }
 
+if (GameRepository::hasRemakeColumns()) {
+    $originalGameOeuvreId = (int) ($game['original_game_oeuvre_id'] ?? 0);
+    $isRemake = !empty($game['is_remake']);
+
+    if ($isRemake && $originalGameOeuvreId > 0) {
+        $originalGame = $repo->findCatalogByOeuvreId($originalGameOeuvreId);
+        if ($originalGame !== null) {
+            $originalBibId = $repo->findLibraryBibIdForCatalogOeuvre($originalGameOeuvreId, $userId, $foyerId);
+            $originalGame['library_bib_id'] = $originalBibId ?? 0;
+            $originalGame['library_url'] = $originalBibId !== null && $originalBibId > 0 ? View::gameUrl($originalBibId) : '';
+        }
+    }
+
+    if (!$isRemake && $oeuvreId > 0) {
+        $remakes = $repo->listRemakesForOriginalGame($oeuvreId, $userId, $foyerId);
+    }
+}
+
 View::render('jeu', [
     'pageTitle' => (string) ($game['titre'] ?? 'Jeu'),
     'game' => $game,
     'magazineCoverage' => $magazineCoverage,
     'baseGame' => $baseGame,
     'extensions' => $extensions,
+    'originalGame' => $originalGame,
+    'remakes' => $remakes,
     'saved' => $saved,
     'canManageCatalog' => UserContext::canManageCatalog(),
     'gameId' => $bibId,

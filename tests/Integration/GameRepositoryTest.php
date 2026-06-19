@@ -419,4 +419,58 @@ final class GameRepositoryTest extends MoncineTestCase
         $this->assertCount(1, $byDecade);
         $this->assertSame('Base Game Stats Test', $byDecade[0]['titre']);
     }
+
+    public function testRemakeLinksBetweenOriginalAndRemake(): void
+    {
+        if (!GameRepository::hasRemakeColumns()) {
+            $this->markTestSkipped('Colonnes remakes non disponibles.');
+        }
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new GameRepository();
+
+        $originalBibId = $repo->createWithLibrary([
+            'titre' => 'Resident Evil Original Test',
+            'platform' => GamePlatform::PLAYSTATION,
+            'genre' => 'Horreur',
+            'annee' => 1996,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($originalBibId);
+
+        $originalGame = $repo->findByBibId($originalBibId, $userId, $foyerId);
+        $this->assertNotNull($originalGame);
+
+        $remakeBibId = $repo->createWithLibrary([
+            'titre' => 'Resident Evil Remake Test',
+            'platform' => GamePlatform::GAMECUBE,
+            'genre' => 'Horreur',
+            'annee' => 2002,
+            'is_remake' => true,
+            'original_game_oeuvre_id' => (int) $originalGame['oeuvre_id'],
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($remakeBibId);
+
+        $remakeGame = $repo->findByBibId($remakeBibId, $userId, $foyerId);
+        $this->assertNotNull($remakeGame);
+        $this->assertTrue($remakeGame['is_remake']);
+        $this->assertSame((int) $originalGame['oeuvre_id'], (int) $remakeGame['original_game_oeuvre_id']);
+
+        $remakes = $repo->listRemakesForOriginalGame((int) $originalGame['oeuvre_id'], $userId, $foyerId);
+        $this->assertCount(1, $remakes);
+        $this->assertSame($remakeBibId, $remakes[0]['bib_id']);
+        $this->assertStringContainsString('2002', $remakes[0]['display_label']);
+
+        $catalogRemakes = $repo->listCatalogRemakesForOriginalGame((int) $originalGame['oeuvre_id']);
+        $this->assertCount(1, $catalogRemakes);
+        $this->assertSame('Resident Evil Remake Test', $catalogRemakes[0]['titre']);
+
+        $bothTypesError = GameRepository::validateGameRelationFlags([
+            'is_extension' => true,
+            'base_game_oeuvre_id' => 1,
+            'is_remake' => true,
+            'original_game_oeuvre_id' => 2,
+        ]);
+        $this->assertNotNull($bothTypesError);
+    }
 }

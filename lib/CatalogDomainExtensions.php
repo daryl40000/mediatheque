@@ -23,6 +23,8 @@ final class CatalogDomainExtensions
         'jeu_digital_stores' => 'Jeu — magasins démat',
         'jeu_is_extension' => 'Jeu — extension',
         'jeu_base_game_oeuvre_id' => 'Jeu — ID jeu de base',
+        'jeu_is_remake' => 'Jeu — remake',
+        'jeu_original_game_oeuvre_id' => 'Jeu — ID jeu d\'origine',
         'mag_series_id' => 'Magazine — ID série',
         'mag_numero' => 'Magazine — numéro',
         'mag_numero_ordre' => 'Magazine — ordre',
@@ -52,6 +54,8 @@ final class CatalogDomainExtensions
         'jeu_digital_stores' => ['jeu magasins demat', 'jeu_digital_stores'],
         'jeu_is_extension' => ['jeu extension', 'jeu_is_extension', 'extension'],
         'jeu_base_game_oeuvre_id' => ['jeu id jeu de base', 'jeu_base_game_oeuvre_id', 'base_game_oeuvre_id'],
+        'jeu_is_remake' => ['jeu remake', 'jeu_is_remake', 'remake'],
+        'jeu_original_game_oeuvre_id' => ['jeu id jeu origine', 'jeu_original_game_oeuvre_id', 'original_game_oeuvre_id'],
         'mag_series_id' => ['magazine id serie', 'magazine id série', 'mag_series_id', 'series_id magazine'],
         'mag_numero' => ['magazine numero', 'magazine numéro', 'mag_numero'],
         'mag_numero_ordre' => ['magazine ordre', 'mag_numero_ordre'],
@@ -76,6 +80,10 @@ final class CatalogDomainExtensions
                 'jeu_is_extension' => self::formatBoolForExport((int) ($row['jeu_is_extension'] ?? 0) === 1),
                 'jeu_base_game_oeuvre_id' => (int) ($row['jeu_base_game_oeuvre_id'] ?? 0) > 0
                     ? (string) (int) $row['jeu_base_game_oeuvre_id']
+                    : '',
+                'jeu_is_remake' => self::formatBoolForExport((int) ($row['jeu_is_remake'] ?? 0) === 1),
+                'jeu_original_game_oeuvre_id' => (int) ($row['jeu_original_game_oeuvre_id'] ?? 0) > 0
+                    ? (string) (int) $row['jeu_original_game_oeuvre_id']
                     : '',
                 'mag_est_hors_serie' => self::formatBoolForExport((int) ($row['mag_est_hors_serie'] ?? 0) === 1),
                 'mag_series_id' => (int) ($row['mag_series_id'] ?? 0) > 0
@@ -171,6 +179,26 @@ final class CatalogDomainExtensions
             (string) ($data['jeu_base_game_oeuvre_id'] ?? '0')
         ));
         $baseGameId = $isExtension ? $baseGameId : 0;
+        $isRemake = self::parseBool(self::cellIfImported(
+            $data,
+            $importSet,
+            'jeu_is_remake',
+            (string) ($data['jeu_is_remake'] ?? '')
+        )) ? 1 : 0;
+        $originalGameId = max(0, (int) self::cellIfImported(
+            $data,
+            $importSet,
+            'jeu_original_game_oeuvre_id',
+            (string) ($data['jeu_original_game_oeuvre_id'] ?? '0')
+        ));
+        $originalGameId = $isRemake ? $originalGameId : 0;
+        $relationData = [
+            'is_extension' => $isExtension === 1,
+            'base_game_oeuvre_id' => $baseGameId,
+            'is_remake' => $isRemake === 1,
+            'original_game_oeuvre_id' => $originalGameId,
+        ];
+        $relationParams = GameRepository::relationWriteParams($relationData);
 
         if (!$exists && $studio === '' && $editeur === '' && $genre === '' && $platform === '') {
             $db->prepare(
@@ -186,14 +214,12 @@ final class CatalogDomainExtensions
                 $db->prepare(
                     'UPDATE oeuvre_jeu SET studio = ?, editeur = ?, genre = ?, platform = ?,
                      is_digital = ?, physical_supports = ?, digital_stores = ?'
-                    . (GameRepository::hasExtensionColumns() ? ', is_extension = ?, base_game_oeuvre_id = ?' : '')
+                    . GameRepository::relationUpdateSet()
                     . ' WHERE oeuvre_id = ?'
                 )->execute([
                     $studio, $editeur, $genre, $platform, $isDigital,
                     $physicalSupports, $digitalStores,
-                    ...(GameRepository::hasExtensionColumns()
-                        ? [$isExtension, $baseGameId > 0 ? $baseGameId : null]
-                        : []),
+                    ...$relationParams,
                     $oeuvreId,
                 ]);
             } else {
@@ -201,15 +227,15 @@ final class CatalogDomainExtensions
                     'INSERT INTO oeuvre_jeu (
                         oeuvre_id, studio, editeur, genre, platform, is_digital,
                         physical_supports, digital_stores'
-                        . (GameRepository::hasExtensionColumns() ? ', is_extension, base_game_oeuvre_id' : '')
+                        . GameRepository::relationInsertColumns()
                         . '
                      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?'
-                        . (GameRepository::hasExtensionColumns() ? ', ?, ?' : '')
+                        . GameRepository::relationInsertPlaceholders()
                         . ')'
                 )->execute([
                     $oeuvreId, $studio, $editeur, $genre, $platform, $isDigital,
                     $physicalSupports, $digitalStores,
-                    ...(GameRepository::hasExtensionColumns() ? [$isExtension, $baseGameId > 0 ? $baseGameId : null] : []),
+                    ...$relationParams,
                 ]);
             }
 
@@ -219,28 +245,24 @@ final class CatalogDomainExtensions
         if ($exists) {
             $db->prepare(
                 'UPDATE oeuvre_jeu SET studio = ?, editeur = ?, genre = ?, platform = ?, is_digital = ?'
-                . (GameRepository::hasExtensionColumns() ? ', is_extension = ?, base_game_oeuvre_id = ?' : '')
+                . GameRepository::relationUpdateSet()
                 . ' WHERE oeuvre_id = ?'
             )->execute([
                 $studio, $editeur, $genre, $platform, $isDigital,
-                ...(GameRepository::hasExtensionColumns()
-                    ? [$isExtension, $baseGameId > 0 ? $baseGameId : null]
-                    : []),
+                ...$relationParams,
                 $oeuvreId,
             ]);
         } else {
             $db->prepare(
                 'INSERT INTO oeuvre_jeu (oeuvre_id, studio, editeur, genre, platform, is_digital'
-                . (GameRepository::hasExtensionColumns() ? ', is_extension, base_game_oeuvre_id' : '')
+                . GameRepository::relationInsertColumns()
                 . ')
                  VALUES (?, ?, ?, ?, ?, ?'
-                . (GameRepository::hasExtensionColumns() ? ', ?, ?' : '')
+                . GameRepository::relationInsertPlaceholders()
                 . ')'
             )->execute([
                 $oeuvreId, $studio, $editeur, $genre, $platform, $isDigital,
-                ...(GameRepository::hasExtensionColumns()
-                    ? [$isExtension, $baseGameId > 0 ? $baseGameId : null]
-                    : []),
+                ...$relationParams,
             ]);
         }
     }

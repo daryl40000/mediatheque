@@ -17,6 +17,9 @@ $selectedPlatform = (string) ($gameRow['platform'] ?? '');
 $isExtension = !empty($gameRow['is_extension']);
 $baseGameOeuvreId = (int) ($gameRow['base_game_oeuvre_id'] ?? 0);
 $baseGameLabel = trim((string) ($gameRow['base_game_label'] ?? ''));
+$isRemake = !empty($gameRow['is_remake']);
+$originalGameOeuvreId = (int) ($gameRow['original_game_oeuvre_id'] ?? 0);
+$originalGameLabel = trim((string) ($gameRow['original_game_label'] ?? ''));
 ?>
 <label for="<?= Moncine\View::escape($fieldPrefix) ?>_titre">Titre du jeu <span class="required">*</span></label>
 <input type="hidden" name="oeuvre_id" id="<?= Moncine\View::escape($fieldPrefix) ?>_oeuvre_id" value="">
@@ -37,10 +40,12 @@ $baseGameLabel = trim((string) ($gameRow['base_game_label'] ?? ''));
         role="listbox" hidden></ul>
 </div>
 
-<?php if (Moncine\GameRepository::hasExtensionColumns()): ?>
-    <fieldset class="game-extension-fieldset" data-game-extension-root>
+<?php if (Moncine\GameRepository::hasExtensionColumns() || Moncine\GameRepository::hasRemakeColumns()): ?>
+    <fieldset class="game-extension-fieldset" data-game-type-fieldset>
         <legend>Type de fiche</legend>
 
+        <?php if (Moncine\GameRepository::hasExtensionColumns()): ?>
+        <div data-game-extension-root>
         <label class="checkbox-inline">
             <input type="checkbox" name="is_extension" value="1" data-game-extension-toggle
                 <?= $isExtension ? ' checked' : '' ?>>
@@ -62,11 +67,44 @@ $baseGameLabel = trim((string) ($gameRow['base_game_label'] ?? ''));
                    value="<?= $baseGameOeuvreId > 0 ? $baseGameOeuvreId : '' ?>"
                    data-game-extension-oeuvre-id>
 
-            <p class="hint" id="base_game_hint"<?= $baseGameLabel !== '' ? '' : ' hidden' ?>>
-                Jeu sélectionné : <strong id="base_game_hint_label"><?= Moncine\View::escape($baseGameLabel) ?></strong>
+            <p class="hint" data-game-extension-hint<?= $baseGameLabel !== '' ? '' : ' hidden' ?>>
+                Jeu sélectionné : <strong data-game-extension-hint-label><?= Moncine\View::escape($baseGameLabel) ?></strong>
                 <button type="button" class="btn btn-sm btn-secondary" data-game-extension-clear>Effacer</button>
             </p>
         </div>
+        </div>
+        <?php endif; ?>
+
+        <?php if (Moncine\GameRepository::hasRemakeColumns()): ?>
+        <div data-game-remake-root>
+        <label class="checkbox-inline">
+            <input type="checkbox" name="is_remake" value="1" data-game-remake-toggle
+                <?= $isRemake ? ' checked' : '' ?>>
+            Cette fiche est un remake
+        </label>
+
+        <div class="game-extension-panel" data-game-remake-panel<?= $isRemake ? '' : ' hidden' ?>>
+            <label for="<?= Moncine\View::escape($fieldPrefix) ?>_original_game_query">Jeu d'origine (catalogue) <span class="required">*</span></label>
+            <div class="catalog-title-autocomplete">
+                <input type="search" id="<?= Moncine\View::escape($fieldPrefix) ?>_original_game_query" name="original_game_query" maxlength="200"
+                       value="<?= Moncine\View::escape($originalGameLabel) ?>"
+                       placeholder="Tapez le titre du jeu original…"
+                       autocomplete="off"
+                       class="catalog-title-autocomplete__input"
+                       data-game-remake-search>
+                <div class="catalog-title-autocomplete__list" role="listbox" hidden data-game-remake-list></div>
+            </div>
+            <input type="hidden" name="original_game_oeuvre_id" id="<?= Moncine\View::escape($fieldPrefix) ?>_original_game_oeuvre_id"
+                   value="<?= $originalGameOeuvreId > 0 ? $originalGameOeuvreId : '' ?>"
+                   data-game-remake-oeuvre-id>
+
+            <p class="hint" data-game-remake-hint<?= $originalGameLabel !== '' ? '' : ' hidden' ?>>
+                Jeu sélectionné : <strong data-game-remake-hint-label><?= Moncine\View::escape($originalGameLabel) ?></strong>
+                <button type="button" class="btn btn-sm btn-secondary" data-game-remake-clear>Effacer</button>
+            </p>
+        </div>
+        </div>
+        <?php endif; ?>
     </fieldset>
 <?php endif; ?>
 

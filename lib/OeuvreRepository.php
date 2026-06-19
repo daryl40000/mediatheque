@@ -324,6 +324,9 @@ final class OeuvreRepository
                 . ' oj.platform AS jeu_platform, oj.is_digital AS jeu_is_digital,'
                 . ' oj.physical_supports AS jeu_physical_supports, oj.digital_stores AS jeu_digital_stores,'
                 . ' oj.is_extension AS jeu_is_extension, oj.base_game_oeuvre_id AS jeu_base_game_oeuvre_id';
+            if (GameRepository::hasRemakeColumns()) {
+                $select .= ', oj.is_remake AS jeu_is_remake, oj.original_game_oeuvre_id AS jeu_original_game_oeuvre_id';
+            }
         }
         if ($magTable) {
             $select .= ', om.series_id AS mag_series_id, om.numero AS mag_numero,'

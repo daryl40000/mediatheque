@@ -61,6 +61,9 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
                         <?php if (!empty($game['is_extension'])): ?>
                             <span class="magazine-tag">Extension</span>
                         <?php endif; ?>
+                        <?php if (!empty($game['is_remake'])): ?>
+                            <span class="magazine-tag">Remake</span>
+                        <?php endif; ?>
                         <?php if ((int) ($game['annee'] ?? 0) > 0): ?>
                             <span class="film-year">(<?= (int) $game['annee'] ?>)</span>
                         <?php endif; ?>
@@ -86,7 +89,16 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
                         <dt>Jeu de base</dt>
                         <dd>
                             <a href="<?= Moncine\View::escape((string) ($baseGame['library_url'] ?? '')) ?>">
-                                <?= Moncine\View::escape((string) ($baseGame['titre'] ?? '')) ?>
+                                <?= Moncine\View::escape((string) ($baseGame['titre'] ?? '')) ?><?php if ((int) ($baseGame['annee'] ?? 0) > 0): ?> (<?= (int) $baseGame['annee'] ?>)<?php endif; ?>
+                            </a>
+                        </dd>
+                    <?php endif; ?>
+
+                    <?php if (!empty($game['is_remake']) && is_array($originalGame)): ?>
+                        <dt>Jeu d'origine</dt>
+                        <dd>
+                            <a href="<?= Moncine\View::escape((string) ($originalGame['library_url'] ?? '')) ?>">
+                                <?= Moncine\View::escape((string) ($originalGame['titre'] ?? '')) ?><?php if ((int) ($originalGame['annee'] ?? 0) > 0): ?> (<?= (int) $originalGame['annee'] ?>)<?php endif; ?>
                             </a>
                         </dd>
                     <?php endif; ?>
@@ -157,6 +169,30 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
                                         (int) ($catalogPage ?? 1)
                                     )) ?>">
                                         <?= Moncine\View::escape((string) ($extension['display_label'] ?? $extension['titre'] ?? '')) ?>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    </section>
+                <?php endif; ?>
+
+                <?php
+                $catalogRemakes = $catalogRemakes ?? [];
+                if ($catalogRemakes !== []):
+                ?>
+                    <section class="oeuvre-catalog-page__extensions">
+                        <h2>Remakes au catalogue</h2>
+                        <ul class="catalog-extensions-list">
+                            <?php foreach ($catalogRemakes as $remake): ?>
+                                <li>
+                                    <a href="<?= Moncine\View::escape(Moncine\View::oeuvreJeuUrl(
+                                        (int) ($remake['oeuvre_id'] ?? 0),
+                                        $catalogSearch ?? '',
+                                        $catalogSort ?? 'titre',
+                                        $catalogDir ?? 'asc',
+                                        (int) ($catalogPage ?? 1)
+                                    )) ?>">
+                                        <?= Moncine\View::escape((string) ($remake['titre'] ?? '')) ?><?php if ((int) ($remake['annee'] ?? 0) > 0): ?> (<?= (int) $remake['annee'] ?>)<?php endif; ?>
                                     </a>
                                 </li>
                             <?php endforeach; ?>

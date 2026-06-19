@@ -71,6 +71,8 @@ if ($game === null) {
 
 $baseGame = null;
 $catalogExtensions = [];
+$originalGame = null;
+$catalogRemakes = [];
 if (GameRepository::hasExtensionColumns()) {
     if (!empty($game['is_extension']) && (int) ($game['base_game_oeuvre_id'] ?? 0) > 0) {
         $baseGame = $repo->findCatalogByOeuvreId((int) $game['base_game_oeuvre_id']);
@@ -86,6 +88,24 @@ if (GameRepository::hasExtensionColumns()) {
         $game['base_game_label'] = trim((string) ($baseGame['titre'] ?? ''));
     } elseif ((int) ($game['oeuvre_id'] ?? 0) > 0) {
         $catalogExtensions = $repo->listCatalogExtensionsForBaseGame((int) $game['oeuvre_id']);
+    }
+}
+
+if (GameRepository::hasRemakeColumns()) {
+    if (!empty($game['is_remake']) && (int) ($game['original_game_oeuvre_id'] ?? 0) > 0) {
+        $originalGame = $repo->findCatalogByOeuvreId((int) $game['original_game_oeuvre_id']);
+        if ($originalGame !== null) {
+            $userId = UserContext::currentUserId();
+            $foyerId = UserContext::currentFoyerId();
+            $originalBibId = $repo->findLibraryBibIdForCatalogOeuvre((int) $originalGame['oeuvre_id'], $userId, $foyerId);
+            $originalGame['library_bib_id'] = $originalBibId ?? 0;
+            $originalGame['library_url'] = $originalBibId !== null && $originalBibId > 0
+                ? View::gameUrl($originalBibId)
+                : View::oeuvreJeuUrl((int) $originalGame['oeuvre_id'], $catalogSearch, $catalogSort, $catalogDir, $catalogPage);
+        }
+        $game['original_game_label'] = trim((string) ($originalGame['titre'] ?? ''));
+    } elseif ((int) ($game['oeuvre_id'] ?? 0) > 0) {
+        $catalogRemakes = $repo->listCatalogRemakesForOriginalGame((int) $game['oeuvre_id']);
     }
 }
 
@@ -119,6 +139,8 @@ View::render('oeuvre-jeu', [
     'game' => $game,
     'baseGame' => $baseGame,
     'catalogExtensions' => $catalogExtensions,
+    'originalGame' => $originalGame,
+    'catalogRemakes' => $catalogRemakes,
     'library' => $library,
     'libraryBibId' => $libraryBibId,
     'libraryCount' => (int) $detail['library_count'],
