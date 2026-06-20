@@ -65,4 +65,30 @@ final class GameGenre
     {
         return self::serializeList(self::parseList($storedGenres));
     }
+
+    /**
+     * Expression SQL : liste de tags en minuscules, délimitée par des virgules (comme parseList).
+     * Permet un test fiable via LIKE '%,tag,%'.
+     */
+    public static function sqlTaggedCsvLower(string $columnSql): string
+    {
+        return 'LOWER(\',\' || REPLACE(REPLACE(REPLACE(TRIM(' . $columnSql . '), \';\', \',\'), \', \', \',\'), \',,\', \',\') || \',\')';
+    }
+
+    /** Vérifie qu’un tag est présent dans une chaîne stockée (tests / logique PHP). */
+    public static function listContainsTag(string $storedGenres, string $tagKey): bool
+    {
+        $tagKey = mb_strtolower(trim($tagKey));
+        if ($tagKey === '') {
+            return false;
+        }
+
+        foreach (self::parseList($storedGenres) as $tag) {
+            if (mb_strtolower($tag) === $tagKey) {
+                return true;
+            }
+        }
+
+        return false;
+    }
 }

@@ -187,7 +187,7 @@ final class GameListFilter
         }
 
         if ($this->genre !== '') {
-            $where[] = 'LOWER(\',\' || REPLACE(oj.genre, \';\', \',\') || \',\') LIKE :filter_genre';
+            $where[] = GameGenre::sqlTaggedCsvLower('oj.genre') . ' LIKE :filter_genre';
             $params['filter_genre'] = '%,' . $this->genre . ',%';
         }
 

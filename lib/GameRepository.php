@@ -1108,7 +1108,7 @@ final class GameRepository
             ? ', b.tested_on_linux' . (GameSchema::hasLinuxNotSupportedColumn() ? ', b.linux_not_supported' : '')
             : '';
 
-        return 'b.id, b.user_id, b.foyer_id, b.oeuvre_id, b.statut, b.support_physique, b.created_at,'
+        return 'b.id, b.user_id, b.foyer_id, b.oeuvre_id, b.statut, b.support_physique, b.created_at, b.saga_ordre,'
             . ' o.titre, o.titre_original, o.annee, o.poster_url, o.synopsis,'
             . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $edition . $extension . $igdb . $igdbMeta . $linux;
     }

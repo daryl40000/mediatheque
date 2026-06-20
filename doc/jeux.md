@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.5.5** · **Date : 2026-06-16**
+**Version : 0.5.6** · **Date : 2026-06-16**
 
 ## Objectif
 
@@ -13,6 +13,8 @@ Gérer une **collection de jeux vidéo** (physiques ou dématérialisés) avec l
 - un **pont avec les magazines** : relier un sujet test/preview/interview à une fiche jeu.
 
 ## Schéma base de données
+
+Vue d’ensemble de **toutes** les tables (catalogue, bibliothèque, magazines, comptes…) : [base-de-donnees.md](base-de-donnees.md).
 
 ### Table `oeuvre_jeu`
 
@@ -82,7 +84,7 @@ Même logique que **TMDB pour les films** : compléter automatiquement les fiche
 | Studio | `oeuvre_jeu.studio` | Développeur |
 | Éditeur | `oeuvre_jeu.editeur` | Éditeur |
 | Genres | `oeuvre_jeu.genre` | Traduits FR (`IgdbGenreMap`) |
-| Franchise | `oeuvre_jeu.franchise` | Première franchise IGDB |
+| Saga | `oeuvre_jeu.franchise` | Première saga IGDB ; voir [Sagas jeux (0.5.6)](#sagas-jeux-056) |
 | Modes | `oeuvre_jeu.game_mode` | Traduits FR (`IgdbGameModeMap`) |
 | Thèmes | `oeuvre_jeu.theme` | Traduits FR (`IgdbThemeMap`) |
 | Acronymes | `oeuvre_jeu.alternative_names` | Filtre acronymes seuls (`IgdbAlternativeNameFilter`) |
@@ -101,6 +103,24 @@ Les champs déjà remplis ne sont **pas écrasés**, sauf correction avec un **i
 | Corriger avec un ID IGDB | Coller le numéro ou l’URL `igdb.com/games/…` |
 
 Handlers : `/enrichir-jeux.php` (lot + config), `/enrichir-jeu.php`, `/enrichir-oeuvre-jeu.php`.
+
+### Sagas jeux (0.5.6)
+
+Inspiré des **sagas films** (`/sagas.php`), adapté aux jeux vidéo :
+
+| Élément | Films | Jeux |
+|---------|-------|------|
+| Nom de la saga | `bibliotheque.saga` (saisie utilisateur) | `oeuvre_jeu.franchise` (IGDB ou saisie manuelle) |
+| Ordre dans la série | `bibliotheque.saga_ordre` | **Année de sortie**, puis titre |
+| Page liste | `/sagas.php` | `/sagas-jeux.php` |
+| Action de masse | Mes films → « Saga » | Mes jeux → « Ajouter à une saga » |
+
+- Le nom de saga est rempli à l’**enrichissement IGDB** ; vous pouvez le corriger sur la fiche catalogue, via l’action de masse ou le renommage sur `/sagas-jeux.php`.
+- **Autocomplétion** : sagas déjà présentes dans le catalogue proposées à la saisie (formulaires, action de masse, renommage).
+- **Liste** : jaquette du premier jeu de chaque saga ; **détail** : jaquettes de tous les jeux, tri par année.
+- Classe : `GameFranchiseRepository` ; URL : `View::gameFranchiseUrl()`.
+
+**Correctif 0.5.6 — filtre genre (statistiques → Mes jeux) :** un jeu avec plusieurs genres (`Aventure, RPG, …`) est bien retrouvé pour **chaque** genre cliqué dans les statistiques.
 
 #### Classes PHP (IGDB)
 
@@ -154,7 +174,8 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | URL | Rôle |
 |-----|------|
 | `/` (onglet Jeux) | Accueil jeux — activité récente, raccourcis |
-| `/jeux.php` | Liste « Mes jeux » (tri colonnes, recherche, vue liste ou vignettes) |
+| `/jeux.php` | Liste « Mes jeux » (tri, recherche, actions de masse saga) |
+| `/sagas-jeux.php` | Sagas jeux (liste avec jaquettes, détail ordonné par année, renommage) |
 | `/jeux-envies.php` | Liste des envies jeux |
 | `/jeu.php?id=` | Fiche jeu (+ section « Dans vos magazines », fichiers attachés) |
 | `/oeuvre-jeu.php?id=` | Fiche catalogue jeu (admin : édition, enrichissement IGDB) |
@@ -175,6 +196,7 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 
 | Classe | Rôle |
 |--------|------|
+| `GameFranchiseRepository` | Sagas jeux (liste, détail, renommage) |
 | `GameRepository` | CRUD collection, recherche catalogue, jaquettes, flags Linux, extensions, remakes |
 | `GameEnricher` | Enrichissement IGDB (unitaire et par lots) |
 | `IgdbClient` | Client HTTP API IGDB v4 |

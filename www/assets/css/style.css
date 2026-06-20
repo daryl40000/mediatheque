@@ -2443,6 +2443,52 @@ a.saga-link:hover {
     font-size: 0.9rem;
 }
 
+.sagas-list--games li {
+    align-items: stretch;
+    padding: 0.65rem 0;
+}
+
+.sagas-list__card {
+    display: flex;
+    align-items: center;
+    gap: 0.85rem;
+    flex: 1;
+    min-width: 0;
+    text-decoration: none;
+    color: inherit;
+}
+
+.sagas-list__card:hover .sagas-list__link {
+    text-decoration: underline;
+}
+
+.sagas-list__poster {
+    flex-shrink: 0;
+    width: 52px;
+    height: 78px;
+    object-fit: cover;
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    background: var(--surface-2, #eee);
+}
+
+.sagas-list__poster--empty {
+    display: inline-block;
+    background: linear-gradient(145deg, var(--surface-2, #e8e8e8), var(--border, #d0d0d0));
+}
+
+.sagas-list__card-body {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    min-width: 0;
+}
+
+.sagas-list--games .sagas-list__link {
+    font-weight: 600;
+    color: var(--accent);
+}
+
 .sagas-page__actions {
     display: flex;
     flex-wrap: wrap;

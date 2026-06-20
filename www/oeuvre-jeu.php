@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\CatalogAdmin;
 use Moncine\CatalogListContext;
 use Moncine\GamePlatform;
+use Moncine\GameFranchiseRepository;
 use Moncine\GameRepository;
 use Moncine\MediaDomain;
 use Moncine\UserContext;
@@ -175,4 +176,7 @@ View::render('oeuvre-jeu', [
     'enrichMessage' => $enrichMessage,
     'platformChoices' => GameRepository::isAvailable() ? GamePlatform::choices() : [],
     'knownGenres' => GameRepository::isAvailable() ? $repo->listKnownGenres() : [],
+    'knownSagas' => GameFranchiseRepository::isAvailable()
+        ? (new GameFranchiseRepository())->listKnownSagas()
+        : [],
 ]);

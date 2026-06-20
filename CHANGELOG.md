@@ -11,6 +11,31 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.5.6] — 2026-06-16
+
+**Sagas jeux, documentation base de données et correctifs statistiques**
+
+Regroupement des jeux par saga (donnée IGDB `franchise`), page dédiée, actions de masse et autocomplétion du champ saga.
+
+### Ajouté
+
+- **Sagas jeux** : page `/sagas-jeux.php` (liste avec jaquette du premier jeu, détail ordonné par année, renommage).
+- **`GameFranchiseRepository`** : liste, détail, assignation en masse, renommage, suggestions autocomplétion (`listKnownSagas`).
+- **Actions de masse** sur `/jeux.php` : « Ajouter à une saga » (cases à cocher, barre d’outils).
+- **Liens saga** : franchise cliquable sur fiches et listes (`_game_franchise_link.php`).
+- **Autocomplétion saga** : datalist catalogue sur formulaires, action de masse et renommage (`_game_saga_datalist.php`).
+- **Documentation** : [doc/base-de-donnees.md](doc/base-de-donnees.md) (structure SQLite, maintenance).
+- **Tests** : `GameFranchiseRepositoryTest`, filtre multi-genres, `GameGenreTest::testListContainsTagIgnoresPositionAndSpacing`.
+
+### Modifié
+
+- **UI jeux** : libellé « Saga » (au lieu de « Franchise ») ; colonne saga dans la liste « Mes jeux ».
+- **Styles** : liste sagas jeux avec vignettes (`.sagas-list--games`).
+
+### Corrigé
+
+- **Filtre genre statistiques → Mes jeux** : les jeux à **plusieurs genres** apparaissent pour **chaque** genre concerné (normalisation `, ` dans `GameListFilter` / `GameGenre::sqlTaggedCsvLower`).
+
 ## [0.5.5] — 2026-06-16
 
 **Enrichissement jeux via IGDB (comme TMDB pour les films)**

@@ -10,6 +10,7 @@
  * @var Moncine\GameListFilter $listFilter
  */
 $listFilter = $listFilter ?? Moncine\GameListFilter::empty();
+$showBulkSelect = isset($canAssignFranchise) ? (bool) $canAssignFranchise : Moncine\GameFranchiseRepository::isAvailable();
 $gridSortLink = static function (string $label, string $column) use ($sortBy, $sortDir, $query, $viewMode, $listFilter): void {
     $active = $sortBy === $column;
     $class = 'collection-grid-sort__link' . ($active ? ' is-active' : '');
@@ -22,6 +23,12 @@ $gridSortLink = static function (string $label, string $column) use ($sortBy, $s
 };
 ?>
 <div class="collection-grid-bar collection-grid-bar--games">
+    <?php if ($showBulkSelect): ?>
+        <label class="collection-grid-bar__select-all collection-select-all">
+            <input type="checkbox" id="collection-select-all" aria-label="Tout sélectionner">
+            <span>Tout sélectionner</span>
+        </label>
+    <?php endif; ?>
     <nav class="collection-grid-sort" aria-label="Trier">
         <span class="collection-grid-sort__label">Trier par</span>
         <?php $gridSortLink('Titre', 'titre'); ?>
@@ -39,14 +46,23 @@ $gridSortLink = static function (string $label, string $column) use ($sortBy, $s
         $gameUrl = Moncine\View::gameUrl($bibId);
         $annee = (int) ($game['annee'] ?? 0);
         $platformShort = (string) ($game['platform_short'] ?? '');
+        $displayTitle = (string) ($game['display_titre'] ?? $game['titre'] ?? '');
         ?>
         <li class="collection-grid__item" role="listitem">
             <article class="collection-grid__card">
+                <?php if ($showBulkSelect): ?>
+                    <label class="collection-grid__check" title="Sélectionner">
+                        <input type="checkbox" name="game_ids[]"
+                               value="<?= $bibId ?>"
+                               class="collection-film-cb"
+                               aria-label="Sélectionner <?= Moncine\View::escape($displayTitle) ?>">
+                    </label>
+                <?php endif; ?>
                 <a href="<?= Moncine\View::escape($gameUrl) ?>" class="collection-grid__link">
                     <div class="collection-grid__poster-wrap">
                         <?php if ($posterSrc !== ''): ?>
                             <img class="collection-grid__poster" src="<?= $posterSrc ?>"
-                                 alt="Jaquette de <?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? '')) ?>"
+                                 alt="Jaquette de <?= Moncine\View::escape($displayTitle) ?>"
                                  width="140" height="210" loading="lazy" decoding="async">
                         <?php else: ?>
                             <span class="collection-grid__poster collection-grid__poster--empty"
@@ -55,7 +71,7 @@ $gridSortLink = static function (string $label, string $column) use ($sortBy, $s
                     </div>
                     <div class="collection-grid__caption">
                         <h3 class="collection-grid__title collection-grid__title--game">
-                            <span><?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? '')) ?></span>
+                            <span><?= Moncine\View::escape($displayTitle) ?></span>
                             <?php if ((string) ($game['linux_badge'] ?? '') !== '' || !empty($game['tested_on_linux']) || !empty($game['linux_not_supported'])): ?>
                                 <span class="collection-grid__linux-badge">
                                     <?php

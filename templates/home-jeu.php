@@ -82,5 +82,8 @@ $mediaNav = Moncine\MediaContext::navLabels();
         <li><a href="/jeux.php"><?= Moncine\View::escape($mediaNav['collection']) ?></a></li>
         <li><a href="/jeux-envies.php"><?= Moncine\View::escape($mediaNav['wishlist']) ?></a></li>
         <li><a href="/ajouter-jeu.php">Ajouter un jeu</a></li>
+        <?php if (Moncine\GameFranchiseRepository::isAvailable()): ?>
+            <li><a href="/sagas-jeux.php">Sagas jeux</a></li>
+        <?php endif; ?>
     </ul>
 </section>

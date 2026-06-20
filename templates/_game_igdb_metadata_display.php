@@ -11,8 +11,13 @@ $acronymList = $game['alternative_name_list'] ?? Moncine\GameGenre::parseList((s
 $franchise = trim((string) ($game['franchise'] ?? ''));
 ?>
 <?php if ($franchise !== ''): ?>
-    <dt>Franchise</dt>
-    <dd><?= Moncine\View::escape($franchise) ?></dd>
+    <dt>Saga</dt>
+    <dd>
+        <?php
+        $franchiseName = $franchise;
+        require MONCINE_ROOT . '/templates/_game_franchise_link.php';
+        ?>
+    </dd>
 <?php endif; ?>
 
 <?php if ($gameModeList !== []): ?>

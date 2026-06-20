@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\GamePlatform;
+use Moncine\GameFranchiseRepository;
 use Moncine\GameRepository;
 use Moncine\MediaDomainGuards;
 use Moncine\UserContext;
@@ -37,6 +38,9 @@ View::render('modifier-jeu', [
     'game' => $game,
     'platformChoices' => GamePlatform::choices(),
     'knownGenres' => $repo->listKnownGenres(),
+    'knownSagas' => GameFranchiseRepository::isAvailable()
+        ? (new GameFranchiseRepository())->listKnownSagas()
+        : [],
     'saveError' => trim((string) ($_GET['error'] ?? '')),
     'saved' => isset($_GET['saved']),
 ]);

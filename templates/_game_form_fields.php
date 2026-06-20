@@ -5,10 +5,12 @@
  * @var array<string, mixed>|null $game
  * @var array<string, string> $platformChoices
  * @var list<string> $knownGenres
+ * @var list<string> $knownSagas
  */
 $game = $game ?? null;
 $platformChoices = $platformChoices ?? Moncine\GamePlatform::choices();
 $knownGenres = $knownGenres ?? [];
+$knownSagas = $knownSagas ?? [];
 $useCatalogAutocomplete = $useCatalogAutocomplete ?? false;
 $gameFormFieldPrefix = $gameFormFieldPrefix ?? '';
 
@@ -217,10 +219,14 @@ require MONCINE_ROOT . '/templates/_game_genre_tags_field.php';
 ?>
 
 <?php if (Moncine\GameRepository::hasIgdbMetadataColumns()): ?>
-<label for="franchise">Franchise (IGDB)</label>
+<label for="franchise">Saga (IGDB)</label>
 <input type="text" name="franchise" id="franchise" maxlength="120"
        value="<?= Moncine\View::escape((string) ($gameRow['franchise'] ?? '')) ?>"
-       placeholder="Ex. The Witcher, Final Fantasy">
+       placeholder="Ex. The Witcher, Final Fantasy"
+       autocomplete="off"
+       list="game-saga-suggestions">
+<?php require MONCINE_ROOT . '/templates/_game_saga_datalist.php'; ?>
+<p class="hint">Les sagas déjà présentes dans le catalogue sont proposées pendant la saisie.</p>
 
 <label for="game_mode">Modes de jeu (IGDB)</label>
 <input type="text" name="game_mode" id="game_mode" maxlength="200"

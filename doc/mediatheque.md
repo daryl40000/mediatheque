@@ -1,6 +1,6 @@
 # Médiathèque — guide du fork
 
-**Version : 0.5.5** · **Date : 2026-06-16**
+**Version : 0.5.6** · **Date : 2026-06-16**
 
 Ce document décrit ce qu’est la **Médiathèque**, ce qui a été livré en **0.1.0**, et comment cela s’articule avec **Monciné**.
 
@@ -89,11 +89,14 @@ Le code métier reste largement celui de Monciné (`FilmRepository`, TMDB, etc.)
 | `ROADMAP.md` | Plan M0 → M7 |
 | `CHANGELOG.md` | Historique des versions |
 | `doc/magazines.md` | Module magazines (PDF, recherche, tags) |
+| `doc/base-de-donnees.md` | **Structure SQLite** — tables, relations, migrations |
 | `doc/conventions-techniques.md` | **Nommage Monciné vs Médiathèque — lecture obligatoire** |
 
 ---
 
 ## 5. Installation et migrations
+
+Structure détaillée des tables : [base-de-donnees.md](base-de-donnees.md) (à mettre à jour à chaque migration SQL).
 
 Comme Monciné :
 

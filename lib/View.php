@@ -665,6 +665,16 @@ final class View
         return '/sagas.php?saga=' . rawurlencode($sagaName);
     }
 
+    public static function gameFranchiseUrl(string $franchiseName): string
+    {
+        $franchiseName = trim($franchiseName);
+        if ($franchiseName === '') {
+            return '/sagas-jeux.php';
+        }
+
+        return '/sagas-jeux.php?franchise=' . rawurlencode($franchiseName);
+    }
+
     public static function supportFilterUrl(string $supportKey): string
     {
         if (!SupportPhysique::isValid($supportKey)) {

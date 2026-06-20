@@ -136,6 +136,7 @@ $oeuvres->insert([…, 'media_domain' => MediaContext::current()]);
 4. Réutiliser `bibliotheque` + `CatalogSchema::JOIN` + filtre domaine (pas une table collection séparée).
 5. Libellés UI : `MediaDomain::navLabels()` — pas de chaînes en dur « Mes films » dans les templates communs.
 6. Marquer le domaine implémenté : `MediaDomain::isCollectionImplemented()`.
+7. Mettre à jour **`sql/schema.sql`** et **[base-de-donnees.md](base-de-donnees.md)** (checklist § Maintenance).
 
 ### 4.2 Modifier une requête SQL existante
 
@@ -191,6 +192,7 @@ Jusque-là, toute PR qui renomme massivement les identifiants techniques doit ê
 
 | Document | Contenu |
 |----------|---------|
+| [base-de-donnees.md](base-de-donnees.md) | Structure SQLite, tables, migrations |
 | [mediatheque.md](mediatheque.md) | Vue d’ensemble du fork 0.1.0 |
 | [ROADMAP.md](../ROADMAP.md) | Phases M0–M7 et décisions actées |
 | [CHANGELOG.md](../CHANGELOG.md) | Versions Médiathèque vs Monciné |

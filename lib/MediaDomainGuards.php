@@ -48,6 +48,7 @@ final class MediaDomainGuards
     private const GAME_ONLY_PATH_PREFIXES = [
         '/jeux',
         '/jeu.php',
+        '/sagas-jeux.php',
         '/ajouter-jeu.php',
         '/modifier-jeu.php',
         '/enregistrer-jeu.php',

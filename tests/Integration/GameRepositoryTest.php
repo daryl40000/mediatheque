@@ -428,6 +428,39 @@ final class GameRepositoryTest extends MoncineTestCase
         $this->assertSame('Base Game Stats Test', $byDecade[0]['titre']);
     }
 
+    public function testGenreFilterMatchesEveryTagInMultiGenreGame(): void
+    {
+        if (!GameRepository::hasExtensionColumns()) {
+            $this->markTestSkipped('Colonnes extensions non disponibles.');
+        }
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new GameRepository();
+
+        $bibId = $repo->createWithLibrary([
+            'titre' => 'Multi Genre Filter Test',
+            'platform' => GamePlatform::PC,
+            'genre' => 'Aventure, RPG, Simulation',
+            'annee' => 2005,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        foreach (['aventure', 'rpg', 'simulation'] as $genreKey) {
+            $games = $repo->listInLibrary(
+                $userId,
+                $foyerId,
+                LibraryStatut::COLLECTION,
+                'titre',
+                'asc',
+                '',
+                GameListFilter::forGenre($genreKey)
+            );
+            $this->assertCount(1, $games, 'Filtre genre « ' . $genreKey . ' »');
+            $this->assertSame('Multi Genre Filter Test', $games[0]['titre']);
+        }
+    }
+
     public function testRemakeLinksBetweenOriginalAndRemake(): void
     {
         if (!GameRepository::hasRemakeColumns()) {
