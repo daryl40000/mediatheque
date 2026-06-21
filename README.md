@@ -1,13 +1,13 @@
 # Médiathèque
 
-**Version : 0.5.6**
+**Version : 0.5.7**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
 
 **Médiathèque** est l’évolution de **[Monciné](CHANGELOG.md)** : une application web pour gérer **plusieurs types de médias** (films, BD/manga, livres, jeux vidéo, magazines) dans une seule interface, avec des **onglets** et une **couleur par média**.
 
-En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. L’onglet **Magazines** gère séries et numéros (PDF, recherche FTS, sujets tests/previews). L’onglet **Jeux** est **pleinement utilisable** depuis **0.5.0** (collection, envies, statistiques, pont magazine), **0.5.3** (fiches catalogue dédiées, autocomplétion à l’ajout), **0.5.4** (remakes, liens extensions/remakes en jaquettes, recherche tolérante), **0.5.5** (enrichissement IGDB : jaquette, titres FR/EN, studio, genres, franchise, modes, thèmes) et **0.5.6** (sagas jeux, autocomplétion saga, correctif filtre genre multi-tags). Les onglets **BD** et **Livres** affichent encore « Bientôt disponible ».
+En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. L’onglet **Magazines** gère séries et numéros (PDF, recherche FTS, sujets tests/previews). L’onglet **Jeux** est **pleinement utilisable** depuis **0.5.0** (collection, envies, statistiques, pont magazine), **0.5.3** (fiches catalogue dédiées, autocomplétion à l’ajout), **0.5.4** (remakes, liens extensions/remakes en jaquettes, recherche tolérante), **0.5.5** (enrichissement IGDB : jaquette, titres FR/EN, studio, genres, franchise, modes, thèmes), **0.5.6** (sagas jeux, autocomplétion saga, correctif filtre genre multi-tags) et **0.5.7** (vue **Bibliothèque** films/jeux, option « Garder la jaquette » IGDB, recherche par acronymes). Les onglets **BD** et **Livres** affichent encore « Bientôt disponible ».
 
 | Document | Contenu |
 |----------|---------|
@@ -26,8 +26,8 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. L’ong
 | Domaine | Statut | Points clés |
 |---------|--------|-------------|
 | **Multi-médias** | ✅ | Onglets Films / BD / Livres / Jeux / Magazines + thème couleur par domaine |
-| **Films** | ✅ Production | Collection, envies, TMDB/OMDB, quiz « Ce soir », prêts, sagas, listes imprimables (**0.4.4+**) |
-| **Jeux vidéo** | ✅ Utilisable | Collection, envies, notes, stats, **extensions DLC**, **remakes**, **enrichissement IGDB**, **sagas jeux**, fichiers attachés, Linux tri-état, pont magazine, fiche `/oeuvre-jeu.php`, autocomplétion à l’ajout, **recherche tolérante** (**0.5.6**, [doc/jeux.md](doc/jeux.md)) |
+| **Films** | ✅ Production | Collection, envies, TMDB/OMDB, quiz « Ce soir », prêts, sagas, **vue Bibliothèque** (**0.5.7**), listes imprimables (**0.4.4+**) |
+| **Jeux vidéo** | ✅ Utilisable | Collection, envies, notes, stats, **extensions DLC**, **remakes**, **enrichissement IGDB**, **sagas jeux**, **vue Bibliothèque**, recherche **acronymes**, fichiers attachés, Linux tri-état, pont magazine, fiche `/oeuvre-jeu.php`, autocomplétion à l’ajout, **recherche tolérante** (**0.5.7**, [doc/jeux.md](doc/jeux.md)) |
 | **Magazines** | 🔄 Avancé | Séries, numéros, PDF, sommaire, FTS, sujets tests/previews, **fiche catalogue** `/oeuvre-magazine.php` (**0.2.x–0.4.x**, [doc/magazines.md](doc/magazines.md)) |
 | **BD / Livres** | ⏸️ Bientôt | Onglets présents, contenu à venir (M2 / M3) |
 | **Transversal** | Partiel | Catalogue partagé multi-domaines, foyers, amis, partage visiteur, profil public (films + magazines + **jeux**) |
@@ -48,7 +48,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Priorité | Contenu | Version cible |
 |----------|---------|---------------|
-| 1 | Tag **v0.5.6** (sagas jeux, doc BDD) | 0.5.6 |
+| 1 | Tag **v0.5.7** (vue Bibliothèque, IGDB jaquette, acronymes) | 0.5.7 |
 | 2 | Magazines : autocomplétion à l’ajout, profil public, parité catalogue | **0.6.0** |
 | 3 | Pont magazine ↔ jeu : rattachement rétroactif des sujets | 0.6.0 |
 | 4 | Polish jeux (plateformes admin, non prêtable si démat) | 0.5.x |
@@ -60,6 +60,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.5.7** | Vue **Bibliothèque** (films + jeux), option « Garder la jaquette » IGDB, recherche jeux par acronymes |
 | **0.5.6** | Sagas jeux (`/sagas-jeux.php`), autocomplétion saga, doc base de données, correctif filtre genre multi-tags |
 | **0.5.5** | Enrichissement jeux IGDB (jaquette, titres FR/EN, studio, genres, franchise, modes, thèmes, acronymes) |
 | **0.5.4** | Remakes jeux, affichage jaquettes extensions/remakes, recherche insensible accents + 1 faute (autocomplétion) |
@@ -191,7 +192,7 @@ Les données (base, affiches, PDF, sessions) sont stockées dans le dossier **`d
 
 - **Onglets** en haut : chaque type de média a sa couleur et ses menus (**Ma collection**, **Mes envies**, **Statistiques**, etc.).
 - **Films** : dvdthèque complète (collection, envies, visions, prêts entre amis, questionnaire du soir…).
-- **Jeux** (**0.5.6**) : collection (`/jeux.php`), envies, statistiques, extensions, remakes, **enrichissement IGDB**, **sagas jeux**, recherche tolérante ; détail [doc/jeux.md](doc/jeux.md).
+- **Jeux** (**0.5.7**) : collection (`/jeux.php`), envies, statistiques, extensions, remakes, **enrichissement IGDB**, **sagas jeux**, **vue Bibliothèque**, recherche acronymes ; détail [doc/jeux.md](doc/jeux.md).
 - **Magazines** : séries → numéros → fiche détaillée ; détail [doc/magazines.md](doc/magazines.md).
 - **BD, Livres** : onglets présents mais marqués **« Bientôt disponible »**.
 
@@ -314,7 +315,7 @@ composer test
 | | Monciné | Médiathèque |
 |---|---------|-------------|
 | Version production films | **1.0.0** | — |
-| Version fork multi-médias | — | **0.5.6** (films, jeux + IGDB + sagas, magazines avancés) |
+| Version fork multi-médias | — | **0.5.7** (films + vue Bibliothèque, jeux + IGDB + sagas, magazines avancés) |
 | Nom affiché | Monciné | Médiathèque |
 | Code PHP | `Moncine\` | `Moncine\` (inchangé — voir [conventions-techniques.md](doc/conventions-techniques.md)) |
 

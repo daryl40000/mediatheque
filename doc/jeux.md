@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.5.6** · **Date : 2026-06-16**
+**Version : 0.5.7** · **Date : 2026-06-16**
 
 ## Objectif
 
@@ -93,6 +93,8 @@ Même logique que **TMDB pour les films** : compléter automatiquement les fiche
 
 Les champs déjà remplis ne sont **pas écrasés**, sauf correction avec un **identifiant IGDB** précis.
 
+**Jaquette existante (0.5.7) :** cochez **« Garder la jaquette »** pour conserver l’image déjà en place lors d’un enrichissement ou d’une correction IGDB (panneaux fiche, import par lot).
+
 #### Utilisation
 
 | Action | Où |
@@ -154,12 +156,12 @@ Classe **`SearchMatch`** (insensible **casse** et **accents**, **1 faute de frap
 | Autocomplétion **jeux** (`/rechercher-jeux-catalogue.php`) | accents + 1 faute / mot |
 | Autocomplétion **films** (titre catalogue) | accents + 1 faute / mot |
 | Autocomplétion **sujets magazines** | accents + 1 faute / mot (+ FTS si disponible) |
-| Recherche **Mes jeux** / **Mes films** | accents (sans faute tolérée en liste) |
+| Recherche **Mes jeux** / **Mes films** | accents ; jeux : acronymes (`alternative_names`, **0.5.7**) |
 | Recherche **catalogue admin** | accents |
 
 Fonction SQL **`fold_search()`** enregistrée au démarrage (`FrenchSort::fold`) pour comparer sans accents dans les requêtes.
 
-Exemples : `demon` → *Démon Souls* ; `eldn ring` → *Elden Ring* ; `gran turismo` → *Gran Turismo*.
+Exemples : `demon` → *Démon Souls* ; `eldn ring` → *Elden Ring* ; `gran turismo` → *Gran Turismo* ; `GTA` → jeux dont l’acronyme IGDB correspond (**0.5.7**).
 
 ### Lien magazine → jeu
 
@@ -295,13 +297,18 @@ Quand l’onglet **Jeux** est actif, la page d’accueil (`home-jeu.php`) affich
 - rattachement rétroactif des sujets existants ;
 - recherche globale incluant le titre catalogue jeu.
 
-## Liste, tri et vue vignettes
+## Liste, tri et modes d’affichage
 
 Sur `/jeux.php` :
 
 - **Colonnes triables** : titre, année, studio, genre, support, note, date d’ajout ;
-- **Recherche texte** : titre, studio, genre ;
-- **Vue liste** (défaut) ou **vue vignettes** (`?view=grid`) — même principe que la collection films (`CollectionViewMode`).
+- **Recherche texte** : titre, studio, genre, **acronymes** (`alternative_names`) ;
+- **Trois vues** (`CollectionViewMode`) — même principe que Mes films :
+  - **Liste** (défaut) ;
+  - **Vignettes** (`?view=grid`) ;
+  - **Bibliothèque** (`?view=shelf`) — tranches verticales (190 px), bord gauche de la jaquette, vignette au survol ; **toute la collection sur une page** (sans pagination).
+
+Styles : classes `.game-shelf-*` ; script `initGameShelfHoverPreviews()` dans `app.js`.
 
 ## Statistiques
 

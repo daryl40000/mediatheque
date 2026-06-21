@@ -200,6 +200,7 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                     <?php
                     $enrichTarget = 'game';
                     $entityId = $gameId;
+                    $currentPosterUrl = (string) ($game['poster_url'] ?? '');
                     require MONCINE_ROOT . '/templates/_enrich_game_panel.php';
                     ?>
                 <?php endif; ?>

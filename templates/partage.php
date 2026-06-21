@@ -13,6 +13,8 @@
         $kindFilter = Moncine\ContentKindFilter::normalize($kindFilter ?? '');
         $viewMode = Moncine\CollectionViewMode::normalize($viewMode ?? '');
         $isGridView = Moncine\CollectionViewMode::isGrid($viewMode);
+        $isShelfView = Moncine\CollectionViewMode::isShelf($viewMode);
+        $viewQueryValue = Moncine\CollectionViewMode::queryValue($viewMode);
         $rawToken = (string) ($rawToken ?? '');
         $resultCount = count($films);
         $totalCount = (int) ($totalCount ?? $resultCount);
@@ -80,8 +82,8 @@
                 <?php if ($kindFilter !== Moncine\ContentKindFilter::ALL): ?>
                     <input type="hidden" name="kind" value="<?= Moncine\View::escape($kindFilter) ?>">
                 <?php endif; ?>
-                <?php if ($isGridView): ?>
-                    <input type="hidden" name="view" value="grid">
+                <?php if ($viewQueryValue !== null): ?>
+                    <input type="hidden" name="view" value="<?= Moncine\View::escape($viewQueryValue) ?>">
                 <?php endif; ?>
                 <button type="submit" class="btn btn-primary">Rechercher</button>
                 <?php if ($searched): ?>
@@ -139,6 +141,8 @@
         <p class="hint collection-page__hint">
             <?php if ($isGridView): ?>
                 Cliquez sur une vignette pour ouvrir la fiche du film.
+            <?php elseif ($isShelfView): ?>
+                Survolez une tranche pour la vignette ; cliquez pour ouvrir la fiche.
             <?php else: ?>
                 Cliquez sur un en-tête pour trier la liste. Cliquez sur une affiche ou un titre pour ouvrir la fiche.
             <?php endif; ?>
@@ -161,6 +165,8 @@
             </p>
         <?php elseif ($isGridView): ?>
             <?php require MONCINE_ROOT . '/templates/_partage_collection_grid.php'; ?>
+        <?php elseif ($isShelfView): ?>
+            <?php require MONCINE_ROOT . '/templates/_partage_collection_shelf.php'; ?>
         <?php else: ?>
             <?php require MONCINE_ROOT . '/templates/_partage_collection_list.php'; ?>
         <?php endif; ?>

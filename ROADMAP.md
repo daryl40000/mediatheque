@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.5.6** (2026-06-16)  
+**Version actuelle : 0.5.7** (2026-06-16)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -13,12 +13,12 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ---
 
-## Où en est-on ? (synthèse 0.5.6)
+## Où en est-on ? (synthèse 0.5.7)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
-| **Films** | ✅ Production | 0.4.4+ | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`) |
-| **Jeux** | ✅ Utilisable | 0.5.0 → **0.5.6** | Complet (extensions, remakes, autocomplétion, recherche tolérante, **IGDB**, **sagas**) |
+| **Films** | ✅ Production | 0.4.4+ → **0.5.7** | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`, **vue Bibliothèque**) |
+| **Jeux** | ✅ Utilisable | 0.5.0 → **0.5.7** | Complet (extensions, remakes, autocomplétion, recherche tolérante, **IGDB**, **sagas**, **vue Bibliothèque**, acronymes) |
 | **Magazines** | 🔄 Avancé (~85 %) | 0.2.x → 0.4.x | Partiel (fiche `/oeuvre-magazine.php` ✅ ; autocomplétion à l’ajout ⏳) |
 | **BD / Manga** | ⏸️ Repoussé | — | — |
 | **Livres** | ⏸️ Repoussé | — | — |
@@ -29,7 +29,7 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 |-------|--------|----------------|-------|
 | **M0** Fondations multi-médias | ✅ Livré | 0.1.0 | — |
 | **M1** Stabilisation films | ✅ Livré | 0.4.4 | Maintenance seulement |
-| **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.5.6** | Polish non bloquant (voir M4) |
+| **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.5.7** | Polish non bloquant (voir M4) |
 | **M5** Magazines | 🔄 En cours | 0.4.3 → **0.6.0** cible | Parité catalogue + profil public |
 | **Pont** Magazines ↔ Jeux | 🔄 Partiel | 0.5.0+ | Rattachement rétroactif |
 | **M2** BD / Manga | ⏸️ Repoussé | 0.6.x+ (indicatif) | Après M5 stabilisée |
@@ -40,6 +40,13 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.5.7** — vue Bibliothèque et enrichissements jeux (2026-06-16)
+
+- **Vue Bibliothèque** (`?view=shelf`) sur Mes films et Mes jeux : tranches verticales (190 px), aperçu vignette au survol, collection entière sur une page.
+- **Enrichissement IGDB** : option « Garder la jaquette » lors d’un enrichissement ou d’une correction.
+- **Recherche jeux** : acronymes IGDB (`alternative_names`, ex. GTA, BotW) dans Mes jeux et le catalogue.
+- **Partage visiteur** : mode Bibliothèque sur les liens `/partage.php`.
 
 ### ✅ **0.5.6** — sagas jeux et doc base de données (2026-06-16)
 

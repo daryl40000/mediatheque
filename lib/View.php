@@ -277,8 +277,8 @@ final class View
         if ($kindFilter !== ContentKindFilter::ALL) {
             $params['kind'] = $kindFilter;
         }
-        if (CollectionViewMode::isGrid($viewMode)) {
-            $params['view'] = CollectionViewMode::GRID;
+        if (CollectionViewMode::isGrid($viewMode) || CollectionViewMode::isShelf($viewMode)) {
+            $params['view'] = CollectionViewMode::queryValue($viewMode) ?? CollectionViewMode::GRID;
         }
         if ($page > 1) {
             $params['page'] = (string) $page;
@@ -849,14 +849,59 @@ final class View
         if ($dir !== 'asc') {
             $params['dir'] = $dir;
         }
-        if (CollectionViewMode::isGrid($viewMode)) {
-            $params['view'] = CollectionViewMode::GRID;
+        $viewParam = CollectionViewMode::queryValue($viewMode);
+        if ($viewParam !== null) {
+            $params['view'] = $viewParam;
         }
         foreach (($filter ?? GameListFilter::empty())->toQueryParams() as $key => $value) {
             $params[$key] = $value;
         }
 
         return $params === [] ? '/jeux.php' : '/jeux.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    /** Hauteur fixe des tranches (vue bibliothèque), en pixels — jeux et films. */
+    public const COLLECTION_SHELF_SPINE_HEIGHT_PX = 190;
+
+    /** @deprecated Utiliser COLLECTION_SHELF_SPINE_HEIGHT_PX */
+    public const GAME_SHELF_SPINE_HEIGHT_PX = self::COLLECTION_SHELF_SPINE_HEIGHT_PX;
+
+    public static function collectionShelfSpineHeightPx(): int
+    {
+        return self::COLLECTION_SHELF_SPINE_HEIGHT_PX;
+    }
+
+    /** Hauteur uniforme des tranches (vue bibliothèque jeux). */
+    public static function gameShelfSpineHeightPx(): int
+    {
+        return self::collectionShelfSpineHeightPx();
+    }
+
+    /**
+     * Teinte du dos (vue bibliothèque).
+     *
+     * @param array<string, mixed> $row
+     */
+    public static function collectionSpineHueStyle(array $row): string
+    {
+        $seed = (string) ($row['platform'] ?? $row['media_domain'] ?? '')
+            . '|'
+            . (string) ($row['titre'] ?? '')
+            . '|'
+            . (string) ($row['id'] ?? '');
+        $hue = abs(crc32($seed)) % 360;
+
+        return '--spine-hue: ' . $hue;
+    }
+
+    /**
+     * Teinte du dos (vue bibliothèque jeux).
+     *
+     * @param array<string, mixed> $game
+     */
+    public static function gameSpineHueStyle(array $game): string
+    {
+        return self::collectionSpineHueStyle($game);
     }
 
     public static function gamesWishlistUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string

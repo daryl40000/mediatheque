@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initTagsBadgeFields();
     initGameEditionFields();
     initGameRelationFields();
+    initGameShelfHoverPreviews();
     initShareLinkCopy();
 
     const params = new URLSearchParams(window.location.search);
@@ -1427,5 +1428,61 @@ function initGameRelationFields() {
                 setHint(input.value);
             }
         });
+    });
+}
+
+/** Vue bibliothèque jeux : vignette au survol (position fixe, hors zone scroll). */
+function initGameShelfHoverPreviews() {
+    const margin = 8;
+    const gap = 10;
+
+    document.querySelectorAll('.game-shelf__card').forEach((card) => {
+        const preview = card.querySelector('.game-shelf__preview');
+        const spine = card.querySelector('.game-shelf__link');
+        if (!preview || !spine) {
+            return;
+        }
+
+        const placePreview = () => {
+            preview.style.left = '-9999px';
+            preview.style.top = '0';
+            preview.classList.add('is-visible');
+            preview.setAttribute('aria-hidden', 'false');
+
+            const spineRect = spine.getBoundingClientRect();
+            const previewWidth = preview.offsetWidth || 148;
+            const previewHeight = preview.offsetHeight || 280;
+
+            let top = spineRect.top - previewHeight - gap;
+            let left = spineRect.left + spineRect.width / 2 - previewWidth / 2;
+
+            left = Math.max(margin, Math.min(left, window.innerWidth - previewWidth - margin));
+
+            if (top < margin) {
+                top = spineRect.bottom + gap;
+            }
+
+            preview.style.left = `${Math.round(left)}px`;
+            preview.style.top = `${Math.round(top)}px`;
+        };
+
+        const hidePreview = () => {
+            preview.classList.remove('is-visible');
+            preview.setAttribute('aria-hidden', 'true');
+            preview.style.left = '';
+            preview.style.top = '';
+        };
+
+        card.addEventListener('mouseenter', placePreview);
+        card.addEventListener('mouseleave', hidePreview);
+        card.addEventListener('focusin', placePreview);
+        card.addEventListener('focusout', (event) => {
+            if (!card.contains(event.relatedTarget)) {
+                hidePreview();
+            }
+        });
+
+        window.addEventListener('scroll', hidePreview, { passive: true });
+        window.addEventListener('resize', hidePreview);
     });
 }

@@ -296,13 +296,16 @@ final class GameRepository
 
         $searchQuery = trim($searchQuery);
         if ($searchQuery !== '') {
-            $where[] = '(fold_search(o.titre) LIKE :q ESCAPE \'\\\''
-                . ' OR fold_search(COALESCE(oj.studio, \'\')) LIKE :q_studio ESCAPE \'\\\''
-                . ' OR fold_search(COALESCE(oj.genre, \'\')) LIKE :q_genre ESCAPE \'\\\')';
-            $foldedPattern = SearchMatch::foldedContainsPattern($searchQuery);
-            $params['q'] = $foldedPattern;
-            $params['q_studio'] = $foldedPattern;
-            $params['q_genre'] = $foldedPattern;
+            [$searchSql, $searchParams] = self::gameSearchSqlConditions(
+                $searchQuery,
+                includeGenre: true,
+                includePrefix: false,
+                titleParam: 'q',
+            );
+            $where[] = $searchSql;
+            foreach ($searchParams as $key => $value) {
+                $params[$key] = $value;
+            }
         }
 
         ($filter ?? GameListFilter::empty())->applyToSql($where, $params);
@@ -417,22 +420,16 @@ final class GameRepository
 
         $query = trim($query);
         if ($query !== '') {
-            $conditions = [
-                'fold_search(o.titre) LIKE :q_titre ESCAPE \'\\\'',
-                'fold_search(COALESCE(oj.studio, \'\')) LIKE :q_studio ESCAPE \'\\\'',
-            ];
-            $params['q_titre'] = SearchMatch::foldedContainsPattern($query);
-            $params['q_studio'] = SearchMatch::foldedContainsPattern($query);
-
-            $prefixPattern = SearchMatch::foldedPrefixPattern($query, 2);
-            if ($prefixPattern !== '') {
-                $conditions[] = 'fold_search(o.titre) LIKE :q_prefix ESCAPE \'\\\'';
-                $conditions[] = 'fold_search(COALESCE(oj.studio, \'\')) LIKE :q_prefix_studio ESCAPE \'\\\'';
-                $params['q_prefix'] = $prefixPattern;
-                $params['q_prefix_studio'] = $prefixPattern;
+            [$searchSql, $searchParams] = self::gameSearchSqlConditions(
+                $query,
+                includeGenre: false,
+                includePrefix: true,
+                titleParam: 'q_titre',
+            );
+            $where[] = $searchSql;
+            foreach ($searchParams as $key => $value) {
+                $params[$key] = $value;
             }
-
-            $where[] = '(' . implode(' OR ', $conditions) . ')';
         }
 
         $sql = 'SELECT ' . self::selectCatalogRow()
@@ -1228,6 +1225,55 @@ final class GameRepository
     public static function formatAddedAt(string $createdAt): string
     {
         return GameRowMapper::formatAddedAt($createdAt);
+    }
+
+    /**
+     * Conditions SQL OR pour rechercher un jeu (titre, studio, genre, acronymes IGDB).
+     *
+     * @return array{0: string, 1: array<string, string>}
+     */
+    private static function gameSearchSqlConditions(
+        string $query,
+        bool $includeGenre,
+        bool $includePrefix,
+        string $titleParam = 'q_titre',
+    ): array {
+        $pattern = SearchMatch::foldedContainsPattern($query);
+        $conditions = [
+            'fold_search(o.titre) LIKE :' . $titleParam . ' ESCAPE \'\\\'',
+            'fold_search(COALESCE(oj.studio, \'\')) LIKE :q_studio ESCAPE \'\\\'',
+        ];
+        $params = [
+            $titleParam => $pattern,
+            'q_studio' => $pattern,
+        ];
+
+        if ($includeGenre) {
+            $conditions[] = 'fold_search(COALESCE(oj.genre, \'\')) LIKE :q_genre ESCAPE \'\\\'';
+            $params['q_genre'] = $pattern;
+        }
+
+        if (self::hasIgdbMetadataColumns()) {
+            $conditions[] = 'fold_search(COALESCE(oj.alternative_names, \'\')) LIKE :q_acronym ESCAPE \'\\\'';
+            $params['q_acronym'] = $pattern;
+        }
+
+        if ($includePrefix) {
+            $prefixPattern = SearchMatch::foldedPrefixPattern($query, 2);
+            if ($prefixPattern !== '') {
+                $conditions[] = 'fold_search(o.titre) LIKE :q_prefix ESCAPE \'\\\'';
+                $conditions[] = 'fold_search(COALESCE(oj.studio, \'\')) LIKE :q_prefix_studio ESCAPE \'\\\'';
+                $params['q_prefix'] = $prefixPattern;
+                $params['q_prefix_studio'] = $prefixPattern;
+
+                if (self::hasIgdbMetadataColumns()) {
+                    $conditions[] = 'fold_search(COALESCE(oj.alternative_names, \'\')) LIKE :q_prefix_acronym ESCAPE \'\\\'';
+                    $params['q_prefix_acronym'] = $prefixPattern;
+                }
+            }
+        }
+
+        return ['(' . implode(' OR ', $conditions) . ')', $params];
     }
 
     private static function igdbMetadataUpdateSet(): string

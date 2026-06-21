@@ -22,6 +22,8 @@ $catalogDir = $catalogDir ?? 'asc';
 $catalogPage = max(1, (int) ($catalogPage ?? 1));
 $currentIgdbId = (int) ($currentIgdbId ?? 0);
 
+$currentPosterUrl = trim((string) ($currentPosterUrl ?? ''));
+$hasExistingPoster = $currentPosterUrl !== '';
 $formAction = $enrichTarget === 'game' ? '/enrichir-jeu.php' : '/enrichir-oeuvre-jeu.php';
 $idFieldName = $enrichTarget === 'game' ? 'game_id' : 'oeuvre_id';
 $panelTitle = $enrichTarget === 'game'
@@ -35,6 +37,9 @@ $igdbPublicUrl = $currentIgdbId > 0 ? Moncine\IgdbClient::publicUrl($currentIgdb
         <p class="hint">
             <strong>IGDB</strong> complète la fiche : jaquette (téléchargée localement), année,
             studio (développeur), éditeur et genres (traduits en français).
+            <?php if ($hasExistingPoster): ?>
+                Si une jaquette est déjà présente, cochez <strong>Garder la jaquette</strong> pour ne pas la remplacer.
+            <?php endif; ?>
             Vous pouvez aussi coller un identifiant IGDB (<code>1942</code> ou URL igdb.com).
             <?php if ($enrichTarget === 'game'): ?>
                 La fiche catalogue partagée en profitera aussi.
@@ -64,7 +69,15 @@ $igdbPublicUrl = $currentIgdbId > 0 ? Moncine\IgdbClient::publicUrl($currentIgdb
                 <input type="hidden" name="catalog_page" value="<?= $catalogPage ?>">
             <?php endif; ?>
             <input type="hidden" name="action" value="enrich">
-            <button type="submit" class="btn btn-accent">Enrichir par le titre</button>
+            <div class="export-actions">
+                <button type="submit" class="btn btn-accent">Enrichir par le titre</button>
+                <?php if ($hasExistingPoster): ?>
+                    <label class="checkbox enrich-game-panel__keep-poster">
+                        <input type="checkbox" name="keep_poster" value="1" checked>
+                        Garder la jaquette
+                    </label>
+                <?php endif; ?>
+            </div>
         </form>
 
         <?php if (($enrichStatus ?? '') === 'not_found' || ($enrichStatus ?? '') === 'error'): ?>
@@ -93,6 +106,12 @@ $igdbPublicUrl = $currentIgdbId > 0 ? Moncine\IgdbClient::publicUrl($currentIgdb
                 <input type="text" name="igdb_id" id="igdb_id_<?= $entityId ?>_<?= Moncine\View::escape($enrichTarget) ?>"
                        value="<?= $currentIgdbId > 0 ? (int) $currentIgdbId : '' ?>"
                        placeholder="1942 ou URL igdb.com/games/…" required>
+                <?php if ($hasExistingPoster): ?>
+                    <label class="checkbox enrich-game-panel__keep-poster">
+                        <input type="checkbox" name="keep_poster" value="1" checked>
+                        Garder la jaquette
+                    </label>
+                <?php endif; ?>
                 <button type="submit" class="btn btn-secondary">Corriger avec cet ID IGDB</button>
             </form>
         </div>

@@ -17,6 +17,8 @@ $listFilter = $listFilter ?? Moncine\GameListFilter::empty();
 $existingFranchises = $existingFranchises ?? [];
 $knownSagas = $knownSagas ?? [];
 $isGridView = Moncine\CollectionViewMode::isGrid($viewMode);
+$isShelfView = Moncine\CollectionViewMode::isShelf($viewMode);
+$viewQueryValue = Moncine\CollectionViewMode::queryValue($viewMode);
 $filterActive = $listFilter->isActive();
 $filterLabel = $listFilter->activeLabel();
 $bulkMsg = trim((string) ($_GET['bulk_msg'] ?? ''));
@@ -85,8 +87,8 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                    placeholder="Titre, studio, genre…">
             <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
             <input type="hidden" name="dir" value="<?= Moncine\View::escape($sortDir) ?>">
-            <?php if ($isGridView): ?>
-                <input type="hidden" name="view" value="grid">
+            <?php if ($viewQueryValue !== null): ?>
+                <input type="hidden" name="view" value="<?= Moncine\View::escape($viewQueryValue) ?>">
             <?php endif; ?>
             <?php foreach ($listFilter->toQueryParams() as $filterKey => $filterValue): ?>
                 <input type="hidden" name="<?= Moncine\View::escape((string) $filterKey) ?>"
@@ -101,7 +103,7 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
     </form>
 
     <nav class="ui-pill-bar" aria-label="Mode d’affichage">
-        <?php foreach (Moncine\CollectionViewMode::choices() as $modeKey => $modeLabel): ?>
+        <?php foreach (Moncine\CollectionViewMode::gameChoices() as $modeKey => $modeLabel): ?>
             <?php
             $modeActive = $viewMode === $modeKey;
             $modeClass = 'ui-pill-bar__item' . ($modeActive ? ' ui-pill--active' : '');
@@ -144,6 +146,8 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
             <?= (int) $totalCount ?> jeu<?= $totalCount > 1 ? 'x' : '' ?> trouvé<?= $totalCount > 1 ? 's' : '' ?>.
             <?php if ($isGridView): ?>
                 Cliquez sur une vignette pour ouvrir la fiche.
+            <?php elseif ($isShelfView): ?>
+                Survolez une tranche pour la vignette ; cliquez pour ouvrir la fiche.
             <?php else: ?>
                 Cliquez sur un en-tête de colonne pour trier.
             <?php endif; ?>
@@ -157,8 +161,8 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
             <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
             <input type="hidden" name="dir" value="<?= Moncine\View::escape($sortDir) ?>">
             <input type="hidden" name="q" value="<?= Moncine\View::escape($query) ?>">
-            <?php if ($isGridView): ?>
-                <input type="hidden" name="view" value="grid">
+            <?php if ($viewQueryValue !== null): ?>
+                <input type="hidden" name="view" value="<?= Moncine\View::escape($viewQueryValue) ?>">
             <?php endif; ?>
             <?php foreach ($listFilter->toQueryParams() as $filterKey => $filterValue): ?>
                 <input type="hidden" name="<?= Moncine\View::escape((string) $filterKey) ?>"
@@ -213,6 +217,8 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
         <?php endif; ?>
         <?php if ($isGridView): ?>
             <?php require MONCINE_ROOT . '/templates/_games_collection_grid.php'; ?>
+        <?php elseif ($isShelfView): ?>
+            <?php require MONCINE_ROOT . '/templates/_games_collection_shelf.php'; ?>
         <?php else: ?>
             <?php require MONCINE_ROOT . '/templates/_games_collection_list.php'; ?>
         <?php endif; ?>

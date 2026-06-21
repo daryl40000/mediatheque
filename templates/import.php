@@ -286,6 +286,10 @@
                     <input type="checkbox" name="force_all_jeux" value="1">
                     Tout retraiter
                 </label>
+                <label class="checkbox">
+                    <input type="checkbox" name="keep_poster" value="1" checked>
+                    Garder les jaquettes existantes
+                </label>
             </div>
         </form>
         <form method="post" action="/enrichir-jeux.php" class="inline-form">

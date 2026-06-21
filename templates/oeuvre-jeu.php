@@ -156,6 +156,7 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
                 $entityId = $oeuvreId;
                 $hasIgdbCredentials = Moncine\IgdbConfig::hasCredentials() && Moncine\GameRepository::hasIgdbColumns();
                 $currentIgdbId = (int) ($game['igdb_id'] ?? 0);
+                $currentPosterUrl = (string) ($game['poster_url'] ?? '');
                 require MONCINE_ROOT . '/templates/_enrich_game_panel.php';
                 ?>
 

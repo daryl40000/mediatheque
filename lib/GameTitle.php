@@ -32,7 +32,7 @@ final class GameTitle
     public static function searchText(array $row): string
     {
         $parts = [];
-        foreach (['titre', 'titre_original'] as $field) {
+        foreach (['titre', 'titre_original', 'alternative_names'] as $field) {
             $value = trim((string) ($row[$field] ?? ''));
             if ($value !== '') {
                 $parts[] = $value;

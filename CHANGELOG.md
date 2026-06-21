@@ -11,6 +11,28 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.5.7] — 2026-06-16
+
+**Vue bibliothèque (films et jeux), enrichissement IGDB et recherche par acronymes**
+
+Affichage « étagère » des collections (tranches verticales avec aperçu au survol), option pour conserver la jaquette à l’enrichissement IGDB, et recherche jeux par acronymes.
+
+### Ajouté
+
+- **Vue Bibliothèque** (`?view=shelf`) sur **Mes films** et **Mes jeux** : tranches verticales (190 px), bord gauche de l’affiche, vignette au survol, cases à cocher pour actions de masse.
+- **Templates** : `_films_collection_shelf.php`, `_films_shelf_hover_tile.php`, `_games_collection_shelf.php`, `_games_shelf_hover_tile.php`, `_partage_collection_shelf.php`.
+- **Styles / JS** : blocs `.game-shelf-*` dans `style.css` ; `initGameShelfHoverPreviews()` dans `app.js`.
+- **Enrichissement IGDB** : case **« Garder la jaquette »** (panneaux enrichissement, import par lot) — ne remplace pas une jaquette déjà présente si cochée.
+- **Recherche jeux par acronymes** : champ `alternative_names` pris en compte dans Mes jeux, catalogue et `GameTitle::searchText`.
+- **Tests** : `CollectionViewModeTest`, `GameCatalogEnrichmentTest`, recherche acronyme (`GameRepositoryTest`, `GameTitleTest`).
+
+### Modifié
+
+- **`CollectionViewMode`** : modes Liste / Vignettes / Bibliothèque pour films et jeux (`SHELF = shelf`).
+- **Vue bibliothèque** : **toute la collection sur une seule page** (pas de pagination), comme Mes jeux — films inclus (`FilmCollectionPagination::usesPagination`).
+- **Partage visiteur** : mode Bibliothèque disponible sur `/partage.php`.
+- **`View`** : `collectionShelfSpineHeightPx()` (190 px), `collectionSpineHueStyle()` (teinte de repli sans affiche).
+
 ## [0.5.6] — 2026-06-16
 
 **Sagas jeux, documentation base de données et correctifs statistiques**

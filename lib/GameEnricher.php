@@ -29,7 +29,7 @@ final class GameEnricher
     /**
      * @return array{processed: int, enriched: int, not_found: int, errors: list<string>}
      */
-    public function enrichBatch(int $limit = MONCINE_ENRICH_BATCH_SIZE, bool $force = false): array
+    public function enrichBatch(int $limit = MONCINE_ENRICH_BATCH_SIZE, bool $force = false, bool $keepPoster = false): array
     {
         if (!self::canEnrich()) {
             return [
@@ -69,7 +69,7 @@ final class GameEnricher
                 continue;
             }
 
-            $this->enrichment->updateEnrichmentMetadata($oeuvreId, $meta);
+            $this->enrichment->updateEnrichmentMetadata($oeuvreId, $meta, false, $keepPoster);
             $enriched++;
         }
 
@@ -84,7 +84,7 @@ final class GameEnricher
     /**
      * @return array{ok: bool, not_found: bool, message: string}
      */
-    public function enrichOne(int $bibId, int $userId, int $foyerId): array
+    public function enrichOne(int $bibId, int $userId, int $foyerId, bool $keepPoster = false): array
     {
         if (!GameRepository::isAvailable()) {
             return [
@@ -112,13 +112,13 @@ final class GameEnricher
             ];
         }
 
-        return $this->enrichOeuvre($oeuvreId);
+        return $this->enrichOeuvre($oeuvreId, $keepPoster);
     }
 
     /**
      * @return array{ok: bool, not_found: bool, message: string}
      */
-    public function correctWithIgdbId(int $bibId, string $igdbInput, int $userId, int $foyerId): array
+    public function correctWithIgdbId(int $bibId, string $igdbInput, int $userId, int $foyerId, bool $keepPoster = false): array
     {
         if (!GameRepository::isAvailable()) {
             return [
@@ -146,13 +146,13 @@ final class GameEnricher
             ];
         }
 
-        return $this->correctOeuvreWithIgdbId($oeuvreId, $igdbInput);
+        return $this->correctOeuvreWithIgdbId($oeuvreId, $igdbInput, $keepPoster);
     }
 
     /**
      * @return array{ok: bool, not_found: bool, message: string}
      */
-    public function enrichOeuvre(int $oeuvreId): array
+    public function enrichOeuvre(int $oeuvreId, bool $keepPoster = false): array
     {
         if (!GameRepository::isAvailable()) {
             return [
@@ -190,19 +190,19 @@ final class GameEnricher
             ];
         }
 
-        $this->enrichment->updateEnrichmentMetadata($oeuvreId, $meta);
+        $this->enrichment->updateEnrichmentMetadata($oeuvreId, $meta, false, $keepPoster);
 
         return [
             'ok' => true,
             'not_found' => false,
-            'message' => 'Fiche jeu enrichie via IGDB (jaquette, année, studio, éditeur, genres).',
+            'message' => $this->enrichmentSuccessMessage($keepPoster),
         ];
     }
 
     /**
      * @return array{ok: bool, not_found: bool, message: string}
      */
-    public function correctOeuvreWithIgdbId(int $oeuvreId, string $igdbInput): array
+    public function correctOeuvreWithIgdbId(int $oeuvreId, string $igdbInput, bool $keepPoster = false): array
     {
         if (!GameRepository::isAvailable()) {
             return [
@@ -249,13 +249,22 @@ final class GameEnricher
             ];
         }
 
-        $this->enrichment->updateEnrichmentMetadata($oeuvreId, $meta, true);
+        $this->enrichment->updateEnrichmentMetadata($oeuvreId, $meta, true, $keepPoster);
 
         return [
             'ok' => true,
             'not_found' => false,
             'message' => 'Fiche jeu corrigée via IGDB #' . $igdbId . '.',
         ];
+    }
+
+    private function enrichmentSuccessMessage(bool $keepPoster): string
+    {
+        if ($keepPoster) {
+            return 'Fiche jeu enrichie via IGDB (année, studio, éditeur, genres — jaquette conservée).';
+        }
+
+        return 'Fiche jeu enrichie via IGDB (jaquette, année, studio, éditeur, genres).';
     }
 
     /**

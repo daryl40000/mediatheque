@@ -4128,6 +4128,237 @@ td .game-linux-badge--plain {
     margin-bottom: 0.75rem;
 }
 
+/* Mes jeux — vue bibliothèque (tranches / dos de jeux) */
+.game-shelf-library {
+    display: flex;
+    flex-direction: column;
+    gap: 1.75rem;
+    margin-top: 0.5rem;
+}
+
+.game-shelf {
+    position: relative;
+    padding: 0 0.25rem;
+}
+
+.game-shelf__spines {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-end;
+    gap: 4px;
+    min-height: calc(var(--spine-h, 190) * 1px + 0.5rem);
+    padding: 0.35rem 0.5rem 0;
+    margin: 0;
+    list-style: none;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+}
+
+.game-shelf__spine {
+    flex: 0 0 auto;
+    margin: 0;
+}
+
+.game-shelf__card {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.game-shelf__card:hover,
+.game-shelf__card:focus-within {
+    z-index: 40;
+}
+
+.game-shelf__preview {
+    position: fixed;
+    left: 0;
+    top: 0;
+    width: 148px;
+    z-index: 200;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.15s ease, visibility 0.15s ease, transform 0.15s ease;
+    transform: scale(0.96);
+    filter: drop-shadow(0 10px 28px rgba(0, 0, 0, 0.28));
+}
+
+.game-shelf__preview.is-visible {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+    transform: scale(1);
+}
+
+.game-shelf__preview-card {
+    height: auto;
+}
+
+.game-shelf__preview-card .collection-grid__link {
+    pointer-events: auto;
+}
+
+.game-shelf__check {
+    position: relative;
+    top: auto;
+    left: auto;
+    z-index: 2;
+    transform: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.35rem;
+    height: 1.35rem;
+    margin: 0 0 0.35rem;
+    padding: 0;
+    background: var(--surface, #fff);
+    border-radius: 4px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    flex-shrink: 0;
+}
+
+.game-shelf__check input {
+    margin: 0;
+    width: 0.95rem;
+    height: 0.95rem;
+}
+
+.game-shelf__link {
+    --spine-hue: 270;
+    position: relative;
+    display: block;
+    width: 2rem;
+    height: calc(var(--spine-h, 190) * 1px);
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 4px 4px 0 0;
+    box-shadow:
+        inset -3px 0 6px rgba(0, 0, 0, 0.22),
+        inset 2px 0 4px rgba(255, 255, 255, 0.12),
+        2px 0 5px rgba(0, 0, 0, 0.18);
+    color: #fff;
+    text-decoration: none;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.game-shelf__link--fallback {
+    background: linear-gradient(
+        90deg,
+        hsl(var(--spine-hue) 42% 26%) 0%,
+        hsl(var(--spine-hue) 48% 38%) 45%,
+        hsl(var(--spine-hue) 40% 30%) 100%
+    );
+}
+
+.game-shelf__cover {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    overflow: hidden;
+}
+
+.game-shelf__cover img {
+    display: block;
+    height: 100%;
+    width: auto;
+    max-width: none;
+    margin: 0;
+}
+
+.game-shelf__shade {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    background: linear-gradient(
+        180deg,
+        rgba(0, 0, 0, 0.1) 0%,
+        rgba(0, 0, 0, 0.22) 55%,
+        rgba(0, 0, 0, 0.38) 100%
+    );
+    pointer-events: none;
+}
+
+.game-shelf__content {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
+    height: 100%;
+    box-sizing: border-box;
+    padding: 10px 0.15rem 0.35rem;
+    gap: 5px;
+}
+
+.game-shelf__link:hover,
+.game-shelf__link:focus-visible {
+    transform: translateY(-3px);
+    box-shadow:
+        inset -3px 0 6px rgba(0, 0, 0, 0.22),
+        inset 2px 0 4px rgba(255, 255, 255, 0.15),
+        0 5px 12px rgba(0, 0, 0, 0.24);
+    outline: none;
+}
+
+.game-shelf__card:hover .game-shelf__link,
+.game-shelf__card:focus-within .game-shelf__link {
+    transform: translateY(-3px);
+}
+
+.game-shelf__title {
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    font-size: 0.62rem;
+    font-weight: 650;
+    line-height: 1.1;
+    letter-spacing: 0.03em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+    flex: 1 1 auto;
+    min-height: 0;
+    max-height: calc(var(--spine-h, 190) * 1px - 10px - 0.35rem - 5px);
+}
+
+.game-shelf__content:has(.game-shelf__year) .game-shelf__title {
+    max-height: calc(var(--spine-h, 190) * 1px - 10px - 0.35rem - 5px - 1.1rem);
+}
+
+.game-shelf__year {
+    font-size: 0.55rem;
+    font-weight: 600;
+    opacity: 0.95;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    flex-shrink: 0;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.75);
+}
+
+.game-shelf__board {
+    height: 14px;
+    margin: 0 0.25rem;
+    background: linear-gradient(180deg, #a67c52 0%, #6b4f2a 55%, #4a3520 100%);
+    border-radius: 0 0 5px 5px;
+    box-shadow:
+        0 4px 10px rgba(0, 0, 0, 0.25),
+        inset 0 2px 0 rgba(255, 255, 255, 0.15);
+}
+
+@media (max-width: 640px) {
+    .game-shelf__link {
+        width: 1.75rem;
+    }
+
+    .game-shelf__title {
+        font-size: 0.58rem;
+    }
+}
+
 .game-edition-icons {
     display: inline-flex;
     align-items: center;

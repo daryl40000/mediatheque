@@ -85,6 +85,51 @@ final class GameRepositoryTest extends MoncineTestCase
         $this->assertSame('Gran Turismo 7 Test', $typoResults[0]['titre']);
     }
 
+    public function testSearchCatalogMatchesAcronym(): void
+    {
+        if (!GameRepository::hasIgdbMetadataColumns()) {
+            $this->markTestSkipped('Colonnes métadonnées IGDB absentes.');
+        }
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new GameRepository();
+
+        $bibId = $repo->createWithLibrary([
+            'titre' => 'The Legend of Zelda Breath of the Wild Acronym Test',
+            'annee' => 2017,
+            'platform' => GamePlatform::SWITCH,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        $game = $repo->findByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($game);
+
+        $update = $repo->updateCatalogByOeuvreId((int) $game['oeuvre_id'], [
+            'titre' => (string) $game['titre'],
+            'alternative_names' => 'BotW, TLoZ',
+        ]);
+        $this->assertTrue($update);
+
+        $byAcronym = $repo->searchCatalog('BotW', 10);
+        $this->assertNotEmpty($byAcronym);
+        $this->assertSame(
+            'The Legend of Zelda Breath of the Wild Acronym Test',
+            $byAcronym[0]['titre']
+        );
+
+        $collection = $repo->listInLibrary(
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'titre',
+            'asc',
+            'TLoZ'
+        );
+        $this->assertCount(1, $collection);
+        $this->assertSame('The Legend of Zelda Breath of the Wild Acronym Test', $collection[0]['titre']);
+    }
+
     public function testCollectionStatsDashboard(): void
     {
         $userId = UserContext::currentUserId();

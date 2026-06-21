@@ -99,7 +99,12 @@ final class GameCatalogEnrichment
     /**
      * @param array<string, mixed> $meta
      */
-    public function updateEnrichmentMetadata(int $oeuvreId, array $meta, bool $forceReplace = false): void
+    public function updateEnrichmentMetadata(
+        int $oeuvreId,
+        array $meta,
+        bool $forceReplace = false,
+        bool $keepPoster = false
+    ): void
     {
         if (!GameRepository::hasIgdbColumns() || $oeuvreId <= 0) {
             return;
@@ -111,13 +116,18 @@ final class GameCatalogEnrichment
             return;
         }
 
+        $existingPoster = trim((string) ($game['poster_url'] ?? ''));
         $newPoster = trim((string) ($meta['poster_url'] ?? ''));
-        if ($forceReplace && $newPoster !== '') {
+        if ($keepPoster && $existingPoster !== '') {
+            $poster = $existingPoster;
+        } elseif ($forceReplace && $newPoster !== '') {
             $poster = $newPoster;
         } else {
-            $poster = $newPoster !== '' ? $newPoster : (string) ($game['poster_url'] ?? '');
+            $poster = $newPoster !== '' ? $newPoster : $existingPoster;
         }
-        $poster = $this->resolvePosterForOeuvre($oeuvreId, $poster);
+        if (!$keepPoster || $existingPoster === '') {
+            $poster = $this->resolvePosterForOeuvre($oeuvreId, $poster);
+        }
 
         $newAnnee = (int) ($meta['annee'] ?? 0);
         if ($forceReplace && $newAnnee > 0) {

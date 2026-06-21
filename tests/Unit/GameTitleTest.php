@@ -34,4 +34,15 @@ final class GameTitleTest extends TestCase
             GameTitle::searchText(['titre' => 'Le Parrain', 'titre_original' => 'The Godfather'])
         );
     }
+
+    public function testSearchTextIncludesAcronyms(): void
+    {
+        $this->assertSame(
+            'Grand Theft Auto V GTA, GTAV',
+            GameTitle::searchText([
+                'titre' => 'Grand Theft Auto V',
+                'alternative_names' => 'GTA, GTAV',
+            ])
+        );
+    }
 }

@@ -39,10 +39,12 @@ Csrf::rejectUnlessValid($_POST, $returnUrl);
 $enricher = new GameEnricher();
 $action = (string) ($_POST['action'] ?? 'enrich');
 
+$keepPoster = isset($_POST['keep_poster']);
+
 if ($action === 'igdb') {
-    $result = $enricher->correctOeuvreWithIgdbId($oeuvreId, (string) ($_POST['igdb_id'] ?? ''));
+    $result = $enricher->correctOeuvreWithIgdbId($oeuvreId, (string) ($_POST['igdb_id'] ?? ''), $keepPoster);
 } else {
-    $result = $enricher->enrichOeuvre($oeuvreId);
+    $result = $enricher->enrichOeuvre($oeuvreId, $keepPoster);
 }
 
 $status = $result['ok'] ? 'ok' : ($result['not_found'] ? 'not_found' : 'error');

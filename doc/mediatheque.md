@@ -1,6 +1,6 @@
 # Médiathèque — guide du fork
 
-**Version : 0.5.6** · **Date : 2026-06-16**
+**Version : 0.5.7** · **Date : 2026-06-16**
 
 Ce document décrit ce qu’est la **Médiathèque**, ce qui a été livré en **0.1.0**, et comment cela s’articule avec **Monciné**.
 
@@ -47,6 +47,8 @@ Depuis **0.4.2** : catégorie **Interview** ; filtre **Hors-série** sur la list
 Depuis **0.4.3** : **année du sujet** choisie via un menu déroulant à l’ajout (par défaut l’année du numéro).
 
 Depuis **0.4.4** : phase **M1 (stabilisation films) clôturée** — QA production complète sur l’onglet Films ; **pagination** Mes films (56 vignettes ou 100 en liste) ; **grille** homogène.
+
+Depuis **0.5.7** : **vue Bibliothèque** sur Mes films et Mes jeux (`?view=shelf`) — tranches verticales, aperçu au survol, collection entière sur une page en mode étagère.
 
 Depuis **0.5.0** : onglet **Jeux vidéo** utilisable — collection, envies, fiches, notes, statistiques, pont magazine (tests/previews), badge Linux — voir [jeux.md](jeux.md).
 
@@ -127,7 +129,7 @@ Voir `.gitignore` :
 
 Points essentiels :
 
-- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.5.1**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.5.7**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
 - **`media_domain`** (onglet Films/BD/…) ≠ **`moncine_kind`** (film/série/spectacle dans l’onglet Films).
 - Nouveau code multi-médias : `MediaDomain`, `MediaContext`, `CatalogSchema::applyMediaDomainFilter()`.
 

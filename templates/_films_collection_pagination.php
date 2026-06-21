@@ -87,8 +87,11 @@ $perPageLabel = Moncine\CollectionViewMode::isGrid($viewMode)
         <?php if (($kindFilter ?? Moncine\ContentKindFilter::ALL) !== Moncine\ContentKindFilter::ALL): ?>
             <input type="hidden" name="kind" value="<?= Moncine\View::escape((string) $kindFilter) ?>">
         <?php endif; ?>
-        <?php if (Moncine\CollectionViewMode::isGrid($viewMode ?? '')): ?>
-            <input type="hidden" name="view" value="grid">
+        <?php
+        $paginationView = Moncine\CollectionViewMode::queryValue($viewMode ?? '');
+        if ($paginationView !== null):
+            ?>
+            <input type="hidden" name="view" value="<?= Moncine\View::escape($paginationView) ?>">
         <?php endif; ?>
         <label for="<?= Moncine\View::escape($gotoPageId) ?>" class="list-pager__goto-label">Page</label>
         <input type="number" name="page" id="<?= Moncine\View::escape($gotoPageId) ?>"

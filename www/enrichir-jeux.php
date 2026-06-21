@@ -65,8 +65,9 @@ if ($action === 'test_igdb') {
 
 if ($action === 'enrichir_jeux') {
     $force = isset($_POST['force_all_jeux']);
+    $keepPoster = isset($_POST['keep_poster']);
     $enricher = new GameEnricher();
-    $result = $enricher->enrichBatch(MONCINE_ENRICH_BATCH_SIZE, $force);
+    $result = $enricher->enrichBatch(MONCINE_ENRICH_BATCH_SIZE, $force, $keepPoster);
     $remaining = $enricher->countPending();
 
     $_SESSION['igdb_enrich_last_errors'] = $result['errors'];

@@ -16,6 +16,8 @@ $query = $query ?? '';
 $kindFilter = \Moncine\ContentKindFilter::normalize($kindFilter ?? '');
 $viewMode = \Moncine\CollectionViewMode::normalize($viewMode ?? '');
 $isGridView = \Moncine\CollectionViewMode::isGrid($viewMode);
+$isShelfView = \Moncine\CollectionViewMode::isShelf($viewMode);
+$viewQueryValue = \Moncine\CollectionViewMode::queryValue($viewMode);
 $hasTmdbKey = $hasTmdbKey ?? false;
 $searched = $searched ?? false;
 $totalCount = (int) ($totalCount ?? count($films));
@@ -79,8 +81,8 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
             <?php if ($kindFilter !== \Moncine\ContentKindFilter::ALL): ?>
                 <input type="hidden" name="kind" value="<?= Moncine\View::escape($kindFilter) ?>">
             <?php endif; ?>
-            <?php if ($isGridView): ?>
-                <input type="hidden" name="view" value="grid">
+            <?php if ($viewQueryValue !== null): ?>
+                <input type="hidden" name="view" value="<?= Moncine\View::escape($viewQueryValue) ?>">
             <?php endif; ?>
             <button type="submit" class="btn btn-primary">Rechercher</button>
             <?php if ($searched): ?>
@@ -181,6 +183,8 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
     <p class="hint collection-page__hint">
         <?php if ($isGridView): ?>
             Cliquez sur une vignette pour ouvrir la fiche. Cochez les titres pour les actions de masse (saga, support, TMDB…).
+        <?php elseif ($isShelfView): ?>
+            Survolez une tranche pour la vignette ; cliquez pour ouvrir la fiche. Cochez les titres pour les actions de masse.
         <?php else: ?>
             Cliquez sur un en-tête pour trier. Cochez un ou plusieurs films pour afficher les actions de masse.
         <?php endif; ?>
@@ -213,8 +217,8 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
             <?php if ($kindFilter !== \Moncine\ContentKindFilter::ALL): ?>
                 <input type="hidden" name="kind" value="<?= Moncine\View::escape($kindFilter) ?>">
             <?php endif; ?>
-            <?php if ($isGridView): ?>
-                <input type="hidden" name="view" value="grid">
+            <?php if ($viewQueryValue !== null): ?>
+                <input type="hidden" name="view" value="<?= Moncine\View::escape($viewQueryValue) ?>">
             <?php endif; ?>
             <?php if ($page > 1): ?>
                 <input type="hidden" name="page" value="<?= $page ?>">
@@ -341,6 +345,8 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
 
             <?php if ($isGridView): ?>
                 <?php require MONCINE_ROOT . '/templates/_films_collection_grid.php'; ?>
+            <?php elseif ($isShelfView): ?>
+                <?php require MONCINE_ROOT . '/templates/_films_collection_shelf.php'; ?>
             <?php else: ?>
                 <?php require MONCINE_ROOT . '/templates/_films_collection_list.php'; ?>
             <?php endif; ?>

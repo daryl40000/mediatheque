@@ -146,7 +146,14 @@ $perPage = $pagination['perPage'];
 $totalPages = $pagination['totalPages'];
 $offset = $pagination['offset'];
 
-$films = $repo->findAll($sortBy, $sortDir, $query, $kindFilter, $perPage, $offset);
+$films = $repo->findAll(
+    $sortBy,
+    $sortDir,
+    $query,
+    $kindFilter,
+    CollectionViewMode::isShelf($viewMode) ? null : $perPage,
+    $offset
+);
 $existingSagas = $repo->distinctSagas();
 
 View::render('films', [
