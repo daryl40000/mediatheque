@@ -38,21 +38,45 @@ UploadLimits::guardPostWithFiles($_POST, $returnUrl, [
 $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
 $repo = new MagazineRepository();
+$oeuvreIdFromCatalog = max(0, (int) ($_POST['oeuvre_id'] ?? 0));
+$supportPapier = isset($_POST['support_papier']);
 
-$result = $repo->createIssueWithLibrary($seriesId, [
-    'numero' => (string) ($_POST['numero'] ?? ''),
-    'numero_ordre' => (float) ($_POST['numero_ordre'] ?? 0),
-    'date_parution' => (string) ($_POST['date_parution'] ?? ''),
-    'sommaire' => (string) ($_POST['sommaire'] ?? ''),
-    'pages' => (int) ($_POST['pages'] ?? 0),
-    'est_hors_serie' => isset($_POST['est_hors_serie']),
-    'support_papier' => isset($_POST['support_papier']),
-], $statut, $userId, $foyerId);
+if ($oeuvreIdFromCatalog > 0) {
+    $catalogIssue = $repo->findCatalogIssueByOeuvreId($oeuvreIdFromCatalog);
+    if ($catalogIssue === null || (int) ($catalogIssue['series_id'] ?? 0) !== $seriesId) {
+        header('Location: ' . $returnUrl . '&error=' . rawurlencode('Numéro catalogue invalide pour cette série.'));
+        exit;
+    }
+
+    $result = $repo->addFromCatalogOeuvre($oeuvreIdFromCatalog, $statut, $userId, $foyerId);
+} else {
+    $numero = trim((string) ($_POST['numero'] ?? ''));
+    if ($numero !== '' && $repo->findCatalogIssueBySeriesNumero($seriesId, $numero) !== null) {
+        header('Location: ' . $returnUrl . '&error=' . rawurlencode(
+            'Ce numéro existe déjà au catalogue — sélectionnez-le dans la liste de suggestions.'
+        ));
+        exit;
+    }
+
+    $result = $repo->createIssueWithLibrary($seriesId, [
+        'numero' => (string) ($_POST['numero'] ?? ''),
+        'numero_ordre' => (float) ($_POST['numero_ordre'] ?? 0),
+        'date_parution' => (string) ($_POST['date_parution'] ?? ''),
+        'sommaire' => (string) ($_POST['sommaire'] ?? ''),
+        'pages' => (int) ($_POST['pages'] ?? 0),
+        'est_hors_serie' => isset($_POST['est_hors_serie']),
+        'support_papier' => $supportPapier,
+    ], $statut, $userId, $foyerId);
+}
 
 if (!is_int($result)) {
     $params = http_build_query(['error' => (string) $result]);
     header('Location: ' . $returnUrl . '&' . $params);
     exit;
+}
+
+if ($supportPapier && $oeuvreIdFromCatalog > 0) {
+    $repo->updateIssue($result, ['support_papier' => true], $userId, $foyerId);
 }
 
 $issue = $repo->findIssueByBibId($result, $userId, $foyerId);

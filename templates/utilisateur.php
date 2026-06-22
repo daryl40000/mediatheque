@@ -228,7 +228,7 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                 <section class="social-profile-section" aria-labelledby="social-last-collection-heading">
                     <h2 id="social-last-collection-heading">
                         <?php if ($isMagazineProfile): ?>
-                            5 dernières séries ajoutées à la collection
+                            5 derniers numéros ajoutés à la collection
                         <?php elseif ($isGameProfile): ?>
                             5 derniers jeux ajoutés à la collection
                         <?php else: ?>
@@ -237,10 +237,9 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                     </h2>
                     <?php if ($isMagazineProfile): ?>
                         <?php
-                        $seriesList = $lastCollection ?? [];
-                        $emptyHint = 'Aucune série en collection pour le moment.';
-                        $magazineListMode = 'collection';
-                        require MONCINE_ROOT . '/templates/_user_profile_magazine_strip.php';
+                        $issuesList = $lastCollection ?? [];
+                        $emptyHint = 'Aucun numéro en collection pour le moment.';
+                        require MONCINE_ROOT . '/templates/_user_profile_magazine_issues_strip.php';
                         ?>
                     <?php else: ?>
                         <?php
@@ -258,7 +257,7 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
             <section class="social-profile-section" aria-labelledby="social-last-wishlist-heading">
                 <h2 id="social-last-wishlist-heading">
                     <?php if ($isMagazineProfile): ?>
-                        5 dernières séries ajoutées aux envies
+                        5 derniers numéros ajoutés aux envies
                     <?php elseif ($isGameProfile): ?>
                         5 derniers jeux ajoutés aux envies
                     <?php else: ?>
@@ -267,10 +266,9 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                 </h2>
                 <?php if ($isMagazineProfile): ?>
                     <?php
-                    $seriesList = $lastWishlist ?? [];
-                    $emptyHint = 'Aucune série dans les envies pour le moment.';
-                    $magazineListMode = 'envies';
-                    require MONCINE_ROOT . '/templates/_user_profile_magazine_strip.php';
+                    $issuesList = $lastWishlist ?? [];
+                    $emptyHint = 'Aucun numéro dans les envies pour le moment.';
+                    require MONCINE_ROOT . '/templates/_user_profile_magazine_issues_strip.php';
                     ?>
                 <?php else: ?>
                     <?php

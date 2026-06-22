@@ -30,6 +30,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initMagazineSubjectAutocompleteFields();
     initMagazineSeriesTagsField();
     initMagazineSeriesCatalogAutocomplete();
+    initMagazineIssueCatalogAutocomplete();
     initTagsBadgeFields();
     initGameEditionFields();
     initGameRelationFields();
@@ -1596,6 +1597,164 @@ function initMagazineSeriesCatalogAutocomplete() {
 
         const fetchResults = (query) => {
             const url = searchUrl + (searchUrl.includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(query);
+            fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+                .then((response) => (response.ok ? response.json() : { results: [] }))
+                .then((data) => renderResults(Array.isArray(data.results) ? data.results : []))
+                .catch(() => closeList());
+        };
+
+        input.addEventListener('input', () => {
+            clearSelection();
+            const query = input.value.trim();
+            if (query.length < 1) {
+                closeList();
+                return;
+            }
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => fetchResults(query), 220);
+        });
+
+        input.addEventListener('keydown', (event) => {
+            const options = list.querySelectorAll('.catalog-title-autocomplete__option');
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                if (options.length) {
+                    activeIndex = Math.min(activeIndex + 1, options.length - 1);
+                    options.forEach((el, i) => el.classList.toggle('is-active', i === activeIndex));
+                }
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                if (options.length) {
+                    activeIndex = Math.max(activeIndex - 1, 0);
+                    options.forEach((el, i) => el.classList.toggle('is-active', i === activeIndex));
+                }
+            } else if (event.key === 'Enter' && activeIndex >= 0 && lastResults[activeIndex]) {
+                event.preventDefault();
+                applySelection(lastResults[activeIndex]);
+            } else if (event.key === 'Escape') {
+                closeList();
+            }
+        });
+
+        input.addEventListener('blur', () => {
+            setTimeout(closeList, 150);
+        });
+    });
+}
+
+/**
+ * Autocomplétion — numéros catalogue d’une série (ajout à la bibliothèque).
+ */
+function initMagazineIssueCatalogAutocomplete() {
+    document.querySelectorAll('[data-magazine-issue-catalog-autocomplete]').forEach((root) => {
+        const input = root.querySelector('.catalog-title-autocomplete__input');
+        const list = root.querySelector('.catalog-title-autocomplete__list');
+        const oeuvreIdInput = document.getElementById(root.dataset.oeuvreIdInput || 'catalog_issue_oeuvre_id');
+        const numeroInput = document.getElementById(root.dataset.numeroInput || 'numero');
+        const dateInput = document.getElementById(root.dataset.dateInput || 'date_parution');
+        const ordreInput = document.getElementById(root.dataset.ordreInput || 'numero_ordre');
+        const horsSerieInput = document.getElementById(root.dataset.horsSerieInput || 'est_hors_serie');
+        const hintEl = document.getElementById(root.dataset.hintId || 'catalog_issue_hint');
+        const searchUrl = root.getAttribute('data-search-url') || '/rechercher-numeros-catalogue.php';
+
+        if (!input || !list || !oeuvreIdInput) {
+            return;
+        }
+
+        let debounceTimer = null;
+        let activeIndex = -1;
+        let lastResults = [];
+
+        const setExpanded = (open) => {
+            input.setAttribute('aria-expanded', open ? 'true' : 'false');
+        };
+
+        const closeList = () => {
+            list.hidden = true;
+            list.innerHTML = '';
+            activeIndex = -1;
+            lastResults = [];
+            setExpanded(false);
+        };
+
+        const clearSelection = () => {
+            oeuvreIdInput.value = '';
+            if (hintEl) {
+                hintEl.hidden = true;
+                hintEl.textContent = '';
+            }
+        };
+
+        const applySelection = (item) => {
+            if (!item) {
+                return;
+            }
+            oeuvreIdInput.value = String(item.oeuvre_id || '');
+            if (numeroInput) {
+                numeroInput.value = item.numero || '';
+            }
+            if (dateInput && item.date_parution) {
+                dateInput.value = item.date_parution;
+            }
+            if (ordreInput && item.numero_ordre) {
+                ordreInput.value = String(item.numero_ordre);
+            }
+            if (horsSerieInput) {
+                horsSerieInput.checked = Boolean(item.est_hors_serie);
+            }
+            closeList();
+            if (hintEl) {
+                let hint = 'Numéro sélectionné au catalogue partagé.';
+                if (item.in_library) {
+                    hint += ' Déjà dans votre bibliothèque — vous pouvez quand même enregistrer (papier, PDF…).';
+                }
+                hintEl.textContent = hint;
+                hintEl.hidden = false;
+            }
+        };
+
+        const renderResults = (results) => {
+            list.innerHTML = '';
+            lastResults = results;
+            activeIndex = -1;
+
+            if (!results.length) {
+                closeList();
+                return;
+            }
+
+            results.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'catalog-title-autocomplete__option';
+                li.setAttribute('role', 'option');
+
+                const main = document.createElement('span');
+                main.className = 'catalog-title-autocomplete__option-label';
+                main.textContent = item.display_label || item.numero || '';
+                li.appendChild(main);
+
+                if (item.in_library) {
+                    const badge = document.createElement('span');
+                    badge.className = 'catalog-title-autocomplete__badge';
+                    badge.textContent = 'Déjà ajouté';
+                    li.appendChild(badge);
+                }
+
+                li.addEventListener('mousedown', (event) => {
+                    event.preventDefault();
+                    applySelection(item);
+                });
+
+                list.appendChild(li);
+            });
+
+            list.hidden = false;
+            setExpanded(true);
+        };
+
+        const fetchResults = (query) => {
+            const sep = searchUrl.includes('?') ? '&' : '?';
+            const url = searchUrl + sep + 'q=' + encodeURIComponent(query);
             fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
                 .then((response) => (response.ok ? response.json() : { results: [] }))
                 .then((data) => renderResults(Array.isArray(data.results) ? data.results : []))

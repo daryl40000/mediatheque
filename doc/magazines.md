@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.6.0** · **Date : 2026-06-16**
+**Version : 0.6.1** · **Date : 2026-06-16**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -15,7 +15,7 @@ L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **nu
 | Numéros d’une série | `/serie-magazine.php?series_id=…` | Grille de numéros, recherche, tri, filtres |
 | Fiche numéro | `/magazine-numero.php?id=…` | Détail, PDF, édition, suppression |
 | Ajouter une série | `/ajouter-serie-magazine.php` | **Catalogue** (autocomplétion) ou création manuelle (**0.6.0**) |
-| Ajouter un numéro | `/ajouter-numero-magazine.php?series_id=…` | Nouveau numéro + import PDF |
+| Ajouter un numéro | `/ajouter-numero-magazine.php?series_id=…` | Catalogue (autocomplétion n°) ou création + PDF (**0.6.1**) |
 | Profil ami — série | `/utilisateur-serie-magazine.php?id=…&series_id=…` | Numéros d’un ami (lecture seule, **0.3.2**) |
 | Profil ami — numéro | `/utilisateur-numero-magazine.php?id=…&bib_id=…` | Fiche numéro sans PDF partagé (**0.3.2**) |
 | Recherche par sujet | `/magazines-recherche.php` | Tests, previews, dossiers dans **toutes** les séries (**0.4.0**) |
@@ -266,7 +266,9 @@ Alimentation du **catalogue partagé** (séries + numéros) depuis [Abandonware 
 | 1. Télécharger les métadonnées | `php lib/cli/abm-fetch-catalog.php --magazine=Tilt --stats` |
 | 2. Importer en catalogue | Page admin **`/import-catalogue-magazines.php`** ou `php lib/cli/abm-import-catalog.php` |
 | 3. Ajouter à ma collection | `/ajouter-serie-magazine.php` → recherche catalogue |
-| 4. Couvertures (optionnel) | Relancer l’import avec « Télécharger les couvertures » par **lots de 20** |
+| 4. Ajouter un numéro | `/ajouter-numero-magazine.php` → autocomplétion n° catalogue (**0.6.1**) |
+| 5. Couvertures (optionnel) | Relancer l’import avec « Télécharger les couvertures » par **lots de 20** |
+| 6. Exporter | **`/export-catalogue-magazines.php`** (JSON admin) |
 
 Guide détaillé : [doc/import-abm.md](import-abm.md).
 

@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.6.0**
+**Version : 0.6.1**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -30,7 +30,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. L’ong
 | **Multi-médias** | ✅ | Onglets Films / BD / Livres / Jeux / Magazines + thème couleur par domaine |
 | **Films** | ✅ Production | Collection, envies, TMDB/OMDB, quiz « Ce soir », prêts, sagas, **vue Bibliothèque** (**0.5.7**), listes imprimables (**0.4.4+**) |
 | **Jeux vidéo** | ✅ Utilisable | Collection, envies, notes, stats, **extensions DLC**, **remakes**, **enrichissement IGDB**, **sagas jeux**, **vue Bibliothèque**, recherche **acronymes**, fichiers attachés, Linux tri-état, pont magazine, fiche `/oeuvre-jeu.php`, autocomplétion à l’ajout, **recherche tolérante** (**0.5.7**, [doc/jeux.md](doc/jeux.md)) |
-| **Magazines** | 🔄 Avancé | Séries, numéros, PDF, FTS, sujets ; **import catalogue ABM** (**0.6.0**), ajout série catalogue, retrait série, dates FR → ISO ([doc/magazines.md](doc/magazines.md), [doc/import-abm.md](doc/import-abm.md)) |
+| **Magazines** | ✅ Complet (M5) | Séries, numéros, PDF, FTS, import/export catalogue ABM, autocomplétion série/numéro, profil public ([doc/magazines.md](doc/magazines.md)) |
 | **BD / Livres** | ⏸️ Bientôt | Onglets présents, contenu à venir (M2 / M3) |
 | **Transversal** | Partiel | Catalogue partagé multi-domaines, foyers, amis, partage visiteur, profil public (films + magazines + **jeux**) |
 
@@ -62,6 +62,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.6.1** | Magazines M5 : autocomplétion numéro catalogue, export JSON, profil public numéros récents |
 | **0.6.0** | Magazines : import catalogue **ABM**, ajout série catalogue, retrait série, dates parution FR, couvertures par lots |
 | **0.5.7** | Vue **Bibliothèque** (films + jeux), option « Garder la jaquette » IGDB, recherche jeux par acronymes |
 | **0.5.6** | Sagas jeux (`/sagas-jeux.php`), autocomplétion saga, doc base de données, correctif filtre genre multi-tags |

@@ -140,7 +140,7 @@ final class UserPublicProfileService
     {
         $mediaDomain = MediaDomain::normalize($mediaDomain);
         if (MediaDomain::isMagazine($mediaDomain)) {
-            return $this->lastMagazineSeries($userId, LibraryStatut::COLLECTION, $limit);
+            return $this->lastMagazineIssues($userId, LibraryStatut::COLLECTION, $limit);
         }
 
         $foyerId = $this->foyerIdForUser($userId);
@@ -192,7 +192,7 @@ final class UserPublicProfileService
     {
         $mediaDomain = MediaDomain::normalize($mediaDomain);
         if (MediaDomain::isMagazine($mediaDomain)) {
-            return $this->lastMagazineSeries($userId, LibraryStatut::WISHLIST, $limit);
+            return $this->lastMagazineIssues($userId, LibraryStatut::WISHLIST, $limit);
         }
 
         if ($userId <= 0 || $limit <= 0) {
@@ -492,6 +492,52 @@ final class UserPublicProfileService
                 WHERE s.media_domain = :domain_series AND ' . $scopeSql . '
                 GROUP BY s.id
                 ORDER BY sb.created_at DESC, s.id DESC
+                LIMIT :limit';
+
+        $stmt = $this->db->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(':' . $key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function lastMagazineIssues(int $userId, string $statut, int $limit): array
+    {
+        if ($userId <= 0 || $limit <= 0 || !MagazineRepository::isAvailable()) {
+            return [];
+        }
+
+        $statut = LibraryStatut::normalize($statut);
+        $foyerId = $this->foyerIdForUser($userId);
+        $params = [
+            'domain_oeuvre' => MediaDomain::MAGAZINE,
+            'bib_statut' => $statut,
+            'limit' => $limit,
+        ];
+
+        if ($statut === LibraryStatut::COLLECTION) {
+            if ($foyerId <= 0) {
+                return [];
+            }
+            $scopeSql = 'b.statut = :bib_statut AND b.foyer_id = :bib_foyer_id';
+            $params['bib_foyer_id'] = $foyerId;
+        } else {
+            $scopeSql = 'b.statut = :bib_statut AND b.user_id = :bib_user_id';
+            $params['bib_user_id'] = $userId;
+        }
+
+        $sql = 'SELECT b.id AS bib_id, o.id AS oeuvre_id, o.titre, o.poster_url,
+                    om.numero, om.date_parution, om.est_hors_serie,
+                    s.id AS series_id, s.titre AS series_titre, s.publication_type
+                FROM bibliotheque b
+                INNER JOIN oeuvres o ON o.id = b.oeuvre_id AND o.media_domain = :domain_oeuvre
+                INNER JOIN oeuvre_magazine om ON om.oeuvre_id = o.id
+                INNER JOIN series s ON s.id = om.series_id
+                WHERE ' . $scopeSql . '
+                ORDER BY b.created_at DESC, b.id DESC
                 LIMIT :limit';
 
         $stmt = $this->db->prepare($sql);

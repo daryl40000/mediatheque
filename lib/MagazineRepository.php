@@ -197,6 +197,67 @@ final class MagazineRepository
     }
 
     /**
+     * Recherche des numéros catalogue d’une série (autocomplétion à l’ajout).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function searchCatalogIssues(
+        int $seriesId,
+        string $query,
+        int $userId,
+        int $foyerId,
+        int $limit = 25
+    ): array {
+        if (!self::isAvailable() || $seriesId <= 0) {
+            return [];
+        }
+
+        $query = trim($query);
+        if ($query === '') {
+            return [];
+        }
+
+        $limit = max(1, min(50, $limit));
+        $pattern = LikePattern::containsFragment($query);
+
+        $sql = 'SELECT o.id AS oeuvre_id, o.titre, o.poster_url, o.annee,
+                    om.series_id, om.numero, om.numero_ordre, om.date_parution,
+                    om.est_hors_serie, om.sommaire,
+                    s.titre AS series_titre, s.publication_type
+                FROM oeuvre_magazine om
+                INNER JOIN oeuvres o ON o.id = om.oeuvre_id AND o.media_domain = :domain
+                INNER JOIN series s ON s.id = om.series_id
+                WHERE om.series_id = :series_id
+                  AND (
+                    LOWER(TRIM(om.numero)) LIKE LOWER(:pattern_num) ESCAPE \'\\\'
+                    OR LOWER(COALESCE(om.date_parution, \'\')) LIKE LOWER(:pattern_date) ESCAPE \'\\\'
+                    OR LOWER(COALESCE(om.sommaire, \'\')) LIKE LOWER(:pattern_som) ESCAPE \'\\\'
+                  )
+                ORDER BY om.numero_ordre ASC, om.numero COLLATE FRENCH_NOCASE ASC
+                LIMIT ' . $limit;
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'domain' => MediaDomain::MAGAZINE,
+            'series_id' => $seriesId,
+            'pattern_num' => $pattern,
+            'pattern_date' => $pattern,
+            'pattern_som' => $pattern,
+        ]);
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows as &$row) {
+            $oeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+            $bibId = $this->findLibraryBibIdForCatalogOeuvre($oeuvreId, $userId, $foyerId);
+            $row['in_library'] = $bibId !== null && $bibId > 0;
+            $row['library_bib_id'] = $bibId ?? 0;
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    /**
      * Séries présentes dans la collection ou les envies de l’utilisateur.
      *
      * @return list<array<string, mixed>>
@@ -1009,6 +1070,11 @@ final class MagazineRepository
                 'statut' => $statut,
                 'support_physique' => $support,
             ]);
+
+            $seriesResult = $this->registerSeriesInLibrary($seriesId, $statut, $userId, $foyerId);
+            if ($seriesResult !== true) {
+                throw new \RuntimeException((string) $seriesResult);
+            }
 
             $this->db->commit();
 

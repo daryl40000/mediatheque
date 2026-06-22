@@ -4,11 +4,14 @@ declare(strict_types=1);
 
 namespace Moncine\Tests\Integration;
 
+use Moncine\LibraryStatut;
 use Moncine\MagazineCatalogImporter;
 use Moncine\MagazineRepository;
 use Moncine\MediaContext;
 use Moncine\MediaDomain;
+use Moncine\PublicationType;
 use Moncine\SeriesRepository;
+use Moncine\UserContext;
 use PHPUnit\Framework\TestCase;
 
 final class MagazineCatalogImporterTest extends TestCase
@@ -97,6 +100,41 @@ final class MagazineCatalogImporterTest extends TestCase
         $this->assertSame(0, $second['issues_created']);
         $this->assertSame(1, $second['issues_skipped']);
         $this->assertSame(1, $second['series_reused']);
+    }
+
+    public function testSearchCatalogIssuesAndAddFromCatalog(): void
+    {
+        if (!MagazineRepository::isAvailable()) {
+            $this->markTestSkipped('Module magazines indisponible.');
+        }
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Revue Search Test ' . uniqid(),
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $oeuvreId = $repo->createCatalogIssue($seriesId, [
+            'numero' => '042',
+            'numero_ordre' => 42,
+            'date_parution' => '2020-04-01',
+            'series_titre' => 'Revue Search Test',
+        ]);
+        $this->assertIsInt($oeuvreId);
+
+        $found = $repo->searchCatalogIssues($seriesId, '042', $userId, $foyerId);
+        $this->assertCount(1, $found);
+        $this->assertSame($oeuvreId, (int) ($found[0]['oeuvre_id'] ?? 0));
+
+        $bibId = $repo->addFromCatalogOeuvre($oeuvreId, LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        $foundAfter = $repo->searchCatalogIssues($seriesId, '042', $userId, $foyerId);
+        $this->assertTrue(!empty($foundAfter[0]['in_library']));
     }
 
     public function testDryRunCountsPendingCovers(): void

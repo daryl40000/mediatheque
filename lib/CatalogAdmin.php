@@ -62,7 +62,15 @@ final class CatalogAdmin
         [$whereSql, $params] = $this->searchWhere($search);
         $sql = 'SELECT o.*, (
                     SELECT COUNT(*) FROM bibliotheque b WHERE b.oeuvre_id = o.id
-                ) AS library_count
+                ) AS library_count,
+                (
+                    SELECT om.numero FROM oeuvre_magazine om WHERE om.oeuvre_id = o.id LIMIT 1
+                ) AS mag_numero,
+                (
+                    SELECT s.titre FROM oeuvre_magazine om
+                    INNER JOIN series s ON s.id = om.series_id
+                    WHERE om.oeuvre_id = o.id LIMIT 1
+                ) AS mag_series_titre
                 FROM oeuvres o'
             . $whereSql
             . ' ORDER BY ' . $sqlSort . ' ' . $direction
@@ -506,9 +514,22 @@ final class CatalogAdmin
         if ($search !== '') {
             $pattern = SearchMatch::foldedContainsPattern($search);
             $parts[] = '(fold_search(o.titre) LIKE :catalog_search ESCAPE \'\\\'
-                OR fold_search(COALESCE(o.realisateur, \'\')) LIKE :catalog_search_real ESCAPE \'\\\')';
+                OR fold_search(COALESCE(o.realisateur, \'\')) LIKE :catalog_search_real ESCAPE \'\\\'
+                OR EXISTS (
+                    SELECT 1 FROM oeuvre_magazine om
+                    INNER JOIN series ms ON ms.id = om.series_id
+                    WHERE om.oeuvre_id = o.id
+                      AND o.media_domain = :mag_domain
+                      AND (
+                        fold_search(om.numero) LIKE :catalog_search_mag_num ESCAPE \'\\\'
+                        OR fold_search(ms.titre) LIKE :catalog_search_mag_series ESCAPE \'\\\'
+                      )
+                ))';
             $params['catalog_search'] = $pattern;
             $params['catalog_search_real'] = $pattern;
+            $params['mag_domain'] = MediaDomain::MAGAZINE;
+            $params['catalog_search_mag_num'] = $pattern;
+            $params['catalog_search_mag_series'] = $pattern;
         }
 
         if ($parts === []) {

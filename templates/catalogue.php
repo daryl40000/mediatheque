@@ -200,7 +200,7 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
             <div class="collection-search__row">
                 <input type="search" name="q" id="catalog_search_q"
                        value="<?= Moncine\View::escape($search) ?>"
-                       placeholder="Titre ou réalisateur…"
+                       placeholder="Titre, réalisateur, n° magazine, série…"
                        autocomplete="off">
                 <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
                 <input type="hidden" name="dir" value="<?= Moncine\View::escape($sortDir) ?>">
@@ -270,9 +270,19 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                                         <br><span class="hint"><?= Moncine\View::escape((string) $oeuvre['titre_original']) ?></span>
                                     <?php endif; ?>
                                 </td>
-                                <td><?= ($oeuvre['realisateur'] ?? '') !== ''
-                                    ? Moncine\View::escape((string) $oeuvre['realisateur'])
-                                    : '—' ?></td>
+                                <td><?php
+                                    $magNumero = trim((string) ($oeuvre['mag_numero'] ?? ''));
+                                    $magSeries = trim((string) ($oeuvre['mag_series_titre'] ?? ''));
+                                    if ($magNumero !== '' || $magSeries !== ''):
+                                        echo Moncine\View::escape(
+                                            ($magSeries !== '' ? $magSeries . ' · ' : '') . ($magNumero !== '' ? 'n°' . $magNumero : '')
+                                        );
+                                    elseif (($oeuvre['realisateur'] ?? '') !== ''):
+                                        echo Moncine\View::escape((string) $oeuvre['realisateur']);
+                                    else:
+                                        echo '—';
+                                    endif;
+                                    ?></td>
                                 <td><?= (int) ($oeuvre['annee'] ?? 0) > 0 ? (int) $oeuvre['annee'] : '—' ?></td>
                                 <td><?= Moncine\View::escape(
                                     Moncine\View::contentKindLabel($oeuvre)

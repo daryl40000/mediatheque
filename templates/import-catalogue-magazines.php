@@ -18,7 +18,8 @@
             </p>
         </div>
         <p class="catalog-admin-page__badge hint">
-            Réservé à l’administrateur
+            Réservé à l’administrateur —
+            <a href="/export-catalogue-magazines.php">Exporter le catalogue JSON</a>
         </p>
     </div>
 

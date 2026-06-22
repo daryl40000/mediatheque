@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.6.0** (2026-06-16)  
+**Version actuelle : 0.6.1** (2026-06-16)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -13,13 +13,13 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ---
 
-## Où en est-on ? (synthèse 0.6.0)
+## Où en est-on ? (synthèse 0.6.1)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
-| **Films** | ✅ Production | 0.4.4+ → **0.6.0** | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`, **vue Bibliothèque**) |
-| **Jeux** | ✅ Utilisable | 0.5.0 → **0.6.0** | Complet (extensions, remakes, autocomplétion, recherche tolérante, **IGDB**, **sagas**, **vue Bibliothèque**, acronymes) |
-| **Magazines** | 🔄 Avancé (~90 %) | 0.2.x → **0.6.0** | Import catalogue ABM, ajout série catalogue, retrait série ; autocomplétion numéro ⏳ |
+| **Films** | ✅ Production | 0.4.4+ → **0.6.1** | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`, **vue Bibliothèque**) |
+| **Jeux** | ✅ Utilisable | 0.5.0 → **0.6.1** | Complet (extensions, remakes, autocomplétion, recherche tolérante, **IGDB**, **sagas**, **vue Bibliothèque**, acronymes) |
+| **Magazines** | ✅ **Complet (M5)** | 0.2.x → **0.6.1** | Import ABM, ajout série/numéro catalogue, retrait série, profil public, export JSON |
 | **BD / Manga** | ⏸️ Repoussé | — | — |
 | **Livres** | ⏸️ Repoussé | — | — |
 
@@ -30,7 +30,7 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 | **M0** Fondations multi-médias | ✅ Livré | 0.1.0 | — |
 | **M1** Stabilisation films | ✅ Livré | 0.4.4 | Maintenance seulement |
 | **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.5.7** | Polish non bloquant (voir M4) |
-| **M5** Magazines | 🔄 En cours | 0.4.3 → **0.6.0** | Autocomplétion à l’ajout numéro, profil public |
+| **M5** Magazines | ✅ **Livré** | **0.6.1** | Maintenance ; polish ponctuel |
 | **Pont** Magazines ↔ Jeux | 🔄 Partiel | 0.5.0+ | Rattachement rétroactif |
 | **M2** BD / Manga | ⏸️ Repoussé | 0.6.x+ (indicatif) | Après M5 stabilisée |
 | **M3** Livres | ⏸️ Repoussé | 0.7.x+ (indicatif) | Après M2 ou en parallèle |
@@ -40,6 +40,13 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.6.1** — clôture M5 magazines (2026-06-16)
+
+- **Autocomplétion numéro** à l’ajout (`/rechercher-numeros-catalogue.php`, `addFromCatalogOeuvre`).
+- **Profil public** : 5 derniers numéros (collection / envies).
+- **Export JSON** catalogue (`/export-catalogue-magazines.php`).
+- **Recherche admin** catalogue : n° magazine et titre de série.
 
 ### ✅ **0.6.0** — import catalogue magazines ABM (2026-06-16)
 
@@ -73,19 +80,13 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 - QA prod : remakes, affichage extensions/remakes, recherche tolérante, migrations **044–045**.
 - Tag Git **`v0.5.4`** — publié sur `origin/main`.
 
-### Priorité 1 — **M5** : finir parité magazines (**0.6.x**)
-
-1. **Autocomplétion catalogue** à l’ajout d’un numéro (`/ajouter-numero-magazine.php`) — même logique que les jeux (0.5.3).
-2. **Profil public** onglet Magazines (comme profil jeux en 0.5.3).
-3. **Parité fiche catalogue** : export/import magazine, navigation catalogue.
-
-### Priorité 2 — **Pont magazine ↔ jeu** (finir le transversal)
+### Priorité 1 — **Pont magazine ↔ jeu** (finir le transversal)
 
 4. **Rattachement rétroactif** : outil admin pour lier les sujets existants (`magazine_subject.catalog_oeuvre_id`).
 5. **Recherche globale** : remonter numéros / sujets via le titre catalogue jeu.
 6. Documenter les cas ambigus (homonymes ; lien toujours optionnel).
 
-### Priorité 3 — Polish **M4** (non bloquant)
+### Priorité 2 — Polish **M4** (non bloquant)
 
 7. Plateformes configurables en admin (au lieu de la liste fixe `GamePlatform`).
 8. Flag « non prêtable » pour exemplaires dématérialisés.
@@ -108,12 +109,11 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ```mermaid
 flowchart LR
-  A[QA 0.5.4 ✅] --> B[M5 parité catalogue]
-  B --> C[Pont rétroactif]
-  C --> D[Polish M4]
-  D --> E[M6 transversal]
-  E --> F[M2 BD / M3 Livres]
-  F --> G[M7 v1.0.0]
+  A[0.6.1 M5 ✅] --> B[Pont rétroactif]
+  B --> C[Polish M4]
+  C --> D[M6 transversal]
+  D --> E[M2 BD / M3 Livres]
+  E --> F[M7 v1.0.0]
 ```
 
 ---
@@ -221,7 +221,7 @@ Détail complet : archives QA dans l’historique git avant cette réorganisatio
 
 ---
 
-## M5 — Magazines 🔄 En cours (cible 0.6.0)
+## M5 — Magazines ✅ Livré (0.6.1)
 
 **Documentation :** [doc/magazines.md](doc/magazines.md)
 
@@ -235,16 +235,13 @@ Détail complet : archives QA dans l’historique git avant cette réorganisatio
 | Sujets tests/previews, FTS globale | 0.4.0–0.4.1 |
 | Maintenance sujets, hors-série, année sujet | 0.4.2–0.4.3 |
 | Fiche catalogue `/oeuvre-magazine.php`, ajout bibliothèque | 0.5.3 |
+| Import / export catalogue ABM + JSON admin | **0.6.0–0.6.1** |
+| Ajout série / numéro depuis catalogue (autocomplétion) | **0.6.0–0.6.1** |
+| Retrait série bibliothèque | **0.6.0** |
+| Profil public (numéros récents, séries, fiches lecture seule) | **0.6.1** |
+| Recherche admin catalogue (n°, série) | **0.6.1** |
 
-### En cours / à faire
-
-| Tâche | Cible |
-|-------|-------|
-| Autocomplétion catalogue à l’ajout numéro | 0.5.4+ |
-| Profil public onglet Magazines | 0.6.0 |
-| Parité complète export/import / navigation catalogue | 0.6.0 |
-
-**Critère de sortie M5 :** onglet magazines aussi fluide que films/jeux sur tout le parcours catalogue → collection.
+**Critère de sortie M5 :** ✅ atteint — parcours catalogue → collection aligné sur films/jeux.
 
 ---
 
@@ -406,4 +403,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.5.4** — 2026-06-16 (consolidation QA + tag **v0.5.4** ; priorité **M5 → 0.6.0**).*
+*Dernière mise à jour : **0.6.1** — 2026-06-16 (M5 magazines livré ; priorité **Pont magazine ↔ jeu**).*

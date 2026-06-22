@@ -30,6 +30,15 @@ if ($series === null) {
 $repo = new MagazineRepository();
 $suggestOrdre = PublicationType::suggestNextNumeroOrdre($repo->maxNumeroOrdreForSeries($seriesId));
 
+$catalogIssue = null;
+$catalogOeuvreId = max(0, (int) ($_GET['oeuvre_id'] ?? 0));
+if ($catalogOeuvreId > 0) {
+    $candidate = $repo->findCatalogIssueByOeuvreId($catalogOeuvreId);
+    if ($candidate !== null && (int) ($candidate['series_id'] ?? 0) === $seriesId) {
+        $catalogIssue = $candidate;
+    }
+}
+
 View::render('ajouter-numero-magazine', [
     'pageTitle' => 'Ajouter un numéro — ' . (string) ($series['titre'] ?? ''),
     'series' => $series,
@@ -37,4 +46,6 @@ View::render('ajouter-numero-magazine', [
     'suggestNumeroOrdre' => $suggestOrdre,
     'publicationTypeLabel' => PublicationType::label((string) ($series['publication_type'] ?? '')),
     'error' => (string) ($_GET['error'] ?? ''),
+    'catalogIssue' => $catalogIssue,
+    'catalogOeuvreId' => $catalogIssue !== null ? $catalogOeuvreId : 0,
 ]);

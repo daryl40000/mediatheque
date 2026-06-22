@@ -24,7 +24,7 @@ final class UserPublicProfileMagazineTest extends MoncineTestCase
         $this->loginAsAdmin();
     }
 
-    public function testMagazineStatsAndRecentSeriesOnProfile(): void
+    public function testMagazineStatsAndRecentIssuesOnProfile(): void
     {
         $this->assertTrue(MagazineRepository::isAvailable());
 
@@ -37,7 +37,12 @@ final class UserPublicProfileMagazineTest extends MoncineTestCase
         $userId = UserContext::currentUserId();
         $foyerId = UserContext::currentFoyerId();
         $repo = new MagazineRepository();
-        $repo->registerSeriesInLibrary($seriesId, LibraryStatut::WISHLIST, $userId, $foyerId);
+        $bibId = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '12',
+            'numero_ordre' => 12,
+            'date_parution' => '2024-12-01',
+        ], LibraryStatut::WISHLIST, $userId, $foyerId);
+        $this->assertIsInt($bibId);
 
         $profile = new UserPublicProfileService();
         $stats = $profile->getStats($userId, MediaDomain::MAGAZINE);
@@ -47,7 +52,8 @@ final class UserPublicProfileMagazineTest extends MoncineTestCase
 
         $recentWishlist = $profile->lastWishlistFilms($userId, 5, MediaDomain::MAGAZINE);
         $this->assertNotEmpty($recentWishlist);
-        $this->assertSame('Joystick Profil', (string) ($recentWishlist[0]['titre'] ?? ''));
+        $this->assertSame('12', (string) ($recentWishlist[0]['numero'] ?? ''));
+        $this->assertSame('Joystick Profil', (string) ($recentWishlist[0]['series_titre'] ?? ''));
 
         $this->assertSame(
             '/utilisateur.php?id=' . $userId . '&domain=magazine',

@@ -11,6 +11,22 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.6.1] — 2026-06-16
+
+**Magazines : clôture M5 — autocomplétion numéro, profil public et parité catalogue**
+
+### Ajouté
+
+- **Autocomplétion catalogue** à l’ajout d’un numéro (`/ajouter-numero-magazine.php`, `/rechercher-numeros-catalogue.php`) — rattachement via `addFromCatalogOeuvre` sans doublon.
+- **Export JSON** du catalogue magazines (`/export-catalogue-magazines.php`, `MagazineCatalogExporter`).
+- **Profil public** : bandeau « 5 derniers numéros » (collection et envies) au lieu des seules séries.
+- **Tests** : recherche numéros catalogue, export, profil public mis à jour.
+
+### Modifié
+
+- **Catalogue admin** : recherche par n° de magazine et titre de série ; colonne série/n° dans la liste.
+- **`createIssueWithLibrary`** : enregistre la série dans `series_bibliotheque` ; bloque la création si le numéro existe déjà au catalogue.
+
 ## [0.6.0] — 2026-06-16
 
 **Magazines : import catalogue ABM, parité collection et dates de parution**

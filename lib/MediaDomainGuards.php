@@ -44,6 +44,8 @@ final class MediaDomainGuards
         '/magazines-recherche.php',
         '/magazine-sujet.php',
         '/rechercher-series-catalogue.php',
+        '/rechercher-numeros-catalogue.php',
+        '/export-catalogue-magazines.php',
     ];
 
     /** Préfixes d’URL réservés à l’onglet Jeux. */
