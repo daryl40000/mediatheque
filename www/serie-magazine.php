@@ -117,6 +117,8 @@ $totalWithPossessionFilter = $possessionFilter !== MagazineRepository::POSSESSIO
     ? $listTotal
     : $totalAllIssues;
 $suggestNumero = PublicationType::suggestNextNumeroOrdre($repo->maxNumeroOrdreForSeries($seriesId));
+$seriesInLibrary = MagazineRepository::isAvailable()
+    && $repo->isSeriesInLibrary($seriesId, $statut, $userId, $foyerId);
 
 View::render('serie-magazine', [
     'pageTitle' => (string) ($series['titre'] ?? 'Série'),
@@ -140,4 +142,5 @@ View::render('serie-magazine', [
     'totalPages' => $totalPages,
     'perPage' => $perPage,
     'listTotal' => $listTotal,
+    'seriesInLibrary' => $seriesInLibrary,
 ]);

@@ -11,6 +11,38 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.6.0] — 2026-06-16
+
+**Magazines : import catalogue ABM, parité collection et dates de parution**
+
+Alignement de l’onglet Magazines sur films/jeux : import catalogue partagé depuis [Abandonware Magazines](https://www.abandonware-magazines.org/), ajout de séries existantes, retrait d’une série de la bibliothèque, et normalisation des dates de parution françaises.
+
+### Ajouté
+
+- **Import catalogue ABM** (outil ponctuel CLI + admin) :
+  - `lib/cli/abm-fetch-catalog.php` — télécharge l’API ABM (`choixapi=12` / `10`) vers un JSON local ;
+  - `lib/cli/abm-import-catalog.php` — importe le JSON en catalogue partagé (sans bibliothèque) ;
+  - `lib/AbmApiParser.php`, `lib/AbmCatalogFetcher.php`, `lib/MagazineCatalogImporter.php` ;
+  - page admin **`/import-catalogue-magazines.php`** (upload JSON, simulation, filtre revue).
+- **Ajouter une série depuis le catalogue** : autocomplétion sur `/ajouter-serie-magazine.php` (`/rechercher-series-catalogue.php`) ; rattache tous les numéros catalogue en **non possédés** (`attachCatalogIssuesToCollection`).
+- **Retirer une série** de la collection ou des envies (`/traiter-serie-magazine.php`, bouton sur fiche et modification série) — le catalogue partagé n’est pas supprimé.
+- **Dates de parution** : `PublicationType::parseParutionDateLabel()` — `Janvier 2002` → `2002-01-01`, `Juillet / août 2020` → `2020-07-01` ; appliqué à l’import et à l’affichage des libellés bruts.
+- **Couvertures par lots** : téléchargement limité (défaut **20** par passage, max 40), pause 300 ms entre requêtes, reprise sur numéros déjà importés.
+- **Documentation** : [doc/import-abm.md](doc/import-abm.md) ; section catalogue dans [doc/magazines.md](doc/magazines.md).
+- **Tests** : `AbmApiParserTest`, `MagazineCatalogImporterTest`, `MagazineCatalogImporterTest` (unit), `MagazineTest` (retrait série), `PublicationTypeTest` (dates).
+
+### Modifié
+
+- **Menu admin** : liens « Import magazines » (Gestion, catalogue, maintenance, import).
+- **`MagazineRepository`** : `createCatalogIssue`, `searchCatalogSeries`, `removeSeriesFromLibrary`, `isSeriesInLibrary`.
+- **`PosterStorage::cacheRemoteForSeries`** — logos de séries magazines en local.
+- Libellés UI : « Ajouter une série » (au lieu de créer uniquement).
+
+### Notes
+
+- Les scripts ABM sont **ponctuels** (préparation d’import) ; le JSON et le cache API sont ignorés par Git.
+- Pour ~300 numéros avec couvertures : importer les métadonnées d’abord, puis relancer l’import avec « Télécharger les couvertures » par lots de 20.
+
 ## [0.5.7] — 2026-06-16
 
 **Vue bibliothèque (films et jeux), enrichissement IGDB et recherche par acronymes**

@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\CatalogAdmin;
 use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
 use Moncine\MagazineSubjectRepository;
@@ -78,4 +79,5 @@ View::render('magazines', [
     'contentSubjects' => $contentSubjects,
     'contentIssues' => $contentIssues,
     'moduleError' => '',
+    'canManageCatalog' => CatalogAdmin::canAccess(),
 ]);

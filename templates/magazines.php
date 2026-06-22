@@ -10,6 +10,8 @@
 $contentSubjects = $contentSubjects ?? [];
 $contentIssues = $contentIssues ?? [];
 $hasContentSearch = trim($query) !== '';
+/** @var bool $canManageCatalog */
+$canManageCatalog = $canManageCatalog ?? false;
 ?>
 <section class="collection-page">
     <header class="collection-page__header">
@@ -19,13 +21,25 @@ $hasContentSearch = trim($query) !== '';
             (PC Jeux, Joystick, Warhammer…). Cliquez sur une série pour voir les numéros.
         </p>
         <div class="collection-page__actions">
-            <a href="/ajouter-serie-magazine.php" class="btn btn-accent">Nouvelle série</a>
+            <a href="/ajouter-serie-magazine.php" class="btn btn-accent">Ajouter une série</a>
             <a href="<?= Moncine\View::escape(Moncine\View::magazineSubjectSearchUrl()) ?>" class="btn btn-secondary">Recherche par sujet</a>
+            <?php if ($canManageCatalog): ?>
+                <a href="/import-catalogue-magazines.php" class="btn btn-secondary">Import catalogue (JSON)</a>
+            <?php endif; ?>
         </div>
     </header>
 
     <?php if ($moduleError !== ''): ?>
         <div class="alert alert-warning"><?= Moncine\View::escape($moduleError) ?></div>
+    <?php endif; ?>
+
+    <?php if (isset($_GET['series_removed'])): ?>
+        <div class="alert alert-success">
+            La revue a été retirée de vos magazines.
+            <?php if (isset($_GET['removed_issues']) && (int) $_GET['removed_issues'] > 0): ?>
+                <?= (int) $_GET['removed_issues'] ?> numéro(s) ont aussi été retirés de votre bibliothèque.
+            <?php endif; ?>
+        </div>
     <?php endif; ?>
 
     <form method="get" action="/magazines.php" class="collection-search magazine-global-search">

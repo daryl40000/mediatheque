@@ -83,4 +83,12 @@ $posterSrc = Moncine\View::posterSrc(trim((string) ($series['poster_url'] ?? '')
 
         <button type="submit" class="btn btn-primary">Enregistrer</button>
     </form>
+
+    <?php if (!empty($seriesInLibrary)): ?>
+        <?php
+        $pageStatut = (string) ($libraryStatut ?? Moncine\LibraryStatut::COLLECTION);
+        $issueCount = (int) ($libraryIssueCount ?? 0);
+        require MONCINE_ROOT . '/templates/_magazine_series_remove_button.php';
+        ?>
+    <?php endif; ?>
 </section>

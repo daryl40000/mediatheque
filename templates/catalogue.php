@@ -323,6 +323,7 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
     <p class="collection-page__footer-links">
         <a href="/films.php">← Mes films</a>
         <a href="/maintenance-catalogue.php">Maintenance catalogue</a>
+        <a href="/import-catalogue-magazines.php">Import magazines (JSON)</a>
         <a href="/ajouter-film.php">Ajouter à ma bibliothèque</a>
         <a href="/import.php">Importer / exporter (catalogue)</a>
     </p>

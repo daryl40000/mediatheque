@@ -314,6 +314,12 @@ Styles : classes `.game-shelf-*` ; script `initGameShelfHoverPreviews()` dans `a
 
 Page `/statistiques.php` (onglet Jeux) : répartition par plateforme, physique/démat, genres, décennies, sujets magazine reliés.
 
+## Import bibliothèque GOG (à venir)
+
+Spécification détaillée (non implémentée) : [import-gog.md](import-gog.md).
+
+Résumé : connexion compte GOG → rapprochement avec le **catalogue existant** → validation utilisateur si le match est incertain → ajout à Mes jeux ou **fusion du magasin GOG** (`digital_stores`) si le jeu est déjà en collection (Steam, physique, etc.).
+
 ## Priorité produit
 
 La phase **M4 (Jeux)** est prioritaire sur **M2 (BD)** et **M3 (Livres)** car elle prépare le pont avec les magazines déjà en production (PC Jeux, Joystick…).

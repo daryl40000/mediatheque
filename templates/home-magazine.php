@@ -17,7 +17,7 @@ $mediaNav = Moncine\MediaContext::navLabels();
     <?php if ((int) $seriesCount === 0): ?>
         <div class="alert alert-info">
             <p><strong>Aucune série en collection.</strong> Commencez par créer une revue, puis ajoutez vos numéros.</p>
-            <a class="btn btn-primary" href="/ajouter-serie-magazine.php">Nouvelle série magazine</a>
+            <a class="btn btn-primary" href="/ajouter-serie-magazine.php">Ajouter une série</a>
         </div>
     <?php else: ?>
         <p class="stats">
@@ -26,7 +26,7 @@ $mediaNav = Moncine\MediaContext::navLabels();
         </p>
         <div class="hero-actions">
             <a class="btn btn-primary btn-lg" href="/magazines.php"><?= Moncine\View::escape($mediaNav['collection']) ?></a>
-            <a class="btn btn-secondary" href="/ajouter-serie-magazine.php">Nouvelle série</a>
+            <a class="btn btn-secondary" href="/ajouter-serie-magazine.php">Ajouter une série</a>
         </div>
     <?php endif; ?>
 </section>
@@ -36,6 +36,6 @@ $mediaNav = Moncine\MediaContext::navLabels();
     <ul>
         <li><a href="/magazines.php"><?= Moncine\View::escape($mediaNav['collection']) ?></a></li>
         <li><a href="/magazines-envies.php"><?= Moncine\View::escape($mediaNav['wishlist']) ?></a></li>
-        <li><a href="/ajouter-serie-magazine.php">Créer une série</a></li>
+        <li><a href="/ajouter-serie-magazine.php">Ajouter une série</a></li>
     </ul>
 </section>

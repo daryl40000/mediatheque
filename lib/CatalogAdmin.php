@@ -518,15 +518,25 @@ final class CatalogAdmin
         return [' WHERE ' . implode(' AND ', $parts), $params];
     }
 
-    private function cachePosterIfRemote(int $oeuvreId, string $posterUrl): void
+    public function cachePosterForOeuvre(int $oeuvreId, string $posterUrl): bool
     {
-        if ($oeuvreId <= 0 || !PosterStorage::isRemoteUrl(trim($posterUrl))) {
-            return;
+        $posterUrl = trim($posterUrl);
+        if ($oeuvreId <= 0 || !PosterStorage::isRemoteUrl($posterUrl)) {
+            return false;
         }
 
-        $local = (new PosterStorage())->cacheRemoteForOeuvre($oeuvreId, trim($posterUrl));
-        if ($local !== '') {
-            $this->oeuvres->update($oeuvreId, ['poster_url' => $local], ['poster_url']);
+        $local = (new PosterStorage())->cacheRemoteForOeuvre($oeuvreId, $posterUrl);
+        if ($local === '') {
+            return false;
         }
+
+        $this->oeuvres->update($oeuvreId, ['poster_url' => $local], ['poster_url']);
+
+        return true;
+    }
+
+    private function cachePosterIfRemote(int $oeuvreId, string $posterUrl): void
+    {
+        $this->cachePosterForOeuvre($oeuvreId, $posterUrl);
     }
 }

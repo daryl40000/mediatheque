@@ -19,6 +19,15 @@
         <div class="alert alert-success">Numéro retiré de vos envies.</div>
     <?php endif; ?>
 
+    <?php if (isset($_GET['series_removed'])): ?>
+        <div class="alert alert-success">
+            La revue a été retirée de vos envies.
+            <?php if (isset($_GET['removed_issues']) && (int) $_GET['removed_issues'] > 0): ?>
+                <?= (int) $_GET['removed_issues'] ?> numéro(s) concerné(s).
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+
     <?php if ($totalCount === 0): ?>
         <p class="hint">Aucune envie magazine pour l’instant.</p>
     <?php else: ?>

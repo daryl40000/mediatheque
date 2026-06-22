@@ -29,6 +29,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCatalogGameTitleAutocomplete();
     initMagazineSubjectAutocompleteFields();
     initMagazineSeriesTagsField();
+    initMagazineSeriesCatalogAutocomplete();
     initTagsBadgeFields();
     initGameEditionFields();
     initGameRelationFields();
@@ -1484,5 +1485,158 @@ function initGameShelfHoverPreviews() {
 
         window.addEventListener('scroll', hidePreview, { passive: true });
         window.addEventListener('resize', hidePreview);
+    });
+}
+
+/**
+ * Autocomplétion — séries magazines du catalogue (ajout à la bibliothèque).
+ */
+function initMagazineSeriesCatalogAutocomplete() {
+    document.querySelectorAll('[data-magazine-series-catalog-autocomplete]').forEach((root) => {
+        const input = root.querySelector('.catalog-title-autocomplete__input');
+        const list = root.querySelector('.catalog-title-autocomplete__list');
+        const seriesIdInput = document.getElementById(root.dataset.seriesIdInput || 'catalog_series_id');
+        const submitBtn = document.getElementById('catalog_series_submit');
+        const hintEl = document.getElementById('catalog_series_hint');
+        const searchUrl = root.getAttribute('data-search-url') || '/rechercher-series-catalogue.php';
+
+        if (!input || !list || !seriesIdInput) {
+            return;
+        }
+
+        let debounceTimer = null;
+        let activeIndex = -1;
+        let lastResults = [];
+
+        const setExpanded = (open) => {
+            input.setAttribute('aria-expanded', open ? 'true' : 'false');
+        };
+
+        const closeList = () => {
+            list.hidden = true;
+            list.innerHTML = '';
+            activeIndex = -1;
+            lastResults = [];
+            setExpanded(false);
+        };
+
+        const clearSelection = () => {
+            seriesIdInput.value = '';
+            if (submitBtn) {
+                submitBtn.disabled = true;
+            }
+            if (hintEl) {
+                hintEl.hidden = true;
+                hintEl.textContent = '';
+            }
+        };
+
+        const applySelection = (item) => {
+            if (!item) {
+                return;
+            }
+            seriesIdInput.value = String(item.series_id || '');
+            input.value = item.titre || '';
+            closeList();
+            if (submitBtn) {
+                submitBtn.disabled = false;
+            }
+            if (hintEl) {
+                const count = Number(item.catalog_issue_count || 0);
+                let hint = count > 0
+                    ? count + ' numéro(s) au catalogue partagé.'
+                    : 'Série au catalogue (aucun numéro référencé pour l’instant).';
+                if (item.in_collection) {
+                    hint += ' Déjà dans vos magazines — vous pouvez quand même valider pour ouvrir la série.';
+                }
+                hintEl.textContent = hint;
+                hintEl.hidden = false;
+            }
+        };
+
+        const renderResults = (results) => {
+            list.innerHTML = '';
+            lastResults = results;
+            activeIndex = -1;
+
+            if (!results.length) {
+                closeList();
+                return;
+            }
+
+            results.forEach((item, index) => {
+                const li = document.createElement('li');
+                li.className = 'catalog-title-autocomplete__option';
+                li.setAttribute('role', 'option');
+                li.id = 'mag-series-opt-' + index;
+
+                const main = document.createElement('span');
+                main.className = 'catalog-title-autocomplete__option-label';
+                main.textContent = item.display_label || item.titre || '';
+                li.appendChild(main);
+
+                if (item.in_collection) {
+                    const badge = document.createElement('span');
+                    badge.className = 'catalog-title-autocomplete__badge';
+                    badge.textContent = 'Déjà suivie';
+                    li.appendChild(badge);
+                }
+
+                li.addEventListener('mousedown', (event) => {
+                    event.preventDefault();
+                    applySelection(item);
+                });
+
+                list.appendChild(li);
+            });
+
+            list.hidden = false;
+            setExpanded(true);
+        };
+
+        const fetchResults = (query) => {
+            const url = searchUrl + (searchUrl.includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(query);
+            fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
+                .then((response) => (response.ok ? response.json() : { results: [] }))
+                .then((data) => renderResults(Array.isArray(data.results) ? data.results : []))
+                .catch(() => closeList());
+        };
+
+        input.addEventListener('input', () => {
+            clearSelection();
+            const query = input.value.trim();
+            if (query.length < 1) {
+                closeList();
+                return;
+            }
+            clearTimeout(debounceTimer);
+            debounceTimer = setTimeout(() => fetchResults(query), 220);
+        });
+
+        input.addEventListener('keydown', (event) => {
+            const options = list.querySelectorAll('.catalog-title-autocomplete__option');
+            if (event.key === 'ArrowDown') {
+                event.preventDefault();
+                if (options.length) {
+                    activeIndex = Math.min(activeIndex + 1, options.length - 1);
+                    options.forEach((el, i) => el.classList.toggle('is-active', i === activeIndex));
+                }
+            } else if (event.key === 'ArrowUp') {
+                event.preventDefault();
+                if (options.length) {
+                    activeIndex = Math.max(activeIndex - 1, 0);
+                    options.forEach((el, i) => el.classList.toggle('is-active', i === activeIndex));
+                }
+            } else if (event.key === 'Enter' && activeIndex >= 0 && lastResults[activeIndex]) {
+                event.preventDefault();
+                applySelection(lastResults[activeIndex]);
+            } else if (event.key === 'Escape') {
+                closeList();
+            }
+        });
+
+        input.addEventListener('blur', () => {
+            setTimeout(closeList, 150);
+        });
     });
 }

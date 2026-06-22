@@ -1,6 +1,6 @@
 # Structure de la base de données — Médiathèque
 
-**Version : 0.5.7** · **Moteur :** SQLite (`data/moncine.db`) · **Schéma de référence :** [`sql/schema.sql`](../sql/schema.sql)
+**Version : 0.6.0** · **Moteur :** SQLite (`data/moncine.db`) · **Schéma de référence :** [`sql/schema.sql`](../sql/schema.sql)
 
 Ce document décrit **comment la base est organisée** : quelles tables existent, à quoi elles servent, et comment elles sont reliées entre elles. Il complète la doc fonctionnelle par domaine ([jeux.md](jeux.md), [magazines.md](magazines.md)).
 
@@ -298,4 +298,4 @@ Détails : [conventions-techniques.md](conventions-techniques.md) §4.
 
 ---
 
-*Dernière mise à jour : **0.5.7** (2026-06-16) — vue Bibliothèque films/jeux (pas de changement schéma).*
+*Dernière mise à jour : **0.6.0** (2026-06-16) — import catalogue magazines ABM (pas de changement schéma).*

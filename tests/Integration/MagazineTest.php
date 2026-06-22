@@ -478,4 +478,34 @@ final class MagazineTest extends MoncineTestCase
             $this->assertStringNotContainsString('Joystick', (string) ($film['titre'] ?? ''));
         }
     }
+
+    public function testRemoveSeriesFromLibraryKeepsCatalog(): void
+    {
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Revue Retrait Test ' . uniqid(),
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $bibId = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '7',
+            'numero_ordre' => 7,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        $issue = $repo->findIssueByBibId($bibId, $userId, $foyerId);
+        $oeuvreId = (int) ($issue['oeuvre_id'] ?? 0);
+        $this->assertTrue($repo->isSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId));
+
+        $result = $repo->removeSeriesFromLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsArray($result);
+        $this->assertSame(1, $result['removed_issues']);
+        $this->assertFalse($repo->isSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId));
+        $this->assertSame([], $repo->listSeriesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION));
+        $this->assertNotNull($repo->findCatalogIssueByOeuvreId($oeuvreId));
+    }
 }

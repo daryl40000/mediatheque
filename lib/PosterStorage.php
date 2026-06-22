@@ -187,6 +187,25 @@ final class PosterStorage
     }
 
     /**
+     * Télécharge une URL HTTPS et enregistre le logo pour une série magazine.
+     */
+    public function cacheRemoteForSeries(int $seriesId, string $remoteUrl): string
+    {
+        if ($seriesId <= 0 || !self::isRemoteUrl($remoteUrl)) {
+            return '';
+        }
+
+        self::ensureDirectory();
+
+        $binary = $this->download($remoteUrl);
+        if ($binary === null) {
+            return '';
+        }
+
+        return $this->importBinaryForSeries($seriesId, $binary);
+    }
+
+    /**
      * Enregistre une image locale pour une série magazine (logo ou couverture type).
      */
     public function importBinaryForSeries(int $seriesId, string $binary): string

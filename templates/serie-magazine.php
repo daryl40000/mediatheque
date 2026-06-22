@@ -97,6 +97,17 @@
         <?php if (isset($_GET['deleted'])): ?>
             <div class="alert alert-success">Numéro retiré de votre liste.</div>
         <?php endif; ?>
+        <?php if (isset($_GET['added_series'])): ?>
+            <div class="alert alert-success">
+                Revue ajoutée à vos magazines.
+                <?php if (isset($_GET['linked_issues']) && (int) $_GET['linked_issues'] > 0): ?>
+                    <?= (int) $_GET['linked_issues'] ?> numéro(s) du catalogue sont listés comme <strong>non possédés</strong>.
+                <?php endif; ?>
+            </div>
+        <?php endif; ?>
+        <?php if (!empty($_GET['error'])): ?>
+            <div class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['error']) ?></div>
+        <?php endif; ?>
         <?php if (isset($_GET['wishlist'])): ?>
             <div class="alert alert-success">Numéro ajouté à vos envies (il reste visible ici avec le badge « Non possédé »).</div>
         <?php endif; ?>
@@ -279,6 +290,14 @@
             <?php
             $paginationIdSuffix = '-bottom';
             require MONCINE_ROOT . '/templates/_magazine_issues_pagination.php';
+            ?>
+        <?php endif; ?>
+
+        <?php if (!empty($seriesInLibrary)): ?>
+            <?php
+            $pageStatut = $statut;
+            $issueCount = $totalAllIssues;
+            require MONCINE_ROOT . '/templates/_magazine_series_remove_button.php';
             ?>
         <?php endif; ?>
     <?php endif; ?>

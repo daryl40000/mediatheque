@@ -152,6 +152,7 @@ $mediaCssVars = implode('; ', [
                         '/soumissions-catalogue.php',
                         '/demandes-inscription.php',
                         '/maintenance-catalogue.php',
+                        '/import-catalogue-magazines.php',
                         '/maintenance-medias.php',
                         '/maintenance-magazine-sujets.php',
                         '/foyers.php',
@@ -174,6 +175,7 @@ $mediaCssVars = implode('; ', [
                                 </a>
                             <?php endif; ?>
                             <a href="/maintenance-catalogue.php" class="site-nav__admin"<?= $currentPath === '/maintenance-catalogue.php' ? ' aria-current="page"' : '' ?>>Maintenance</a>
+                            <a href="/import-catalogue-magazines.php" class="site-nav__admin"<?= $currentPath === '/import-catalogue-magazines.php' ? ' aria-current="page"' : '' ?>>Import magazines</a>
                             <a href="/maintenance-magazine-sujets.php" class="site-nav__admin"<?= $currentPath === '/maintenance-magazine-sujets.php' ? ' aria-current="page"' : '' ?>>Sujets magazines</a>
                             <a href="/maintenance-medias.php" class="site-nav__admin"<?= $currentPath === '/maintenance-medias.php' ? ' aria-current="page"' : '' ?>>Médias</a>
                             <a href="/foyers.php" class="site-nav__admin"<?= $currentPath === '/foyers.php' ? ' aria-current="page"' : '' ?>>Groupes famille</a>

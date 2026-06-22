@@ -145,6 +145,18 @@
         </details>
     <?php endif; ?>
 </section>
+
+<?php if (!empty($canManageCatalog)): ?>
+<section class="export-panel">
+    <h2>Import catalogue magazines (JSON)</h2>
+    <p class="lead">
+        Alimente le catalogue partagé avec des revues et numéros (export ABM ou autre JSON),
+        <strong>sans</strong> les ajouter automatiquement à votre bibliothèque.
+    </p>
+    <p>
+        <a href="/import-catalogue-magazines.php" class="btn btn-secondary">Ouvrir l’import magazines JSON</a>
+    </p>
+</section>
 <?php endif; ?>
 
 <section class="enrich-panel">

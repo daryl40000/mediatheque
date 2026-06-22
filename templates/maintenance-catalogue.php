@@ -21,7 +21,8 @@
                 et consultez le journal des actions admin.
             </p>
             <p class="hint"><a href="/maintenance-medias.php">Stockage médias (PDF, exports…) →</a>
-                · <a href="/maintenance-magazine-sujets.php">Sujets magazines (nettoyage) →</a></p>
+                · <a href="/maintenance-magazine-sujets.php">Sujets magazines (nettoyage) →</a>
+                · <a href="/import-catalogue-magazines.php">Import catalogue magazines (JSON) →</a></p>
         </div>
     </div>
 

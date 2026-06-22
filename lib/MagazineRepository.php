@@ -105,6 +105,98 @@ final class MagazineRepository
     }
 
     /**
+     * Recherche des séries magazines au catalogue (pour ajout à la bibliothèque).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function searchCatalogSeries(
+        string $query,
+        int $userId,
+        int $foyerId,
+        int $limit = 25
+    ): array {
+        if (!self::isAvailable()) {
+            return [];
+        }
+
+        $query = trim($query);
+        if ($query === '') {
+            return [];
+        }
+
+        $limit = max(1, min(50, $limit));
+        $pattern = LikePattern::containsFragment($query);
+
+        $sql = 'SELECT s.id, s.titre, s.publication_type, s.poster_url, s.editeur,
+                    (SELECT COUNT(*) FROM oeuvre_magazine om WHERE om.series_id = s.id) AS catalog_issue_count,
+                    EXISTS (
+                        SELECT 1 FROM series_bibliotheque sb
+                        WHERE sb.series_id = s.id
+                          AND sb.statut = :collection_stat
+                          AND sb.foyer_id = :foyer_id
+                    ) AS in_collection
+                FROM series s
+                WHERE s.media_domain = :domain
+                  AND LOWER(s.titre) LIKE LOWER(:pattern) ESCAPE \'\\\'
+                ORDER BY s.titre COLLATE FRENCH_NOCASE
+                LIMIT ' . $limit;
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute([
+            'collection_stat' => LibraryStatut::COLLECTION,
+            'foyer_id' => $foyerId,
+            'domain' => MediaDomain::MAGAZINE,
+            'pattern' => $pattern,
+        ]);
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows as &$row) {
+            $row['in_collection'] = (int) ($row['in_collection'] ?? 0) === 1;
+            $row['catalog_issue_count'] = (int) ($row['catalog_issue_count'] ?? 0);
+        }
+        unset($row);
+
+        return $rows;
+    }
+
+    /**
+     * Ajoute à la collection tous les numéros catalogue d’une série (non possédés, sans papier ni PDF).
+     *
+     * @return int nombre de numéros nouvellement rattachés
+     */
+    public function attachCatalogIssuesToCollection(int $seriesId, int $userId, int $foyerId): int
+    {
+        if (!self::isAvailable() || $seriesId <= 0) {
+            return 0;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT oeuvre_id FROM oeuvre_magazine WHERE series_id = ? ORDER BY numero_ordre ASC'
+        );
+        $stmt->execute([$seriesId]);
+
+        $attached = 0;
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            $oeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+            if ($oeuvreId <= 0) {
+                continue;
+            }
+
+            $result = $this->addFromCatalogOeuvre(
+                $oeuvreId,
+                LibraryStatut::COLLECTION,
+                $userId,
+                $foyerId
+            );
+            if (is_int($result)) {
+                $attached++;
+            }
+        }
+
+        return $attached;
+    }
+
+    /**
      * Séries présentes dans la collection ou les envies de l’utilisateur.
      *
      * @return list<array<string, mixed>>
@@ -554,6 +646,122 @@ final class MagazineRepository
         return $issue !== null ? $bibId : null;
     }
 
+    /**
+     * Numéro catalogue existant pour une série (correspondance sur le libellé numéro).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function findCatalogIssueBySeriesNumero(int $seriesId, string $numero): ?array
+    {
+        if (!self::isAvailable() || $seriesId <= 0) {
+            return null;
+        }
+
+        $numero = trim($numero);
+        if ($numero === '') {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT o.id AS oeuvre_id, o.titre, o.poster_url,
+                    om.series_id, om.numero, om.numero_ordre, om.date_parution,
+                    om.est_hors_serie
+             FROM oeuvre_magazine om
+             INNER JOIN oeuvres o ON o.id = om.oeuvre_id AND o.media_domain = ?
+             WHERE om.series_id = ? AND LOWER(TRIM(om.numero)) = LOWER(?)
+             LIMIT 1'
+        );
+        $stmt->execute([MediaDomain::MAGAZINE, $seriesId, $numero]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row !== false ? $row : null;
+    }
+
+    /**
+     * Crée un numéro magazine dans le catalogue partagé (sans bibliothèque).
+     *
+     * @param array<string, mixed> $data
+     * @return int|string ID œuvre ou message d’erreur
+     */
+    public function createCatalogIssue(int $seriesId, array $data): int|string
+    {
+        if (!self::isAvailable()) {
+            return 'Module magazines non disponible.';
+        }
+
+        $series = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE);
+        if ($series === null) {
+            return 'Série introuvable.';
+        }
+
+        $numero = trim((string) ($data['numero'] ?? ''));
+        if ($numero === '') {
+            return 'Le numéro est obligatoire.';
+        }
+
+        if ($this->findCatalogIssueBySeriesNumero($seriesId, $numero) !== null) {
+            return 'Ce numéro existe déjà pour cette série.';
+        }
+
+        $numeroOrdre = (float) ($data['numero_ordre'] ?? 0);
+        if ($numeroOrdre <= 0) {
+            $numeroOrdre = is_numeric($numero)
+                ? (float) $numero
+                : $this->maxNumeroOrdreForSeries($seriesId) + 1;
+        }
+
+        $horsSerie = !empty($data['est_hors_serie']);
+        if ($horsSerie && $numeroOrdre === (float) (int) $numeroOrdre) {
+            $numeroOrdre += 0.5;
+        }
+
+        $seriesTitre = trim((string) ($data['series_titre'] ?? $series['titre'] ?? ''));
+        $titre = $seriesTitre !== '' ? $seriesTitre . ' — n°' . $numero : 'n°' . $numero;
+        $dateParution = trim((string) ($data['date_parution'] ?? ''));
+        $annee = max(0, (int) ($data['annee'] ?? 0));
+        $posterUrl = SecureUrl::sanitizePosterUrl((string) ($data['poster_url'] ?? ''));
+
+        $this->db->beginTransaction();
+        try {
+            $oeuvreId = (new OeuvreRepository())->insert([
+                'titre' => $titre,
+                'realisateur' => '',
+                'annee' => $annee,
+                'synopsis' => '',
+                'poster_url' => $posterUrl,
+                'media_domain' => MediaDomain::MAGAZINE,
+            ]);
+
+            $this->db->prepare(
+                'INSERT INTO oeuvre_magazine (
+                    oeuvre_id, series_id, numero, numero_ordre, date_parution,
+                    sommaire, pages, est_hors_serie
+                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+            )->execute([
+                $oeuvreId,
+                $seriesId,
+                $numero,
+                $numeroOrdre,
+                $dateParution !== '' ? $dateParution : null,
+                trim((string) ($data['sommaire'] ?? '')),
+                max(0, (int) ($data['pages'] ?? 0)),
+                $horsSerie ? 1 : 0,
+            ]);
+
+            $this->db->commit();
+            MagazineIssueFts::upsert($oeuvreId);
+
+            return $oeuvreId;
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log('MagazineRepository::createCatalogIssue: ' . $e->getMessage());
+
+            return 'Impossible d’enregistrer le numéro catalogue.';
+        }
+    }
+
     /** Fiche catalogue magazine (indépendamment de la bibliothèque).
      *
      * @return array<string, mixed>|null
@@ -924,6 +1132,112 @@ final class MagazineRepository
         $stmt->execute([$bibId]);
 
         return $stmt->rowCount() > 0 ? true : 'Suppression impossible.';
+    }
+
+    /**
+     * Retire une série de la bibliothèque (collection du foyer ou envies personnelles).
+     * Ne supprime pas les fiches catalogue partagées.
+     *
+     * @return array{removed_issues: int}|string
+     */
+    public function removeSeriesFromLibrary(int $seriesId, string $statut, int $userId, int $foyerId): array|string
+    {
+        if (!self::isAvailable() || $seriesId <= 0) {
+            return 'Module magazines non disponible.';
+        }
+
+        $series = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE);
+        if ($series === null) {
+            return 'Série introuvable.';
+        }
+
+        $statut = LibraryStatut::normalize($statut);
+        if (!$this->isSeriesInLibrary($seriesId, $statut, $userId, $foyerId)) {
+            return $statut === LibraryStatut::WISHLIST
+                ? 'Cette série n’est pas dans vos envies.'
+                : 'Cette série n’est pas dans vos magazines.';
+        }
+
+        $this->db->beginTransaction();
+        try {
+            if ($statut === LibraryStatut::COLLECTION) {
+                $deleteIssues = $this->db->prepare(
+                    'DELETE FROM bibliotheque
+                     WHERE statut = :statut
+                       AND foyer_id = :foyer_id
+                       AND oeuvre_id IN (
+                           SELECT oeuvre_id FROM oeuvre_magazine WHERE series_id = :series_id
+                       )'
+                );
+                $deleteIssues->execute([
+                    'statut' => LibraryStatut::COLLECTION,
+                    'foyer_id' => $foyerId,
+                    'series_id' => $seriesId,
+                ]);
+
+                $this->db->prepare(
+                    'DELETE FROM series_bibliotheque
+                     WHERE series_id = ? AND statut = ? AND foyer_id = ?'
+                )->execute([$seriesId, LibraryStatut::COLLECTION, $foyerId]);
+            } else {
+                $deleteIssues = $this->db->prepare(
+                    'DELETE FROM bibliotheque
+                     WHERE statut = :statut
+                       AND user_id = :user_id
+                       AND oeuvre_id IN (
+                           SELECT oeuvre_id FROM oeuvre_magazine WHERE series_id = :series_id
+                       )'
+                );
+                $deleteIssues->execute([
+                    'statut' => LibraryStatut::WISHLIST,
+                    'user_id' => $userId,
+                    'series_id' => $seriesId,
+                ]);
+
+                $this->db->prepare(
+                    'DELETE FROM series_bibliotheque
+                     WHERE series_id = ? AND statut = ? AND user_id = ?'
+                )->execute([$seriesId, LibraryStatut::WISHLIST, $userId]);
+            }
+
+            $removedIssues = $deleteIssues->rowCount();
+            $this->db->commit();
+
+            return ['removed_issues' => $removedIssues];
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log('MagazineRepository::removeSeriesFromLibrary: ' . $e->getMessage());
+
+            return 'Impossible de retirer la série de votre bibliothèque.';
+        }
+    }
+
+    public function isSeriesInLibrary(int $seriesId, string $statut, int $userId, int $foyerId): bool
+    {
+        if (!self::seriesLibraryTableExists() || $seriesId <= 0) {
+            return false;
+        }
+
+        $statut = LibraryStatut::normalize($statut);
+        if ($statut === LibraryStatut::COLLECTION) {
+            $stmt = $this->db->prepare(
+                'SELECT 1 FROM series_bibliotheque
+                 WHERE series_id = ? AND statut = ? AND foyer_id = ?
+                 LIMIT 1'
+            );
+            $stmt->execute([$seriesId, LibraryStatut::COLLECTION, $foyerId]);
+        } else {
+            $stmt = $this->db->prepare(
+                'SELECT 1 FROM series_bibliotheque
+                 WHERE series_id = ? AND statut = ? AND user_id = ?
+                 LIMIT 1'
+            );
+            $stmt->execute([$seriesId, LibraryStatut::WISHLIST, $userId]);
+        }
+
+        return (bool) $stmt->fetchColumn();
     }
 
     /**

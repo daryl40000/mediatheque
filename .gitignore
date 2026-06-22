@@ -16,6 +16,10 @@
 # Graine d’installation : déposer CSV/ZIP ici sans les versionner
 /install_seed/*.zip
 /install_seed/*.ods
+/install_seed/abm-*.json
+
+# Cache ponctuel script ABM (lib/cli/abm-fetch-catalog.php)
+/data/abm-fetch-cache/
 
 # Affiches téléchargées
 /data/posters/

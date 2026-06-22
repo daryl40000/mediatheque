@@ -39,9 +39,11 @@ final class MediaDomainGuards
         '/enregistrer-numero-magazine.php',
         '/enregistrer-modification-serie-magazine.php',
         '/traiter-numero-magazine.php',
+        '/traiter-serie-magazine.php',
         '/imprimer-serie-magazine.php',
         '/magazines-recherche.php',
         '/magazine-sujet.php',
+        '/rechercher-series-catalogue.php',
     ];
 
     /** Préfixes d’URL réservés à l’onglet Jeux. */

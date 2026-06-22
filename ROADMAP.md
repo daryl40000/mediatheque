@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.5.7** (2026-06-16)  
+**Version actuelle : 0.6.0** (2026-06-16)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -13,13 +13,13 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ---
 
-## Où en est-on ? (synthèse 0.5.7)
+## Où en est-on ? (synthèse 0.6.0)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
-| **Films** | ✅ Production | 0.4.4+ → **0.5.7** | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`, **vue Bibliothèque**) |
-| **Jeux** | ✅ Utilisable | 0.5.0 → **0.5.7** | Complet (extensions, remakes, autocomplétion, recherche tolérante, **IGDB**, **sagas**, **vue Bibliothèque**, acronymes) |
-| **Magazines** | 🔄 Avancé (~85 %) | 0.2.x → 0.4.x | Partiel (fiche `/oeuvre-magazine.php` ✅ ; autocomplétion à l’ajout ⏳) |
+| **Films** | ✅ Production | 0.4.4+ → **0.6.0** | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`, **vue Bibliothèque**) |
+| **Jeux** | ✅ Utilisable | 0.5.0 → **0.6.0** | Complet (extensions, remakes, autocomplétion, recherche tolérante, **IGDB**, **sagas**, **vue Bibliothèque**, acronymes) |
+| **Magazines** | 🔄 Avancé (~90 %) | 0.2.x → **0.6.0** | Import catalogue ABM, ajout série catalogue, retrait série ; autocomplétion numéro ⏳ |
 | **BD / Manga** | ⏸️ Repoussé | — | — |
 | **Livres** | ⏸️ Repoussé | — | — |
 
@@ -30,7 +30,7 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 | **M0** Fondations multi-médias | ✅ Livré | 0.1.0 | — |
 | **M1** Stabilisation films | ✅ Livré | 0.4.4 | Maintenance seulement |
 | **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.5.7** | Polish non bloquant (voir M4) |
-| **M5** Magazines | 🔄 En cours | 0.4.3 → **0.6.0** cible | Parité catalogue + profil public |
+| **M5** Magazines | 🔄 En cours | 0.4.3 → **0.6.0** | Autocomplétion à l’ajout numéro, profil public |
 | **Pont** Magazines ↔ Jeux | 🔄 Partiel | 0.5.0+ | Rattachement rétroactif |
 | **M2** BD / Manga | ⏸️ Repoussé | 0.6.x+ (indicatif) | Après M5 stabilisée |
 | **M3** Livres | ⏸️ Repoussé | 0.7.x+ (indicatif) | Après M2 ou en parallèle |
@@ -40,6 +40,14 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.6.0** — import catalogue magazines ABM (2026-06-16)
+
+- **Import ABM** : CLI `abm-fetch-catalog.php` / `abm-import-catalog.php`, page admin `/import-catalogue-magazines.php`.
+- **Ajout série catalogue** : autocomplétion, rattachement des numéros en non possédés.
+- **Retrait série** : collection et envies sans toucher au catalogue partagé.
+- **Dates** : libellés français (`mars 2018`, `juillet / août`) → dates ISO.
+- **Couvertures** : téléchargement par lots (20 par défaut) pour ne pas surcharger ABM.
 
 ### ✅ **0.5.7** — vue Bibliothèque et enrichissements jeux (2026-06-16)
 
@@ -65,11 +73,11 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 - QA prod : remakes, affichage extensions/remakes, recherche tolérante, migrations **044–045**.
 - Tag Git **`v0.5.4`** — publié sur `origin/main`.
 
-### Priorité 1 — **M5** : aligner magazines sur films / jeux (**0.6.0**)
+### Priorité 1 — **M5** : finir parité magazines (**0.6.x**)
 
 1. **Autocomplétion catalogue** à l’ajout d’un numéro (`/ajouter-numero-magazine.php`) — même logique que les jeux (0.5.3).
-2. **Parité fiche catalogue** : vérifier édition admin, navigation catalogue, export/import magazine.
-3. **Profil public** onglet Magazines (comme profil jeux en 0.5.3).
+2. **Profil public** onglet Magazines (comme profil jeux en 0.5.3).
+3. **Parité fiche catalogue** : export/import magazine, navigation catalogue.
 
 ### Priorité 2 — **Pont magazine ↔ jeu** (finir le transversal)
 
@@ -207,6 +215,7 @@ Détail complet : archives QA dans l’historique git avant cette réorganisatio
 
 | Tâche | Cible |
 |-------|-------|
+| **Import bibliothèque GOG** (catalogue existant uniquement, confirmation utilisateur, tag GOG) | 0.6.x — voir [doc/import-gog.md](doc/import-gog.md) |
 | Plateformes configurables (admin) | 0.5.x |
 | Flag « non prêtable » si démat | 0.5.x |
 

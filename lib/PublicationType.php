@@ -73,6 +73,12 @@ final class PublicationType
 
         $ts = strtotime($isoDate);
         if ($ts === false) {
+            $normalized = self::parseParutionDateLabel($isoDate);
+            if ($normalized !== null) {
+                $ts = strtotime($normalized);
+            }
+        }
+        if ($ts === false) {
             return $isoDate;
         }
 
@@ -138,6 +144,86 @@ final class PublicationType
         }
 
         return null;
+    }
+
+    /**
+     * Convertit un libellé de parution (souvent ABM) en date ISO AAAA-MM-JJ.
+     * Les mois français sont calés sur le 1er du mois ; pour « juillet / août », on garde juillet.
+     * Année seule → 1er janvier. Retourne null si le texte est vide ou incompréhensible.
+     */
+    public static function parseParutionDateLabel(string $input): ?string
+    {
+        $input = trim($input);
+        if ($input === '') {
+            return null;
+        }
+
+        if (preg_match('/^(19|20)\d{2}-\d{2}-\d{2}$/', $input) === 1) {
+            return $input;
+        }
+
+        $lower = mb_strtolower($input);
+
+        if (preg_match('/^(\d{1,2})[\/\-.](\d{1,2})[\/\-.]((19|20)\d{2})$/', $lower, $m) === 1) {
+            $day = (int) $m[1];
+            $month = (int) $m[2];
+            $year = (int) $m[3];
+            if ($day >= 1 && $day <= 31 && $month >= 1 && $month <= 12) {
+                return sprintf('%04d-%02d-%02d', $year, $month, $day);
+            }
+        }
+
+        $filter = self::parseParutionDateFilter($lower);
+        if ($filter !== null) {
+            $month = $filter['month'] ?? 1;
+
+            return sprintf('%04d-%02d-01', $filter['year'], $month);
+        }
+
+        if (preg_match('/\b((?:19|20)\d{2})\b/', $lower, $yearMatch) !== 1) {
+            return null;
+        }
+
+        $year = (int) $yearMatch[1];
+        $month = self::firstFrenchMonthInLabel($lower);
+        if ($month === null) {
+            return sprintf('%04d-01-01', $year);
+        }
+
+        return sprintf('%04d-%02d-01', $year, $month);
+    }
+
+    private static function firstFrenchMonthInLabel(string $lowerLabel): ?int
+    {
+        $normalized = self::normalizeAccentsForMonthSearch($lowerLabel);
+        $months = [
+            'janvier' => 1, 'fevrier' => 2, 'mars' => 3, 'avril' => 4,
+            'mai' => 5, 'juin' => 6, 'juillet' => 7, 'aout' => 8,
+            'septembre' => 9, 'octobre' => 10, 'novembre' => 11, 'decembre' => 12,
+        ];
+
+        $firstMonth = null;
+        $firstPos = PHP_INT_MAX;
+        foreach ($months as $name => $monthNum) {
+            $pos = mb_strpos($normalized, $name);
+            if ($pos !== false && $pos < $firstPos) {
+                $firstPos = $pos;
+                $firstMonth = $monthNum;
+            }
+        }
+
+        return $firstMonth;
+    }
+
+    private static function normalizeAccentsForMonthSearch(string $value): string
+    {
+        $value = mb_strtolower($value);
+
+        return str_replace(
+            ['é', 'è', 'ê', 'ë', 'û', 'ù', 'ü', 'à', 'â', 'ô', 'ç'],
+            ['e', 'e', 'e', 'e', 'u', 'u', 'u', 'a', 'a', 'o', 'c'],
+            $value
+        );
     }
 
     private static function formatMonthYear(int $ts): string
