@@ -42,21 +42,32 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
 };
 ?>
 <section class="collection-page">
-    <header class="collection-page__header">
+    <div class="collection-page__head">
         <h1><?= Moncine\View::escape(Moncine\MediaContext::navLabels()['collection']) ?></h1>
-        <p class="lead">
-            Vos jeux vidéo (physiques ou dématérialisés). Les fiches peuvent être reliées aux
-            <strong>tests et previews</strong> de vos magazines (PC Jeux, Joystick…).
-        </p>
-        <div class="collection-page__actions">
-            <a href="/ajouter-jeu.php" class="btn btn-accent">Ajouter un jeu</a>
-            <a href="/jeux-envies.php" class="btn btn-secondary">Mes envies jeux</a>
-            <a href="/statistiques.php" class="btn btn-secondary">Statistiques jeux</a>
-            <?php if ($canAssignFranchise): ?>
-                <a href="/sagas-jeux.php" class="btn btn-secondary">Sagas</a>
-            <?php endif; ?>
+        <div class="collection-page__head-actions">
+            <?php
+            $printUrl = Moncine\View::gamesPrintUrl($query, $sortBy, $sortDir, $listFilter);
+            require MONCINE_ROOT . '/templates/_print_button.php';
+            ?>
+            <a class="btn btn-secondary" href="/gerer-partages.php?domain=<?= Moncine\MediaDomain::JEU ?>&scope=<?= Moncine\ShareLinkScope::COLLECTION ?>">
+                Partager
+            </a>
+            <a href="/ajouter-jeu.php" class="btn btn-primary">Ajouter un jeu</a>
         </div>
-    </header>
+    </div>
+
+    <p class="lead">
+        Vos jeux vidéo (physiques ou dématérialisés). Les fiches peuvent être reliées aux
+        <strong>tests et previews</strong> de vos magazines (PC Jeux, Joystick…).
+    </p>
+
+    <nav class="ui-pill-nav" aria-label="Accès rapides jeux">
+        <a href="/jeux-envies.php" class="ui-pill">Mes envies jeux</a>
+        <a href="/statistiques.php" class="ui-pill">Statistiques jeux</a>
+        <?php if ($canAssignFranchise): ?>
+            <a href="/sagas-jeux.php" class="ui-pill">Sagas</a>
+        <?php endif; ?>
+    </nav>
 
     <?php if ($moduleError !== ''): ?>
         <div class="alert alert-warning"><?= Moncine\View::escape($moduleError) ?></div>

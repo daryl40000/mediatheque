@@ -284,6 +284,7 @@ CREATE TABLE IF NOT EXISTS share_links (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     token_hash TEXT NOT NULL UNIQUE,
     scope TEXT NOT NULL CHECK (scope IN ('collection', 'wishlist')),
+    media_domain TEXT NOT NULL DEFAULT 'film',
     foyer_id INTEGER DEFAULT NULL REFERENCES foyers(id) ON DELETE CASCADE,
     user_id INTEGER NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
     label TEXT NOT NULL DEFAULT '',
@@ -296,6 +297,7 @@ CREATE TABLE IF NOT EXISTS share_links (
 
 CREATE INDEX IF NOT EXISTS idx_share_links_user ON share_links(user_id);
 CREATE INDEX IF NOT EXISTS idx_share_links_foyer ON share_links(foyer_id) WHERE foyer_id IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_share_links_media_domain ON share_links(media_domain);
 
 CREATE TABLE IF NOT EXISTS oeuvre_eans (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

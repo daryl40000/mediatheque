@@ -860,6 +860,52 @@ final class View
         return $params === [] ? '/jeux.php' : '/jeux.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
     }
 
+    /** Version imprimable de Mes jeux (mêmes filtres / tri que /jeux.php). */
+    public static function gamesPrintUrl(
+        string $searchQuery = '',
+        string $sortBy = 'titre',
+        string $sortDir = 'asc',
+        ?GameListFilter $filter = null
+    ): string {
+        $params = [];
+        $searchQuery = trim($searchQuery);
+        if ($searchQuery !== '') {
+            $params['q'] = $searchQuery;
+        }
+        if ($sortBy !== '' && $sortBy !== 'titre') {
+            $params['sort'] = $sortBy;
+        }
+        if (strtolower($sortDir) === 'desc') {
+            $params['dir'] = 'desc';
+        }
+        foreach (($filter ?? GameListFilter::empty())->toQueryParams() as $key => $value) {
+            $params[$key] = $value;
+        }
+
+        return $params === [] ? '/imprimer-jeux.php' : '/imprimer-jeux.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    /** Version imprimable des envies jeux. */
+    public static function gamesWishlistPrintUrl(
+        string $searchQuery = '',
+        string $sortBy = 'titre',
+        string $sortDir = 'asc'
+    ): string {
+        $params = [];
+        $searchQuery = trim($searchQuery);
+        if ($searchQuery !== '') {
+            $params['q'] = $searchQuery;
+        }
+        if ($sortBy !== '' && $sortBy !== 'titre') {
+            $params['sort'] = $sortBy;
+        }
+        if (strtolower($sortDir) === 'desc') {
+            $params['dir'] = 'desc';
+        }
+
+        return $params === [] ? '/imprimer-envies-jeux.php' : '/imprimer-envies-jeux.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+    }
+
     /** Hauteur fixe des tranches (vue bibliothèque), en pixels — jeux et films. */
     public const COLLECTION_SHELF_SPINE_HEIGHT_PX = 190;
 

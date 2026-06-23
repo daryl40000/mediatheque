@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\Auth;
 use Moncine\Csrf;
 use Moncine\AppUrl;
+use Moncine\MediaDomain;
 use Moncine\ShareLinkRepository;
 use Moncine\ShareLinkScope;
 use Moncine\ShareLinkService;
@@ -38,16 +39,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($action === 'create') {
         $scope = ShareLinkScope::normalize((string) ($_POST['scope'] ?? ''));
+        $mediaDomain = MediaDomain::normalize((string) ($_POST['media_domain'] ?? MediaDomain::FILM));
         $label = trim((string) ($_POST['label'] ?? ''));
-        $result = $service->create($userId, $foyerId, $scope, $label);
+        $result = $service->create($userId, $foyerId, $scope, $label, null, $mediaDomain);
         if (is_string($result)) {
             $flashError = $result;
         } else {
             $rawToken = (string) $result['token'];
             $scopeNorm = ShareLinkScope::normalize((string) ($result['link']['scope'] ?? ''));
-            $newShareUrl = ShareLinkService::listUrl($rawToken, $scopeNorm);
+            $linkDomain = ShareLinkRepository::mediaDomainFromRow($result['link']);
+            $newShareUrl = ShareLinkService::listUrl($rawToken, $scopeNorm, $linkDomain);
             $newShareLinkId = (int) ($result['link']['id'] ?? 0);
-            $newShareScopeLabel = ShareLinkScope::label($scopeNorm);
+            $newShareScopeLabel = ShareLinkScope::label($scopeNorm, $linkDomain);
             $absoluteUrl = AppUrl::path($newShareUrl);
             if ($newShareLinkId > 0) {
                 ShareLinkSessionStore::remember($newShareLinkId, $absoluteUrl);
@@ -66,7 +69,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } elseif ($recipient === '' || !filter_var($recipient, FILTER_VALIDATE_EMAIL)) {
             $shareEmailError = 'Adresse e-mail du destinataire invalide.';
         } else {
-            $scopeLabel = ShareLinkScope::label(ShareLinkScope::normalize((string) ($link['scope'] ?? '')));
+            $scopeLabel = ShareLinkScope::label(
+                ShareLinkScope::normalize((string) ($link['scope'] ?? '')),
+                ShareLinkRepository::mediaDomainFromRow($link)
+            );
             $sender = UserProfile::displayName(Auth::currentUser() ?? []);
             $sent = ShareLinkShare::sendByEmail($recipient, $sender, $shareUrl, $scopeLabel, $personalMessage);
             if ($sent) {
@@ -89,6 +95,7 @@ $links = $repo->listForUser($userId);
 $shareUrlByLinkId = ShareLinkSessionStore::allForUserLinks($links);
 
 $defaultScope = ShareLinkScope::normalize((string) ($_GET['scope'] ?? ShareLinkScope::COLLECTION));
+$defaultDomain = MediaDomain::normalize((string) ($_GET['domain'] ?? MediaDomain::FILM));
 
 $newShareAbsoluteUrl = $newShareUrl !== '' ? AppUrl::path($newShareUrl) : '';
 
@@ -106,4 +113,5 @@ View::render('gerer-partages', [
     'shareEmailError' => $shareEmailError,
     'foyerId' => $foyerId,
     'defaultScope' => $defaultScope,
+    'defaultDomain' => $defaultDomain,
 ]);

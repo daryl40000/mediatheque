@@ -4,7 +4,7 @@
 <section>
     <h1>Liens de partage</h1>
     <p class="hint">
-        Créez un lien lecture seule pour montrer vos films (collection du foyer) ou vos envies à quelqu’un
+        Créez un lien lecture seule pour montrer vos films ou vos jeux (collection du foyer) ou vos envies à quelqu’un
         sans compte Moncine. Vous pouvez révoquer un lien à tout moment.
     </p>
 
@@ -33,12 +33,28 @@
             <?= Moncine\View::csrfField() ?>
             <input type="hidden" name="action" value="create">
 
-            <label for="share_scope">Contenu à partager</label>
-            <?php $defaultScope = Moncine\ShareLinkScope::normalize($defaultScope ?? Moncine\ShareLinkScope::COLLECTION); ?>
+            <?php
+            $defaultDomain = Moncine\MediaDomain::normalize($defaultDomain ?? Moncine\MediaDomain::FILM);
+            $defaultScope = Moncine\ShareLinkScope::normalize($defaultScope ?? Moncine\ShareLinkScope::COLLECTION);
+            ?>
+
+            <label for="share_media_domain">Type de contenu</label>
+            <select name="media_domain" id="share_media_domain" required>
+                <option value="<?= Moncine\MediaDomain::FILM ?>"
+                    <?= $defaultDomain === Moncine\MediaDomain::FILM ? ' selected' : '' ?>>
+                    Films
+                </option>
+                <option value="<?= Moncine\MediaDomain::JEU ?>"
+                    <?= $defaultDomain === Moncine\MediaDomain::JEU ? ' selected' : '' ?>>
+                    Jeux vidéo
+                </option>
+            </select>
+
+            <label for="share_scope">Liste à partager</label>
             <select name="scope" id="share_scope" required>
                 <option value="<?= Moncine\ShareLinkScope::COLLECTION ?>"
                     <?= $defaultScope === Moncine\ShareLinkScope::COLLECTION ? ' selected' : '' ?>>
-                    Mes films (collection du foyer)
+                    Collection du foyer
                 </option>
                 <option value="<?= Moncine\ShareLinkScope::WISHLIST ?>"
                     <?= $defaultScope === Moncine\ShareLinkScope::WISHLIST ? ' selected' : '' ?>>
@@ -69,7 +85,8 @@
                     <?php
                     $linkId = (int) ($link['id'] ?? 0);
                     $scope = Moncine\ShareLinkScope::normalize((string) ($link['scope'] ?? ''));
-                    $scopeLabel = Moncine\ShareLinkScope::label($scope);
+                    $linkDomain = Moncine\ShareLinkRepository::mediaDomainFromRow($link);
+                    $scopeLabel = Moncine\ShareLinkScope::label($scope, $linkDomain);
                     $expires = (string) ($link['expires_at'] ?? '');
                     $shareUrl = $shareUrlByLinkId[$linkId] ?? '';
                     ?>

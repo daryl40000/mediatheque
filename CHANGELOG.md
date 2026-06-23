@@ -13,19 +13,23 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ## [0.6.1] — 2026-06-16
 
-**Magazines : clôture M5 — autocomplétion numéro, profil public et parité catalogue**
+**Magazines : clôture M5 — autocomplétion numéro, profil public et parité catalogue**  
+**Jeux : partage visiteur et listes imprimables (parité films)**
 
 ### Ajouté
 
 - **Autocomplétion catalogue** à l’ajout d’un numéro (`/ajouter-numero-magazine.php`, `/rechercher-numeros-catalogue.php`) — rattachement via `addFromCatalogOeuvre` sans doublon.
 - **Export JSON** du catalogue magazines (`/export-catalogue-magazines.php`, `MagazineCatalogExporter`).
 - **Profil public** : bandeau « 5 derniers numéros » (collection et envies) au lieu des seules séries.
-- **Tests** : recherche numéros catalogue, export, profil public mis à jour.
+- **Partage visiteur jeux** : liens lecture seule collection / envies (`/partage-jeux.php`, `/partage-jeu.php`) ; choix Films ou Jeux dans `/gerer-partages.php` ; migration `048_share_links_media_domain.sql`.
+- **Listes imprimables jeux** : `/imprimer-jeux.php`, `/imprimer-envies-jeux.php` (`GamePrintListService`, boutons sur Mes jeux / Mes envies jeux).
+- **Tests** : recherche numéros catalogue, export, profil public mis à jour ; partage jeux (`ShareLinkGameRepository`).
 
 ### Modifié
 
 - **Catalogue admin** : recherche par n° de magazine et titre de série ; colonne série/n° dans la liste.
 - **`createIssueWithLibrary`** : enregistre la série dans `series_bibliotheque` ; bloque la création si le numéro existe déjà au catalogue.
+- **Mes jeux / Mes envies jeux** : boutons Partager et Version imprimable alignés sur la page Mes films (`collection-page__head`).
 
 ## [0.6.0] — 2026-06-16
 

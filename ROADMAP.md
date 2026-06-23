@@ -18,7 +18,7 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
 | **Films** | ✅ Production | 0.4.4+ → **0.6.1** | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`, **vue Bibliothèque**) |
-| **Jeux** | ✅ Utilisable | 0.5.0 → **0.6.1** | Complet (extensions, remakes, autocomplétion, recherche tolérante, **IGDB**, **sagas**, **vue Bibliothèque**, acronymes) |
+| **Jeux** | ✅ Utilisable | 0.5.0 → **0.6.1** | Complet (extensions, remakes, autocomplétion, recherche tolérante, **IGDB**, **sagas**, **vue Bibliothèque**, acronymes, **partage visiteur**, **listes imprimables**) |
 | **Magazines** | ✅ **Complet (M5)** | 0.2.x → **0.6.1** | Import ABM, ajout série/numéro catalogue, retrait série, profil public, export JSON |
 | **BD / Manga** | ⏸️ Repoussé | — | — |
 | **Livres** | ⏸️ Repoussé | — | — |
@@ -41,12 +41,14 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ## Prochaines étapes (par priorité)
 
-### ✅ **0.6.1** — clôture M5 magazines (2026-06-16)
+### ✅ **0.6.1** — clôture M5 magazines + parité jeux (2026-06-16)
 
 - **Autocomplétion numéro** à l’ajout (`/rechercher-numeros-catalogue.php`, `addFromCatalogOeuvre`).
 - **Profil public** : 5 derniers numéros (collection / envies).
 - **Export JSON** catalogue (`/export-catalogue-magazines.php`).
 - **Recherche admin** catalogue : n° magazine et titre de série.
+- **Jeux — partage visiteur** : liens collection / envies (`/partage-jeux.php`, `/gerer-partages.php?domain=jeu`).
+- **Jeux — listes imprimables** : `/imprimer-jeux.php`, `/imprimer-envies-jeux.php`.
 
 ### ✅ **0.6.0** — import catalogue magazines ABM (2026-06-16)
 

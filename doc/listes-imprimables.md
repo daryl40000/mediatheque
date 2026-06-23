@@ -1,12 +1,12 @@
-# Listes imprimables (Mes films / Mes envies)
+# Listes imprimables (Mes films / Mes envies / Mes jeux)
 
-**Version : 0.1.0** (onglet Films — identique à Monciné 1.0.0)
+**Version : 0.1.0** (onglet Films — identique à Monciné 1.0.0 ; jeux ajoutés en 0.6.x)
 
 Alternative **légère** à l’export PDF côté serveur (phase 10 reportée pour compatibilité **YunoHost** : pas de Dompdf ni autre dépendance Composer en production).
 
 ## Utilisation
 
-1. Ouvrez **Mes films** ou **Mes envies**.
+1. Ouvrez **Mes films**, **Mes envies**, **Mes jeux** ou **Mes envies jeux**.
 2. Appliquez vos **filtres** et votre **tri** comme d’habitude (recherche, type film/série, onglet envies du groupe, etc.).
 3. Cliquez sur **Version imprimable** (s’ouvre dans un **nouvel onglet**).
 4. Sur la page d’impression :
@@ -23,8 +23,10 @@ La liste imprimée reprend les **mêmes critères** que l’écran d’origine (
 |-----|--------|
 | `/imprimer-films.php` | Mes films — collection partagée du foyer |
 | `/imprimer-envies.php` | Mes envies personnelles, ou **envies du groupe** si cet onglet est actif |
+| `/imprimer-jeux.php` | Mes jeux — collection partagée du foyer |
+| `/imprimer-envies-jeux.php` | Mes envies jeux (liste personnelle) |
 
-Paramètres d’URL identiques aux listes : `q`, `sort`, `dir`, `kind` (films), `scope=group` (envies groupe).
+Paramètres d’URL identiques aux listes : `q`, `sort`, `dir`, `kind` (films), `scope=group` (envies groupe), filtres jeux (`platform`, `genre`, `decade`, `support`, `extensions`).
 
 ## Colonnes imprimées
 
@@ -40,22 +42,34 @@ Titre, année, nationalité, réalisateur, style, versions recherchées (support
 
 Nombre de demandes, titre, année, personnes concernées, réalisateur.
 
+### Mes jeux
+
+Jaquette (miniature), titre, plateforme, année, studio, genres, support, note personnelle, date d’ajout.
+
+### Mes envies jeux
+
+Jaquette, titre, plateforme, année, studio, genres, support, note, date d’ajout.
+
 ## Fichiers techniques
 
 | Fichier | Rôle |
 |---------|------|
-| `www/imprimer-films.php` | Contrôleur collection |
-| `www/imprimer-envies.php` | Contrôleur envies |
+| `www/imprimer-films.php` | Contrôleur collection films |
+| `www/imprimer-envies.php` | Contrôleur envies films |
+| `www/imprimer-jeux.php` | Contrôleur collection jeux |
+| `www/imprimer-envies-jeux.php` | Contrôleur envies jeux |
 | `templates/layout_print.php` | Mise en page minimale (sans menu du site) |
 | `www/assets/css/print.css` | Styles écran et `@media print` |
 | `www/assets/js/print-page.js` | Déclenche `window.print()` (obligatoire : voir CSP ci-dessous) |
-| `lib/PrintListService.php` | Préparation des données (filtres, tri, listes) |
+| `lib/PrintListService.php` | Préparation des données films |
+| `lib/GamePrintListService.php` | Préparation des données jeux |
 | `lib/PrintListHelper.php` | Libellés des filtres et du tri |
-| `lib/View.php` | `filmsPrintUrl()`, `wishlistPrintUrl()` |
-| `templates/_print_button.php` | Bouton sur Mes films / Mes envies |
-| `templates/_print_collection_table.php` | Tableau collection |
-| `templates/_print_wishlist_table.php` | Tableau envies personnelles |
-| `templates/_print_wishlist_group_table.php` | Tableau envies du groupe |
+| `lib/View.php` | `filmsPrintUrl()`, `wishlistPrintUrl()`, `gamesPrintUrl()`, `gamesWishlistPrintUrl()` |
+| `templates/_print_button.php` | Bouton sur les listes |
+| `templates/_print_collection_table.php` | Tableau collection films |
+| `templates/_print_games_table.php` | Tableau jeux |
+| `templates/_print_wishlist_table.php` | Tableau envies personnelles films |
+| `templates/_print_wishlist_group_table.php` | Tableau envies du groupe films |
 
 ## Sécurité (CSP)
 

@@ -23,15 +23,25 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
     <?php
 };
 ?>
-<section class="collection-page">
-    <header class="collection-page__header">
+<section class="collection-page wishlist-page">
+    <div class="collection-page__head">
         <h1><?= Moncine\View::escape(Moncine\MediaContext::navLabels()['wishlist']) ?></h1>
-        <p class="lead">Jeux que vous souhaitez acquérir.</p>
-        <div class="collection-page__actions">
-            <a href="/ajouter-jeu.php?statut=wishlist" class="btn btn-accent">Ajouter une envie</a>
-            <a href="/jeux.php" class="btn btn-secondary btn-sm">← <?= Moncine\View::escape(Moncine\MediaContext::navLabels()['collection']) ?></a>
+        <div class="collection-page__head-actions">
+            <?php
+            $printUrl = Moncine\View::gamesWishlistPrintUrl($query, $sortBy, $sortDir);
+            require MONCINE_ROOT . '/templates/_print_button.php';
+            ?>
+            <a class="btn btn-secondary" href="/gerer-partages.php?domain=<?= Moncine\MediaDomain::JEU ?>&scope=<?= Moncine\ShareLinkScope::WISHLIST ?>">
+                Partager mes envies
+            </a>
         </div>
-    </header>
+    </div>
+
+    <p class="lead">Jeux que vous souhaitez acquérir.</p>
+
+    <nav class="ui-pill-nav" aria-label="Navigation envies jeux">
+        <a href="/jeux.php" class="ui-pill">← <?= Moncine\View::escape(Moncine\MediaContext::navLabels()['collection']) ?></a>
+    </nav>
 
     <?php if ($moduleError !== ''): ?>
         <div class="alert alert-warning"><?= Moncine\View::escape($moduleError) ?></div>
@@ -51,18 +61,24 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
         </div>
     <?php endif; ?>
 
-    <form method="get" action="/jeux-envies.php" class="collection-search">
+    <form method="get" action="/jeux-envies.php" class="collection-search import-form">
         <label for="jeux_w_q">Rechercher</label>
-        <input type="search" name="q" id="jeux_w_q"
-               value="<?= Moncine\View::escape($query) ?>"
-               placeholder="Titre, studio…">
-        <?php if ($sortBy !== 'titre'): ?>
-            <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
-        <?php endif; ?>
-        <?php if (strtolower($sortDir) === 'desc'): ?>
-            <input type="hidden" name="dir" value="desc">
-        <?php endif; ?>
-        <button type="submit" class="btn btn-secondary btn-sm">Rechercher</button>
+        <div class="collection-search__row">
+            <input type="search" name="q" id="jeux_w_q"
+                   value="<?= Moncine\View::escape($query) ?>"
+                   placeholder="Titre, studio…"
+                   autocomplete="off">
+            <?php if ($sortBy !== 'titre'): ?>
+                <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
+            <?php endif; ?>
+            <?php if (strtolower($sortDir) === 'desc'): ?>
+                <input type="hidden" name="dir" value="desc">
+            <?php endif; ?>
+            <button type="submit" class="btn btn-primary">Rechercher</button>
+        </div>
+        <div class="collection-search__add">
+            <a href="/ajouter-jeu.php?statut=wishlist" class="btn btn-primary">Ajouter une envie</a>
+        </div>
     </form>
 
     <?php if ($totalCount === 0): ?>

@@ -27,6 +27,34 @@ final class ShareLinkRepository
         return $stmt !== false && $stmt->fetchColumn() !== false;
     }
 
+    public static function hasMediaDomainColumn(): bool
+    {
+        if (!self::tableExists()) {
+            return false;
+        }
+        $stmt = Database::getInstance()->query('PRAGMA table_info(share_links)');
+        if ($stmt === false) {
+            return false;
+        }
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (($row['name'] ?? '') === 'media_domain') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /** @param array<string, mixed> $link */
+    public static function mediaDomainFromRow(array $link): string
+    {
+        if (!self::hasMediaDomainColumn()) {
+            return MediaDomain::FILM;
+        }
+
+        return MediaDomain::normalize((string) ($link['media_domain'] ?? MediaDomain::FILM));
+    }
+
     /** @return array<string, mixed>|null */
     public function findByTokenHash(string $tokenHash): ?array
     {
@@ -94,19 +122,36 @@ final class ShareLinkRepository
         int $userId,
         ?int $foyerId,
         string $label,
-        ?string $expiresAt
+        ?string $expiresAt,
+        string $mediaDomain = MediaDomain::FILM
     ): int {
-        $this->db->prepare(
-            'INSERT INTO share_links (token_hash, scope, user_id, foyer_id, label, expires_at, created_at)
-             VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))'
-        )->execute([
-            $tokenHash,
-            ShareLinkScope::normalize($scope),
-            $userId,
-            $foyerId,
-            trim($label),
-            $expiresAt,
-        ]);
+        $mediaDomain = MediaDomain::normalize($mediaDomain);
+        if (self::hasMediaDomainColumn()) {
+            $this->db->prepare(
+                'INSERT INTO share_links (token_hash, scope, media_domain, user_id, foyer_id, label, expires_at, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, ?, datetime(\'now\'))'
+            )->execute([
+                $tokenHash,
+                ShareLinkScope::normalize($scope),
+                $mediaDomain,
+                $userId,
+                $foyerId,
+                trim($label),
+                $expiresAt,
+            ]);
+        } else {
+            $this->db->prepare(
+                'INSERT INTO share_links (token_hash, scope, user_id, foyer_id, label, expires_at, created_at)
+                 VALUES (?, ?, ?, ?, ?, ?, datetime(\'now\'))'
+            )->execute([
+                $tokenHash,
+                ShareLinkScope::normalize($scope),
+                $userId,
+                $foyerId,
+                trim($label),
+                $expiresAt,
+            ]);
+        }
 
         return (int) $this->db->lastInsertId();
     }

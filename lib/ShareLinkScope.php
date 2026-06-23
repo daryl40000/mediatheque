@@ -19,11 +19,13 @@ final class ShareLinkScope
         return $scope === self::WISHLIST ? self::WISHLIST : self::COLLECTION;
     }
 
-    public static function label(string $scope): string
+    public static function label(string $scope, string $mediaDomain = MediaDomain::FILM): string
     {
+        $domain = MediaDomain::normalize($mediaDomain);
+
         return match (self::normalize($scope)) {
-            self::WISHLIST => 'Mes envies',
-            default => 'Mes films',
+            self::WISHLIST => $domain === MediaDomain::JEU ? 'Mes envies jeux' : 'Mes envies',
+            default => $domain === MediaDomain::JEU ? 'Mes jeux' : 'Mes films',
         };
     }
 }

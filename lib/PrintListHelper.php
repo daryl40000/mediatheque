@@ -22,6 +22,18 @@ final class PrintListHelper
         'votes' => 'Demandes',
     ];
 
+    /** @var array<string, string> */
+    private const GAME_SORT_LABELS = [
+        'titre' => 'Titre',
+        'annee' => 'Année',
+        'platform' => 'Plateforme',
+        'studio' => 'Studio',
+        'genre' => 'Genres',
+        'support' => 'Support',
+        'note' => 'Notes',
+        'added_at' => 'Ajouté le',
+    ];
+
     public static function sortLabel(string $sortBy): string
     {
         return self::SORT_LABELS[$sortBy] ?? $sortBy;
@@ -35,6 +47,47 @@ final class PrintListHelper
     public static function sortSummary(string $sortBy, string $sortDir): string
     {
         return self::sortLabel($sortBy) . ' (' . self::sortDirectionLabel($sortDir) . ')';
+    }
+
+    public static function gameSortLabel(string $sortBy): string
+    {
+        return self::GAME_SORT_LABELS[$sortBy] ?? $sortBy;
+    }
+
+    public static function gameSortSummary(string $sortBy, string $sortDir): string
+    {
+        return self::gameSortLabel($sortBy) . ' (' . self::sortDirectionLabel($sortDir) . ')';
+    }
+
+    public static function gameCollectionFilterSummary(
+        string $query,
+        GameListFilter $listFilter,
+        int $resultCount
+    ): string {
+        $parts = [];
+        $filterLabel = $listFilter->activeLabel();
+        if ($filterLabel !== '') {
+            $parts[] = $filterLabel;
+        }
+        if (trim($query) !== '') {
+            $parts[] = 'recherche « ' . trim($query) . ' »';
+        }
+        $count = $resultCount . ' jeu' . ($resultCount > 1 ? 'x' : '');
+        if ($parts !== []) {
+            return $count . ' — ' . implode(', ', $parts);
+        }
+
+        return $count;
+    }
+
+    public static function gameWishlistFilterSummary(string $query, int $resultCount): string
+    {
+        $count = $resultCount . ' jeu' . ($resultCount > 1 ? 'x' : '');
+        if (trim($query) !== '') {
+            return $count . ' — recherche « ' . trim($query) . ' »';
+        }
+
+        return $count;
     }
 
     public static function collectionFilterSummary(

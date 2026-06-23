@@ -31,7 +31,8 @@ final class ShareLinkService
         int $foyerId,
         string $scope,
         string $label = '',
-        ?int $expireDays = self::DEFAULT_EXPIRE_DAYS
+        ?int $expireDays = self::DEFAULT_EXPIRE_DAYS,
+        string $mediaDomain = MediaDomain::FILM
     ): array|string {
         if (!ShareLinkRepository::tableExists()) {
             return 'Le partage visiteur n’est pas disponible (migration en attente).';
@@ -41,6 +42,7 @@ final class ShareLinkService
         }
 
         $scope = ShareLinkScope::normalize($scope);
+        $mediaDomain = MediaDomain::normalize($mediaDomain);
         if ($scope === ShareLinkScope::COLLECTION && $foyerId <= 0) {
             return 'Aucun foyer associé pour partager la collection.';
         }
@@ -64,7 +66,8 @@ final class ShareLinkService
             $userId,
             $scope === ShareLinkScope::COLLECTION ? $foyerId : null,
             $label,
-            $expiresAt
+            $expiresAt,
+            $mediaDomain
         );
         $link = $this->links->findByIdForUser($linkId, $userId);
         if ($link === null) {
@@ -118,11 +121,18 @@ final class ShareLinkService
         return hash('sha256', $rawToken);
     }
 
-    public static function listUrl(string $rawToken, string $scope, array $query = []): string
+    public static function listUrl(string $rawToken, string $scope, string $mediaDomain = MediaDomain::FILM): string
     {
         unset($scope);
 
-        return self::collectionUrl($rawToken, $query);
+        return self::collectionUrl($rawToken, [], $mediaDomain);
+    }
+
+    public static function collectionPath(string $mediaDomain = MediaDomain::FILM): string
+    {
+        return MediaDomain::normalize($mediaDomain) === MediaDomain::JEU
+            ? '/partage-jeux.php'
+            : '/partage.php';
     }
 
     /**
@@ -130,8 +140,11 @@ final class ShareLinkService
      *
      * @param array<string, int|string> $extra
      */
-    public static function collectionUrl(string $rawToken, array $extra = []): string
-    {
+    public static function collectionUrl(
+        string $rawToken,
+        array $extra = [],
+        string $mediaDomain = MediaDomain::FILM
+    ): string {
         $params = ['t' => $rawToken];
         foreach ($extra as $key => $value) {
             if ($value === '' || $value === null) {
@@ -140,7 +153,7 @@ final class ShareLinkService
             $params[(string) $key] = $value;
         }
 
-        return '/partage.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return self::collectionPath($mediaDomain) . '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
     }
 
     /** Lien de tri pour la liste partagée. */
@@ -151,7 +164,8 @@ final class ShareLinkService
         string $currentDir,
         string $searchQuery = '',
         string $kindFilter = '',
-        string $viewMode = ''
+        string $viewMode = '',
+        string $mediaDomain = MediaDomain::FILM
     ): string {
         $dir = 'asc';
         if ($currentSort === $column && strtolower($currentDir) === 'asc') {
@@ -164,7 +178,7 @@ final class ShareLinkService
             $dir,
             $kindFilter,
             $viewMode
-        ));
+        ), $mediaDomain);
     }
 
     /**
@@ -206,9 +220,19 @@ final class ShareLinkService
         return '/partage-film.php?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
     }
 
-    /** URL de retour vers la liste partagée (conserve recherche, tri, filtre, vue). */
-    public static function listBackUrl(string $rawToken, array $query = []): string
+    public static function gameUrl(string $rawToken, int $gameId, array $listContext = []): string
     {
-        return self::collectionUrl($rawToken, $query);
+        $query = array_merge(['t' => $rawToken, 'id' => $gameId], $listContext);
+
+        return '/partage-jeu.php?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    /** URL de retour vers la liste partagée (conserve recherche, tri, filtre, vue). */
+    public static function listBackUrl(
+        string $rawToken,
+        array $query = [],
+        string $mediaDomain = MediaDomain::FILM
+    ): string {
+        return self::collectionUrl($rawToken, $query, $mediaDomain);
     }
 }
