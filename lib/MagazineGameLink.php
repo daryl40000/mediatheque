@@ -229,7 +229,7 @@ final class MagazineGameLink
         $bibId = (new GameRepository())->findLibraryBibIdForCatalogOeuvre($oeuvreId, $userId, $foyerId);
         if ($bibId !== null && $bibId > 0) {
             $subject['catalog_game_bib_id'] = $bibId;
-            $subject['catalog_game_url'] = View::gameUrl($bibId);
+            $subject['catalog_game_url'] = View::gameNavUrl($bibId);
         }
 
         return $subject;

@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.6.3**
+**Version : 0.6.4**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -63,6 +63,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.6.4** | Fix liens croisés jeux ↔ magazines (clic depuis l’autre onglet ouvre la bonne fiche) |
 | **0.6.3** | Pont magazine ↔ jeux : rattachement rétroactif admin, recherche globale par titre catalogue, doc homonymes |
 | **0.6.2** | Jeux : sagas en vignettes, extensions triées chronologiquement sur les fiches |
 | **0.6.1** | Magazines M5 : autocomplétion numéro catalogue, export JSON, profil public numéros récents ; jeux : partage visiteur et listes imprimables |

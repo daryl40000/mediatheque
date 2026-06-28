@@ -216,7 +216,7 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                         <ul class="magazine-subject-results" role="list">
                             <?php foreach ($magazineCoverage as $row): ?>
                                 <li class="magazine-subject-results__item" role="listitem">
-                                    <a href="<?= Moncine\View::escape(Moncine\View::magazineIssueUrl((int) ($row['bib_id'] ?? 0))) ?>"
+                                    <a href="<?= Moncine\View::escape(Moncine\View::magazineIssueNavUrl((int) ($row['bib_id'] ?? 0))) ?>"
                                        class="magazine-subject-results__link">
                                         <span class="magazine-tag magazine-tag--subject">
                                             <?= Moncine\View::escape((string) ($row['category_label'] ?? '')) ?>

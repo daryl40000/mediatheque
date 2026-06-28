@@ -774,6 +774,17 @@ final class View
         return $bibId > 0 ? '/magazine-numero.php?id=' . $bibId : '/magazines.php';
     }
 
+    /** Lien cliquable vers un numéro magazine (bascule d’onglet si besoin). */
+    public static function magazineIssueNavUrl(int $bibId): string
+    {
+        $path = self::magazineIssueUrl($bibId);
+        if (MediaContext::current() === MediaDomain::MAGAZINE) {
+            return $path;
+        }
+
+        return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::MAGAZINE, $path);
+    }
+
     public static function magazineSubjectSearchUrl(): string
     {
         return '/magazines-recherche.php';
@@ -784,6 +795,17 @@ final class View
         return $subjectId > 0
             ? '/magazine-sujet.php?id=' . $subjectId
             : self::magazineSubjectSearchUrl();
+    }
+
+    /** Lien cliquable vers une fiche sujet magazine (bascule d’onglet si besoin). */
+    public static function magazineSubjectNavUrl(int $subjectId): string
+    {
+        $path = self::magazineSubjectUrl($subjectId);
+        if (MediaContext::current() === MediaDomain::MAGAZINE) {
+            return $path;
+        }
+
+        return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::MAGAZINE, $path);
     }
 
     public static function magazineSubjectApiUrl(): string
@@ -1005,6 +1027,17 @@ final class View
     public static function gameUrl(int $bibId): string
     {
         return $bibId > 0 ? '/jeu.php?id=' . $bibId : '/jeux.php';
+    }
+
+    /** Lien cliquable vers une fiche jeu (bascule d’onglet si besoin). */
+    public static function gameNavUrl(int $bibId): string
+    {
+        $path = self::gameUrl($bibId);
+        if (MediaContext::current() === MediaDomain::JEU) {
+            return $path;
+        }
+
+        return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::JEU, $path);
     }
 
     public static function gameCatalogApiUrl(): string

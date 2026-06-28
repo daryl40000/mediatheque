@@ -80,4 +80,14 @@ final class MediaDomainTest extends TestCase
             MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::FILM, '/jeux.php')
         );
     }
+
+    public function testMediaDomainSwitchUrlPreservesExplicitPath(): void
+    {
+        $url = MediaDomainGuards::mediaDomainSwitchUrl(
+            MediaDomain::MAGAZINE,
+            '/magazine-numero.php?id=42'
+        );
+        $this->assertStringContainsString('domain=magazine', $url);
+        $this->assertStringContainsString('redirect=%2Fmagazine-numero.php%3Fid%3D42', $url);
+    }
 }

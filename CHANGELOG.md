@@ -11,6 +11,14 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.6.4] — 2026-06-16
+
+**Correction liens croisés jeux ↔ magazines**
+
+### Corrigé
+
+- **Navigation inter-onglets** : depuis l’onglet Jeux (ou Magazines), un clic vers un numéro / sujet magazine ou une fiche jeu bascule l’onglet actif et ouvre la **bonne fiche** (`MediaDomainGuards`, `View::*NavUrl`).
+
 ## [0.6.3] — 2026-06-16
 
 **Pont magazine ↔ jeux — complété**

@@ -152,7 +152,7 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
                             <?php foreach ($catalogMagazineSubjects as $row): ?>
                                 <?php $subjectId = (int) ($row['subject_id'] ?? 0); ?>
                                 <li class="magazine-subject-results__item" role="listitem">
-                                    <a href="<?= Moncine\View::escape(Moncine\View::magazineSubjectUrl($subjectId)) ?>"
+                                    <a href="<?= Moncine\View::escape(Moncine\View::magazineSubjectNavUrl($subjectId)) ?>"
                                        class="magazine-subject-results__link">
                                         <span class="magazine-tag magazine-tag--subject">
                                             <?= Moncine\View::escape((string) ($row['category_label'] ?? '')) ?>

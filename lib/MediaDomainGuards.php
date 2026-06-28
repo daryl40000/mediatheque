@@ -198,35 +198,53 @@ final class MediaDomainGuards
         exit;
     }
 
+    /**
+     * URL interne pour basculer d’onglet média puis ouvrir une page.
+     * Si $redirectPath est null, conserve l’URL demandée (path + query).
+     */
+    public static function mediaDomainSwitchUrl(
+        string $targetDomain,
+        ?string $redirectPath = null,
+        string $fallbackPath = '/'
+    ): string {
+        $target = $redirectPath ?? self::currentRequestUri($fallbackPath);
+
+        return '/set-media-domain.php?domain='
+            . rawurlencode(MediaDomain::normalize($targetDomain))
+            . '&redirect='
+            . rawurlencode(SafeRedirect::path($target));
+    }
+
     /** Redirige vers l’onglet Magazines si la page magazine est ouverte depuis un autre domaine. */
-    public static function ensureMagazineContext(string $redirectPath = '/magazines.php'): void
+    public static function ensureMagazineContext(?string $redirectPath = null): void
     {
         if (MediaContext::current() === MediaDomain::MAGAZINE) {
             return;
         }
 
-        header(
-            'Location: /set-media-domain.php?domain='
-            . rawurlencode(MediaDomain::MAGAZINE)
-            . '&redirect='
-            . rawurlencode($redirectPath)
-        );
+        header('Location: ' . self::mediaDomainSwitchUrl(MediaDomain::MAGAZINE, $redirectPath, '/magazines.php'));
         exit;
     }
 
     /** Redirige vers l’onglet Jeux si la page jeu est ouverte depuis un autre domaine. */
-    public static function ensureGameContext(string $redirectPath = '/jeux.php'): void
+    public static function ensureGameContext(?string $redirectPath = null): void
     {
         if (MediaContext::current() === MediaDomain::JEU) {
             return;
         }
 
-        header(
-            'Location: /set-media-domain.php?domain='
-            . rawurlencode(MediaDomain::JEU)
-            . '&redirect='
-            . rawurlencode($redirectPath)
-        );
+        header('Location: ' . self::mediaDomainSwitchUrl(MediaDomain::JEU, $redirectPath, '/jeux.php'));
         exit;
+    }
+
+    /** Path + query de la requête courante (GET), pour reprendre la navigation après changement d’onglet. */
+    private static function currentRequestUri(string $fallback): string
+    {
+        $uri = trim((string) ($_SERVER['REQUEST_URI'] ?? ''));
+        if ($uri === '') {
+            return $fallback;
+        }
+
+        return SafeRedirect::path($uri);
     }
 }

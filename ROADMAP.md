@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.6.3** (2026-06-16)  
+**Version actuelle : 0.6.4** (2026-06-16)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -412,4 +412,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.6.3** — 2026-06-16 (pont magazine ↔ jeux livré ; priorité **Polish M4**).*
+*Dernière mise à jour : **0.6.4** — 2026-06-16 (fix navigation jeux ↔ magazines).*

@@ -16,7 +16,7 @@ Un sujet **sans lien** reste parfaitement valide. Le pont enrichit l’expérien
 
 1. **À l’ajout** d’un sujet sur un numéro : autocomplétion catalogue jeux (test / preview / interview).
 2. **Fiche sujet** : lien vers la fiche jeu si le jeu est dans votre bibliothèque.
-3. **Fiche jeu** (`/jeu.php`) : section « Dans vos magazines » (numéros de **votre** bibliothèque).
+3. **Fiche jeu** (`/jeu.php`) : section « Dans vos magazines » (numéros de **votre** bibliothèque) — le clic bascule l’onglet Magazines si besoin.
 4. **Fiche catalogue admin** (`/oeuvre-jeu.php`) : sujets reliés (tous numéros du catalogue).
 5. **Recherche globale** (`/magazines.php`) : remonte aussi les sujets reliés dont le **titre catalogue** correspond.
 
