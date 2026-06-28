@@ -5,11 +5,28 @@
 /** @var list<array{franchise: string, game_count: int, poster_url: string}> $franchises */
 /** @var list<string> $knownSagas */
 /** @var string $moduleError */
+/** @var string $viewMode */
 
 $renameError = trim((string) ($_GET['rename_error'] ?? ''));
 $renamed = isset($_GET['renamed']) && (string) $_GET['renamed'] === '1';
 $renamedCount = isset($_GET['count']) ? (int) $_GET['count'] : 0;
 $knownSagas = $knownSagas ?? [];
+$viewMode = Moncine\CollectionViewMode::normalize($viewMode ?? '');
+$isGridView = Moncine\CollectionViewMode::isGrid($viewMode);
+$viewQueryValue = Moncine\CollectionViewMode::queryValue($viewMode);
+
+$sagasViewUrl = static function (?string $mode = null) use ($franchise, $searched, $viewMode): string {
+    if ($searched) {
+        return Moncine\View::gameFranchiseUrl($franchise, $mode ?? $viewMode);
+    }
+    $params = [];
+    $mode = $mode ?? $viewMode;
+    if ($viewParam = Moncine\CollectionViewMode::queryValue($mode)) {
+        $params['view'] = $viewParam;
+    }
+
+    return $params === [] ? '/sagas-jeux.php' : '/sagas-jeux.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+};
 ?>
 <section class="sagas-page">
     <h1><?= $searched ? 'Saga' : 'Sagas jeux' ?></h1>
@@ -18,7 +35,7 @@ $knownSagas = $knownSagas ?? [];
         <p class="alert alert-warning"><?= Moncine\View::escape($moduleError) ?></p>
     <?php elseif ($searched): ?>
         <p class="breadcrumb">
-            <a href="/sagas-jeux.php">Toutes les sagas</a>
+            <a href="<?= Moncine\View::escape(Moncine\View::gameFranchiseUrl('', $viewMode)) ?>">Toutes les sagas</a>
             <span aria-hidden="true"> › </span>
             <span><?= Moncine\View::escape($franchise) ?></span>
         </p>
@@ -35,7 +52,7 @@ $knownSagas = $knownSagas ?? [];
         <?php if ($games === []): ?>
             <p class="alert alert-warning">
                 Aucun jeu trouvé pour cette saga.
-                <a href="/sagas-jeux.php">Retour à la liste</a>.
+                <a href="<?= Moncine\View::escape(Moncine\View::gameFranchiseUrl('', $viewMode)) ?>">Retour à la liste</a>.
             </p>
         <?php else: ?>
             <details class="sagas-rename-panel">
@@ -44,6 +61,9 @@ $knownSagas = $knownSagas ?? [];
                     <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
                     <input type="hidden" name="action" value="rename_franchise">
                     <input type="hidden" name="franchise_old" value="<?= Moncine\View::escape($franchise) ?>">
+                    <?php if ($viewQueryValue !== null): ?>
+                        <input type="hidden" name="view" value="<?= Moncine\View::escape($viewQueryValue) ?>">
+                    <?php endif; ?>
 
                     <p class="hint">
                         Corrige le nom pour les jeux de votre collection (ex. faute de frappe ou traduction).
@@ -65,8 +85,31 @@ $knownSagas = $knownSagas ?? [];
                 <?= count($games) ?> jeu<?= count($games) > 1 ? 'x' : '' ?>
                 dans « <?= Moncine\View::escape($franchise) ?> »
             </p>
-            <p class="hint">Ordre : année de sortie, puis titre alphabétique.</p>
+            <p class="hint">
+                Ordre : année de sortie, puis titre alphabétique.
+                <?php if ($isGridView): ?>
+                    Cliquez sur une vignette pour ouvrir la fiche.
+                <?php else: ?>
+                    Cliquez sur une jaquette ou un titre pour ouvrir la fiche.
+                <?php endif; ?>
+            </p>
 
+            <nav class="ui-pill-bar" aria-label="Mode d’affichage">
+                <?php foreach (Moncine\CollectionViewMode::listGridChoices() as $modeKey => $modeLabel): ?>
+                    <?php
+                    $modeActive = $viewMode === $modeKey;
+                    $modeClass = 'ui-pill-bar__item' . ($modeActive ? ' ui-pill--active' : '');
+                    ?>
+                    <a href="<?= Moncine\View::escape($sagasViewUrl($modeKey)) ?>"
+                       class="<?= $modeClass ?>"<?= $modeActive ? ' aria-current="true"' : '' ?>>
+                        <?= Moncine\View::escape($modeLabel) ?>
+                    </a>
+                <?php endforeach; ?>
+            </nav>
+
+            <?php if ($isGridView): ?>
+                <?php require MONCINE_ROOT . '/templates/_saga_games_grid.php'; ?>
+            <?php else: ?>
             <p class="table-scroll-hint show-mobile-only">Faites glisser le tableau horizontalement pour voir toutes les colonnes.</p>
             <div class="table-scroll">
             <table class="films-table sagas-detail sagas-detail--games">
@@ -113,6 +156,7 @@ $knownSagas = $knownSagas ?? [];
                 </tbody>
             </table>
             </div>
+            <?php endif; ?>
         <?php endif; ?>
     <?php else: ?>
         <p class="lead">
@@ -130,6 +174,22 @@ $knownSagas = $knownSagas ?? [];
                 manuellement depuis <a href="/jeux.php">Mes jeux</a>.
             </p>
         <?php else: ?>
+            <nav class="ui-pill-bar" aria-label="Mode d’affichage">
+                <?php foreach (Moncine\CollectionViewMode::listGridChoices() as $modeKey => $modeLabel): ?>
+                    <?php
+                    $modeActive = $viewMode === $modeKey;
+                    $modeClass = 'ui-pill-bar__item' . ($modeActive ? ' ui-pill--active' : '');
+                    ?>
+                    <a href="<?= Moncine\View::escape($sagasViewUrl($modeKey)) ?>"
+                       class="<?= $modeClass ?>"<?= $modeActive ? ' aria-current="true"' : '' ?>>
+                        <?= Moncine\View::escape($modeLabel) ?>
+                    </a>
+                <?php endforeach; ?>
+            </nav>
+
+            <?php if ($isGridView): ?>
+                <?php require MONCINE_ROOT . '/templates/_sagas_franchises_grid.php'; ?>
+            <?php else: ?>
             <ul class="sagas-list sagas-list--games">
                 <?php foreach ($franchises as $item): ?>
                     <?php
@@ -139,7 +199,7 @@ $knownSagas = $knownSagas ?? [];
                             ? (string) $item['poster_url']
                             : null
                     );
-                    $franchiseUrl = Moncine\View::gameFranchiseUrl($franchiseName);
+                    $franchiseUrl = Moncine\View::gameFranchiseUrl($franchiseName, $viewMode);
                     ?>
                     <li>
                         <a href="<?= Moncine\View::escape($franchiseUrl) ?>" class="sagas-list__card">
@@ -160,12 +220,13 @@ $knownSagas = $knownSagas ?? [];
                     </li>
                 <?php endforeach; ?>
             </ul>
+            <?php endif; ?>
         <?php endif; ?>
     <?php endif; ?>
 
     <p class="sagas-page__actions">
         <?php if ($searched): ?>
-            <a href="/sagas-jeux.php" class="btn btn-secondary">Toutes les sagas</a>
+            <a href="<?= Moncine\View::escape(Moncine\View::gameFranchiseUrl('', $viewMode)) ?>" class="btn btn-secondary">Toutes les sagas</a>
         <?php endif; ?>
         <a href="/jeux.php" class="btn btn-secondary">Mes jeux</a>
     </p>

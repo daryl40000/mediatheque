@@ -665,14 +665,18 @@ final class View
         return '/sagas.php?saga=' . rawurlencode($sagaName);
     }
 
-    public static function gameFranchiseUrl(string $franchiseName): string
+    public static function gameFranchiseUrl(string $franchiseName, string $viewMode = ''): string
     {
         $franchiseName = trim($franchiseName);
-        if ($franchiseName === '') {
-            return '/sagas-jeux.php';
+        $params = [];
+        if ($franchiseName !== '') {
+            $params['franchise'] = $franchiseName;
+        }
+        if ($viewParam = CollectionViewMode::queryValue($viewMode)) {
+            $params['view'] = $viewParam;
         }
 
-        return '/sagas-jeux.php?franchise=' . rawurlencode($franchiseName);
+        return $params === [] ? '/sagas-jeux.php' : '/sagas-jeux.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
     }
 
     public static function supportFilterUrl(string $supportKey): string

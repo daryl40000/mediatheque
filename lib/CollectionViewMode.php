@@ -57,4 +57,13 @@ final class CollectionViewMode
     {
         return self::choices();
     }
+
+    /** Liste et vignettes uniquement (pages sans vue bibliothèque). */
+    public static function listGridChoices(): array
+    {
+        return [
+            self::LIST => 'Liste',
+            self::GRID => 'Vignettes',
+        ];
+    }
 }

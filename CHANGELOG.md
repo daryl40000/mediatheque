@@ -11,6 +11,18 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.6.2] — 2026-06-16
+
+**Jeux : sagas en vignettes et extensions triées chronologiquement**
+
+### Ajouté
+
+- **Sagas jeux** : bascule **Liste / Vignettes** sur `/sagas-jeux.php` (liste de toutes les sagas et jeux d’une saga) ; paramètre URL `view=grid`.
+
+### Modifié
+
+- **Fiches jeux** : extensions (DLC) affichées par **ordre chronologique** (année, puis titre) — bibliothèque et catalogue.
+
 ## [0.6.1] — 2026-06-16
 
 **Magazines : clôture M5 — autocomplétion numéro, profil public et parité catalogue**  

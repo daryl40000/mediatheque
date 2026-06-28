@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\CollectionViewMode;
 use Moncine\Csrf;
 use Moncine\GameFranchiseRepository;
 use Moncine\MediaDomainGuards;
@@ -20,6 +21,7 @@ $repo = new GameFranchiseRepository();
 $foyerId = UserContext::currentFoyerId();
 $userId = UserContext::currentUserId();
 $franchise = trim((string) ($_GET['franchise'] ?? $_POST['franchise'] ?? ''));
+$viewMode = CollectionViewMode::normalize((string) ($_GET['view'] ?? $_POST['view'] ?? ''));
 $searched = $franchise !== '';
 
 if (!GameFranchiseRepository::isAvailable()) {
@@ -38,7 +40,8 @@ if (!GameFranchiseRepository::isAvailable()) {
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') === 'rename_franchise') {
     $oldName = trim((string) ($_POST['franchise_old'] ?? ''));
     $redirectFranchise = $oldName !== '' ? $oldName : $franchise;
-    $failUrl = View::gameFranchiseUrl($redirectFranchise);
+    $postViewMode = CollectionViewMode::normalize((string) ($_POST['view'] ?? $viewMode));
+    $failUrl = View::gameFranchiseUrl($redirectFranchise, $postViewMode);
 
     Csrf::rejectUnlessValid($_POST, $failUrl);
 
@@ -54,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && (string) ($_POST['action'] ?? '') =
         'renamed' => '1',
         'count' => $result['updated'],
     ]);
-    header('Location: ' . View::gameFranchiseUrl($newName) . '&' . $params);
+    header('Location: ' . View::gameFranchiseUrl($newName, $postViewMode) . '&' . $params);
     exit;
 }
 
@@ -69,5 +72,6 @@ View::render('sagas-jeux', [
     'games' => $games,
     'franchises' => $franchises,
     'knownSagas' => $knownSagas,
+    'viewMode' => $viewMode,
     'moduleError' => '',
 ]);

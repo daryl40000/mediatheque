@@ -27,7 +27,7 @@ final class GameLinkedGamesQuery
             $baseOeuvreId,
             $userId,
             $foyerId,
-            'o.titre COLLATE FRENCH_NOCASE ASC, o.annee ASC'
+            'o.annee ASC, o.titre COLLATE FRENCH_NOCASE ASC'
         );
     }
 
@@ -56,7 +56,7 @@ final class GameLinkedGamesQuery
             'is_extension',
             'base_game_oeuvre_id',
             $baseOeuvreId,
-            'o.titre COLLATE FRENCH_NOCASE ASC, o.annee ASC',
+            'o.annee ASC, o.titre COLLATE FRENCH_NOCASE ASC',
             $selectCatalogRow,
             $hydrateCatalogRow
         );

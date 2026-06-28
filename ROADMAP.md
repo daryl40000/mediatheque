@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.6.1** (2026-06-16)  
+**Version actuelle : 0.6.2** (2026-06-16)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -13,12 +13,12 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ---
 
-## Où en est-on ? (synthèse 0.6.1)
+## Où en est-on ? (synthèse 0.6.2)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
-| **Films** | ✅ Production | 0.4.4+ → **0.6.1** | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`, **vue Bibliothèque**) |
-| **Jeux** | ✅ Utilisable | 0.5.0 → **0.6.1** | Complet (extensions, remakes, autocomplétion, recherche tolérante, **IGDB**, **sagas**, **vue Bibliothèque**, acronymes, **partage visiteur**, **listes imprimables**) |
+| **Films** | ✅ Production | 0.4.4+ → **0.6.2** | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`, **vue Bibliothèque**) |
+| **Jeux** | ✅ Utilisable | 0.5.0 → **0.6.2** | Complet (extensions, remakes, autocomplétion, recherche tolérante, **IGDB**, **sagas** + **vignettes**, **vue Bibliothèque**, acronymes, **partage visiteur**, **listes imprimables**) |
 | **Magazines** | ✅ **Complet (M5)** | 0.2.x → **0.6.1** | Import ABM, ajout série/numéro catalogue, retrait série, profil public, export JSON |
 | **BD / Manga** | ⏸️ Repoussé | — | — |
 | **Livres** | ⏸️ Repoussé | — | — |
@@ -40,6 +40,11 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.6.2** — polish sagas jeux (2026-06-16)
+
+- **Sagas jeux** : vue **Vignettes** (liste de sagas + jeux d’une saga).
+- **Extensions** : tri chronologique sur les fiches jeu (bibliothèque et catalogue).
 
 ### ✅ **0.6.1** — clôture M5 magazines + parité jeux (2026-06-16)
 
@@ -405,4 +410,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.6.1** — 2026-06-16 (M5 magazines livré ; priorité **Pont magazine ↔ jeu**).*
+*Dernière mise à jour : **0.6.2** — 2026-06-16 (polish sagas jeux ; priorité **Pont magazine ↔ jeu**).*

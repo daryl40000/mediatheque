@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.6.1**
+**Version : 0.6.2**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -62,7 +62,8 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
-| **0.6.1** | Magazines M5 : autocomplétion numéro catalogue, export JSON, profil public numéros récents |
+| **0.6.2** | Jeux : sagas en vignettes, extensions triées chronologiquement sur les fiches |
+| **0.6.1** | Magazines M5 : autocomplétion numéro catalogue, export JSON, profil public numéros récents ; jeux : partage visiteur et listes imprimables |
 | **0.6.0** | Magazines : import catalogue **ABM**, ajout série catalogue, retrait série, dates parution FR, couvertures par lots |
 | **0.5.7** | Vue **Bibliothèque** (films + jeux), option « Garder la jaquette » IGDB, recherche jeux par acronymes |
 | **0.5.6** | Sagas jeux (`/sagas-jeux.php`), autocomplétion saga, doc base de données, correctif filtre genre multi-tags |
