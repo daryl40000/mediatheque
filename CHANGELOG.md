@@ -11,6 +11,22 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.6.3] — 2026-06-16
+
+**Pont magazine ↔ jeux — complété**
+
+### Ajouté
+
+- **Maintenance admin** `/maintenance-magazine-jeux-liens.php` : rattachement rétroactif des sujets test / preview / interview au catalogue jeux ; suggestions automatiques ; retrait de lien ; audit admin (`MagazineGameLinkMaintenance`).
+- **Recherche globale magazines** : les sujets **reliés** remontent aussi via le titre catalogue jeu (et acronymes IGDB).
+- **Fiche catalogue jeu** : section « Sujets magazine reliés » (`listCatalogSubjectCoverageForGame`).
+- **Documentation** : `doc/pont-magazine-jeu.md` (homonymes, bonnes pratiques).
+
+### Modifié
+
+- Fusion de sujets magazines : conservation du `catalog_oeuvre_id` du sujet fusionné si le sujet conservé n’en avait pas.
+- **Sagas jeux** : grille vignettes alignée sur Mes jeux (mise en page large `/sagas-jeux.php`).
+
 ## [0.6.2] — 2026-06-16
 
 **Jeux : sagas en vignettes et extensions triées chronologiquement**

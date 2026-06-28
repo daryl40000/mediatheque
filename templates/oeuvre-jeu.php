@@ -140,6 +140,37 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
                     <p class="film-synopsis"><?= Moncine\View::escape((string) $game['synopsis']) ?></p>
                 <?php endif; ?>
 
+                <?php $catalogMagazineSubjects = $catalogMagazineSubjects ?? []; ?>
+                <?php if ($catalogMagazineSubjects !== []): ?>
+                    <section aria-labelledby="catalog-game-magazine-heading">
+                        <h2 id="catalog-game-magazine-heading">Sujets magazine reliés</h2>
+                        <p class="hint">
+                            Sujets test / preview / interview du catalogue magazines pointant vers cette fiche jeu
+                            (tous numéros du catalogue, pas seulement votre bibliothèque).
+                        </p>
+                        <ul class="magazine-subject-results" role="list">
+                            <?php foreach ($catalogMagazineSubjects as $row): ?>
+                                <?php $subjectId = (int) ($row['subject_id'] ?? 0); ?>
+                                <li class="magazine-subject-results__item" role="listitem">
+                                    <a href="<?= Moncine\View::escape(Moncine\View::magazineSubjectUrl($subjectId)) ?>"
+                                       class="magazine-subject-results__link">
+                                        <span class="magazine-tag magazine-tag--subject">
+                                            <?= Moncine\View::escape((string) ($row['category_label'] ?? '')) ?>
+                                        </span>
+                                        <strong><?= Moncine\View::escape((string) ($row['display_label'] ?? '')) ?></strong>
+                                        <span class="hint">
+                                            <?= (int) ($row['issue_count'] ?? 0) ?> numéro<?= (int) ($row['issue_count'] ?? 0) > 1 ? 's' : '' ?> catalogue
+                                        </span>
+                                    </a>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                        <p class="hint">
+                            <a href="/maintenance-magazine-jeux-liens.php">Gérer les liens magazine ↔ jeux</a>
+                        </p>
+                    </section>
+                <?php endif; ?>
+
                 <?php if (!empty($saved)): ?>
                     <p class="alert alert-success">Modifications enregistrées.</p>
                 <?php endif; ?>

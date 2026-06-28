@@ -12,6 +12,7 @@ use Moncine\CatalogListContext;
 use Moncine\GamePlatform;
 use Moncine\GameFranchiseRepository;
 use Moncine\GameRepository;
+use Moncine\MagazineGameLink;
 use Moncine\MediaDomain;
 use Moncine\UserContext;
 use Moncine\View;
@@ -148,6 +149,10 @@ if ($library !== null) {
     );
 }
 
+$catalogMagazineSubjects = MagazineGameLink::isAvailable()
+    ? (new MagazineGameLink())->listCatalogSubjectCoverageForGame($oeuvreId)
+    : [];
+
 View::render('oeuvre-jeu', [
     'pageTitle' => (string) ($game['display_titre'] ?? $game['titre'] ?? 'Jeu catalogue'),
     'catalogListContext' => $catalogListContext,
@@ -179,4 +184,5 @@ View::render('oeuvre-jeu', [
     'knownSagas' => GameFranchiseRepository::isAvailable()
         ? (new GameFranchiseRepository())->listKnownSagas()
         : [],
+    'catalogMagazineSubjects' => $catalogMagazineSubjects,
 ]);

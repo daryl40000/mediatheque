@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.6.2**
+**Version : 0.6.3**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -17,6 +17,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. L’ong
 | [doc/magazines.md](doc/magazines.md) | Magazines : PDF, recherche, tags, import catalogue ABM (**0.6.0**) |
 | [doc/import-abm.md](doc/import-abm.md) | Import catalogue depuis Abandonware Magazines (CLI + admin) |
 | [doc/jeux.md](doc/jeux.md) | Jeux vidéo : collection, pont magazine, Linux |
+| [doc/pont-magazine-jeu.md](doc/pont-magazine-jeu.md) | Pont magazine ↔ jeux : lien catalogue, homonymes, admin |
 | [doc/import-gog.md](doc/import-gog.md) | **Spécification** import bibliothèque GOG (à implémenter) |
 | [ROADMAP.md](ROADMAP.md) | Plan détaillé M0 → M7 |
 | [CHANGELOG.md](CHANGELOG.md) | Journal des versions (Médiathèque + historique Monciné) |
@@ -29,7 +30,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. L’ong
 |---------|--------|-------------|
 | **Multi-médias** | ✅ | Onglets Films / BD / Livres / Jeux / Magazines + thème couleur par domaine |
 | **Films** | ✅ Production | Collection, envies, TMDB/OMDB, quiz « Ce soir », prêts, sagas, **vue Bibliothèque** (**0.5.7**), listes imprimables (**0.4.4+**) |
-| **Jeux vidéo** | ✅ Utilisable | Collection, envies, notes, stats, **extensions DLC**, **remakes**, **enrichissement IGDB**, **sagas jeux**, **vue Bibliothèque**, recherche **acronymes**, fichiers attachés, Linux tri-état, pont magazine, fiche `/oeuvre-jeu.php`, autocomplétion à l’ajout, **recherche tolérante** (**0.5.7**, [doc/jeux.md](doc/jeux.md)) |
+| **Jeux vidéo** | ✅ Utilisable | Collection, envies, notes, stats, **extensions DLC**, **remakes**, **enrichissement IGDB**, **sagas jeux**, **vue Bibliothèque**, recherche **acronymes**, fichiers attachés, Linux tri-état, **pont magazine ↔ jeux** (**0.6.3**), fiche `/oeuvre-jeu.php`, autocomplétion à l’ajout, **recherche tolérante** (**0.5.7**, [doc/jeux.md](doc/jeux.md)) |
 | **Magazines** | ✅ Complet (M5) | Séries, numéros, PDF, FTS, import/export catalogue ABM, autocomplétion série/numéro, profil public ([doc/magazines.md](doc/magazines.md)) |
 | **BD / Livres** | ⏸️ Bientôt | Onglets présents, contenu à venir (M2 / M3) |
 | **Transversal** | Partiel | Catalogue partagé multi-domaines, foyers, amis, partage visiteur, profil public (films + magazines + **jeux**) |
@@ -52,7 +53,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 |----------|---------|---------------|
 | 1 | Tag **v0.6.0** (import catalogue magazines ABM) | **0.6.0** |
 | 2 | Magazines : autocomplétion à l’ajout numéro, profil public | **0.6.x** |
-| 3 | Pont magazine ↔ jeu : rattachement rétroactif des sujets | 0.6.0 |
+| 3 | ~~Pont magazine ↔ jeu~~ | ✅ 0.6.3 |
 | 4 | Polish jeux (plateformes admin, non prêtable si démat) | 0.5.x |
 | 5 | Transversal multi-domaines (stats, partage, import/export) | **0.9.0** |
 | 6 | BD / Manga, Livres | 0.6.x+ |
@@ -62,6 +63,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.6.3** | Pont magazine ↔ jeux : rattachement rétroactif admin, recherche globale par titre catalogue, doc homonymes |
 | **0.6.2** | Jeux : sagas en vignettes, extensions triées chronologiquement sur les fiches |
 | **0.6.1** | Magazines M5 : autocomplétion numéro catalogue, export JSON, profil public numéros récents ; jeux : partage visiteur et listes imprimables |
 | **0.6.0** | Magazines : import catalogue **ABM**, ajout série catalogue, retrait série, dates parution FR, couvertures par lots |

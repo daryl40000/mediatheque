@@ -1868,6 +1868,25 @@ final class MagazineRepository
             $orParts[] = '(' . implode(' OR ', $likeParts) . ')';
         }
 
+        if (MagazineSubjectRepository::isAvailable()) {
+            [$subjectSql, $subjectParams] = $this->subjectGlobalSearchMatchSql($searchQuery);
+            if ($subjectSql !== '') {
+                [$issueSubjectSql, $issueSubjectParams] = $this->subjectSearchSqlForAlias(
+                    $subjectSql,
+                    $subjectParams,
+                    'ms_issue',
+                    'issue'
+                );
+                $orParts[] = 'om.oeuvre_id IN (
+                    SELECT oms_issue.oeuvre_id
+                    FROM oeuvre_magazine_subject oms_issue
+                    INNER JOIN magazine_subject ms_issue ON ms_issue.id = oms_issue.subject_id
+                    WHERE ' . $issueSubjectSql . '
+                )';
+                $params = array_merge($params, $issueSubjectParams);
+            }
+        }
+
         if ($orParts === []) {
             return ['', []];
         }
@@ -1937,27 +1956,68 @@ final class MagazineRepository
             return ['', []];
         }
 
+        $matchParts = [];
+        $params = [];
+
         $ftsMatch = MagazineSubjectFts::isAvailable()
             ? MagazineSubjectFts::matchExpression($searchQuery)
             : '';
         if ($ftsMatch !== '') {
-            return [
-                'ms.id IN (
+            $matchParts[] = 'ms.id IN (
                     SELECT magazine_subject_fts.subject_id
                     FROM magazine_subject_fts
                     WHERE magazine_subject_fts MATCH :series_subj_fts
-                )',
-                ['series_subj_fts' => $ftsMatch],
-            ];
+                )';
+            $params['series_subj_fts'] = $ftsMatch;
+        } else {
+            $matchParts[] = '(LOWER(ms.label) LIKE LOWER(:series_subj_q) ESCAPE \'\\\'
+                OR LOWER(ms.detail) LIKE LOWER(:series_subj_q_detail) ESCAPE \'\\\')';
+            $params['series_subj_q'] = LikePattern::containsFragment($searchQuery);
+            $params['series_subj_q_detail'] = LikePattern::containsFragment($searchQuery);
         }
 
-        return [
-            '(LOWER(ms.label) LIKE LOWER(:series_subj_q) ESCAPE \'\\\' OR LOWER(ms.detail) LIKE LOWER(:series_subj_q_detail) ESCAPE \'\\\')',
-            [
-                'series_subj_q' => LikePattern::containsFragment($searchQuery),
-                'series_subj_q_detail' => LikePattern::containsFragment($searchQuery),
-            ],
-        ];
+        if (MagazineGameLink::isAvailable()) {
+            $matchParts[] = '(ms.catalog_oeuvre_id IS NOT NULL AND EXISTS (
+                SELECT 1
+                FROM oeuvres o_subj_game
+                INNER JOIN oeuvre_jeu oj_subj_game ON oj_subj_game.oeuvre_id = o_subj_game.id
+                WHERE o_subj_game.id = ms.catalog_oeuvre_id
+                  AND o_subj_game.media_domain = :subj_game_domain
+                  AND (
+                      fold_search(o_subj_game.titre) LIKE :subj_game_title ESCAPE \'\\\'
+                      OR fold_search(COALESCE(oj_subj_game.alternative_names, \'\')) LIKE :subj_game_acronym ESCAPE \'\\\'
+                  )
+            ))';
+            $gamePattern = SearchMatch::foldedContainsPattern($searchQuery);
+            $params['subj_game_domain'] = MediaDomain::JEU;
+            $params['subj_game_title'] = $gamePattern;
+            $params['subj_game_acronym'] = $gamePattern;
+        }
+
+        return ['(' . implode(' OR ', $matchParts) . ')', $params];
+    }
+
+    /**
+     * Remplace l’alias ms et préfixe les paramètres nommés pour une sous-requête.
+     *
+     * @param array<string, int|string> $params
+     * @return array{0: string, 1: array<string, int|string>}
+     */
+    private function subjectSearchSqlForAlias(
+        string $subjectSql,
+        array $params,
+        string $tableAlias,
+        string $paramSuffix
+    ): array {
+        $sql = str_replace('ms.', $tableAlias . '.', $subjectSql);
+        $outParams = [];
+        foreach ($params as $key => $value) {
+            $newKey = $key . '_' . $paramSuffix;
+            $sql = str_replace(':' . $key, ':' . $newKey, $sql);
+            $outParams[$newKey] = $value;
+        }
+
+        return [$sql, $outParams];
     }
 
     private function isPdfMime(mixed $mime, string $path): bool

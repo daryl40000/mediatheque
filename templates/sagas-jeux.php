@@ -28,7 +28,7 @@ $sagasViewUrl = static function (?string $mode = null) use ($franchise, $searche
     return $params === [] ? '/sagas-jeux.php' : '/sagas-jeux.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
 };
 ?>
-<section class="sagas-page">
+<section class="collection-page sagas-page">
     <h1><?= $searched ? 'Saga' : 'Sagas jeux' ?></h1>
 
     <?php if ($moduleError !== ''): ?>

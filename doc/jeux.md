@@ -215,6 +215,7 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | `GamePhysicalSupport` | Supports physiques (CD/DVD, disquette) |
 | `GameDigitalStore` | Magasins démat PC et stores console |
 | `MagazineGameLink` | Validation et gestion du pont sujet ↔ jeu |
+| `MagazineGameLinkMaintenance` | Rattachement rétroactif admin (pont magazine ↔ jeux) |
 
 ## Jaquettes
 
@@ -292,10 +293,12 @@ Quand l’onglet **Jeux** est actif, la page d’accueil (`home-jeu.php`) affich
 - lien sujet → fiche jeu ; affichage sur fiche sujet, numéro et section « Dans vos magazines » sur la fiche jeu ;
 - `MagazineGameLink::setSubjectCatalogLink()` pour rattacher un sujet.
 
-**Prochaine étape (M5+) :**
+**Complété (0.6.3+) :**
 
-- rattachement rétroactif des sujets existants ;
-- recherche globale incluant le titre catalogue jeu.
+- **rattachement rétroactif** admin (`/maintenance-magazine-jeux-liens.php`) ;
+- **recherche globale** magazines incluant le titre catalogue jeu (sujets reliés) ;
+- section sujets magazine sur fiche catalogue admin (`/oeuvre-jeu.php`) ;
+- guide homonymes : [pont-magazine-jeu.md](pont-magazine-jeu.md).
 
 ## Liste, tri et modes d’affichage
 

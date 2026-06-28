@@ -75,6 +75,7 @@ final class View
             'utilisateur-numero-magazine',
             'jeux',
             'jeux-envies',
+            'sagas-jeux',
             'jeu',
             'ajouter-jeu',
             'modifier-jeu',

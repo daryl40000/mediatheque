@@ -18,6 +18,7 @@
             </p>
             <p class="hint">
                 <a href="/maintenance-catalogue.php">← Maintenance catalogue</a>
+                · <a href="/maintenance-magazine-jeux-liens.php">Liens magazine ↔ jeux</a>
                 · <a href="/magazines-recherche.php">Recherche par sujet</a>
             </p>
         </div>

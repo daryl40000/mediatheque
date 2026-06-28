@@ -155,6 +155,7 @@ $mediaCssVars = implode('; ', [
                         '/import-catalogue-magazines.php',
                         '/maintenance-medias.php',
                         '/maintenance-magazine-sujets.php',
+                        '/maintenance-magazine-jeux-liens.php',
                         '/foyers.php',
                         '/utilisateurs.php',
                     ];
@@ -177,6 +178,7 @@ $mediaCssVars = implode('; ', [
                             <a href="/maintenance-catalogue.php" class="site-nav__admin"<?= $currentPath === '/maintenance-catalogue.php' ? ' aria-current="page"' : '' ?>>Maintenance</a>
                             <a href="/import-catalogue-magazines.php" class="site-nav__admin"<?= $currentPath === '/import-catalogue-magazines.php' ? ' aria-current="page"' : '' ?>>Import magazines</a>
                             <a href="/maintenance-magazine-sujets.php" class="site-nav__admin"<?= $currentPath === '/maintenance-magazine-sujets.php' ? ' aria-current="page"' : '' ?>>Sujets magazines</a>
+                            <a href="/maintenance-magazine-jeux-liens.php" class="site-nav__admin"<?= $currentPath === '/maintenance-magazine-jeux-liens.php' ? ' aria-current="page"' : '' ?>>Liens magazine ↔ jeux</a>
                             <a href="/maintenance-medias.php" class="site-nav__admin"<?= $currentPath === '/maintenance-medias.php' ? ' aria-current="page"' : '' ?>>Médias</a>
                             <a href="/foyers.php" class="site-nav__admin"<?= $currentPath === '/foyers.php' ? ' aria-current="page"' : '' ?>>Groupes famille</a>
                             <a href="/utilisateurs.php" class="site-nav__admin"<?= $currentPath === '/utilisateurs.php' ? ' aria-current="page"' : '' ?>>Comptes utilisateurs</a>

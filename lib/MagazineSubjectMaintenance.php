@@ -229,6 +229,16 @@ final class MagazineSubjectMaintenance
                 $detach->execute([$oeuvreId, $removeId]);
             }
 
+            if (MagazineGameLink::catalogColumnExists()) {
+                $keepCatalogId = (int) ($keep['catalog_oeuvre_id'] ?? 0);
+                $removeCatalogId = (int) ($remove['catalog_oeuvre_id'] ?? 0);
+                if ($keepCatalogId <= 0 && $removeCatalogId > 0) {
+                    $this->db->prepare(
+                        'UPDATE magazine_subject SET catalog_oeuvre_id = ? WHERE id = ?'
+                    )->execute([$removeCatalogId, $keepId]);
+                }
+            }
+
             $this->db->prepare('DELETE FROM magazine_subject WHERE id = ?')->execute([$removeId]);
 
             MagazineSubjectFts::upsert($keepId);
@@ -269,6 +279,9 @@ final class MagazineSubjectMaintenance
         $row['usage_count'] = $usageCount;
         $row['label_key'] = MagazineSubject::normalizeLabelKey($label);
         $row['is_empty_label'] = $label === '' || MagazineSubject::normalizeLabelKey($label) === '';
+        $row['catalog_oeuvre_id'] = MagazineGameLink::catalogColumnExists()
+            ? (int) ($row['catalog_oeuvre_id'] ?? 0)
+            : 0;
 
         return $row;
     }
@@ -294,6 +307,7 @@ final class MagazineSubjectMaintenance
     {
         $stmt = $this->db->prepare(
             'SELECT ms.id, ms.category, ms.label, ms.detail, ms.parution_year, ms.created_at,
+                    ms.catalog_oeuvre_id,
                     COUNT(DISTINCT oms.oeuvre_id) AS usage_count
              FROM magazine_subject ms
              LEFT JOIN oeuvre_magazine_subject oms ON oms.subject_id = ms.id

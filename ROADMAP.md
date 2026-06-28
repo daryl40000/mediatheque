@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.6.2** (2026-06-16)  
+**Version actuelle : 0.6.3** (2026-06-16)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -13,12 +13,12 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ---
 
-## Où en est-on ? (synthèse 0.6.2)
+## Où en est-on ? (synthèse 0.6.3)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
-| **Films** | ✅ Production | 0.4.4+ → **0.6.2** | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`, **vue Bibliothèque**) |
-| **Jeux** | ✅ Utilisable | 0.5.0 → **0.6.2** | Complet (extensions, remakes, autocomplétion, recherche tolérante, **IGDB**, **sagas** + **vignettes**, **vue Bibliothèque**, acronymes, **partage visiteur**, **listes imprimables**) |
+| **Films** | ✅ Production | 0.4.4+ → **0.6.3** | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`, **vue Bibliothèque**) |
+| **Jeux** | ✅ Utilisable | 0.5.0 → **0.6.3** | Complet (extensions, remakes, autocomplétion, recherche tolérante, **IGDB**, **sagas** + **vignettes**, **vue Bibliothèque**, acronymes, **partage visiteur**, **listes imprimables**, **pont magazine ↔ jeux**) |
 | **Magazines** | ✅ **Complet (M5)** | 0.2.x → **0.6.1** | Import ABM, ajout série/numéro catalogue, retrait série, profil public, export JSON |
 | **BD / Manga** | ⏸️ Repoussé | — | — |
 | **Livres** | ⏸️ Repoussé | — | — |
@@ -31,7 +31,7 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 | **M1** Stabilisation films | ✅ Livré | 0.4.4 | Maintenance seulement |
 | **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.5.7** | Polish non bloquant (voir M4) |
 | **M5** Magazines | ✅ **Livré** | **0.6.1** | Maintenance ; polish ponctuel |
-| **Pont** Magazines ↔ Jeux | 🔄 Partiel | 0.5.0+ | Rattachement rétroactif |
+| **Pont** Magazines ↔ Jeux | ✅ Livré | 0.6.3 | — |
 | **M2** BD / Manga | ⏸️ Repoussé | 0.6.x+ (indicatif) | Après M5 stabilisée |
 | **M3** Livres | ⏸️ Repoussé | 0.7.x+ (indicatif) | Après M2 ou en parallèle |
 | **M6** Transversal | ⏳ À faire | 0.9.0 | Après 3 domaines alignés |
@@ -40,6 +40,12 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.6.3** — pont magazine ↔ jeux (2026-06-16)
+
+- **Rattachement rétroactif** admin (`/maintenance-magazine-jeux-liens.php`).
+- **Recherche globale** magazines par titre catalogue jeu (sujets reliés).
+- **Fiche catalogue jeu** : sujets magazine reliés ; doc homonymes (`doc/pont-magazine-jeu.md`).
 
 ### ✅ **0.6.2** — polish sagas jeux (2026-06-16)
 
@@ -87,11 +93,11 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 - QA prod : remakes, affichage extensions/remakes, recherche tolérante, migrations **044–045**.
 - Tag Git **`v0.5.4`** — publié sur `origin/main`.
 
-### Priorité 1 — **Pont magazine ↔ jeu** (finir le transversal)
+### Priorité 1 — **Pont magazine ↔ jeu** ✅ livré en 0.6.3
 
-4. **Rattachement rétroactif** : outil admin pour lier les sujets existants (`magazine_subject.catalog_oeuvre_id`).
-5. **Recherche globale** : remonter numéros / sujets via le titre catalogue jeu.
-6. Documenter les cas ambigus (homonymes ; lien toujours optionnel).
+4. ~~**Rattachement rétroactif**~~ — `/maintenance-magazine-jeux-liens.php`
+5. ~~**Recherche globale**~~ — titre catalogue jeu pour sujets reliés
+6. ~~Documenter les cas ambigus~~ — `doc/pont-magazine-jeu.md`
 
 ### Priorité 2 — Polish **M4** (non bloquant)
 
@@ -252,7 +258,7 @@ Détail complet : archives QA dans l’historique git avant cette réorganisatio
 
 ---
 
-## Pont Magazines ↔ Jeux vidéo 🔄 Partiel
+## Pont Magazines ↔ Jeux vidéo ✅ Livré (0.6.3)
 
 Relier optionnellement un sujet magazine à une fiche jeu catalogue (`magazine_subject.catalog_oeuvre_id` → `oeuvres` jeu).
 
@@ -264,13 +270,9 @@ Relier optionnellement un sujet magazine à une fiche jeu catalogue (`magazine_s
 | Autocomplétion jeux à l’ajout d’un sujet test/preview/interview | 0.5.0 |
 | Affichage croisé fiche jeu ↔ sujets / numéros | 0.5.0 |
 | Fiches catalogue jeux partagées (`/oeuvre-jeu.php`) | 0.5.3 |
-
-### À faire
-
-| Tâche | Cible |
-|-------|-------|
-| Rattachement rétroactif sujets existants (outil admin) | 0.6.0 |
-| Recherche globale par titre catalogue jeu | 0.6.0 |
+| Rattachement rétroactif sujets existants (outil admin) | 0.6.3 |
+| Recherche globale par titre catalogue jeu | 0.6.3 |
+| Doc homonymes (`doc/pont-magazine-jeu.md`) | 0.6.3 |
 
 **Règles inchangées :** lien optionnel ; sujets sans lien restent valides ; tags série (PS5, PC…) = contexte revue, pas identité du jeu.
 
@@ -355,7 +357,7 @@ flowchart TB
   M0[M0 ✅ 0.1.0] --> M1[M1 ✅ Films]
   M1 --> M4[M4 ✅ Jeux 0.5.4]
   M1 --> M5[M5 🔄 Magazines]
-  M4 --> XPont[Pont ↔ jeu partiel]
+  M4 --> XPont[Pont ↔ jeu ✅]
   M5 --> XPont
   XPont --> M6[M6 Transversal]
   M4 --> M6
@@ -410,4 +412,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.6.2** — 2026-06-16 (polish sagas jeux ; priorité **Pont magazine ↔ jeu**).*
+*Dernière mise à jour : **0.6.3** — 2026-06-16 (pont magazine ↔ jeux livré ; priorité **Polish M4**).*

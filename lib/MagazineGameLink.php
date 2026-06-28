@@ -165,6 +165,45 @@ final class MagazineGameLink
     }
 
     /**
+     * Sujets magazine reliés à un jeu catalogue (vue admin, tous numéros du catalogue).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function listCatalogSubjectCoverageForGame(int $oeuvreId): array
+    {
+        if (!self::isAvailable() || $oeuvreId <= 0) {
+            return [];
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT ms.id AS subject_id, ms.category, ms.label, ms.detail, ms.parution_year,
+                    COUNT(DISTINCT oms.oeuvre_id) AS issue_count
+             FROM magazine_subject ms
+             INNER JOIN oeuvre_magazine_subject oms ON oms.subject_id = ms.id
+             WHERE ms.catalog_oeuvre_id = :oeuvre_id
+             GROUP BY ms.id
+             ORDER BY ms.parution_year DESC, ms.label COLLATE FRENCH_NOCASE ASC'
+        );
+        $stmt->execute(['oeuvre_id' => $oeuvreId]);
+
+        $rows = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $row['subject_id'] = (int) ($row['subject_id'] ?? 0);
+            $row['issue_count'] = (int) ($row['issue_count'] ?? 0);
+            $row['parution_year'] = (int) ($row['parution_year'] ?? 0);
+            $row['category_label'] = MagazineSubject::label((string) ($row['category'] ?? ''));
+            $row['display_label'] = MagazineSubject::displayLabel(
+                (string) ($row['label'] ?? ''),
+                (string) ($row['detail'] ?? ''),
+                (int) ($row['parution_year'] ?? 0)
+            );
+            $rows[] = $row;
+        }
+
+        return $rows;
+    }
+
+    /**
      * Enrichit un sujet magazine avec les infos catalogue jeu + lien bibliothèque utilisateur.
      *
      * @param array<string, mixed> $subject

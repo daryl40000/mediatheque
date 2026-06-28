@@ -233,8 +233,9 @@ Page réservée aux **administrateurs** du catalogue :
 | Page | URL | Rôle |
 |------|-----|------|
 | Nettoyage sujets | `/maintenance-magazine-sujets.php` | Orphelins, purge, fusion de doublons |
+| Liens magazine ↔ jeux | `/maintenance-magazine-jeux-liens.php` | Rattachement rétroactif sujets → catalogue jeux |
 
-Accès depuis le menu admin **Sujets magazines** ou **Maintenance catalogue** → lien « Sujets magazines (nettoyage) ».
+Accès depuis le menu admin **Sujets magazines**, **Liens magazine ↔ jeux** ou **Maintenance catalogue**.
 
 ### Sujets orphelins
 
@@ -252,6 +253,10 @@ Regroupe les sujets qui ont la **même catégorie**, le **même tag**, la **mêm
 - Les numéros liés au doublon sont **réaffectés** vers le sujet conservé.
 
 Les actions sont tracées dans le **journal d’audit** du catalogue (`CatalogAuditLog`).
+
+### Pont magazine ↔ jeux (0.6.3+)
+
+Page **`/maintenance-magazine-jeux-liens.php`** : rattachement rétroactif des sujets test / preview / interview à une fiche jeu catalogue, suggestions automatiques, retrait de lien. Guide : [pont-magazine-jeu.md](pont-magazine-jeu.md).
 
 Classe PHP : `lib/MagazineSubjectMaintenance.php`.
 

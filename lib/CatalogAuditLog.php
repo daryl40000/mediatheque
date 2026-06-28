@@ -19,6 +19,7 @@ final class CatalogAuditLog
     public const ACTION_MAGAZINE_SUBJECT_DELETE = 'delete_magazine_subject';
     public const ACTION_MAGAZINE_SUBJECT_MERGE = 'merge_magazine_subjects';
     public const ACTION_MAGAZINE_SUBJECT_PURGE = 'purge_orphan_magazine_subjects';
+    public const ACTION_MAGAZINE_GAME_LINK = 'magazine_game_link';
 
     private PDO $db;
 
@@ -88,6 +89,7 @@ final class CatalogAuditLog
             self::ACTION_MAGAZINE_SUBJECT_DELETE => 'Suppression sujet magazine',
             self::ACTION_MAGAZINE_SUBJECT_MERGE => 'Fusion sujets magazine',
             self::ACTION_MAGAZINE_SUBJECT_PURGE => 'Purge sujets orphelins',
+            self::ACTION_MAGAZINE_GAME_LINK => 'Lien sujet magazine ↔ jeu',
             default => $action,
         };
     }

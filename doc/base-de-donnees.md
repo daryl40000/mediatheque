@@ -166,7 +166,7 @@ Pièces jointes (manuels, sauvegardes…) liées à une entrée `bibliotheque`, 
 | `series_bibliotheque` | Série suivie en collection ou envies (niveau **série**, pas numéro) |
 | `magazine_subject` | Sujet normalisé (test, preview, interview…) |
 | `oeuvre_magazine_subject` | Lien N↔N numéro ↔ sujet |
-| `magazine_subject.catalog_oeuvre_id` | Lien optionnel vers un **jeu** catalogue (pont magazine ↔ jeux) |
+| `magazine_subject.catalog_oeuvre_id` | Lien optionnel vers un **jeu** catalogue (pont magazine ↔ jeux) — voir [pont-magazine-jeu.md](pont-magazine-jeu.md) |
 
 Recherche plein texte (FTS) : migration **038** — voir [magazines.md](magazines.md).
 
