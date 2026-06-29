@@ -8,6 +8,8 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\MediaDomain;
+use Moncine\GameRepository;
+use Moncine\GameSchema;
 use Moncine\ShareLinkGameRepository;
 use Moncine\ShareLinkRepository;
 use Moncine\ShareLinkScope;
@@ -51,6 +53,45 @@ $listContext = ShareLinkService::collectionQueryParams(
 );
 $listUrl = ShareLinkService::listBackUrl($rawToken, $listContext, MediaDomain::JEU);
 
+$shareGameRepo = new ShareLinkGameRepository();
+$baseGame = null;
+$extensions = [];
+$originalGame = null;
+$remakes = [];
+$oeuvreId = $game !== null ? (int) ($game['oeuvre_id'] ?? 0) : 0;
+
+if ($game !== null && GameRepository::isAvailable()) {
+    if (GameSchema::hasExtensionColumns()) {
+        $baseGameOeuvreId = (int) ($game['base_game_oeuvre_id'] ?? 0);
+        if (!empty($game['is_extension']) && $baseGameOeuvreId > 0) {
+            $baseGame = $shareGameRepo->resolveCatalogParentForLink(
+                $link,
+                $baseGameOeuvreId,
+                $rawToken,
+                $listContext
+            );
+        }
+        if (empty($game['is_extension']) && $oeuvreId > 0) {
+            $extensions = $shareGameRepo->listExtensionsForBaseGameForLink($link, $oeuvreId);
+        }
+    }
+
+    if (GameSchema::hasRemakeColumns()) {
+        $originalGameOeuvreId = (int) ($game['original_game_oeuvre_id'] ?? 0);
+        if (!empty($game['is_remake']) && $originalGameOeuvreId > 0) {
+            $originalGame = $shareGameRepo->resolveCatalogParentForLink(
+                $link,
+                $originalGameOeuvreId,
+                $rawToken,
+                $listContext
+            );
+        }
+        if (empty($game['is_remake']) && $oeuvreId > 0) {
+            $remakes = $shareGameRepo->listRemakesForOriginalGameForLink($link, $oeuvreId);
+        }
+    }
+}
+
 if ($game === null) {
     http_response_code(404);
 }
@@ -65,4 +106,9 @@ View::render('partage-jeu', [
     'listUrl' => $listUrl,
     'scopeLabel' => $scopeLabel,
     'scope' => $scope,
+    'baseGame' => $baseGame,
+    'extensions' => $extensions,
+    'originalGame' => $originalGame,
+    'remakes' => $remakes,
+    'listContext' => $listContext,
 ]);

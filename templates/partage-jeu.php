@@ -84,6 +84,22 @@
                     <?php endif; ?>
                 </dl>
 
+                <?php
+                $gameRelatedSections = Moncine\GameRelatedSections::build(
+                    $game,
+                    $baseGame ?? null,
+                    $originalGame ?? null,
+                    $extensions ?? [],
+                    $remakes ?? [],
+                    static fn (array $row): string => Moncine\ShareLinkService::gameUrl(
+                        $rawToken,
+                        (int) ($row['bib_id'] ?? 0),
+                        $listContext ?? []
+                    ),
+                );
+                require MONCINE_ROOT . '/templates/_game_related_posters.php';
+                ?>
+
                 <?php if (trim((string) ($game['synopsis'] ?? '')) !== ''): ?>
                     <section class="film-synopsis">
                         <h2>Description</h2>

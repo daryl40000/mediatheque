@@ -15,6 +15,7 @@ use Moncine\ShareLinkScope;
 use Moncine\ShareLinkService;
 use Moncine\SupportPhysique;
 use Moncine\GameRepository;
+use Moncine\GameSchema;
 use Moncine\Tests\Support\MoncineTestCase;
 use Moncine\UserContext;
 use Moncine\WishlistTargetRepository;
@@ -201,5 +202,75 @@ final class ShareFeaturesTest extends MoncineTestCase
 
         $this->assertNull($gameRepo->findByIdForLink($colLink, $wishId));
         $this->assertNotNull($gameRepo->findByIdForLink($colLink, $gameId));
+    }
+
+    public function testGameShareLinkShowsExtensionRelations(): void
+    {
+        if (!GameRepository::isAvailable() || !GameSchema::hasExtensionColumns()) {
+            $this->markTestSkipped('Extensions jeux indisponibles.');
+        }
+
+        $userId = $this->loginAsAdmin();
+        $foyerId = UserContext::currentFoyerId();
+        $gameRepo = new GameRepository();
+        $shareRepo = new ShareLinkGameRepository();
+
+        $base = $gameRepo->createWithLibrary([
+            'titre' => 'Jeu Base Partage Test',
+            'platform' => 'pc',
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($base);
+        $baseRow = $gameRepo->findByBibId((int) $base, $userId, $foyerId);
+        $this->assertNotNull($baseRow);
+        $baseOeuvreId = (int) ($baseRow['oeuvre_id'] ?? 0);
+
+        $extension = $gameRepo->createWithLibrary([
+            'titre' => 'Extension Partage Test',
+            'platform' => 'pc',
+            'is_extension' => true,
+            'base_game_oeuvre_id' => $baseOeuvreId,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($extension);
+
+        $created = (new ShareLinkService())->create(
+            $userId,
+            $foyerId,
+            ShareLinkScope::COLLECTION,
+            'jeux relations',
+            null,
+            \Moncine\MediaDomain::JEU
+        );
+        $this->assertIsArray($created);
+        $link = (new ShareLinkService())->resolve((string) $created['token']);
+        $this->assertNotNull($link);
+
+        $listContext = ShareLinkService::collectionQueryParams();
+        $parent = $shareRepo->resolveCatalogParentForLink(
+            $link,
+            $baseOeuvreId,
+            (string) $created['token'],
+            $listContext
+        );
+        $this->assertNotNull($parent);
+        $this->assertStringContainsString('partage-jeu.php', (string) ($parent['library_url'] ?? ''));
+
+        $extensions = $shareRepo->listExtensionsForBaseGameForLink($link, $baseOeuvreId);
+        $this->assertCount(1, $extensions);
+        $this->assertSame((int) $extension, (int) ($extensions[0]['bib_id'] ?? 0));
+
+        $sections = \Moncine\GameRelatedSections::build(
+            $shareRepo->findByIdForLink($link, (int) $extension) ?? [],
+            $parent,
+            null,
+            [],
+            [],
+            static fn (array $row): string => ShareLinkService::gameUrl(
+                (string) $created['token'],
+                (int) ($row['bib_id'] ?? 0),
+                $listContext
+            ),
+        );
+        $this->assertNotEmpty($sections);
+        $this->assertSame('Jeu de base', $sections[0]['title'] ?? '');
     }
 }

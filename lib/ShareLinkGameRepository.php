@@ -111,6 +111,148 @@ final class ShareLinkGameRepository
     }
 
     /**
+     * Jeu partagé identifié par l’id catalogue (œuvre), dans le périmètre du lien.
+     *
+     * @param array<string, mixed> $link
+     * @return array<string, mixed>|null
+     */
+    public function findByOeuvreIdForLink(array $link, int $oeuvreId): ?array
+    {
+        if (!GameRepository::isAvailable() || $oeuvreId <= 0) {
+            return null;
+        }
+
+        [$userWhere, $params] = $this->libraryFilterForLink($link);
+        $params['share_oeuvre_id'] = $oeuvreId;
+        $params['share_game_domain'] = MediaDomain::JEU;
+
+        $sql = 'SELECT ' . self::selectGameRow()
+            . ' FROM bibliotheque b'
+            . ' INNER JOIN oeuvres o ON o.id = b.oeuvre_id'
+            . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . ' WHERE ' . $userWhere
+            . ' AND o.id = :share_oeuvre_id'
+            . ' AND o.media_domain = :share_game_domain'
+            . ' LIMIT 1';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row !== false ? GameRowMapper::hydrateGameRow($row) : null;
+    }
+
+    /**
+     * Extensions d’un jeu de base visibles via le lien de partage.
+     *
+     * @param array<string, mixed> $link
+     * @return list<array<string, mixed>>
+     */
+    public function listExtensionsForBaseGameForLink(array $link, int $baseOeuvreId): array
+    {
+        if (!GameRepository::isAvailable() || !GameSchema::hasExtensionColumns() || $baseOeuvreId <= 0) {
+            return [];
+        }
+
+        return $this->listRelatedForLink($link, 'is_extension', 'base_game_oeuvre_id', $baseOeuvreId);
+    }
+
+    /**
+     * Remakes visibles via le lien de partage.
+     *
+     * @param array<string, mixed> $link
+     * @return list<array<string, mixed>>
+     */
+    public function listRemakesForOriginalGameForLink(array $link, int $originalOeuvreId): array
+    {
+        if (!GameRepository::isAvailable() || !GameSchema::hasRemakeColumns() || $originalOeuvreId <= 0) {
+            return [];
+        }
+
+        return $this->listRelatedForLink($link, 'is_remake', 'original_game_oeuvre_id', $originalOeuvreId);
+    }
+
+    /**
+     * Jeu catalogue pour affichage visiteur (jaquette sans lien si absent du partage).
+     *
+     * @param array<string, mixed> $link
+     * @return array<string, mixed>|null
+     */
+    public function resolveCatalogParentForLink(
+        array $link,
+        int $parentOeuvreId,
+        string $rawToken,
+        array $listContext = []
+    ): ?array {
+        if ($parentOeuvreId <= 0) {
+            return null;
+        }
+
+        $inShare = $this->findByOeuvreIdForLink($link, $parentOeuvreId);
+        if ($inShare !== null) {
+            $bibId = (int) ($inShare['id'] ?? 0);
+
+            return [
+                'oeuvre_id' => $parentOeuvreId,
+                'titre' => (string) ($inShare['display_titre'] ?? $inShare['titre'] ?? ''),
+                'poster_url' => $inShare['poster_url'] ?? null,
+                'annee' => (int) ($inShare['annee'] ?? 0),
+                'library_url' => $bibId > 0
+                    ? ShareLinkService::gameUrl($rawToken, $bibId, $listContext)
+                    : '',
+            ];
+        }
+
+        $catalog = (new GameRepository())->findCatalogByOeuvreId($parentOeuvreId);
+        if ($catalog === null) {
+            return null;
+        }
+
+        return [
+            'oeuvre_id' => $parentOeuvreId,
+            'titre' => (string) ($catalog['display_titre'] ?? $catalog['titre'] ?? ''),
+            'poster_url' => $catalog['poster_url'] ?? null,
+            'annee' => (int) ($catalog['annee'] ?? 0),
+            'library_url' => '',
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $link
+     * @return list<array<string, mixed>>
+     */
+    private function listRelatedForLink(
+        array $link,
+        string $flagColumn,
+        string $fkColumn,
+        int $parentOeuvreId
+    ): array {
+        [$userWhere, $params] = $this->libraryFilterForLink($link);
+        $params['share_parent_oeuvre_id'] = $parentOeuvreId;
+        $params['share_game_domain'] = MediaDomain::JEU;
+
+        $sql = 'SELECT b.id AS bib_id, o.id AS oeuvre_id, o.titre, o.titre_original, o.annee, o.poster_url, oj.platform'
+            . ' FROM bibliotheque b'
+            . ' INNER JOIN oeuvres o ON o.id = b.oeuvre_id'
+            . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . ' WHERE o.media_domain = :share_game_domain'
+            . ' AND oj.' . $flagColumn . ' = 1'
+            . ' AND oj.' . $fkColumn . ' = :share_parent_oeuvre_id'
+            . ' AND ' . $userWhere
+            . ' ORDER BY o.annee ASC, o.titre COLLATE FRENCH_NOCASE ASC';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $out[] = GameRowMapper::hydrateLinkedLibraryGameRow($row);
+        }
+
+        return $out;
+    }
+
+    /**
      * @param array<string, mixed> $link
      * @return array{0: string, 1: array<string, int|string>}
      */

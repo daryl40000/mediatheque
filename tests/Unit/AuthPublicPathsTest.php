@@ -17,6 +17,13 @@ final class AuthPublicPathsTest extends TestCase
         $this->assertTrue(Auth::isPublicWebPath('/partage-jeu.php'));
     }
 
+    public function testPosterDeliveryPathsArePublic(): void
+    {
+        $this->assertTrue(Auth::isPublicWebPath('/poster.php'));
+        $this->assertTrue(Auth::isPublicWebPath('/posters/42.jpg'));
+        $this->assertTrue(Auth::isPublicWebPath('/posters/s7.webp'));
+    }
+
     public function testProtectedPathsRequireLogin(): void
     {
         $this->assertFalse(Auth::isPublicWebPath('/films.php'));

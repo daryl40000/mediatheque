@@ -28,6 +28,7 @@ final class Auth
         '/partage-film.php',
         '/partage-jeux.php',
         '/partage-jeu.php',
+        '/poster.php',
     ];
 
     /**
@@ -174,6 +175,11 @@ final class Auth
     public static function isPublicWebPath(string $path): bool
     {
         if (str_starts_with($path, '/assets/')) {
+            return true;
+        }
+
+        // Jaquettes locales (/poster.php ou /posters/123.jpg) — lecture publique (partage visiteur).
+        if ($path === '/poster.php' || str_starts_with($path, '/posters/')) {
             return true;
         }
 
