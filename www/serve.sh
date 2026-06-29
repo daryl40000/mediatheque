@@ -10,4 +10,4 @@ echo "Sessions PHP : ${SESSION_DIR}"
 echo "Arrêt : Ctrl+C"
 exec php -c www/php-dev.ini \
   -d session.save_path="${SESSION_DIR}" \
-  -S "${HOST}" -t www
+  -S "${HOST}" -t www www/router.php

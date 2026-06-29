@@ -216,7 +216,7 @@ final class View
         if (PosterStorage::isLocalWebPath($url)) {
             $path = PosterStorage::filesystemPathFromWeb($url);
             if ($path !== null && is_file($path)) {
-                $delivery = PosterStorage::deliveryUrlFromWeb($url);
+                $delivery = AppUrl::webPath(PosterStorage::deliveryUrlFromWeb($url));
 
                 return $delivery !== '' ? self::escape($delivery) : '';
             }

@@ -191,7 +191,19 @@ final class Auth
         $uri = (string) ($_SERVER['REQUEST_URI'] ?? '/');
         $path = parse_url($uri, PHP_URL_PATH);
 
-        return is_string($path) && $path !== '' ? $path : '/';
+        if (!is_string($path) || $path === '') {
+            $path = '/';
+        }
+
+        $base = AppUrl::webBasePath();
+        if ($base !== '' && str_starts_with($path, $base)) {
+            $path = substr($path, strlen($base));
+            if ($path === '' || !str_starts_with($path, '/')) {
+                $path = '/' . ltrim($path, '/');
+            }
+        }
+
+        return $path;
     }
 
     private static function isPublicPath(string $path): bool

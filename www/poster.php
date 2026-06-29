@@ -1,11 +1,12 @@
 <?php
 /**
  * Sert les affiches stockées dans MONCINE_DATA/posters/ (URL /posters/123.jpg ou /posters/s42.jpg).
+ * Accès public (partage visiteur) — bootstrap allégé sans session ni login.
  */
 
 declare(strict_types=1);
 
-require_once dirname(__DIR__) . '/lib/bootstrap.php';
+require_once dirname(__DIR__) . '/lib/bootstrap-poster.php';
 
 use Moncine\PosterDelivery;
 use Moncine\PosterStorage;

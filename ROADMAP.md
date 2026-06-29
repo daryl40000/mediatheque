@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.6.5** (2026-06-16)  
+**Version actuelle : 0.6.7** (2026-06-29)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -40,6 +40,11 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.6.7** — partage visiteur jeux et jaquettes (2026-06-29)
+
+- Pages `/partage-jeux.php` et `/partage-jeu.php` publiques ; jaquettes via `poster.php` sans login.
+- Liens extension / jeu de base sur la fiche jeu partagée ; préfixe web `MONCINE_WEB_BASE_PATH`.
 
 ### ✅ **0.6.5** — jeux : prêts, plateformes, foyers personnels ; films : sagas catalogue (2026-06-16)
 
@@ -426,4 +431,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.6.5** — 2026-06-16 (prêts jeux, multi-plateformes, foyers personnels).*
+*Dernière mise à jour : **0.6.7** — 2026-06-29 (partage visiteur, jaquettes publiques).*

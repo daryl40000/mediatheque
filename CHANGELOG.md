@@ -13,6 +13,24 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.6.7] — 2026-06-29
+
+**Partage visiteur : pages publiques, jaquettes et liens jeux**
+
+### Corrigé
+
+- **Liens de partage jeux** : `/partage-jeux.php` et `/partage-jeu.php` accessibles sans connexion (auparavant redirection vers la page de login).
+- **Jaquettes visiteur** : `poster.php` utilise un bootstrap allégé (sans session ni contrôle de login) ; chemins `/posters/` et `/poster.php` publics.
+- **URLs d’affiches** : `AppUrl::webPath()` et préfixe optionnel `MONCINE_WEB_BASE_PATH` pour les installations dans un sous-dossier.
+- **Auth** : normalisation du chemin de requête avec le préfixe d’installation (pages publiques reconnues correctement).
+- **Fiche jeu partagée** : affichage des liens **jeu de base**, **extensions** et **remakes** (bandeau jaquettes, comme sur `/jeu.php`).
+
+### Ajouté
+
+- **`lib/bootstrap-poster.php`** — chargement minimal pour la livraison des affiches.
+- **`www/router.php`** — routeur `php -S` pour `/posters/*.jpg` en développement local.
+- **Tests** : `AuthPublicPathsTest`, `AppUrlWebPathTest`, `ShareFeaturesTest::testGameShareLinkShowsExtensionRelations`.
+
 ## [0.6.5] — 2026-06-16
 
 **Jeux : prêts, multi-plateformes, formulaires bibliothèque — Foyers personnels**
