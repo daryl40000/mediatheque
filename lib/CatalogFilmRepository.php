@@ -375,6 +375,12 @@ final class CatalogFilmRepository
                 'library_statut_label' => $libraryStatut !== ''
                     ? LibraryStatut::label($libraryStatut)
                     : '',
+                'saga' => CatalogSchema::hasOeuvreSagaColumns()
+                    ? trim((string) ($oeuvre['saga'] ?? ''))
+                    : '',
+                'saga_ordre' => CatalogSchema::hasOeuvreSagaColumns()
+                    ? max(0, (int) ($oeuvre['saga_ordre'] ?? 0))
+                    : 0,
             ];
         }
 
@@ -595,11 +601,20 @@ final class CatalogFilmRepository
     /** @return list<string> */
     public function distinctSagas(): array
     {
-        $stmt = $this->db->prepare(
-            'SELECT DISTINCT b.saga FROM bibliotheque b
-             WHERE b.foyer_id = ? AND b.statut = ? AND TRIM(b.saga) != ""
-             ORDER BY b.saga COLLATE FRENCH_NOCASE'
-        );
+        if (CatalogSchema::hasOeuvreSagaColumns()) {
+            $stmt = $this->db->prepare(
+                'SELECT DISTINCT o.saga FROM bibliotheque b
+                 INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+                 WHERE b.foyer_id = ? AND b.statut = ? AND TRIM(o.saga) != ""
+                 ORDER BY o.saga COLLATE FRENCH_NOCASE'
+            );
+        } else {
+            $stmt = $this->db->prepare(
+                'SELECT DISTINCT b.saga FROM bibliotheque b
+                 WHERE b.foyer_id = ? AND b.statut = ? AND TRIM(b.saga) != ""
+                 ORDER BY b.saga COLLATE FRENCH_NOCASE'
+            );
+        }
         $stmt->execute([$this->foyerId(), LibraryStatut::COLLECTION]);
         $rows = $stmt->fetchAll();
 
@@ -615,16 +630,64 @@ final class CatalogFilmRepository
     }
 
     /**
+     * Sagas déjà utilisées dans le catalogue (autocomplétion des formulaires).
+     *
+     * @return list<string>
+     */
+    public function listKnownSagas(int $limit = 120): array
+    {
+        if (!CatalogSchema::hasOeuvreSagaColumns()) {
+            return $this->distinctSagas();
+        }
+
+        $limit = max(1, min($limit, 300));
+        $stmt = $this->db->query(
+            'SELECT saga FROM oeuvres WHERE TRIM(saga) != \'\'
+             ORDER BY saga COLLATE FRENCH_NOCASE ASC'
+        );
+        if ($stmt === false) {
+            return [];
+        }
+
+        $known = [];
+        foreach ($stmt->fetchAll() as $row) {
+            $name = trim((string) ($row['saga'] ?? ''));
+            if ($name === '') {
+                continue;
+            }
+            $key = mb_strtolower($name);
+            if (!isset($known[$key])) {
+                $known[$key] = $name;
+            }
+        }
+
+        $names = array_values($known);
+        sort($names, SORT_NATURAL | SORT_FLAG_CASE);
+
+        return array_slice($names, 0, $limit);
+    }
+
+    /**
      * @return list<array{saga: string, film_count: int}>
      */
     public function listSagasWithCounts(): array
     {
-        $stmt = $this->db->prepare(
-            'SELECT b.saga, COUNT(*) AS film_count FROM bibliotheque b
-             WHERE b.foyer_id = ? AND b.statut = ? AND TRIM(b.saga) != ""
-             GROUP BY b.saga
-             ORDER BY b.saga COLLATE FRENCH_NOCASE'
-        );
+        if (CatalogSchema::hasOeuvreSagaColumns()) {
+            $stmt = $this->db->prepare(
+                'SELECT o.saga, COUNT(*) AS film_count FROM bibliotheque b
+                 INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+                 WHERE b.foyer_id = ? AND b.statut = ? AND TRIM(o.saga) != ""
+                 GROUP BY o.saga
+                 ORDER BY o.saga COLLATE FRENCH_NOCASE'
+            );
+        } else {
+            $stmt = $this->db->prepare(
+                'SELECT b.saga, COUNT(*) AS film_count FROM bibliotheque b
+                 WHERE b.foyer_id = ? AND b.statut = ? AND TRIM(b.saga) != ""
+                 GROUP BY b.saga
+                 ORDER BY b.saga COLLATE FRENCH_NOCASE'
+            );
+        }
         $stmt->execute([$this->foyerId(), LibraryStatut::COLLECTION]);
         $rows = $stmt->fetchAll();
 
@@ -660,15 +723,21 @@ final class CatalogFilmRepository
             'catalog_statut' => LibraryStatut::COLLECTION,
             'saga' => $saga,
         ];
+        $sagaFilter = CatalogSchema::hasOeuvreSagaColumns()
+            ? 'o.saga = :saga'
+            : 'b.saga = :saga';
+        $orderBy = CatalogSchema::hasOeuvreSagaColumns()
+            ? 'CASE WHEN o.saga_ordre > 0 THEN o.saga_ordre ELSE 999999 END ASC'
+            : 'CASE WHEN b.saga_ordre > 0 THEN b.saga_ordre ELSE 999999 END ASC';
         $stmt = $this->db->prepare(
             'SELECT ' . CatalogSchema::selectFilmRow() . $this->collectionRatingSelectSql($includeFoyerAverage) . '
              FROM ' . CatalogSchema::JOIN . '
              WHERE b.foyer_id = :catalog_foyer_id
                AND b.statut = :catalog_statut
-               AND b.saga = :saga'
+               AND ' . $sagaFilter
             . CatalogSchema::sqlMediaDomainAnd('o', $params) . '
              ORDER BY
-                CASE WHEN b.saga_ordre > 0 THEN b.saga_ordre ELSE 999999 END ASC,
+                ' . $orderBy . ',
                 o.titre COLLATE FRENCH_NOCASE ASC'
         );
         $this->appendCollectionRatingParams($params, $includeFoyerAverage);
@@ -688,6 +757,16 @@ final class CatalogFilmRepository
         }
 
         $startOrder = max(1, $startOrder);
+        $lookup = $this->db->prepare(
+            'SELECT oeuvre_id FROM bibliotheque
+             WHERE id = :id AND foyer_id = :foyer_id AND statut = :statut'
+        );
+        $updateCatalog = CatalogSchema::hasOeuvreSagaColumns()
+            ? $this->db->prepare(
+                'UPDATE oeuvres SET saga = :saga, saga_ordre = :saga_ordre, updated_at = datetime(\'now\')
+                 WHERE id = :oeuvre_id'
+            )
+            : null;
         $stmt = $this->db->prepare(
             'UPDATE bibliotheque SET saga = :saga, saga_ordre = :saga_ordre
              WHERE id = :id AND foyer_id = :foyer_id AND statut = :statut'
@@ -700,6 +779,17 @@ final class CatalogFilmRepository
             if ($filmId <= 0) {
                 continue;
             }
+
+            $oeuvreId = 0;
+            if ($updateCatalog !== null) {
+                $lookup->execute([
+                    'id' => $filmId,
+                    'foyer_id' => $this->foyerId(),
+                    'statut' => LibraryStatut::COLLECTION,
+                ]);
+                $oeuvreId = (int) $lookup->fetchColumn();
+            }
+
             $stmt->execute([
                 'saga' => $saga,
                 'saga_ordre' => $ordre,
@@ -710,6 +800,15 @@ final class CatalogFilmRepository
             if ($stmt->rowCount() > 0) {
                 $updated++;
             }
+
+            if ($updateCatalog !== null && $oeuvreId > 0) {
+                $updateCatalog->execute([
+                    'saga' => $saga,
+                    'saga_ordre' => $ordre,
+                    'oeuvre_id' => $oeuvreId,
+                ]);
+            }
+
             $ordre++;
         }
 
@@ -732,6 +831,41 @@ final class CatalogFilmRepository
         }
         if ($oldName === $newName) {
             return ['ok' => true, 'updated' => 0];
+        }
+
+        if (CatalogSchema::hasOeuvreSagaColumns()) {
+            $countStmt = $this->db->prepare(
+                'SELECT COUNT(*) FROM bibliotheque b
+                 INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+                 WHERE b.foyer_id = ? AND b.statut = ? AND o.saga = ?'
+            );
+            $countStmt->execute([$this->foyerId(), LibraryStatut::COLLECTION, $oldName]);
+            $filmCount = (int) $countStmt->fetchColumn();
+            if ($filmCount === 0) {
+                return ['ok' => false, 'error' => 'Aucun film n’utilise cette saga.'];
+            }
+
+            $catalogStmt = $this->db->prepare(
+                'UPDATE oeuvres SET saga = :new_name, updated_at = datetime(\'now\')
+                 WHERE saga = :old_name'
+            );
+            $catalogStmt->execute([
+                'new_name' => $newName,
+                'old_name' => $oldName,
+            ]);
+
+            $stmt = $this->db->prepare(
+                'UPDATE bibliotheque SET saga = :new_name
+                 WHERE foyer_id = :foyer_id AND statut = :statut AND saga = :old_name'
+            );
+            $stmt->execute([
+                'new_name' => $newName,
+                'foyer_id' => $this->foyerId(),
+                'statut' => LibraryStatut::COLLECTION,
+                'old_name' => $oldName,
+            ]);
+
+            return ['ok' => true, 'updated' => $stmt->rowCount()];
         }
 
         $countStmt = $this->db->prepare(
@@ -1389,6 +1523,12 @@ final class CatalogFilmRepository
         $saga = trim((string) ($data['saga'] ?? ''));
         $sagaOrdre = max(0, (int) ($data['saga_ordre'] ?? 0));
         if ($saga === '') {
+            $oeuvre = $this->oeuvres->findById((int) ($film['oeuvre_id'] ?? 0));
+            if ($oeuvre !== null) {
+                [$saga, $sagaOrdre] = $this->resolveLibrarySagaFromOeuvre($oeuvre, $data);
+            }
+        }
+        if ($saga === '') {
             $sagaOrdre = 0;
         }
 
@@ -1617,16 +1757,12 @@ final class CatalogFilmRepository
             'support_physique' => SupportPhysique::normalize((string) ($data['support_physique'] ?? '')),
             'format_image' => trim((string) ($data['format_image'] ?? '')),
             'format_son' => trim((string) ($data['format_son'] ?? '')),
-            'saga' => trim((string) ($data['saga'] ?? '')),
-            'saga_ordre' => max(0, (int) ($data['saga_ordre'] ?? 0)),
             'saison_numero' => max(0, (int) ($data['saison_numero'] ?? 0)),
             'saison_label' => trim((string) ($data['saison_label'] ?? '')),
             'ean' => OeuvreEanRepository::normalizeEan((string) ($data['ean'] ?? '')),
             'statut' => $statut,
         ];
-        if ($libraryPayload['saga'] === '') {
-            $libraryPayload['saga_ordre'] = 0;
-        }
+        [$libraryPayload['saga'], $libraryPayload['saga_ordre']] = $this->resolveLibrarySagaFromOeuvre($oeuvre, $data);
 
         $libraryId = $this->bibliotheque->insert($this->userId(), $this->foyerId(), $oeuvreId, $libraryPayload);
         $updateResult = $this->updateManual($libraryId, $data);
@@ -1684,6 +1820,9 @@ final class CatalogFilmRepository
             'o.styles',
             'b.saga',
         ];
+        if (CatalogSchema::hasOeuvreSagaColumns()) {
+            $fields[] = 'o.saga';
+        }
 
         $parts = [];
         foreach ($fields as $field) {
@@ -1841,6 +1980,29 @@ final class CatalogFilmRepository
         ];
 
         return [$oeuvre, $library];
+    }
+
+    /**
+     * @param array<string, mixed> $oeuvre
+     * @param array<string, mixed> $data
+     * @return array{0: string, 1: int}
+     */
+    private function resolveLibrarySagaFromOeuvre(array $oeuvre, array $data): array
+    {
+        $saga = trim((string) ($data['saga'] ?? ''));
+        $sagaOrdre = max(0, (int) ($data['saga_ordre'] ?? 0));
+        if ($saga === '' && CatalogSchema::hasOeuvreSagaColumns()) {
+            $catalogSaga = trim((string) ($oeuvre['saga'] ?? ''));
+            if ($catalogSaga !== '') {
+                $saga = $catalogSaga;
+                $sagaOrdre = max(0, (int) ($oeuvre['saga_ordre'] ?? 0));
+            }
+        }
+        if ($saga === '') {
+            $sagaOrdre = 0;
+        }
+
+        return [$saga, $sagaOrdre];
     }
 
     /**

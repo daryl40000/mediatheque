@@ -41,7 +41,10 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ## Prochaines étapes (par priorité)
 
-### ✅ **0.6.5** — jeux : prêts, plateformes, foyers personnels (2026-06-16)
+### ✅ **0.6.5** — jeux : prêts, plateformes, foyers personnels ; films : sagas catalogue (2026-06-16)
+
+- Prêts jeux physiques, multi-plateformes, admin plateformes, foyer personnel auto.
+- **Sagas films** : migration 052 — saga partagée sur `oeuvres`, héritée à l’ajout depuis le catalogue.
 
 - Prêts de jeux physiques entre amis (migration 049, `LoanEligibility`).
 - Plateformes configurables admin + multi-plateformes catalogue / « Mes plateformes » (migrations 050–051).

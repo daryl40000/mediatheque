@@ -152,12 +152,15 @@ CREATE TABLE IF NOT EXISTS oeuvres (
     moncine_kind TEXT DEFAULT 'film',
     omdb_imdb_id TEXT DEFAULT '',
     omdb_enriched_at TEXT DEFAULT NULL,
+    saga TEXT NOT NULL DEFAULT '',
+    saga_ordre INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT NULL,
     UNIQUE (titre, realisateur)
 );
 
 CREATE INDEX IF NOT EXISTS idx_oeuvres_tmdb ON oeuvres(tmdb_id) WHERE tmdb_id > 0;
+CREATE INDEX IF NOT EXISTS idx_oeuvres_saga ON oeuvres(saga COLLATE NOCASE) WHERE saga != '';
 CREATE INDEX IF NOT EXISTS idx_oeuvres_media_domain ON oeuvres(media_domain);
 
 CREATE TABLE IF NOT EXISTS bibliotheque (

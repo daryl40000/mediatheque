@@ -31,7 +31,9 @@ if (!$showChoice) {
     $statut = '';
 }
 
-$sagaSuggestions = $repo->distinctSagas();
+$sagaSuggestions = $repo->usesCatalogModel()
+    ? $repo->listKnownSagas()
+    : $repo->distinctSagas();
 $prefillOeuvreId = max(0, (int) ($_GET['oeuvre_id'] ?? 0));
 $prefillFilm = null;
 if ($prefillOeuvreId > 0 && $repo->usesCatalogModel()) {

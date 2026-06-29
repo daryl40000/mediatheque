@@ -25,9 +25,10 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 - **Multi-plateformes catalogue** : colonne `oeuvre_jeu.platforms` — un titre peut exister sur PC et console (migration **051**).
 - **Mes plateformes** : colonne `bibliotheque.owned_platforms` — l’utilisateur coche les plateformes qu’il possède pour son exemplaire.
 - **Migrations 050–051** : table `game_platform`, colonnes `platforms` et `owned_platforms`.
+- **Sagas films catalogue** : colonnes `oeuvres.saga` et `oeuvres.saga_ordre` (migration **052**) — même principe que `oeuvre_jeu.franchise` pour les jeux ; recopie automatique à l’ajout depuis le catalogue.
 - **Foyer personnel** : création automatique de « Mon foyer » pour tout compte sans foyer (`FoyerRepository::ensurePersonalFoyerForUser`) — inscription, connexion ou premier ajout en collection.
 - **Classes** : `LoanEligibility`, `LoanCatalog`, `GamePlatformRegistry`, `GamePlatformAdmin`, `GamePlatformList`.
-- **Tests** : `LoanEligibilityTest`, `GameLoanTest`, `GamePlatformListTest`, `FoyerTest::testEnsurePersonalFoyerForSoloUser`.
+- **Tests** : `LoanEligibilityTest`, `GameLoanTest`, `GamePlatformListTest`, `FoyerTest::testEnsurePersonalFoyerForSoloUser`, `FilmSagaCatalogTest`.
 
 ### Modifié
 
@@ -39,6 +40,7 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 ### Corrigé
 
 - Utilisateur sans foyer : plus d’erreur fatale à l’ajout film/jeu — foyer personnel créé à la volée.
+- **Sagas films** : un utilisateur qui ajoute un film depuis le catalogue hérite désormais de la saga définie au niveau catalogue (auparavant la saga n’existait que sur l’exemplaire de l’admin).
 
 ## [0.6.4] — 2026-06-16
 

@@ -1,6 +1,6 @@
 # Structure de la base de données — Médiathèque
 
-**Version : 0.6.0** · **Moteur :** SQLite (`data/moncine.db`) · **Schéma de référence :** [`sql/schema.sql`](../sql/schema.sql)
+**Version : 0.6.5** · **Moteur :** SQLite (`data/moncine.db`) · **Schéma de référence :** [`sql/schema.sql`](../sql/schema.sql)
 
 Ce document décrit **comment la base est organisée** : quelles tables existent, à quoi elles servent, et comment elles sont reliées entre elles. Il complète la doc fonctionnelle par domaine ([jeux.md](jeux.md), [magazines.md](magazines.md)).
 
@@ -105,6 +105,7 @@ Une ligne = une fiche catalogue (film, jeu, numéro de magazine, …).
 | `realisateur`, `acteur_*`, `duree_min`, `styles` | Spécifique **films** |
 | `tmdb_*`, `omdb_*` | Enrichissement TMDB / OMDb |
 | `moncine_kind` | Film vs série vs spectacle (domaine `film` uniquement) |
+| `saga`, `saga_ordre` | **Films** : saga catalogue partagée et ordre dans la saga (migration **052**, **0.6.5**) |
 
 Contrainte : `UNIQUE (titre, realisateur)` — pour les jeux, `realisateur` reste souvent vide.
 
@@ -116,7 +117,7 @@ Contrainte : `UNIQUE (titre, realisateur)` — pour les jeux, `realisateur` rest
 | `statut` | `collection` (foyer) ou `wishlist` (utilisateur) |
 | `foyer_id` / `user_id` | Propriétaire selon le statut |
 | `support_physique`, `format_image`, `format_son` | Exemplaire physique (films surtout) |
-| `saga`, `saga_ordre` | **Films** : saga personnelle et ordre (jeux : champ `saga_ordre` non utilisé pour le tri) |
+| `saga`, `saga_ordre` | Copie locale de la saga catalogue à l’ajout ; l’affichage et les pages `/sagas.php` utilisent `oeuvres.saga` en priorité (**0.6.5**) |
 | `saison_numero`, `saison_label` | Saisons de séries TV |
 | `ean` | Code-barres exemplaire |
 | `tested_on_linux`, `linux_not_supported` | Jeux PC : compatibilité Linux (tri-état) |
@@ -271,6 +272,9 @@ Liste complète : voir [`sql/schema.sql`](../sql/schema.sql).
 | 046 | `046_oeuvre_jeu_igdb.sql` | IGDB id + date enrichissement |
 | 047 | `047_oeuvre_jeu_igdb_metadata.sql` | Franchise, modes, thèmes, acronymes |
 | 049 | `049_bibliotheque_non_pretable.sql` | Exemplaire non prêtable (prêts jeux) |
+| 050 | `050_game_platform.sql` | Table `game_platform` |
+| 051 | `051_oeuvre_jeu_multi_platform.sql` | Plateformes catalogue et bibliothèque |
+| 052 | `052_oeuvres_saga.sql` | Sagas films sur `oeuvres` (catalogue partagé) |
 
 Migration transversale multi-médias : **030** (`media_domain` sur `oeuvres`).
 
@@ -300,4 +304,4 @@ Détails : [conventions-techniques.md](conventions-techniques.md) §4.
 
 ---
 
-*Dernière mise à jour : **0.6.0** (2026-06-16) — import catalogue magazines ABM (pas de changement schéma).*
+*Dernière mise à jour : **0.6.5** (2026-06-16) — sagas films catalogue (`oeuvres.saga`, migration 052).*

@@ -63,7 +63,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
-| **0.6.5** | Prêts jeux physiques, multi-plateformes, admin plateformes, foyer personnel auto, formulaires bibliothèque utilisateur |
+| **0.6.5** | Prêts jeux physiques, multi-plateformes, admin plateformes, foyer personnel auto, formulaires bibliothèque utilisateur, **sagas films catalogue partagé** |
 | **0.6.4** | Fix liens croisés jeux ↔ magazines (clic depuis l’autre onglet ouvre la bonne fiche) |
 | **0.6.3** | Pont magazine ↔ jeux : rattachement rétroactif admin, recherche globale par titre catalogue, doc homonymes |
 | **0.6.2** | Jeux : sagas en vignettes, extensions triées chronologiquement sur les fiches |

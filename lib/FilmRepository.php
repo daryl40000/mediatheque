@@ -240,6 +240,12 @@ final class FilmRepository
         return $this->engine->distinctSagas();
     }
 
+    /** @return list<string> */
+    public function listKnownSagas(int $limit = 120): array
+    {
+        return $this->engine->listKnownSagas($limit);
+    }
+
     public function listSagasWithCounts(): array
     {
         return $this->engine->listSagasWithCounts();

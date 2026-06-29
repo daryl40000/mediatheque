@@ -415,6 +415,12 @@ final class FilmRepositoryLegacy
         return $out;
     }
 
+    /** @return list<string> */
+    public function listKnownSagas(int $limit = 120): array
+    {
+        return array_slice($this->distinctSagas(), 0, max(1, min($limit, 300)));
+    }
+
     /**
      * Sagas avec le nombre de films associés.
      *

@@ -45,6 +45,8 @@ final class CatalogSchema
         'moncine_kind',
         'omdb_imdb_id',
         'omdb_enriched_at',
+        'saga',
+        'saga_ordre',
     ];
 
     public const JOIN = 'bibliotheque b INNER JOIN oeuvres o ON o.id = b.oeuvre_id';
@@ -53,12 +55,61 @@ final class CatalogSchema
     {
         $oeuvre = [];
         foreach (self::OEUVRE_FIELDS as $field) {
+            if ($field === 'saga' || $field === 'saga_ordre') {
+                continue;
+            }
             $oeuvre[] = 'o.' . $field;
         }
 
         return 'b.id, b.user_id, b.foyer_id, b.oeuvre_id, b.statut, b.support_physique, b.format_image, b.format_son, '
-            . 'b.saga, b.saga_ordre, b.saison_numero, b.saison_label, b.ean, b.created_at, '
+            . self::selectFilmSagaSql() . ', b.saison_numero, b.saison_label, b.ean, b.created_at, '
             . implode(', ', $oeuvre);
+    }
+
+    /**
+     * Saga affichée : catalogue (oeuvres) en priorité, sinon exemplaire bibliothèque.
+     */
+    public static function selectFilmSagaSql(): string
+    {
+        if (!self::hasOeuvreSagaColumns()) {
+            return 'b.saga, b.saga_ordre';
+        }
+
+        return "CASE WHEN TRIM(COALESCE(o.saga, '')) != '' THEN TRIM(o.saga) "
+            . "WHEN TRIM(COALESCE(b.saga, '')) != '' THEN TRIM(b.saga) ELSE '' END AS saga, "
+            . "CASE WHEN TRIM(COALESCE(NULLIF(TRIM(o.saga), ''), NULLIF(TRIM(b.saga), ''))) != '' "
+            . 'THEN CASE WHEN COALESCE(o.saga_ordre, 0) > 0 THEN o.saga_ordre '
+            . 'ELSE COALESCE(b.saga_ordre, 0) END ELSE 0 END AS saga_ordre';
+    }
+
+    public static function hasOeuvreSagaColumns(?PDO $db = null): bool
+    {
+        return self::hasOeuvreColumn('saga', $db) && self::hasOeuvreColumn('saga_ordre', $db);
+    }
+
+    public static function hasOeuvreColumn(string $column, ?PDO $db = null): bool
+    {
+        static $cache = [];
+        $key = $column;
+        if (array_key_exists($key, $cache)) {
+            return $cache[$key];
+        }
+
+        $db ??= Database::getInstance();
+        if (!self::usesCatalogTables($db)) {
+            return $cache[$key] = false;
+        }
+
+        $stmt = $db->query(
+            "SELECT 1 FROM pragma_table_info('oeuvres') WHERE name = " . self::quoteSqlLiteral($column) . ' LIMIT 1'
+        );
+
+        return $cache[$key] = (bool) $stmt->fetchColumn();
+    }
+
+    private static function quoteSqlLiteral(string $value): string
+    {
+        return "'" . str_replace("'", "''", $value) . "'";
     }
 
     /**
