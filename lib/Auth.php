@@ -26,6 +26,8 @@ final class Auth
         '/reinitialiser-mot-de-passe.php',
         '/partage.php',
         '/partage-film.php',
+        '/partage-jeux.php',
+        '/partage-jeu.php',
     ];
 
     /**
@@ -168,6 +170,16 @@ final class Auth
         }
     }
 
+    /** Page accessible sans connexion (tests et vérifications). */
+    public static function isPublicWebPath(string $path): bool
+    {
+        if (str_starts_with($path, '/assets/')) {
+            return true;
+        }
+
+        return in_array($path, self::PUBLIC_PATHS, true);
+    }
+
     private static function requestPath(): string
     {
         $uri = (string) ($_SERVER['REQUEST_URI'] ?? '/');
@@ -178,11 +190,7 @@ final class Auth
 
     private static function isPublicPath(string $path): bool
     {
-        if (str_starts_with($path, '/assets/')) {
-            return true;
-        }
-
-        return in_array($path, self::PUBLIC_PATHS, true);
+        return self::isPublicWebPath($path);
     }
 
     /** Une seule session PHP pour le questionnaire « Ce soir » et la connexion. */
