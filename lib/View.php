@@ -349,6 +349,16 @@ final class View
         return '/ajouter-film.php';
     }
 
+    /** Page de choix ou formulaire d’ajout de jeu. */
+    public static function addGameChoiceUrl(int $oeuvreId = 0): string
+    {
+        if ($oeuvreId > 0) {
+            return '/ajouter-jeu.php?oeuvre_id=' . $oeuvreId;
+        }
+
+        return '/ajouter-jeu.php';
+    }
+
     /**
      * Lien depuis la recherche par personne : fiche film si déjà en bibliothèque, sinon ajout depuis le catalogue.
      *
@@ -386,6 +396,11 @@ final class View
         $kind = (string) ($note['kind'] ?? '');
         $oeuvreId = (int) ($note['related_oeuvre_id'] ?? 0);
         if ($kind === NotificationRepository::KIND_SUBMISSION_APPROVED && $oeuvreId > 0) {
+            $oeuvre = (new OeuvreRepository())->findByIdForAdmin($oeuvreId);
+            if (is_array($oeuvre) && MediaDomain::isGame((string) ($oeuvre['media_domain'] ?? ''))) {
+                return self::addGameChoiceUrl($oeuvreId);
+            }
+
             return self::addFilmChoiceUrl($oeuvreId);
         }
 

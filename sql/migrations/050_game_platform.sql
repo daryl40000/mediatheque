@@ -20,6 +20,7 @@ INSERT OR IGNORE INTO game_platform (platform_key, label, short_label, kind, con
     ('ps4', 'PlayStation 4', 'PS4', 'console', 'psn', 30),
     ('xbox_series', 'Xbox Series', 'Xbox Series', 'console', 'xbox', 40),
     ('xbox_one', 'Xbox One', 'Xbox One', 'console', 'xbox', 50),
+    ('snes', 'Super Nintendo (SNES)', 'SNES', 'console', '', 55),
     ('switch', 'Nintendo Switch', 'Switch', 'console', 'eshop', 60),
     ('switch2', 'Nintendo Switch 2', 'Switch 2', 'console', 'eshop', 65),
     ('mobile', 'Mobile', 'Mobile', 'mobile', '', 70),

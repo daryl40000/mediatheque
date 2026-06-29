@@ -206,7 +206,7 @@ final class OeuvreRepository
     public function insert(array $payload): int
     {
         $fields = CatalogSchema::OEUVRE_FIELDS;
-        $params = $this->filterPayload($payload, $fields);
+        $params = $this->filterPayload(CatalogSchema::completeOeuvrePayload($payload), $fields);
         if (CatalogSchema::hasMediaDomainColumn()) {
             $domain = MediaDomain::normalize((string) ($payload['media_domain'] ?? MediaContext::current()));
             $columns = 'media_domain, ' . implode(', ', $fields);
@@ -240,7 +240,10 @@ final class OeuvreRepository
         }
 
         $fields = array_merge(['id'], CatalogSchema::OEUVRE_FIELDS);
-        $params = $this->filterPayload($payload, CatalogSchema::OEUVRE_FIELDS);
+        $params = $this->filterPayload(
+            CatalogSchema::completeOeuvrePayload($payload),
+            CatalogSchema::OEUVRE_FIELDS
+        );
         $params['id'] = $id;
         if (CatalogSchema::hasMediaDomainColumn()) {
             $fields = array_merge(['id', 'media_domain'], CatalogSchema::OEUVRE_FIELDS);

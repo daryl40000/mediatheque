@@ -1,6 +1,6 @@
 <?php
 /**
- * Sérialisation des champs catalogue dans une proposition utilisateur.
+ * Sérialisation des champs catalogue dans une proposition utilisateur (films et jeux).
  */
 
 declare(strict_types=1);
@@ -9,8 +9,8 @@ namespace Moncine;
 
 final class CatalogSubmissionPayload
 {
-    /** Champs stockés dans payload_json (hors métadonnées techniques). */
-    private const STORED_KEYS = [
+    /** Champs films stockés dans payload_json. */
+    private const FILM_KEYS = [
         'titre',
         'titre_original',
         'realisateur',
@@ -28,19 +28,60 @@ final class CatalogSubmissionPayload
         'poster_url',
         'synopsis',
         'moncine_kind',
+        'submission_domain',
     ];
 
+    /** Champs jeux stockés dans payload_json. */
+    private const GAME_KEYS = [
+        'titre',
+        'titre_original',
+        'annee',
+        'studio',
+        'editeur',
+        'genre',
+        'platform',
+        'platforms',
+        'platform_list',
+        'synopsis',
+        'poster_url',
+        'is_extension',
+        'base_game_oeuvre_id',
+        'is_remake',
+        'original_game_oeuvre_id',
+        'igdb_id',
+        'submission_domain',
+    ];
+
+    public static function domain(array $stored): string
+    {
+        $raw = (string) ($stored['submission_domain'] ?? '');
+
+        return $raw !== '' ? MediaDomain::normalize($raw) : MediaDomain::FILM;
+    }
+
+    public static function isGame(array $stored): bool
+    {
+        return MediaDomain::isGame(self::domain($stored));
+    }
+
     /**
-     * @param array<string, mixed> $manualEditData Sortie de FilmManualEdit::parseFromPost
+     * @param array<string, mixed> $manualEditData Sortie de FilmManualEdit ou GameManualEdit
      * @return array<string, mixed>
      */
     public static function fromManualEditData(array $manualEditData): array
     {
+        $keys = self::isGame($manualEditData) ? self::GAME_KEYS : self::FILM_KEYS;
         $out = [];
-        foreach (self::STORED_KEYS as $key) {
+        foreach ($keys as $key) {
             if (array_key_exists($key, $manualEditData)) {
                 $out[$key] = $manualEditData[$key];
             }
+        }
+
+        if (!isset($out['submission_domain'])) {
+            $out['submission_domain'] = self::isGame($manualEditData)
+                ? MediaDomain::JEU
+                : MediaDomain::FILM;
         }
 
         return $out;
@@ -72,7 +113,7 @@ final class CatalogSubmissionPayload
     }
 
     /**
-     * Données pour CatalogAdmin::createOeuvre().
+     * Données pour CatalogAdmin::createOeuvre() (films).
      *
      * @param array<string, mixed> $stored
      * @return array<string, mixed>
@@ -94,13 +135,42 @@ final class CatalogSubmissionPayload
         ]);
     }
 
+    /**
+     * Données pour CatalogAdmin::createGameOeuvre() (jeux).
+     *
+     * @param array<string, mixed> $stored
+     * @return array<string, mixed>
+     */
+    public static function toCreateGameData(array $stored): array
+    {
+        $clean = self::fromManualEditData($stored);
+
+        return array_merge($clean, [
+            'oeuvre_id' => 0,
+        ]);
+    }
+
     /** @return array<string, mixed> Pour préremplir le formulaire (clés formulaire). */
     public static function toFormPrefill(array $stored): array
     {
+        if (self::isGame($stored)) {
+            $game = self::fromManualEditData($stored);
+            $game['platform_list'] = $game['platform_list']
+                ?? GamePlatformList::parseList((string) ($game['platforms'] ?? ''));
+            $game['genre_list'] = GameGenre::parseList((string) ($game['genre'] ?? ''));
+
+            return $game;
+        }
+
         $film = self::fromManualEditData($stored);
         $film['duree'] = FilmManualEdit::dureeForInput((int) ($film['duree_min'] ?? 0));
         unset($film['duree_min'], $film['tmdb_types_locked']);
 
         return $film;
+    }
+
+    public static function domainLabel(array $stored): string
+    {
+        return MediaDomain::label(self::domain($stored));
     }
 }

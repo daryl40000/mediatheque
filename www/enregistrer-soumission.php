@@ -1,6 +1,6 @@
 <?php
 /**
- * Enregistre une proposition d’œuvre au catalogue.
+ * Enregistre une proposition d’œuvre au catalogue (film ou jeu).
  */
 
 declare(strict_types=1);
@@ -11,6 +11,9 @@ use Moncine\Auth;
 use Moncine\CatalogSubmission;
 use Moncine\Csrf;
 use Moncine\FilmManualEdit;
+use Moncine\GameManualEdit;
+use Moncine\GameRepository;
+use Moncine\MediaDomain;
 use Moncine\UserContext;
 
 Auth::enforceWebAccess();
@@ -21,10 +24,24 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
     exit;
 }
 
-$backUrl = '/proposer-oeuvre.php';
+$domain = MediaDomain::normalize((string) ($_POST['submission_domain'] ?? MediaDomain::FILM));
+$backUrl = MediaDomain::isGame($domain) ? '/proposer-jeu.php' : '/proposer-oeuvre.php';
+
 Csrf::rejectUnlessValid($_POST, $backUrl);
 
-$parsed = FilmManualEdit::parseFromPost($_POST);
+if (MediaDomain::isGame($domain)) {
+    if (!GameRepository::isAvailable()) {
+        header('Location: ' . $backUrl . '?save_error=' . rawurlencode('Module jeux non disponible.'));
+        exit;
+    }
+    $parsed = GameManualEdit::parseFromPost($_POST);
+} else {
+    $parsed = FilmManualEdit::parseFromPost($_POST);
+    if ($parsed['ok']) {
+        $parsed['data']['submission_domain'] = MediaDomain::FILM;
+    }
+}
+
 if (!$parsed['ok']) {
     header('Location: ' . $backUrl . '?save_error=' . rawurlencode($parsed['error']));
     exit;

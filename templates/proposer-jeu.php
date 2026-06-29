@@ -2,15 +2,22 @@
 /**
  * @var string $saveError
  * @var int $pendingCount
+ * @var array<string, string> $platformChoices
+ * @var list<string> $knownGenres
  */
 ?>
 <section class="catalog-submission-page">
-    <h1>Proposer une œuvre au catalogue</h1>
+    <h1>Proposer un jeu au catalogue</h1>
     <p class="lead">
-        Si un film n’existe pas encore dans le catalogue Moncine, vous pouvez proposer sa fiche.
+        Si un jeu n’existe pas encore dans le catalogue partagé, vous pouvez proposer sa fiche.
         Un administrateur l’examinera avant qu’elle soit visible pour tout le monde.
         Vous pouvez envoyer <strong>plusieurs propositions</strong> en parallèle.
-        · <a href="/proposer-jeu.php">Proposer un jeu</a>
+    </p>
+    <p class="hint">
+        Vous proposez une <strong>fiche catalogue</strong> (titre, plateformes, studio…).
+        Une fois acceptée, vous l’ajouterez à votre collection depuis
+        <a href="/ajouter-jeu.php">Ajouter un jeu</a>.
+        · <a href="/proposer-oeuvre.php">Proposer un film</a>
     </p>
 
     <?php if ($pendingCount > 0): ?>
@@ -27,13 +34,13 @@
 
     <?php
     $formAction = '/enregistrer-soumission.php';
-    $fieldPrefix = 'propose';
-    $film = [];
+    $fieldPrefix = 'propose_game';
+    $game = [];
     $userNote = '';
     $showUserNote = true;
     $submitLabel = 'Envoyer la proposition';
-    $cancelUrl = '/films.php';
+    $cancelUrl = '/jeux.php';
     $hiddenFields = [];
-    require MONCINE_ROOT . '/templates/_catalog_submission_form.php';
+    require MONCINE_ROOT . '/templates/_game_catalog_submission_form.php';
     ?>
 </section>

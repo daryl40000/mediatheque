@@ -63,14 +63,34 @@ final class CatalogSubmission
             return 'Les administrateurs ajoutent les œuvres directement depuis le catalogue.';
         }
 
+        if (!isset($manualEditData['submission_domain'])) {
+            $manualEditData['submission_domain'] = MediaDomain::FILM;
+        }
+
+        $isGame = CatalogSubmissionPayload::isGame($manualEditData);
+        if ($isGame && !GameRepository::isAvailable()) {
+            return 'Module jeux non disponible.';
+        }
+
         $titre = trim((string) ($manualEditData['titre'] ?? ''));
         if ($titre === '') {
             return 'Le titre est obligatoire.';
         }
 
-        $realisateur = trim((string) ($manualEditData['realisateur'] ?? ''));
-        if ($this->oeuvres->findByTitreAndRealisateur($titre, $realisateur) !== null) {
-            return 'Cette œuvre est déjà au catalogue. Ajoutez-la depuis Mes films ou Mes envies.';
+        if ($isGame) {
+            $existing = $this->oeuvres->findByTitreRealisateurAndDomain(
+                $titre,
+                '',
+                MediaDomain::JEU
+            );
+            if ($existing !== null) {
+                return 'Ce jeu est déjà au catalogue. Ajoutez-le depuis Mes jeux ou Mes envies.';
+            }
+        } else {
+            $realisateur = trim((string) ($manualEditData['realisateur'] ?? ''));
+            if ($this->oeuvres->findByTitreAndRealisateur($titre, $realisateur) !== null) {
+                return 'Cette œuvre est déjà au catalogue. Ajoutez-la depuis Mes films ou Mes envies.';
+            }
         }
 
         try {
@@ -146,17 +166,30 @@ final class CatalogSubmission
             return 'Cette proposition a déjà été traitée.';
         }
 
-        $createData = CatalogSubmissionPayload::toCreateOeuvreData(
-            CatalogSubmissionPayload::fromManualEditData($manualEditData)
-        );
-
-        $oeuvreId = (new CatalogAdmin())->createOeuvre($createData);
+        $isGame = CatalogSubmissionPayload::isGame($manualEditData);
+        if ($isGame) {
+            if (!GameRepository::isAvailable()) {
+                return 'Module jeux non disponible.';
+            }
+            $createData = CatalogSubmissionPayload::toCreateGameData(
+                CatalogSubmissionPayload::fromManualEditData($manualEditData)
+            );
+            $oeuvreId = (new CatalogAdmin())->createGameOeuvre($createData);
+        } else {
+            $createData = CatalogSubmissionPayload::toCreateOeuvreData(
+                CatalogSubmissionPayload::fromManualEditData($manualEditData)
+            );
+            $oeuvreId = (new CatalogAdmin())->createOeuvre($createData);
+        }
         if (!is_int($oeuvreId)) {
             return $oeuvreId;
         }
 
-        if ($enrichAfter && FilmEnricher::canEnrich()) {
+        if (!$isGame && $enrichAfter && FilmEnricher::canEnrich()) {
             (new FilmEnricher())->enrichOeuvre($oeuvreId);
+        }
+        if ($isGame && $enrichAfter && GameEnricher::canEnrich()) {
+            (new GameEnricher())->enrichOeuvre($oeuvreId);
         }
 
         if (!$this->repo->markApproved($submissionId, $oeuvreId, $adminId, $reviewNote)) {
@@ -260,6 +293,7 @@ final class CatalogSubmission
             $row['payload'] = [];
         }
         $row['form_prefill'] = CatalogSubmissionPayload::toFormPrefill($row['payload']);
+        $row['submission_domain'] = CatalogSubmissionPayload::domain($row['payload']);
 
         return $row;
     }
@@ -277,6 +311,7 @@ final class CatalogSubmission
                 $payload = [];
             }
             $row['payload'] = $payload;
+            $row['submission_domain'] = CatalogSubmissionPayload::domain($payload);
             $row['submitter_label'] = View::userDisplayName([
                 'nom' => (string) ($row['submitter_nom'] ?? ''),
                 'prenom' => (string) ($row['submitter_prenom'] ?? ''),

@@ -10,6 +10,9 @@ use Moncine\CatalogSubmission;
 use Moncine\CatalogSubmissionRepository;
 use Moncine\FilmManualEdit;
 use Moncine\FilmRepository;
+use Moncine\GameManualEdit;
+use Moncine\GameRepository;
+use Moncine\MediaDomain;
 use Moncine\FoyerRepository;
 use Moncine\OeuvreRepository;
 use Moncine\SchemaMigrator;
@@ -214,5 +217,55 @@ final class CatalogSubmissionTest extends MoncineTestCase
             CatalogSubmissionRepository::STATUS_PENDING
         );
         $this->assertCount(2, $pending);
+    }
+
+    public function testUserCanSubmitGameAndAdminApproves(): void
+    {
+        $adminId = $this->loginAsAdmin();
+        $foyerId = (new FoyerRepository())->currentFoyerIdForUser($adminId);
+
+        Auth::logout();
+        $this->startSession();
+
+        $userId = (new UtilisateurRepository())->create(
+            'Proposeur Jeu',
+            'proposeur-jeu@test.local',
+            'TestPass123!',
+            UserRole::USER,
+            $foyerId
+        );
+        $this->assertIsInt($userId);
+        Auth::login('proposeur-jeu@test.local', 'TestPass123!');
+
+        $parsed = GameManualEdit::parseFromPost([
+            'titre' => 'Chrono Trigger Proposition',
+            'annee' => '1995',
+            'studio' => 'Square',
+            'platforms' => ['snes'],
+            'submission_domain' => MediaDomain::JEU,
+        ]);
+        $this->assertTrue($parsed['ok']);
+
+        $submitId = (new CatalogSubmission())->submit($userId, $parsed['data'], 'Version US');
+        $this->assertIsInt($submitId);
+
+        $row = (new CatalogSubmissionRepository())->findById($submitId);
+        $this->assertSame(CatalogSubmissionRepository::STATUS_PENDING, $row['status'] ?? '');
+
+        Auth::logout();
+        $this->startSession();
+        Auth::login('admin@test.local', 'TestPass123!');
+
+        $oeuvreId = (new CatalogSubmission())->approve($submitId, $adminId, $parsed['data']);
+        $this->assertIsInt($oeuvreId);
+
+        $oeuvre = (new OeuvreRepository())->findByIdForAdmin($oeuvreId);
+        $this->assertSame('Chrono Trigger Proposition', $oeuvre['titre'] ?? '');
+        $this->assertSame(MediaDomain::JEU, $oeuvre['media_domain'] ?? '');
+
+        $game = (new GameRepository())->findCatalogByOeuvreId($oeuvreId);
+        $this->assertNotNull($game);
+        $this->assertSame('Square', $game['studio'] ?? '');
+        $this->assertStringContainsString('snes', (string) ($game['platforms'] ?? ''));
     }
 }

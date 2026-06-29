@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.6.7** · **Date : 2026-06-29**
+**Version : 0.6.8** · **Date : 2026-06-30**
 
 ## Objectif
 
@@ -27,7 +27,7 @@ Vue d’ensemble de **toutes** les tables (catalogue, bibliothèque, magazines, 
 | `platform` | Plateforme principale (`pc`, `ps5`, `switch`…) — conservée pour compatibilité |
 | `platforms` | Toutes les plateformes du titre (liste CSV : `pc,ps5`) — migration **051** |
 | `is_digital` | 1 = version démat, 0 = physique |
-| `physical_supports` | Supports physiques possédés (CD/DVD, disquette…) |
+| `physical_supports` | Supports physiques possédés (CD/DVD, disquette/cartouche…) |
 | `digital_stores` | Magasins démat (Steam, GOG, Epic…) + URLs |
 | `is_extension` | 1 = extension (DLC / add-on) — migration **044** |
 | `base_game_oeuvre_id` | Jeu de base du catalogue (extensions) |
@@ -230,7 +230,7 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | `GamePlatformList` | Listes multi-plateformes CSV catalogue / bibliothèque (**0.6.5**) |
 | `LoanEligibility` | Règles de prêt (films, jeux physiques) (**0.6.5**) |
 | `LoanCatalog` | Listes prêts multi-domaines (**0.6.5**) |
-| `GamePhysicalSupport` | Supports physiques (CD/DVD, disquette) |
+| `GamePhysicalSupport` | Supports physiques (CD/DVD, disquette/cartouche) |
 | `GameDigitalStore` | Magasins démat PC et stores console |
 | `MagazineGameLink` | Validation et gestion du pont sujet ↔ jeu |
 | `MagazineGameLinkMaintenance` | Rattachement rétroactif admin (pont magazine ↔ jeux) |
@@ -249,7 +249,7 @@ Méthode : `GameRepository::savePoster()` → `PosterStorage::ensureLocalForOeuv
 
 | Type | Saisie |
 |------|--------|
-| Physique | CD/DVD, Disquette (plusieurs possibles) |
+| Physique | CD/DVD, Disquette/cartouche (plusieurs possibles) |
 | Démat PC | Steam, GOG, Epic — plusieurs magasins, lien HTTPS optionnel par magasin |
 | Démat console | Store imposé (PSN, Xbox, eShop) — **sans** lien personnalisé |
 
@@ -267,11 +267,26 @@ Le panneau démat s’adapte aux **plateformes cochées** (PC vs console) via Ja
 
 - **Admin catalogue** : cases « Plateformes disponibles » sur création / édition fiche (`/oeuvre-jeu.php`, maintenance).
 - **Utilisateur** : à l’ajout, choisir le jeu dans le catalogue puis cocher **« Mes plateformes »** uniquement parmi celles du titre.
-- **Non admin** : ne peut pas créer une fiche catalogue jeu — doit choisir une suggestion du catalogue (comme pour les films).
+- **Non admin** : ne peut pas créer une fiche catalogue jeu — doit choisir une suggestion du catalogue (comme pour les films), ou **proposer une nouvelle fiche** via `/proposer-jeu.php` (validation administrateur, comme pour les films).
 
 ### Admin plateformes
 
-Page `/plateformes-jeux.php` (lien depuis maintenance catalogue) : ajout, modification, désactivation des clés (`pc`, `ps5`, `switch`…).
+Page `/plateformes-jeux.php` (lien depuis maintenance catalogue) : ajout, modification, désactivation des clés (`pc`, `ps5`, `snes`, `switch`…).
+
+## Propositions au catalogue (0.6.8)
+
+Comme pour les **films**, un utilisateur non administrateur peut proposer une **nouvelle fiche jeu** au catalogue partagé :
+
+| Étape | Page / action |
+|-------|----------------|
+| Proposer | `/proposer-jeu.php` (menu Paramètres → Proposer au catalogue, ou lien depuis `/ajouter-jeu.php`) |
+| Suivi | `/mes-soumissions.php` |
+| Validation admin | `/soumissions-catalogue.php` — accepter, refuser, ou accepter avec enrichissement **IGDB** |
+| Après acceptation | L’utilisateur ajoute le jeu à sa collection via `/ajouter-jeu.php?oeuvre_id=…` |
+
+Champs proposés : titre, plateformes, année, studio, éditeur, genres, jaquette, synopsis. Le domaine (`film` / `jeu`) est stocké dans `catalogue_soumissions.payload_json` (`submission_domain`).
+
+Handlers : `/enregistrer-soumission.php` (film ou jeu), `/traiter-soumission.php` (admin). Code : `GameManualEdit`, `CatalogSubmission`, `CatalogSubmissionPayload`.
 
 ## Ajout à la bibliothèque (utilisateur, 0.6.5)
 
@@ -334,7 +349,7 @@ Même système que pour les films : un ami peut demander un prêt depuis votre *
 
 | Règle | Détail |
 |-------|--------|
-| Éligible | Jeu avec **support physique** coché (CD/DVD, disquette…) |
+| Éligible | Jeu avec **support physique** coché (CD/DVD, disquette/cartouche…) |
 | Refusé | Jeu **démat seul** (Steam, GOG, etc. sans support physique) |
 | Option | Case **« Ne pas prêter cet exemplaire »** à l’ajout / modification (colonne `bibliotheque.non_pretable`) |
 | Flux | Demande → acceptation (réservation) → validation le jour J → retour — page `/mes-prets.php` |

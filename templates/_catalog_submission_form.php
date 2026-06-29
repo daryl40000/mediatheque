@@ -20,6 +20,7 @@ $hiddenFields = $hiddenFields ?? [];
 <?php if (($formAction ?? '') !== ''): ?>
 <form method="post" action="<?= Moncine\View::escape($formAction) ?>" class="film-edit-form catalog-submission-form">
     <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+    <input type="hidden" name="submission_domain" value="film">
     <?php foreach ($hiddenFields as $hidden): ?>
         <input type="hidden" name="<?= Moncine\View::escape((string) ($hidden['name'] ?? '')) ?>"
                value="<?= Moncine\View::escape((string) ($hidden['value'] ?? '')) ?>">

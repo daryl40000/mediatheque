@@ -35,7 +35,7 @@ final class GameEditionIcons
         return array_values($keys);
     }
 
-    /** Texte pour supports sans icône dédiée (disquette, stores console…). */
+    /** Texte pour supports sans icône dédiée (disquette/cartouche, stores console…). */
     public static function supplementalText(array $gameRow): string
     {
         $parts = [];

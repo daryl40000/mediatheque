@@ -2136,20 +2136,7 @@ final class CatalogFilmRepository
 
     private function completeOeuvrePayload(array $oeuvre): array
     {
-        foreach (CatalogSchema::OEUVRE_FIELDS as $field) {
-            if (array_key_exists($field, $oeuvre)) {
-                continue;
-            }
-            $oeuvre[$field] = match ($field) {
-                'duree_min', 'annee', 'tmdb_id', 'realisateur_tmdb_id',
-                'acteur_1_tmdb_id', 'acteur_2_tmdb_id', 'acteur_3_tmdb_id' => 0,
-                'omdb_enriched_at' => null,
-                'moncine_kind' => MoncineContentKind::FILM,
-                default => '',
-            };
-        }
-
-        return $oeuvre;
+        return CatalogSchema::completeOeuvrePayload($oeuvre);
     }
 
     private function resolvePosterForOeuvre(int $oeuvreId, string $posterUrl): string

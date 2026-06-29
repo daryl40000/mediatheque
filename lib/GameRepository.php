@@ -336,6 +336,7 @@ final class GameRepository
         try {
             $oeuvreId = (new OeuvreRepository())->insert([
                 'titre' => $titre,
+                'titre_original' => trim((string) ($data['titre_original'] ?? '')),
                 'realisateur' => '',
                 'annee' => max(0, (int) ($data['annee'] ?? 0)),
                 'synopsis' => trim((string) ($data['synopsis'] ?? '')),

@@ -1,6 +1,6 @@
 <?php
 /**
- * Supports physiques des jeux (CD/DVD, disquette…).
+ * Supports physiques des jeux (CD/DVD, disquette/cartouche…).
  */
 
 declare(strict_types=1);
@@ -17,7 +17,7 @@ final class GamePhysicalSupport
     {
         return [
             self::CD_DVD => 'CD / DVD',
-            self::DISKETTE => 'Disquette',
+            self::DISKETTE => 'Disquette/cartouche',
         ];
     }
 
@@ -83,7 +83,7 @@ final class GamePhysicalSupport
 
         return match ($raw) {
             'cd', 'dvd', 'cd/dvd', 'cd_dvd', 'cd-dvd' => self::CD_DVD,
-            'disquette', 'diskette', 'floppy' => self::DISKETTE,
+            'disquette', 'diskette', 'floppy', 'cartouche', 'cartridge' => self::DISKETTE,
             default => $raw,
         };
     }

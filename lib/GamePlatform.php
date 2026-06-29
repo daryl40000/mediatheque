@@ -14,6 +14,7 @@ final class GamePlatform
     public const PS4 = 'ps4';
     public const XBOX_SERIES = 'xbox_series';
     public const XBOX_ONE = 'xbox_one';
+    public const SNES = 'snes';
     public const SWITCH = 'switch';
     public const SWITCH2 = 'switch2';
     public const MOBILE = 'mobile';
@@ -77,6 +78,9 @@ final class GamePlatform
             'xbox series x' => self::XBOX_SERIES,
             'xbox series s' => self::XBOX_SERIES,
             'xbox one' => self::XBOX_ONE,
+            'snes' => self::SNES,
+            'super nintendo' => self::SNES,
+            'super nintendo entertainment system' => self::SNES,
             'switch' => self::SWITCH,
             'nintendo switch' => self::SWITCH,
             'switch 2' => self::SWITCH2,

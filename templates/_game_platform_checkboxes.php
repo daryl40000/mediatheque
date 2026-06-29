@@ -28,6 +28,14 @@ if ($allowedPlatformKeys !== null) {
     }
     $platformChoices = $allowed;
 }
+// Plateformes déjà sélectionnées mais absentes du registre (ex. migration pas encore appliquée).
+foreach ($selectedPlatformKeys as $selectedKey) {
+    $selectedKey = Moncine\GamePlatform::normalize((string) $selectedKey);
+    if ($selectedKey !== '' && !isset($platformChoices[$selectedKey])) {
+        $label = Moncine\GamePlatform::label($selectedKey);
+        $platformChoices[$selectedKey] = $label !== '' ? $label : strtoupper($selectedKey);
+    }
+}
 $fieldsetExtraAttrs = (string) ($fieldsetExtraAttrs ?? '');
 ?>
 <fieldset class="game-platform-fieldset" data-game-platform-fieldset<?= $hidden ? ' hidden' : '' ?><?= $fieldsetExtraAttrs !== '' ? ' ' . $fieldsetExtraAttrs : '' ?>>

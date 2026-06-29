@@ -419,24 +419,7 @@ final class CatalogAdmin
      */
     private function completeOeuvrePayload(array $payload): array
     {
-        foreach (CatalogSchema::OEUVRE_FIELDS as $field) {
-            if (array_key_exists($field, $payload)) {
-                continue;
-            }
-            $payload[$field] = match ($field) {
-                'duree_min', 'annee', 'tmdb_id', 'realisateur_tmdb_id',
-                'acteur_1_tmdb_id', 'acteur_2_tmdb_id', 'acteur_3_tmdb_id' => 0,
-                'omdb_enriched_at' => null,
-                'moncine_kind' => MoncineContentKind::FILM,
-                default => '',
-            };
-        }
-
-        if (!array_key_exists('media_domain', $payload)) {
-            $payload['media_domain'] = MediaDomain::FILM;
-        }
-
-        return $payload;
+        return CatalogSchema::completeOeuvrePayload($payload);
     }
 
     /**

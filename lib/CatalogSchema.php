@@ -49,6 +49,31 @@ final class CatalogSchema
         'saga_ordre',
     ];
 
+    /**
+     * Complète un payload oeuvres avec les champs manquants (évite les NULL sur NOT NULL).
+     *
+     * @param array<string, mixed> $payload
+     * @return array<string, mixed>
+     */
+    public static function completeOeuvrePayload(array $payload): array
+    {
+        foreach (self::OEUVRE_FIELDS as $field) {
+            if (array_key_exists($field, $payload)) {
+                continue;
+            }
+            $payload[$field] = match ($field) {
+                'duree_min', 'annee', 'tmdb_id', 'realisateur_tmdb_id',
+                'acteur_1_tmdb_id', 'acteur_2_tmdb_id', 'acteur_3_tmdb_id',
+                'saga_ordre' => 0,
+                'omdb_enriched_at' => null,
+                'moncine_kind' => MoncineContentKind::FILM,
+                default => '',
+            };
+        }
+
+        return $payload;
+    }
+
     public const JOIN = 'bibliotheque b INNER JOIN oeuvres o ON o.id = b.oeuvre_id';
 
     public static function selectFilmRow(): string

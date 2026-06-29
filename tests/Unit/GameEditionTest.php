@@ -18,6 +18,14 @@ final class GameEditionTest extends TestCase
             GamePhysicalSupport::normalizeFromPost(['cd_dvd', 'disquette', 'cd_dvd'])
         );
         $this->assertSame(['CD / DVD'], GamePhysicalSupport::displayLabels('cd_dvd'));
+        $this->assertSame(
+            ['Disquette/cartouche'],
+            GamePhysicalSupport::displayLabels('disquette')
+        );
+        $this->assertSame(
+            'disquette',
+            GamePhysicalSupport::normalizeFromPost(['cartouche'])
+        );
     }
 
     public function testPcDigitalStoresWithUrls(): void

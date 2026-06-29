@@ -34,6 +34,7 @@ $originalGameLabel = trim((string) ($gameRow['original_game_label'] ?? ''));
            class="catalog-title-autocomplete__input"
            autocomplete="off" autocapitalize="off" spellcheck="false"
            placeholder="Tapez le titre — ne choisissez pas un jeu déjà listé"
+           value="<?= Moncine\View::escape((string) ($gameRow['titre'] ?? '')) ?>"
            aria-autocomplete="list" aria-controls="catalog-game-title-suggestions"
            aria-expanded="false">
     <ul class="catalog-title-autocomplete__list" id="catalog-game-title-suggestions"

@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.6.7** (2026-06-29)  
+**Version actuelle : 0.6.8** (2026-06-30)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -40,6 +40,11 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.6.8** — propositions jeux au catalogue (2026-06-30)
+
+- `/proposer-jeu.php`, validation admin, enrichissement IGDB ; plateforme **SNES** (migration 053).
+- Fix insertion catalogue jeux (`oeuvres.saga`) et formulaire d’examen admin.
 
 ### ✅ **0.6.7** — partage visiteur jeux et jaquettes (2026-06-29)
 
@@ -431,4 +436,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.6.7** — 2026-06-29 (partage visiteur, jaquettes publiques).*
+*Dernière mise à jour : **0.6.8** — 2026-06-30 (propositions jeux catalogue, SNES).*

@@ -23,7 +23,13 @@
         <h1>Ajouter — <?= Moncine\View::escape($statutLabel) ?></h1>
         <p class="lead">
             Tapez le titre du jeu : si une fiche existe déjà au catalogue partagé, choisissez-la dans la liste.
-            Sinon, complétez le formulaire pour créer une nouvelle fiche.
+            <?php if ($canManageCatalog): ?>
+                Sinon, complétez le formulaire pour créer une nouvelle fiche.
+            <?php elseif (Moncine\CatalogSubmission::canSubmit()): ?>
+                Sinon, <a href="/proposer-jeu.php">proposez une nouvelle fiche</a> à l’administrateur.
+            <?php else: ?>
+                Sinon, demandez à l’administrateur d’ajouter le jeu au catalogue.
+            <?php endif; ?>
         </p>
         <p><a href="/ajouter-jeu.php" class="btn btn-secondary btn-sm">← Changer de destination</a></p>
 

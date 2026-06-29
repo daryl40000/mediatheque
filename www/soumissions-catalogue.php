@@ -10,6 +10,10 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\CatalogAdmin;
 use Moncine\CatalogSubmission;
 use Moncine\FilmEnricher;
+use Moncine\GameEnricher;
+use Moncine\GamePlatform;
+use Moncine\GameRepository;
+use Moncine\MediaDomain;
 use Moncine\View;
 
 CatalogAdmin::denyUnlessAccess();
@@ -32,4 +36,7 @@ View::render('soumissions-catalogue', [
     'approved' => isset($_GET['approved']) && (string) $_GET['approved'] === '1',
     'rejected' => isset($_GET['rejected']) && (string) $_GET['rejected'] === '1',
     'hasTmdbKey' => FilmEnricher::canEnrich(),
+    'hasIgdbKey' => GameEnricher::canEnrich(),
+    'platformChoices' => GameRepository::isAvailable() ? GamePlatform::choices() : [],
+    'knownGenres' => GameRepository::isAvailable() ? (new GameRepository())->listKnownGenres() : [],
 ]);

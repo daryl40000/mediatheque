@@ -16,7 +16,10 @@
     <?php endif; ?>
 
     <p>
-        <a href="/proposer-oeuvre.php" class="btn btn-primary">Proposer une nouvelle œuvre</a>
+        <a href="/proposer-oeuvre.php" class="btn btn-primary">Proposer un film</a>
+        <?php if (Moncine\GameRepository::isAvailable() && Moncine\CatalogSubmission::canSubmit()): ?>
+            <a href="/proposer-jeu.php" class="btn btn-secondary">Proposer un jeu</a>
+        <?php endif; ?>
     </p>
 
     <?php if ($submissions === []): ?>
@@ -37,11 +40,16 @@
                     $payload = is_array($row['payload'] ?? null) ? $row['payload'] : [];
                     $status = (string) ($row['status'] ?? '');
                     $oeuvreId = (int) ($row['resulting_oeuvre_id'] ?? 0);
+                    $rowDomain = Moncine\CatalogSubmissionPayload::domain($payload);
+                    $isGameRow = Moncine\MediaDomain::isGame($rowDomain);
                     ?>
                     <tr>
                         <td>
+                            <span class="hint"><?= Moncine\View::escape(Moncine\MediaDomain::label($rowDomain)) ?></span><br>
                             <strong><?= Moncine\View::escape((string) ($payload['titre'] ?? '—')) ?></strong>
-                            <?php if (trim((string) ($payload['realisateur'] ?? '')) !== ''): ?>
+                            <?php if ($isGameRow && trim((string) ($payload['studio'] ?? '')) !== ''): ?>
+                                <br><span class="hint"><?= Moncine\View::escape((string) $payload['studio']) ?></span>
+                            <?php elseif (trim((string) ($payload['realisateur'] ?? '')) !== ''): ?>
                                 <br><span class="hint"><?= Moncine\View::escape((string) $payload['realisateur']) ?></span>
                             <?php endif; ?>
                         </td>
@@ -53,9 +61,16 @@
                         <td><?= Moncine\View::escape((string) ($row['created_at'] ?? '')) ?></td>
                         <td>
                             <?php if ($status === Moncine\CatalogSubmissionRepository::STATUS_APPROVED && $oeuvreId > 0): ?>
-                                <a href="<?= Moncine\View::escape(Moncine\View::addFilmChoiceUrl($oeuvreId)) ?>">Ajouter à mes films ou envies</a>
-                                <?php if (Moncine\CatalogAdmin::canAccess()): ?>
-                                    · <a href="/oeuvre.php?id=<?= $oeuvreId ?>">Fiche catalogue</a>
+                                <?php if ($isGameRow): ?>
+                                    <a href="<?= Moncine\View::escape(Moncine\View::addGameChoiceUrl($oeuvreId)) ?>">Ajouter à Mes jeux ou envies</a>
+                                    <?php if (Moncine\CatalogAdmin::canAccess()): ?>
+                                        · <a href="/oeuvre-jeu.php?id=<?= $oeuvreId ?>">Fiche catalogue</a>
+                                    <?php endif; ?>
+                                <?php else: ?>
+                                    <a href="<?= Moncine\View::escape(Moncine\View::addFilmChoiceUrl($oeuvreId)) ?>">Ajouter à mes films ou envies</a>
+                                    <?php if (Moncine\CatalogAdmin::canAccess()): ?>
+                                        · <a href="/oeuvre.php?id=<?= $oeuvreId ?>">Fiche catalogue</a>
+                                    <?php endif; ?>
                                 <?php endif; ?>
                             <?php elseif ($status === Moncine\CatalogSubmissionRepository::STATUS_REJECTED): ?>
                                 <?php if (trim((string) ($row['review_note'] ?? '')) !== ''): ?>

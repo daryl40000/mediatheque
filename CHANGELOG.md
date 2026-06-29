@@ -13,6 +13,25 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.6.8] — 2026-06-30
+
+**Jeux : propositions au catalogue, plateforme SNES, correctifs validation admin**
+
+### Ajouté
+
+- **Propositions jeux au catalogue** : `/proposer-jeu.php` pour les utilisateurs (comme `/proposer-oeuvre.php` pour les films) ; validation admin sur `/soumissions-catalogue.php` avec enrichissement IGDB optionnel.
+- **`GameManualEdit`**, **`CatalogSubmissionPayload`** (domaine film/jeu), formulaire `_game_catalog_submission_form.php`.
+- **Plateforme SNES** : migration **053** (`snes` — Super Nintendo).
+- **Tests** : `CatalogSubmissionTest::testUserCanSubmitGameAndAdminApproves`.
+
+### Corrigé
+
+- **Examen admin proposition jeu** : titre et champs préremplis ; formulaire de révision dédié.
+- **Validation proposition jeu** : insertion catalogue sans erreur sur `oeuvres.saga` / `saga_ordre` (`CatalogSchema::completeOeuvrePayload`).
+- **Notifications** : lien « proposition acceptée » vers `/ajouter-jeu.php` pour les jeux.
+- **Plateformes** : cases cochées conservées si la clé n’est pas encore dans `game_platform` (ex. avant migration).
+- **Support physique console** : libellé **Disquette/cartouche** (jeux SNES, Mega Drive, etc.) ; alias `cartouche` en import/saisie.
+
 ## [0.6.7] — 2026-06-29
 
 **Partage visiteur : pages publiques, jaquettes et liens jeux**

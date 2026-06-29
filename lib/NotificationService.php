@@ -157,19 +157,32 @@ final class NotificationService
 
         $titre = trim($titre);
         if ($titre === '' && $oeuvreId > 0) {
-            $oeuvre = (new OeuvreRepository())->findById($oeuvreId);
+            $oeuvre = (new OeuvreRepository())->findByIdForAdmin($oeuvreId);
             $titre = trim((string) ($oeuvre['titre'] ?? ''));
         }
         if ($titre === '') {
             $titre = 'votre proposition';
         }
 
+        $mediaDomain = MediaDomain::FILM;
+        if ($oeuvreId > 0) {
+            $oeuvre = (new OeuvreRepository())->findByIdForAdmin($oeuvreId);
+            $mediaDomain = (string) ($oeuvre['media_domain'] ?? MediaDomain::FILM);
+        }
+
         $link = $oeuvreId > 0
-            ? View::addFilmChoiceUrl($oeuvreId)
+            ? (MediaDomain::isGame($mediaDomain)
+                ? View::addGameChoiceUrl($oeuvreId)
+                : View::addFilmChoiceUrl($oeuvreId))
             : '/mes-soumissions.php';
         $title = 'Proposition acceptée — ' . $titre;
-        $body = '« ' . $titre . ' » est dans le catalogue Moncine.';
-        $body .= ' Cliquez pour l’ajouter à Mes films (collection) ou à Mes envies.';
+        if (MediaDomain::isGame($mediaDomain)) {
+            $body = '« ' . $titre . ' » est dans le catalogue jeux.';
+            $body .= ' Cliquez pour l’ajouter à Mes jeux (collection) ou à Mes envies jeux.';
+        } else {
+            $body = '« ' . $titre . ' » est dans le catalogue Moncine.';
+            $body .= ' Cliquez pour l’ajouter à Mes films (collection) ou à Mes envies.';
+        }
         if (trim($reviewNote) !== '') {
             $body .= "\n\nMessage de l’administrateur : " . trim($reviewNote);
         }

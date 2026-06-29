@@ -124,6 +124,7 @@ $mediaCssVars = implode('; ', [
                     '/rechercher-utilisateurs.php',
                     '/import.php',
                     '/proposer-oeuvre.php',
+                    '/proposer-jeu.php',
                     '/mes-soumissions.php',
                 ];
                 $parametresOpen = in_array($currentPath, $parametresPaths, true);
@@ -137,7 +138,7 @@ $mediaCssVars = implode('; ', [
                         <a href="/mes-prets.php"<?= $currentPath === '/mes-prets.php' ? ' aria-current="page"' : '' ?>>Mes prêts</a>
                         <a href="/rechercher-utilisateurs.php"<?= $currentPath === '/rechercher-utilisateurs.php' ? ' aria-current="page"' : '' ?>>Rechercher des utilisateurs</a>
                         <?php if ($canProposeToCatalog): ?>
-                            <a href="/proposer-oeuvre.php"<?= in_array($currentPath, ['/proposer-oeuvre.php', '/mes-soumissions.php'], true) ? ' aria-current="page"' : '' ?>>
+                            <a href="/proposer-oeuvre.php"<?= in_array($currentPath, ['/proposer-oeuvre.php', '/proposer-jeu.php', '/mes-soumissions.php'], true) ? ' aria-current="page"' : '' ?>>
                                 Proposer au catalogue
                             </a>
                         <?php endif; ?>

@@ -275,6 +275,7 @@ Liste complète : voir [`sql/schema.sql`](../sql/schema.sql).
 | 050 | `050_game_platform.sql` | Table `game_platform` |
 | 051 | `051_oeuvre_jeu_multi_platform.sql` | Plateformes catalogue et bibliothèque |
 | 052 | `052_oeuvres_saga.sql` | Sagas films sur `oeuvres` (catalogue partagé) |
+| 053 | `053_game_platform_snes.sql` | Plateforme Super Nintendo (`snes`) |
 
 Migration transversale multi-médias : **030** (`media_domain` sur `oeuvres`).
 
@@ -304,4 +305,4 @@ Détails : [conventions-techniques.md](conventions-techniques.md) §4.
 
 ---
 
-*Dernière mise à jour : **0.6.5** (2026-06-16) — sagas films catalogue (`oeuvres.saga`, migration 052).*
+*Dernière mise à jour : **0.6.8** (2026-06-30) — propositions jeux catalogue, plateforme SNES.*

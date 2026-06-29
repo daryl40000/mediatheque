@@ -6,9 +6,13 @@
  * @var bool $approved
  * @var bool $rejected
  * @var bool $hasTmdbKey
+ * @var bool $hasIgdbKey
  * @var int $pendingCount
+ * @var array<string, string> $platformChoices
+ * @var list<string> $knownGenres
  */
 $reviewId = $review !== null ? (int) ($review['id'] ?? 0) : 0;
+$reviewIsGame = $review !== null && Moncine\MediaDomain::isGame((string) ($review['submission_domain'] ?? ''));
 ?>
 <section class="catalog-submission-admin">
     <div class="catalog-admin-page__head">
@@ -36,7 +40,7 @@ $reviewId = $review !== null ? (int) ($review['id'] ?? 0) : 0;
 
     <?php if ($review !== null && $reviewId > 0): ?>
         <section class="catalog-submission-review">
-            <h2>Examiner la proposition #<?= $reviewId ?></h2>
+            <h2>Examiner la proposition #<?= $reviewId ?> — <?= Moncine\View::escape(Moncine\MediaDomain::label((string) ($review['submission_domain'] ?? ''))) ?></h2>
             <p class="hint">
                 Proposée par <strong><?= Moncine\View::escape(
                     Moncine\View::userDisplayName(is_array($review['submitter'] ?? null) ? $review['submitter'] : [])
@@ -55,6 +59,22 @@ $reviewId = $review !== null ? (int) ($review['id'] ?? 0) : 0;
                 <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
                 <input type="hidden" name="submission_id" value="<?= $reviewId ?>">
 
+                <?php if ($reviewIsGame): ?>
+                    <?php
+                    $formAction = '';
+                    $fieldPrefix = 'review_game';
+                    $game = is_array($review['form_prefill'] ?? null) ? $review['form_prefill'] : [];
+                    $userNote = '';
+                    $showUserNote = false;
+                    $submitLabel = '';
+                    $cancelUrl = '';
+                    $hiddenFields = [];
+                    $isReviewMode = true;
+                    $platformChoices = $platformChoices ?? Moncine\GamePlatform::choices();
+                    $knownGenres = $knownGenres ?? [];
+                    require MONCINE_ROOT . '/templates/_game_catalog_submission_form.php';
+                    ?>
+                <?php else: ?>
                 <?php
                 $formAction = '';
                 $fieldPrefix = 'review';
@@ -66,6 +86,7 @@ $reviewId = $review !== null ? (int) ($review['id'] ?? 0) : 0;
                 $hiddenFields = [];
                 require MONCINE_ROOT . '/templates/_catalog_submission_form.php';
                 ?>
+                <?php endif; ?>
 
                 <fieldset>
                     <legend>Réponse administrateur</legend>
@@ -78,9 +99,13 @@ $reviewId = $review !== null ? (int) ($review['id'] ?? 0) : 0;
                     <button type="submit" name="action" value="approve" class="btn btn-primary">
                         Accepter et publier au catalogue
                     </button>
-                    <?php if ($hasTmdbKey): ?>
+                    <?php if (!$reviewIsGame && $hasTmdbKey): ?>
                         <button type="submit" name="action" value="approve_enrich" class="btn btn-secondary">
                             Accepter avec enrichissement TMDB
+                        </button>
+                    <?php elseif ($reviewIsGame && !empty($hasIgdbKey)): ?>
+                        <button type="submit" name="action" value="approve_enrich" class="btn btn-secondary">
+                            Accepter avec enrichissement IGDB
                         </button>
                     <?php endif; ?>
                     <button type="submit" name="action" value="reject" class="btn btn-danger">
@@ -104,11 +129,17 @@ $reviewId = $review !== null ? (int) ($review['id'] ?? 0) : 0;
             </thead>
             <tbody>
                 <?php foreach ($pending as $row): ?>
-                    <?php $payload = is_array($row['payload'] ?? null) ? $row['payload'] : []; ?>
+                    <?php
+                    $payload = is_array($row['payload'] ?? null) ? $row['payload'] : [];
+                    $rowDomain = Moncine\CatalogSubmissionPayload::domain($payload);
+                    ?>
                     <tr>
                         <td>
+                            <span class="hint"><?= Moncine\View::escape(Moncine\MediaDomain::label($rowDomain)) ?></span><br>
                             <strong><?= Moncine\View::escape((string) ($payload['titre'] ?? '—')) ?></strong>
-                            <?php if (trim((string) ($payload['realisateur'] ?? '')) !== ''): ?>
+                            <?php if (Moncine\MediaDomain::isGame($rowDomain) && trim((string) ($payload['studio'] ?? '')) !== ''): ?>
+                                <br><span class="hint"><?= Moncine\View::escape((string) $payload['studio']) ?></span>
+                            <?php elseif (trim((string) ($payload['realisateur'] ?? '')) !== ''): ?>
                                 <br><span class="hint"><?= Moncine\View::escape((string) $payload['realisateur']) ?></span>
                             <?php endif; ?>
                         </td>
