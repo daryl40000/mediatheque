@@ -23,6 +23,7 @@
             <p class="hint"><a href="/maintenance-medias.php">Stockage médias (PDF, exports…) →</a>
                 · <a href="/maintenance-magazine-sujets.php">Sujets magazines (nettoyage) →</a>
                 · <a href="/maintenance-magazine-jeux-liens.php">Liens magazine ↔ jeux →</a>
+                · <a href="/plateformes-jeux.php">Plateformes jeux →</a>
                 · <a href="/import-catalogue-magazines.php">Import catalogue magazines (JSON) →</a></p>
         </div>
     </div>

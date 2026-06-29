@@ -38,12 +38,27 @@ $repo = new GameRepository();
 
 $editions = GameRepository::editionPayloadFromPost($_POST);
 $linuxFlags = GameRepository::linuxFlagsFromPost($_POST);
+$platformPayload = GameRepository::catalogPlatformsFromPost($_POST);
+$ownedPayload = GameRepository::ownedPlatformsFromPost($_POST, $platformPayload['platforms']);
 $libraryDetails = array_merge($editions, $linuxFlags, [
-    'platform' => (string) ($_POST['platform'] ?? ''),
+    'owned_platforms' => $ownedPayload['owned_platform_list'],
+    'non_pretable' => GameRepository::nonPretableFromPost($_POST),
 ]);
 
 $oeuvreId = max(0, (int) ($_POST['oeuvre_id'] ?? 0));
+if (!UserContext::canManageCatalog() && $oeuvreId <= 0) {
+    header('Location: ' . $returnUrl . '&error=' . rawurlencode(
+        'Choisissez un jeu dans le catalogue partagé (tapez le titre et cliquez sur une suggestion).'
+    ));
+    exit;
+}
 if ($oeuvreId > 0) {
+    $catalogGame = $repo->findCatalogByOeuvreId($oeuvreId);
+    $catalogCsv = $catalogGame !== null
+        ? \Moncine\GamePlatformList::serializeList(\Moncine\GamePlatformList::catalogKeysFromRow($catalogGame))
+        : '';
+    $ownedFromCatalog = GameRepository::ownedPlatformsFromPost($_POST, $catalogCsv);
+    $libraryDetails['owned_platforms'] = $ownedFromCatalog['owned_platform_list'];
     $result = $repo->addFromCatalogOeuvre($oeuvreId, $statut, $userId, $foyerId, $libraryDetails);
 } else {
     $result = $repo->createWithLibrary(array_merge([
@@ -52,7 +67,6 @@ if ($oeuvreId > 0) {
         'studio' => (string) ($_POST['studio'] ?? ''),
         'editeur' => (string) ($_POST['editeur'] ?? ''),
         'genre' => GameGenre::normalizeFromPost($_POST['genres'] ?? []),
-        'platform' => (string) ($_POST['platform'] ?? ''),
         'synopsis' => (string) ($_POST['synopsis'] ?? ''),
         'poster_url' => '',
         'is_extension' => !empty($_POST['is_extension']),
@@ -61,7 +75,8 @@ if ($oeuvreId > 0) {
         'original_game_oeuvre_id' => (int) ($_POST['original_game_oeuvre_id'] ?? 0),
         'tested_on_linux' => $linuxFlags['tested_on_linux'],
         'linux_not_supported' => $linuxFlags['linux_not_supported'],
-    ], $editions), $statut, $userId, $foyerId);
+        'non_pretable' => GameRepository::nonPretableFromPost($_POST),
+    ], $editions, $platformPayload, $ownedPayload), $statut, $userId, $foyerId);
 }
 
 if (!is_int($result)) {

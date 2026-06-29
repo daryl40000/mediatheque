@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.5.7** · **Date : 2026-06-16**
+**Version : 0.6.5** · **Date : 2026-06-16**
 
 ## Objectif
 
@@ -24,7 +24,8 @@ Vue d’ensemble de **toutes** les tables (catalogue, bibliothèque, magazines, 
 | `studio` | Développeur |
 | `editeur` | Éditeur |
 | `genre` | Genres (Action-RPG, FPS…) — liste séparée par virgules |
-| `platform` | Plateforme principale (`pc`, `ps5`, `switch`…) |
+| `platform` | Plateforme principale (`pc`, `ps5`, `switch`…) — conservée pour compatibilité |
+| `platforms` | Toutes les plateformes du titre (liste CSV : `pc,ps5`) — migration **051** |
 | `is_digital` | 1 = version démat, 0 = physique |
 | `physical_supports` | Supports physiques possédés (CD/DVD, disquette…) |
 | `digital_stores` | Magasins démat (Steam, GOG, Epic…) + URLs |
@@ -38,6 +39,14 @@ Vue d’ensemble de **toutes** les tables (catalogue, bibliothèque, magazines, 
 | `game_mode` | Modes de jeu traduits (Solo, Multijoueur…) — tags séparés par virgules |
 | `theme` | Thèmes traduits (Fantasy, Monde ouvert…) — tags séparés par virgules |
 | `alternative_names` | Acronymes IGDB uniquement (GTA, FF…) — tags séparés par virgules |
+
+### Table `game_platform` (migration **050**)
+
+Liste des plateformes configurables par l’administrateur (`/plateformes-jeux.php`) : clé technique, libellé, ordre d’affichage, type (PC / console…), store console associé.
+
+### Colonne `bibliotheque.owned_platforms` (migration **051**)
+
+Plateformes que **vous possédez** pour cet exemplaire (sous-ensemble de `oeuvre_jeu.platforms`). Exemple : un jeu catalogue `pc,ps5` peut être dans votre collection avec `pc` seulement si vous ne l’avez que sur PC.
 
 ### Table `game_attachment`
 
@@ -61,7 +70,10 @@ Migrations :
 - `sql/migrations/044_oeuvre_jeu_extensions.sql` — extensions (DLC) ;
 - `sql/migrations/045_oeuvre_jeu_remakes.sql` — remakes ;
 - `sql/migrations/046_oeuvre_jeu_igdb.sql` — identifiant et date enrichissement IGDB ;
-- `sql/migrations/047_oeuvre_jeu_igdb_metadata.sql` — franchise, modes, thèmes, acronymes.
+- `sql/migrations/047_oeuvre_jeu_igdb_metadata.sql` — franchise, modes, thèmes, acronymes ;
+- `sql/migrations/049_bibliotheque_non_pretable.sql` — option « ne pas prêter » ;
+- `sql/migrations/050_game_platform.sql` — table `game_platform` ;
+- `sql/migrations/051_oeuvre_jeu_multi_platform.sql` — colonnes `platforms` et `owned_platforms`.
 
 ### Enrichissement IGDB (0.5.5)
 
@@ -185,6 +197,7 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | `/enrichir-jeu.php` | Enrichissement IGDB fiche bibliothèque (POST, admin) |
 | `/enrichir-oeuvre-jeu.php` | Enrichissement IGDB fiche catalogue (POST, admin) |
 | `/ajouter-jeu.php` | Formulaire d’ajout (collection ou envie) |
+| `/plateformes-jeux.php` | Admin : liste des plateformes jeux (**0.6.5**) |
 | `/modifier-jeu.php?id=` | Modification fiche catalogue (admin) |
 | `/rechercher-jeux-catalogue.php` | API JSON autocomplétion catalogue |
 | `/marquer-joue.php` | Enregistrer une note sur 10 |
@@ -211,7 +224,12 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | `GameEditionIcons` | URLs des icônes support (images ou repli SVG) |
 | `GameGenre` | Genres réutilisables (tags, comme magazines) |
 | `GameCollectionStats` | Statistiques collection jeux |
-| `GamePlatform` | Liste et normalisation des plateformes |
+| `GamePlatform` | Liste et normalisation des plateformes (délègue au registre) |
+| `GamePlatformRegistry` | Lecture plateformes depuis `game_platform` (**0.6.5**) |
+| `GamePlatformAdmin` | CRUD admin plateformes (**0.6.5**) |
+| `GamePlatformList` | Listes multi-plateformes CSV catalogue / bibliothèque (**0.6.5**) |
+| `LoanEligibility` | Règles de prêt (films, jeux physiques) (**0.6.5**) |
+| `LoanCatalog` | Listes prêts multi-domaines (**0.6.5**) |
 | `GamePhysicalSupport` | Supports physiques (CD/DVD, disquette) |
 | `GameDigitalStore` | Magasins démat PC et stores console |
 | `MagazineGameLink` | Validation et gestion du pont sujet ↔ jeu |
@@ -235,7 +253,43 @@ Méthode : `GameRepository::savePoster()` → `PosterStorage::ensureLocalForOeuv
 | Démat PC | Steam, GOG, Epic — plusieurs magasins, lien HTTPS optionnel par magasin |
 | Démat console | Store imposé (PSN, Xbox, eShop) — **sans** lien personnalisé |
 
-Le panneau démat s’adapte à la plateforme choisie (PC vs console) via JavaScript (`initGameEditionFields`).
+Le panneau démat s’adapte aux **plateformes cochées** (PC vs console) via JavaScript (`initGameEditionFields`, `initGamePlatformFields`).
+
+## Plateformes multi-exemplaires (0.6.5)
+
+| Niveau | Colonne | Rôle |
+|--------|---------|------|
+| Catalogue | `oeuvre_jeu.platforms` | Toutes les plateformes du titre (ex. `pc,ps5`) |
+| Catalogue | `oeuvre_jeu.platform` | Plateforme principale (1ʳᵉ de la liste, rétrocompatibilité) |
+| Bibliothèque | `bibliotheque.owned_platforms` | Plateformes que **vous** possédez pour cet exemplaire |
+
+### Saisie
+
+- **Admin catalogue** : cases « Plateformes disponibles » sur création / édition fiche (`/oeuvre-jeu.php`, maintenance).
+- **Utilisateur** : à l’ajout, choisir le jeu dans le catalogue puis cocher **« Mes plateformes »** uniquement parmi celles du titre.
+- **Non admin** : ne peut pas créer une fiche catalogue jeu — doit choisir une suggestion du catalogue (comme pour les films).
+
+### Admin plateformes
+
+Page `/plateformes-jeux.php` (lien depuis maintenance catalogue) : ajout, modification, désactivation des clés (`pc`, `ps5`, `switch`…).
+
+## Ajout à la bibliothèque (utilisateur, 0.6.5)
+
+Lorsqu’un utilisateur **non administrateur** ajoute un film ou un jeu :
+
+1. Il tape le titre et **choisit une ligne du catalogue** (autocomplétion).
+2. Seuls les champs **exemplaire** s’affichent (plateformes possédées, supports physiques/démat, saga, prêt…).
+3. Les métadonnées catalogue (studio, synopsis, IGDB, jaquette catalogue…) restent **masquées** — elles sont gérées par l’admin ou l’enrichissement IGDB.
+
+## Foyer personnel (0.6.5)
+
+Chaque compte dispose d’un **foyer** pour sa collection partagée :
+
+- À l’**inscription** ou au **premier besoin**, le système crée automatiquement un foyer **« Mon foyer »** si aucun n’est associé (`FoyerRepository::ensurePersonalFoyerForUser`).
+- Un utilisateur **seul** n’a pas besoin qu’un admin le rattache à un foyer pour ajouter des films ou des jeux.
+- S’il **rejoint un groupe famille** plus tard, son `foyer_id` pointe vers le foyer partagé du groupe.
+
+Voir aussi [mediatheque.md](mediatheque.md) (section foyers).
 
 ### Icônes support (0.5.1)
 
@@ -273,6 +327,21 @@ Deux cases **mutuellement exclusives** dans le formulaire d’ajout/modification
 | Linux non supporté | `bibliotheque.linux_not_supported` | Pingouin barré (barre rouge) |
 
 Les badges apparaissent sur la fiche jeu et dans les listes (Mes jeux, Mes envies).
+
+## Prêts entre amis (0.6.5)
+
+Même système que pour les films : un ami peut demander un prêt depuis votre **profil public** (onglet Jeux → collection).
+
+| Règle | Détail |
+|-------|--------|
+| Éligible | Jeu avec **support physique** coché (CD/DVD, disquette…) |
+| Refusé | Jeu **démat seul** (Steam, GOG, etc. sans support physique) |
+| Option | Case **« Ne pas prêter cet exemplaire »** à l’ajout / modification (colonne `bibliotheque.non_pretable`) |
+| Flux | Demande → acceptation (réservation) → validation le jour J → retour — page `/mes-prets.php` |
+
+Les magazines ne sont pas prêtables (PDF / démat).
+
+Voir aussi `LoanEligibility` et `LoanCatalog` dans le code ; migration **049**.
 
 ## Accueil (onglet Jeux)
 

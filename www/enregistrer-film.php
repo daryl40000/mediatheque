@@ -33,7 +33,20 @@ if (!$parsed['ok']) {
     exit;
 }
 
-$filmId = (new FilmRepository())->createManual($parsed['data'], $statut);
+$oeuvreId = max(0, (int) ($parsed['data']['oeuvre_id'] ?? 0));
+if (!UserContext::canManageCatalog() && $oeuvreId <= 0) {
+    header('Location: ' . $backUrl . '&save_error=' . rawurlencode(
+        'Choisissez un film dans le catalogue partagé (tapez le titre et cliquez sur une suggestion).'
+    ));
+    exit;
+}
+
+try {
+    $filmId = (new FilmRepository())->createManual($parsed['data'], $statut);
+} catch (\RuntimeException $e) {
+    header('Location: ' . $backUrl . '&save_error=' . rawurlencode($e->getMessage()));
+    exit;
+}
 if (!is_int($filmId)) {
     header('Location: ' . $backUrl . '&save_error=' . rawurlencode((string) $filmId));
     exit;

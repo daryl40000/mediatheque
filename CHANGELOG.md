@@ -11,6 +11,35 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+---
+
+## [0.6.5] — 2026-06-16
+
+**Jeux : prêts, multi-plateformes, formulaires bibliothèque — Foyers personnels**
+
+### Ajouté
+
+- **Prêts jeux** : bouton « Demander un prêt » sur la collection jeux d’un ami (profil public), même flux que les films (demande → réservation → prêt → retour).
+- **Règles prêts** : jeux avec support physique uniquement ; refus automatique pour exemplaires démat seuls ; magazines non prêtables ; case « Ne pas prêter cet exemplaire » (`bibliotheque.non_pretable`, migration **049**).
+- **Admin plateformes** : page `/plateformes-jeux.php` (libellés, ordre, activation).
+- **Multi-plateformes catalogue** : colonne `oeuvre_jeu.platforms` — un titre peut exister sur PC et console (migration **051**).
+- **Mes plateformes** : colonne `bibliotheque.owned_platforms` — l’utilisateur coche les plateformes qu’il possède pour son exemplaire.
+- **Migrations 050–051** : table `game_platform`, colonnes `platforms` et `owned_platforms`.
+- **Foyer personnel** : création automatique de « Mon foyer » pour tout compte sans foyer (`FoyerRepository::ensurePersonalFoyerForUser`) — inscription, connexion ou premier ajout en collection.
+- **Classes** : `LoanEligibility`, `LoanCatalog`, `GamePlatformRegistry`, `GamePlatformAdmin`, `GamePlatformList`.
+- **Tests** : `LoanEligibilityTest`, `GameLoanTest`, `GamePlatformListTest`, `FoyerTest::testEnsurePersonalFoyerForSoloUser`.
+
+### Modifié
+
+- **Formulaires ajout film / jeu** (utilisateur non admin) : après choix dans le catalogue, seuls les champs **exemplaire** (plateformes possédées, supports, saga…) ; les métadonnées catalogue restent masquées.
+- **Formulaires jeu** : cases à cocher plateformes ; panneaux Linux et démat selon les plateformes cochées ; autocomplétion renvoie `platform_list`.
+- Filtres, statistiques et profil public : prise en charge des plateformes possédées.
+- Page **Mes prêts** et **notifications** : libellés neutres films + jeux.
+
+### Corrigé
+
+- Utilisateur sans foyer : plus d’erreur fatale à l’ajout film/jeu — foyer personnel créé à la volée.
+
 ## [0.6.4] — 2026-06-16
 
 **Correction liens croisés jeux ↔ magazines**

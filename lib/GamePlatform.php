@@ -23,32 +23,28 @@ final class GamePlatform
     /** @return array<string, string> clé interne => libellé affiché */
     public static function choices(): array
     {
-        return [
-            self::PC => 'PC',
-            self::PS5 => 'PlayStation 5',
-            self::PS4 => 'PlayStation 4',
-            self::XBOX_SERIES => 'Xbox Series',
-            self::XBOX_ONE => 'Xbox One',
-            self::SWITCH => 'Nintendo Switch',
-            self::SWITCH2 => 'Nintendo Switch 2',
-            self::MOBILE => 'Mobile',
-            self::MULTI => 'Multi-plateformes',
-            self::OTHER => 'Autre',
-        ];
+        return GamePlatformRegistry::choices(true);
+    }
+
+    /** @return array<string, string> y compris plateformes désactivées (affichage données existantes). */
+    public static function allChoices(): array
+    {
+        return GamePlatformRegistry::choices(false);
     }
 
     public static function isValid(?string $key): bool
     {
-        return $key !== null && $key !== '' && isset(self::choices()[$key]);
+        return GamePlatformRegistry::isValid($key, false);
     }
 
     public static function label(?string $key): string
     {
-        if ($key === null || $key === '') {
-            return '';
-        }
+        return GamePlatformRegistry::label($key);
+    }
 
-        return self::choices()[$key] ?? (string) $key;
+    public static function shortLabel(?string $key): string
+    {
+        return GamePlatformRegistry::shortLabel($key);
     }
 
     /** Normalise une saisie formulaire ou import vers une clé interne (ou vide). */
@@ -59,8 +55,8 @@ final class GamePlatform
             return '';
         }
 
-        if (isset(self::choices()[$raw])) {
-            return $raw;
+        if (GamePlatformRegistry::isValid($raw, false)) {
+            return self::normalizeKey($raw);
         }
 
         $norm = mb_strtolower($raw, 'UTF-8');
@@ -93,43 +89,54 @@ final class GamePlatform
             'multiplateformes' => self::MULTI,
         ];
 
-        return $aliases[$norm] ?? self::OTHER;
+        $mapped = $aliases[$norm] ?? '';
+        if ($mapped !== '' && GamePlatformRegistry::isValid($mapped, false)) {
+            return $mapped;
+        }
+
+        $slug = preg_replace('/[^a-z0-9_]+/', '_', $norm) ?? '';
+        $slug = trim((string) $slug, '_');
+        if ($slug !== '' && GamePlatformRegistry::isValid($slug, false)) {
+            return $slug;
+        }
+
+        return GamePlatformRegistry::isValid(self::OTHER, false) ? self::OTHER : '';
     }
 
-    /** Libellé court pour affichage catalogue (ex. « PS5 »). */
-    public static function shortLabel(?string $key): string
+    public static function normalizeKey(string $raw): string
     {
-        return match (self::normalize($key)) {
-            self::PC => 'PC',
-            self::PS5 => 'PS5',
-            self::PS4 => 'PS4',
-            self::XBOX_SERIES => 'Xbox Series',
-            self::XBOX_ONE => 'Xbox One',
-            self::SWITCH => 'Switch',
-            self::SWITCH2 => 'Switch 2',
-            self::MOBILE => 'Mobile',
-            self::MULTI => 'Multi',
-            self::OTHER => 'Autre',
-            default => '',
-        };
+        $raw = mb_strtolower(trim($raw), 'UTF-8');
+        $raw = preg_replace('/[^a-z0-9_]+/', '_', $raw) ?? '';
+        $raw = trim($raw, '_');
+
+        return $raw;
     }
 
     /** Plateformes consoles (store démat unique, sans lien). */
     public static function isConsole(string $platform): bool
     {
-        return in_array(self::normalize($platform), [
-            self::PS5,
-            self::PS4,
-            self::XBOX_SERIES,
-            self::XBOX_ONE,
-            self::SWITCH,
-            self::SWITCH2,
-        ], true);
+        return GamePlatformRegistry::isConsole($platform);
     }
 
     /** PC : choix Steam / GOG / Epic avec liens magasin. */
     public static function usesPcDigitalStores(string $platform): bool
     {
-        return self::normalize($platform) === self::PC;
+        return GamePlatformRegistry::usesPcDigitalStores($platform);
+    }
+
+    /** @return list<string> */
+    public static function selectedKeysFromPost(array $post, string $arrayField, string $scalarField = ''): array
+    {
+        if (isset($post[$arrayField]) && is_array($post[$arrayField])) {
+            return GamePlatformList::parseList(GamePlatformList::serializeList($post[$arrayField]));
+        }
+
+        if ($scalarField !== '' && isset($post[$scalarField])) {
+            $single = self::normalize((string) $post[$scalarField]);
+
+            return $single !== '' ? [$single] : [];
+        }
+
+        return [];
     }
 }

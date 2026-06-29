@@ -12,6 +12,7 @@ use Moncine\GamePlatform;
 use Moncine\GameRepository;
 use Moncine\LibraryStatut;
 use Moncine\MediaDomainGuards;
+use Moncine\UserContext;
 use Moncine\View;
 
 MediaDomainGuards::renderCollectionPageOrExit();
@@ -31,6 +32,9 @@ $prefillOeuvreId = max(0, (int) ($_GET['oeuvre_id'] ?? 0));
 $prefillGame = null;
 if ($prefillOeuvreId > 0 && GameRepository::isAvailable()) {
     $prefillGame = $repo->findCatalogByOeuvreId($prefillOeuvreId);
+    if (is_array($prefillGame)) {
+        $prefillGame['oeuvre_id'] = $prefillOeuvreId;
+    }
 }
 
 View::render('ajouter-jeu', [
@@ -47,4 +51,5 @@ View::render('ajouter-jeu', [
     'saveError' => trim((string) ($_GET['error'] ?? '')),
     'prefillOeuvreId' => $prefillGame !== null ? $prefillOeuvreId : 0,
     'prefillGame' => $prefillGame,
+    'canManageCatalog' => UserContext::canManageCatalog(),
 ]);

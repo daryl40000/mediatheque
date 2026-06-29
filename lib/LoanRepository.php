@@ -68,7 +68,7 @@ final class LoanRepository
         );
         $activeLoan->execute([$bibliothequeId]);
         if ($activeLoan->fetchColumn()) {
-            return 'Ce film est déjà prêté.';
+            return 'Cet exemplaire est déjà prêté.';
         }
 
         // Valide due_at (ISO yyyy-mm-dd), optionnel.
@@ -133,10 +133,10 @@ final class LoanRepository
         $stmt = $this->db->prepare(
             'SELECT l.id AS loan_id, l.loaned_at, l.due_at, l.returned_at,
                     u.id AS borrower_id, u.nom AS borrower_nom, u.prenom AS borrower_prenom, u.pseudo AS borrower_pseudo,
-                    ' . CatalogSchema::selectFilmRow() . '
+                    ' . LoanCatalog::selectLoanRow() . '
              FROM loans l
              INNER JOIN utilisateurs u ON u.id = l.borrower_user_id
-             INNER JOIN ' . CatalogSchema::JOIN . '
+             INNER JOIN ' . CatalogSchema::JOIN . LoanCatalog::joinExtras() . '
              WHERE l.lender_user_id = ?
                AND l.returned_at IS NULL
                AND b.id = l.bibliotheque_id

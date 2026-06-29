@@ -8,6 +8,9 @@
  * @var string $sortBy
  * @var string $sortDir
  * @var string $profileDomain
+ * @var int $viewerId
+ * @var bool $areFriends
+ * @var array $loanUi
  */
 $sortLink = static function (string $label, string $column) use ($targetUserId, $listMode, $sortBy, $sortDir, $profileDomain): void {
     $active = $sortBy === $column;
@@ -39,6 +42,17 @@ $sortLink = static function (string $label, string $column) use ($targetUserId, 
             $titre = (string) ($game['display_titre'] ?? $game['titre'] ?? '');
             $annee = (int) ($game['annee'] ?? 0);
             $platformShort = (string) ($game['platform_short'] ?? '');
+            $bibliothequeId = (int) ($game['id'] ?? 0);
+            $ownerUserId = (int) ($game['user_id'] ?? 0);
+            $returnTo = '/utilisateur.php?' . http_build_query([
+                'id' => (string) $targetUserId,
+                'liste' => (string) ($listMode ?? 'collection'),
+                'sort' => (string) ($sortBy ?? 'titre'),
+                'dir' => (string) ($sortDir ?? 'asc'),
+                'domain' => (string) ($profileDomain ?? Moncine\MediaDomain::JEU),
+            ], '', '&', PHP_QUERY_RFC3986);
+            $isLoanable = !empty($game['loanable']);
+            $mediaItemLabel = 'jeu';
             ?>
             <li class="collection-grid__item" role="listitem">
                 <article class="collection-grid__card">
@@ -64,6 +78,7 @@ $sortLink = static function (string $label, string $column) use ($targetUserId, 
                             <?php endif; ?>
                         </div>
                     </div>
+                    <?php require MONCINE_ROOT . '/templates/_user_public_loan_panel.php'; ?>
                 </article>
             </li>
         <?php endforeach; ?>

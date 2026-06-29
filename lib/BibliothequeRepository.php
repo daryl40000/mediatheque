@@ -84,16 +84,32 @@ final class BibliothequeRepository
     }
 
     /**
+     * Vérifie qu’un foyer est défini pour une entrée en collection partagée.
+     */
+    public static function validateCollectionFoyer(string $statut, int $foyerId): ?string
+    {
+        if (LibraryStatut::normalize($statut) === LibraryStatut::COLLECTION && $foyerId <= 0) {
+            return 'Aucun foyer n’est associé à votre compte. Demandez à l’administrateur de vous rattacher à un foyer, ou ajoutez ce titre à vos envies.';
+        }
+
+        return null;
+    }
+
+    /**
      * @param array<string, mixed> $libraryData support_physique, format_*, saga, saga_ordre, statut
      */
     public function insert(int $userId, int $foyerId, int $oeuvreId, array $libraryData): int
     {
         $statut = LibraryStatut::normalize((string) ($libraryData['statut'] ?? LibraryStatut::COLLECTION));
-        $rowFoyerId = $statut === LibraryStatut::COLLECTION ? max(0, $foyerId) : null;
-        if ($statut === LibraryStatut::COLLECTION && $rowFoyerId <= 0) {
-            throw new \RuntimeException('Aucun foyer associé à votre compte.');
+        if ($statut === LibraryStatut::COLLECTION && $foyerId <= 0 && FoyerRepository::tableExists($this->db)) {
+            $foyerId = (new FoyerRepository())->ensurePersonalFoyerForUser($userId);
+        }
+        $foyerError = self::validateCollectionFoyer($statut, $foyerId);
+        if ($foyerError !== null) {
+            throw new \RuntimeException($foyerError);
         }
 
+        $rowFoyerId = $statut === LibraryStatut::COLLECTION ? max(0, $foyerId) : null;
         $stmt = $this->db->prepare(
             'INSERT INTO bibliotheque (
                 user_id, foyer_id, oeuvre_id, statut, support_physique, format_image, format_son,

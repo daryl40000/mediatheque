@@ -108,15 +108,19 @@ $originalGameLabel = trim((string) ($gameRow['original_game_label'] ?? ''));
     </fieldset>
 <?php endif; ?>
 
-<label for="<?= Moncine\View::escape($fieldPrefix) ?>_platform">Plateforme principale</label>
-<select name="platform" id="<?= Moncine\View::escape($fieldPrefix) ?>_platform" data-game-platform-select>
-    <option value="">— Choisir —</option>
-    <?php foreach ($platformChoices as $key => $label): ?>
-        <option value="<?= Moncine\View::escape($key) ?>"<?= $selectedPlatform === $key ? ' selected' : '' ?>>
-            <?= Moncine\View::escape($label) ?>
-        </option>
-    <?php endforeach; ?>
-</select>
+<label for="<?= Moncine\View::escape($fieldPrefix) ?>_platform">Plateformes du jeu</label>
+<?php
+$catalogPlatformKeys = $gameRow['platform_list'] ?? Moncine\GamePlatformList::catalogKeysFromRow($gameRow);
+$platformFieldName = 'platforms[]';
+$selectedPlatformKeys = $catalogPlatformKeys;
+$legend = 'Plateformes';
+$hint = 'Cochez toutes les plateformes sur lesquelles ce titre est disponible.';
+$allowedPlatformKeys = null;
+$hidden = false;
+require MONCINE_ROOT . '/templates/_game_platform_checkboxes.php';
+?>
+<input type="hidden" name="platform" id="<?= Moncine\View::escape($fieldPrefix) ?>_platform" data-game-platform-legacy
+       value="<?= Moncine\View::escape((string) ($gameRow['platform'] ?? Moncine\GamePlatformList::primaryKey($catalogPlatformKeys))) ?>">
 
 <label for="<?= Moncine\View::escape($fieldPrefix) ?>_annee">Année de sortie</label>
 <input type="number" name="annee" id="<?= Moncine\View::escape($fieldPrefix) ?>_annee" min="1970" max="2100" step="1"

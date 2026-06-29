@@ -1,6 +1,6 @@
 <?php
 /**
- * Demander un prêt d'un film appartenant à un ami.
+ * Demander un prêt d’un exemplaire (film ou jeu) appartenant à un ami.
  */
 
 declare(strict_types=1);
@@ -41,13 +41,15 @@ if (is_int($result)) {
     // Notification côté propriétaire
     if (NotificationService::isAvailable()) {
         $stmt = Moncine\Database::getInstance()->prepare(
-            'SELECT o.titre
+            'SELECT ' . Moncine\LoanCatalog::notificationSelect() . '
              FROM bibliotheque b INNER JOIN oeuvres o ON o.id = b.oeuvre_id
              WHERE b.id = ? LIMIT 1'
         );
         $stmt->execute([$bibliothequeId]);
-        $titre = (string) ($stmt->fetchColumn() ?: '');
-        (new NotificationService())->notifyLoanRequested($ownerUserId, $userId, $titre);
+        $row = $stmt->fetch() ?: [];
+        $titre = (string) ($row['titre'] ?? '');
+        $mediaDomain = (string) ($row['media_domain'] ?? '');
+        (new NotificationService())->notifyLoanRequested($ownerUserId, $userId, $titre, $mediaDomain);
     }
     header('Location: ' . $returnTo . $sep . 'pret=demande');
 } else {

@@ -115,6 +115,96 @@ final class GameRepository
         return GameSchema::hasLinuxNotSupportedColumn();
     }
 
+    public static function hasNonPretableColumn(): bool
+    {
+        return GameSchema::hasNonPretableColumn();
+    }
+
+    /** @param array<string, mixed> $post */
+    public static function nonPretableFromPost(array $post): bool
+    {
+        return !empty($post['non_pretable']);
+    }
+
+    public static function hasPlatformsColumn(): bool
+    {
+        return GameSchema::hasPlatformsColumn();
+    }
+
+    public static function hasOwnedPlatformsColumn(): bool
+    {
+        return GameSchema::hasOwnedPlatformsColumn();
+    }
+
+    /**
+     * Plateformes catalogue depuis un formulaire (cases platforms[] ou ancien select platform).
+     *
+     * @param array<string, mixed> $post
+     * @return array{platform: string, platforms: string, platform_list: list<string>}
+     */
+    public static function catalogPlatformsFromPost(array $post): array
+    {
+        return self::resolveCatalogPlatformFields($post);
+    }
+
+    /**
+     * Plateformes possédées (sous-ensemble du catalogue).
+     *
+     * @param array<string, mixed> $post
+     * @return array{owned_platforms: string, owned_platform_list: list<string>}
+     */
+    public static function ownedPlatformsFromPost(array $post, string $catalogPlatformsCsv): array
+    {
+        $ownedCsv = GamePlatformList::normalizeOwnedFromPost(
+            $post['owned_platforms'] ?? [],
+            GamePlatformList::parseList($catalogPlatformsCsv)
+        );
+        if ($ownedCsv === '' && isset($post['platform'])) {
+            $legacy = GamePlatform::normalize((string) $post['platform']);
+            $catalogKeys = GamePlatformList::parseList($catalogPlatformsCsv);
+            if ($legacy !== '' && in_array($legacy, $catalogKeys, true)) {
+                $ownedCsv = $legacy;
+            }
+        }
+
+        return [
+            'owned_platforms' => $ownedCsv,
+            'owned_platform_list' => GamePlatformList::parseList($ownedCsv),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array{platform: string, platforms: string, platform_list: list<string>}
+     */
+    public static function resolveCatalogPlatformFields(array $data): array
+    {
+        $keys = [];
+        if (isset($data['platform_list']) && is_array($data['platform_list'])) {
+            $keys = GamePlatformList::parseList(GamePlatformList::serializeList($data['platform_list']));
+        } elseif (isset($data['platforms'])) {
+            if (is_array($data['platforms'])) {
+                $keys = GamePlatformList::parseList(GamePlatformList::serializeList($data['platforms']));
+            } else {
+                $keys = GamePlatformList::parseList((string) $data['platforms']);
+            }
+        } elseif (isset($data['platform'])) {
+            $single = GamePlatform::normalize((string) $data['platform']);
+            if ($single !== '') {
+                $keys = [$single];
+            }
+        }
+
+        $platformsCsv = GamePlatformList::serializeList($keys);
+        $primary = GamePlatformList::primaryKey($keys);
+
+        return [
+            'platform' => $primary,
+            'platforms' => $platformsCsv,
+            'platform_list' => $keys,
+        ];
+    }
+
     /**
      * Exemplaires / éditions depuis un formulaire POST.
      *
@@ -123,12 +213,16 @@ final class GameRepository
      */
     public static function editionPayloadFromPost(array $post): array
     {
-        $platform = GamePlatform::normalize((string) ($post['platform'] ?? ''));
+        $keys = GamePlatform::selectedKeysFromPost($post, 'owned_platforms');
+        if ($keys === []) {
+            $keys = GamePlatform::selectedKeysFromPost($post, 'platforms', 'platform');
+        }
+        $platform = GamePlatformList::primaryKey($keys);
         $physicalSupports = GameSchema::hasEditionColumns()
             ? GamePhysicalSupport::normalizeFromPost($post['physical_supports'] ?? [])
             : '';
         $digitalStores = GameSchema::hasEditionColumns()
-            ? GameDigitalStore::buildFromPost($post, $platform)
+            ? GameDigitalStore::buildFromPostForPlatforms($post, $keys)
             : '';
         $isDigital = !empty($post['is_digital'])
             || GameDigitalStore::hasDigitalEdition($digitalStores, false);
@@ -143,8 +237,11 @@ final class GameRepository
     /** Cases Linux (jeux PC uniquement, mutuellement exclusives). */
     public static function linuxFlagsFromPost(array $post): array
     {
-        $platform = GamePlatform::normalize((string) ($post['platform'] ?? ''));
-        if ($platform !== GamePlatform::PC) {
+        $keys = GamePlatform::selectedKeysFromPost($post, 'owned_platforms');
+        if ($keys === []) {
+            $keys = GamePlatform::selectedKeysFromPost($post, 'platforms', 'platform');
+        }
+        if (!in_array(GamePlatform::PC, $keys, true)) {
             return [
                 'tested_on_linux' => false,
                 'linux_not_supported' => false,
@@ -226,7 +323,8 @@ final class GameRepository
             return 'Un jeu avec ce titre existe déjà au catalogue.';
         }
 
-        $platform = GamePlatform::normalize((string) ($data['platform'] ?? ''));
+        $platformFields = self::resolveCatalogPlatformFields($data);
+        $platform = $platformFields['platform'];
         $relationError = self::validateGameRelationFlags($data);
         if ($relationError !== null) {
             return $relationError;
@@ -245,7 +343,15 @@ final class GameRepository
                 'media_domain' => MediaDomain::JEU,
             ]);
 
-            $this->insertCatalogGameRow($oeuvreId, $data, $platform, false, $isExtension, $baseGameOeuvreId);
+            $this->insertCatalogGameRow(
+                $oeuvreId,
+                $data,
+                $platform,
+                $platformFields['platforms'],
+                false,
+                $isExtension,
+                $baseGameOeuvreId
+            );
 
             $this->db->commit();
 
@@ -400,6 +506,26 @@ final class GameRepository
         $params[] = $bibId;
 
         $this->db->prepare($sql)->execute($params);
+    }
+
+    private function saveNonPretable(int $bibId, bool $nonPretable): void
+    {
+        if (!self::hasNonPretableColumn() || $bibId <= 0) {
+            return;
+        }
+
+        $this->db->prepare('UPDATE bibliotheque SET non_pretable = ? WHERE id = ?')
+            ->execute([$nonPretable ? 1 : 0, $bibId]);
+    }
+
+    private function saveOwnedPlatforms(int $bibId, string $ownedPlatformsCsv): void
+    {
+        if (!self::hasOwnedPlatformsColumn() || $bibId <= 0) {
+            return;
+        }
+
+        $this->db->prepare('UPDATE bibliotheque SET owned_platforms = ? WHERE id = ?')
+            ->execute([$ownedPlatformsCsv, $bibId]);
     }
 
     /**
@@ -651,14 +777,30 @@ final class GameRepository
             return;
         }
 
-        $platform = GamePlatform::normalize((string) ($details['platform'] ?? $game['platform'] ?? ''));
+        $catalogCsv = GamePlatformList::serializeList(GamePlatformList::catalogKeysFromRow($game));
+        $ownedFields = self::ownedPlatformsFromPost($details, $catalogCsv);
+        if ($ownedFields['owned_platforms'] !== '' || array_key_exists('owned_platforms', $details)) {
+            $this->saveOwnedPlatforms($bibId, $ownedFields['owned_platforms']);
+        }
+
+        $ownedList = GamePlatformList::parseList($ownedFields['owned_platforms']);
+        if ($ownedList === []) {
+            $ownedList = GamePlatformList::catalogKeysFromRow($game);
+        }
+        $linuxPlatform = in_array(GamePlatform::PC, $ownedList, true)
+            ? GamePlatform::PC
+            : GamePlatform::normalize((string) ($details['platform'] ?? $game['platform'] ?? ''));
         if (array_key_exists('tested_on_linux', $details) || array_key_exists('linux_not_supported', $details)) {
             $this->saveLinuxFlags(
                 $bibId,
-                $platform,
+                $linuxPlatform,
                 !empty($details['tested_on_linux']),
                 !empty($details['linux_not_supported'])
             );
+        }
+
+        if (array_key_exists('non_pretable', $details)) {
+            $this->saveNonPretable($bibId, !empty($details['non_pretable']));
         }
 
         if (!self::hasEditionColumns()) {
@@ -742,7 +884,15 @@ final class GameRepository
         }
 
         $statut = LibraryStatut::normalize($statut);
-        $platform = GamePlatform::normalize((string) ($data['platform'] ?? ''));
+        $platformFields = self::resolveCatalogPlatformFields($data);
+        $platform = $platformFields['platform'];
+        $ownedFields = self::ownedPlatformsFromPost($data, $platformFields['platforms']);
+        if ($ownedFields['owned_platforms'] === '' && $platformFields['platforms'] !== '') {
+            $ownedFields = [
+                'owned_platforms' => $platformFields['platforms'],
+                'owned_platform_list' => $platformFields['platform_list'],
+            ];
+        }
         $physicalSupports = (string) ($data['physical_supports'] ?? '');
         $digitalStores = (string) ($data['digital_stores'] ?? '');
         $isDigital = !empty($data['is_digital'])
@@ -765,19 +915,24 @@ final class GameRepository
                 'media_domain' => MediaDomain::JEU,
             ]);
 
-            $this->insertCatalogGameRow($oeuvreId, $data, $platform, $isDigital, $isExtension, $baseGameOeuvreId);
+            $this->insertCatalogGameRow($oeuvreId, $data, $platform, $platformFields['platforms'], $isDigital, $isExtension, $baseGameOeuvreId);
 
             $bibId = (new BibliothequeRepository())->insert($userId, $foyerId, $oeuvreId, [
                 'statut' => $statut,
                 'support_physique' => trim((string) ($data['support_physique'] ?? '')),
             ]);
 
+            $linuxPlatform = in_array(GamePlatform::PC, $ownedFields['owned_platform_list'], true)
+                ? GamePlatform::PC
+                : $platform;
             $this->saveLinuxFlags(
                 $bibId,
-                $platform,
+                $linuxPlatform,
                 !empty($data['tested_on_linux']),
                 !empty($data['linux_not_supported'])
             );
+            $this->saveNonPretable($bibId, !empty($data['non_pretable']));
+            $this->saveOwnedPlatforms($bibId, $ownedFields['owned_platforms']);
 
             $this->db->commit();
 
@@ -819,7 +974,10 @@ final class GameRepository
             return 'Fiche catalogue introuvable.';
         }
 
-        $platform = GamePlatform::normalize((string) ($data['platform'] ?? ''));
+        $platformFields = self::resolveCatalogPlatformFields($data);
+        $platform = $platformFields['platform'];
+        $platformsCsv = $platformFields['platforms'];
+        $ownedFields = self::ownedPlatformsFromPost($data, $platformsCsv);
         $physicalSupports = (string) ($data['physical_supports'] ?? '');
         $digitalStores = (string) ($data['digital_stores'] ?? '');
         $isDigital = !empty($data['is_digital'])
@@ -839,14 +997,16 @@ final class GameRepository
             ], ['titre', 'titre_original', 'annee', 'synopsis']);
 
             if (self::hasEditionColumns()) {
+                $platformsSql = self::hasPlatformsColumn() ? ', platforms = ?' : '';
                 $this->db->prepare(
                     'UPDATE oeuvre_jeu SET
                         studio = ?, editeur = ?, genre = ?, platform = ?, is_digital = ?,
                         physical_supports = ?, digital_stores = ?'
+                        . $platformsSql
                         . self::igdbMetadataUpdateSet()
                         . GameRelations::updateSet()
                         . ' WHERE oeuvre_id = ?'
-                )->execute([
+                )->execute(array_merge([
                     trim((string) ($data['studio'] ?? '')),
                     trim((string) ($data['editeur'] ?? '')),
                     GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
@@ -854,34 +1014,35 @@ final class GameRepository
                     $isDigital ? 1 : 0,
                     $physicalSupports,
                     $digitalStores,
-                    ...self::igdbMetadataWriteParams($data),
-                    ...GameRelations::writeParams($data),
-                    $oeuvreId,
-                ]);
+                ], self::hasPlatformsColumn() ? [$platformsCsv] : [], self::igdbMetadataWriteParams($data), GameRelations::writeParams($data), [$oeuvreId]));
             } else {
+                $platformsSql = self::hasPlatformsColumn() ? ', platforms = ?' : '';
                 $this->db->prepare(
                     'UPDATE oeuvre_jeu SET studio = ?, editeur = ?, genre = ?, platform = ?, is_digital = ?'
+                    . $platformsSql
                     . self::igdbMetadataUpdateSet()
                     . GameRelations::updateSet()
                     . ' WHERE oeuvre_id = ?'
-                )->execute([
+                )->execute(array_merge([
                     trim((string) ($data['studio'] ?? '')),
                     trim((string) ($data['editeur'] ?? '')),
                     GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
                     $platform,
                     $isDigital ? 1 : 0,
-                    ...self::igdbMetadataWriteParams($data),
-                    ...GameRelations::writeParams($data),
-                    $oeuvreId,
-                ]);
+                ], self::hasPlatformsColumn() ? [$platformsCsv] : [], self::igdbMetadataWriteParams($data), GameRelations::writeParams($data), [$oeuvreId]));
             }
 
+            $linuxPlatform = in_array(GamePlatform::PC, $ownedFields['owned_platform_list'], true)
+                ? GamePlatform::PC
+                : $platform;
             $this->saveLinuxFlags(
                 $bibId,
-                $platform,
+                $linuxPlatform,
                 !empty($data['tested_on_linux']),
                 !empty($data['linux_not_supported'])
             );
+            $this->saveNonPretable($bibId, !empty($data['non_pretable']));
+            $this->saveOwnedPlatforms($bibId, $ownedFields['owned_platforms']);
 
             $this->db->commit();
 
@@ -918,7 +1079,9 @@ final class GameRepository
             return 'Le titre est obligatoire.';
         }
 
-        $platform = GamePlatform::normalize((string) ($data['platform'] ?? ''));
+        $platformFields = self::resolveCatalogPlatformFields($data);
+        $platform = $platformFields['platform'];
+        $platformsCsv = $platformFields['platforms'];
         $physicalSupports = (string) ($data['physical_supports'] ?? '');
         $digitalStores = (string) ($data['digital_stores'] ?? '');
         $isDigital = !empty($data['is_digital'])
@@ -939,14 +1102,16 @@ final class GameRepository
             ], ['titre', 'titre_original', 'annee', 'synopsis', 'poster_url']);
 
             if (self::hasEditionColumns()) {
+                $platformsSql = self::hasPlatformsColumn() ? ', platforms = ?' : '';
                 $this->db->prepare(
                     'UPDATE oeuvre_jeu SET
                         studio = ?, editeur = ?, genre = ?, platform = ?, is_digital = ?,
                         physical_supports = ?, digital_stores = ?'
+                        . $platformsSql
                         . self::igdbMetadataUpdateSet()
                         . GameRelations::updateSet()
                         . ' WHERE oeuvre_id = ?'
-                )->execute([
+                )->execute(array_merge([
                     trim((string) ($data['studio'] ?? '')),
                     trim((string) ($data['editeur'] ?? '')),
                     GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
@@ -954,26 +1119,22 @@ final class GameRepository
                     $isDigital ? 1 : 0,
                     $physicalSupports,
                     $digitalStores,
-                    ...self::igdbMetadataWriteParams($data),
-                    ...GameRelations::writeParams($data),
-                    $oeuvreId,
-                ]);
+                ], self::hasPlatformsColumn() ? [$platformsCsv] : [], self::igdbMetadataWriteParams($data), GameRelations::writeParams($data), [$oeuvreId]));
             } else {
+                $platformsSql = self::hasPlatformsColumn() ? ', platforms = ?' : '';
                 $this->db->prepare(
                     'UPDATE oeuvre_jeu SET studio = ?, editeur = ?, genre = ?, platform = ?, is_digital = ?'
+                    . $platformsSql
                     . self::igdbMetadataUpdateSet()
                     . GameRelations::updateSet()
                     . ' WHERE oeuvre_id = ?'
-                )->execute([
+                )->execute(array_merge([
                     trim((string) ($data['studio'] ?? '')),
                     trim((string) ($data['editeur'] ?? '')),
                     GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
                     $platform,
                     $isDigital ? 1 : 0,
-                    ...self::igdbMetadataWriteParams($data),
-                    ...GameRelations::writeParams($data),
-                    $oeuvreId,
-                ]);
+                ], self::hasPlatformsColumn() ? [$platformsCsv] : [], self::igdbMetadataWriteParams($data), GameRelations::writeParams($data), [$oeuvreId]));
             }
 
             $this->db->commit();
@@ -1104,10 +1265,13 @@ final class GameRepository
         $linux = GameSchema::hasTestedOnLinuxColumn()
             ? ', b.tested_on_linux' . (GameSchema::hasLinuxNotSupportedColumn() ? ', b.linux_not_supported' : '')
             : '';
+        $nonPretable = GameSchema::hasNonPretableColumn() ? ', b.non_pretable' : '';
+        $ownedPlatforms = GameSchema::hasOwnedPlatformsColumn() ? ', b.owned_platforms' : '';
+        $platformsCol = GameSchema::hasPlatformsColumn() ? ', oj.platforms' : '';
 
         return 'b.id, b.user_id, b.foyer_id, b.oeuvre_id, b.statut, b.support_physique, b.created_at, b.saga_ordre,'
             . ' o.titre, o.titre_original, o.annee, o.poster_url, o.synopsis,'
-            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $edition . $extension . $igdb . $igdbMeta . $linux;
+            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $platformsCol . $edition . $extension . $igdb . $igdbMeta . $linux . $nonPretable . $ownedPlatforms;
     }
 
     private static function selectGameHistoryExtras(): string
@@ -1132,8 +1296,10 @@ final class GameRepository
             ? ', oj.franchise, oj.game_mode, oj.theme, oj.alternative_names'
             : '';
 
+        $platformsCol = GameSchema::hasPlatformsColumn() ? ', oj.platforms' : '';
+
         return 'o.id AS oeuvre_id, o.titre, o.titre_original, o.annee, o.poster_url, o.synopsis,'
-            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $edition . $extension . $igdb . $igdbMeta;
+            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $platformsCol . $edition . $extension . $igdb . $igdbMeta;
     }
 
     /**
@@ -1143,6 +1309,7 @@ final class GameRepository
         int $oeuvreId,
         array $data,
         string $platform,
+        string $platformsCsv,
         bool $isDigital,
         bool $isExtension,
         int $baseGameOeuvreId
@@ -1155,16 +1322,20 @@ final class GameRepository
         $digitalStores = (string) ($data['digital_stores'] ?? '');
 
         if (self::hasEditionColumns()) {
+            $platformsInsert = self::hasPlatformsColumn() ? ', platforms' : '';
+            $platformsValue = self::hasPlatformsColumn() ? ', ?' : '';
             $this->db->prepare(
                 'INSERT INTO oeuvre_jeu (
                     oeuvre_id, studio, editeur, genre, platform, is_digital,
                     physical_supports, digital_stores'
+                    . $platformsInsert
                     . GameRelations::insertColumns()
                     . '
                  ) VALUES (?, ?, ?, ?, ?, ?, ?, ?'
+                    . $platformsValue
                     . GameRelations::insertPlaceholders()
                     . ')'
-            )->execute([
+            )->execute(array_merge([
                 $oeuvreId,
                 trim((string) ($data['studio'] ?? '')),
                 trim((string) ($data['editeur'] ?? '')),
@@ -1173,29 +1344,31 @@ final class GameRepository
                 $isDigital ? 1 : 0,
                 $physicalSupports,
                 $digitalStores,
-                ...GameRelations::writeParams($data),
-            ]);
+            ], self::hasPlatformsColumn() ? [$platformsCsv] : [], GameRelations::writeParams($data)));
 
             return;
         }
 
+        $platformsInsert = self::hasPlatformsColumn() ? ', platforms' : '';
+        $platformsValue = self::hasPlatformsColumn() ? ', ?' : '';
         $this->db->prepare(
             'INSERT INTO oeuvre_jeu (
                 oeuvre_id, studio, editeur, genre, platform, is_digital'
+                . $platformsInsert
                 . GameRelations::insertColumns()
                 . '
              ) VALUES (?, ?, ?, ?, ?, ?'
+                . $platformsValue
                 . GameRelations::insertPlaceholders()
                 . ')'
-        )->execute([
+        )->execute(array_merge([
             $oeuvreId,
             trim((string) ($data['studio'] ?? '')),
             trim((string) ($data['editeur'] ?? '')),
             GameGenre::normalizeInput((string) ($data['genre'] ?? '')),
             $platform,
             $isDigital ? 1 : 0,
-            ...GameRelations::writeParams($data),
-        ]);
+        ], self::hasPlatformsColumn() ? [$platformsCsv] : [], GameRelations::writeParams($data)));
     }
 
     public static function relationInsertColumns(): string

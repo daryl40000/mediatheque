@@ -180,9 +180,14 @@ final class GameListFilter
     public function applyToSql(array &$where, array &$params): void
     {
         if ($this->platform === '_none') {
-            $where[] = '(oj.platform IS NULL OR TRIM(oj.platform) = \'\')';
+            $where[] = '(TRIM(COALESCE(oj.platform, \'\')) = \'\' AND TRIM(COALESCE(oj.platforms, \'\')) = \'\''
+                . ' AND TRIM(COALESCE(b.owned_platforms, \'\')) = \'\')';
         } elseif ($this->platform !== '') {
-            $where[] = 'oj.platform = :filter_platform';
+            $where[] = '('
+                . GamePlatformList::sqlCsvContains('b.owned_platforms', ':filter_platform')
+                . ' OR ' . GamePlatformList::sqlCsvContains('oj.platforms', ':filter_platform')
+                . ' OR oj.platform = :filter_platform'
+                . ')';
             $params['filter_platform'] = $this->platform;
         }
 

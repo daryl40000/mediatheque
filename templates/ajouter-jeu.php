@@ -6,6 +6,8 @@
 /** @var list<string> $knownGenres */
 /** @var bool $moduleAvailable */
 /** @var string $saveError */
+/** @var bool $canManageCatalog */
+/** @var array<string, mixed>|null $prefillGame */
 ?>
 <section>
     <?php if ($showChoice): ?>
@@ -34,13 +36,15 @@
         <?php endif; ?>
 
         <form method="post" action="/enregistrer-jeu.php" class="import-form" enctype="multipart/form-data"
-              data-game-catalog-url="/rechercher-jeux-catalogue.php">
+              data-game-catalog-url="/rechercher-jeux-catalogue.php"
+              data-can-manage-catalog="<?= !empty($canManageCatalog) ? '1' : '0' ?>">
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
             <input type="hidden" name="statut" value="<?= Moncine\View::escape($statut) ?>">
 
             <?php
             $game = is_array($prefillGame ?? null) ? $prefillGame : null;
             $useCatalogAutocomplete = $moduleAvailable;
+            $canManageCatalog = !empty($canManageCatalog);
             require MONCINE_ROOT . '/templates/_game_form_fields.php';
             ?>
 

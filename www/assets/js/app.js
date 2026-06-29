@@ -32,6 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initMagazineSeriesCatalogAutocomplete();
     initMagazineIssueCatalogAutocomplete();
     initTagsBadgeFields();
+    initGamePlatformFields();
     initGameEditionFields();
     initGameRelationFields();
     initGameShelfHoverPreviews();
@@ -295,6 +296,30 @@ function initCollectionBulkSelection() {
 }
 
 /**
+ * Formulaire film : masque les champs catalogue quand une œuvre existante est choisie.
+ */
+function setFilmCatalogLinkedState(form, linked) {
+    if (!form) {
+        return;
+    }
+    const canManageCatalog = form.dataset.canManageCatalog === '1';
+    const catalogEdit = form.querySelector('[data-film-catalog-edit-fields]');
+    const libraryFields = form.querySelector('[data-film-library-fields]');
+    const pickHint = form.querySelector('[data-film-pick-catalog-hint]');
+
+    if (catalogEdit) {
+        catalogEdit.hidden = linked || !canManageCatalog;
+    }
+    if (libraryFields) {
+        libraryFields.hidden = !canManageCatalog && !linked;
+    }
+    if (pickHint) {
+        pickHint.hidden = linked;
+    }
+    form.dataset.filmCatalogLinked = linked ? '1' : '0';
+}
+
+/**
  * Autocomplétion du titre à l’ajout : catalogue partagé (titre — réalisateur).
  */
 function initCatalogTitleAutocomplete() {
@@ -332,6 +357,8 @@ function initCatalogTitleAutocomplete() {
         if (oeuvreIdInput) {
             oeuvreIdInput.value = '';
         }
+        const form = document.querySelector('.film-edit-form');
+        setFilmCatalogLinkedState(form, false);
     };
 
     const fillField = (id, value) => {
@@ -366,6 +393,9 @@ function initCatalogTitleAutocomplete() {
             kindSelect.value = item.content_kind;
             kindSelect.dispatchEvent(new Event('change', { bubbles: true }));
         }
+
+        const form = document.querySelector('.film-edit-form');
+        setFilmCatalogLinkedState(form, true);
 
         closeList();
     };
@@ -488,6 +518,11 @@ function initCatalogTitleAutocomplete() {
             closeList();
         }
     });
+
+    const form = document.querySelector('.film-edit-form');
+    if (form && oeuvreIdInput && String(oeuvreIdInput.value || '').trim() !== '') {
+        setFilmCatalogLinkedState(form, true);
+    }
 }
 
 /** Bascule film / jeu vidéo dans le formulaire admin catalogue. */
@@ -583,6 +618,10 @@ function initGameCatalogAutocompleteRoot(root) {
             oeuvreIdInput.value = '';
         }
         syncGameTypeFieldsetForCatalogLink();
+        const form = root.closest('form');
+        if (form) {
+            setGameCatalogPlatformState(form, [], { catalogLinked: false });
+        }
     };
 
     const syncGameTypeFieldsetForCatalogLink = () => {
@@ -629,8 +668,14 @@ function initGameCatalogAutocompleteRoot(root) {
         fillFieldById(fieldMap.studio, item.studio ?? '');
         fillFieldById(fieldMap.editeur, item.editeur ?? '');
         fillFieldById(fieldMap.synopsis, item.synopsis ?? '');
-        if (item.platform) {
-            fillFieldById(fieldMap.platform, item.platform);
+
+        const form = root.closest('form');
+        const platformKeys = Array.isArray(item.platform_list) && item.platform_list.length > 0
+            ? item.platform_list
+            : (item.platform ? [item.platform] : []);
+        if (form && platformKeys.length > 0) {
+            setGameCatalogPlatformState(form, platformKeys, { catalogLinked: true });
+            fillFieldById(fieldMap.platform, platformKeys[0] ?? item.platform ?? '');
         }
 
         closeList();
@@ -757,6 +802,16 @@ function initGameCatalogAutocompleteRoot(root) {
     });
 
     syncGameTypeFieldsetForCatalogLink();
+    const form = root.closest('form');
+    if (form && oeuvreIdInput && String(oeuvreIdInput.value || '').trim() !== '') {
+        const catalogRoot = form.querySelector('[data-field-name="platforms[]"]');
+        const keys = catalogRoot
+            ? [...catalogRoot.querySelectorAll('input[type="checkbox"]:checked')].map((el) => el.value)
+            : [];
+        if (keys.length > 0) {
+            setGameCatalogPlatformState(form, keys, { catalogLinked: true });
+        }
+    }
 }
 
 /** Affiche les champs « saison » quand la catégorie Série est choisie. */
@@ -1188,7 +1243,122 @@ function initMagazineSeriesTagsField() {
     });
 }
 
-/** Exemplaires jeux : panneaux démat PC vs console selon la plateforme. */
+/** Exemplaires jeux : panneaux démat PC vs console selon les plateformes cochées. */
+function getGameFormPlatformKeys(form) {
+    const catalog = [...form.querySelectorAll('input[name="platforms[]"]:checked')].map((el) => el.value);
+    const owned = [...form.querySelectorAll('input[name="owned_platforms[]"]:checked')].map((el) => el.value);
+    if (owned.length > 0) {
+        return owned;
+    }
+    if (catalog.length > 0) {
+        return catalog;
+    }
+    const legacy = form.querySelector('[data-game-platform-legacy]')?.value || '';
+    return legacy ? [legacy] : [];
+}
+
+/** État plateformes catalogue / exemplaire (lien catalogue ou saisie manuelle). */
+function setGameCatalogPlatformState(form, platformKeys, options = {}) {
+    const catalogLinked = Boolean(options.catalogLinked);
+    const keys = new Set((platformKeys || []).filter(Boolean));
+    const canManageCatalog = form.dataset.canManageCatalog === '1';
+
+    const catalogEditBlock = form.querySelector('[data-game-catalog-edit-fields]');
+    const libraryBlock = form.querySelector('[data-game-library-fields]');
+    const pickHint = form.querySelector('[data-game-pick-catalog-hint]');
+    const catalogBlock = form.querySelector('[data-game-catalog-platforms-fieldset]');
+    const catalogLabel = form.querySelector('label[for="platform"]');
+    const catalogRoot = form.querySelector('[data-field-name="platforms[]"]');
+    const ownedRoot = form.querySelector('[data-field-name="owned_platforms[]"]');
+
+    if (catalogEditBlock) {
+        catalogEditBlock.hidden = catalogLinked || !canManageCatalog;
+    }
+    if (libraryBlock) {
+        libraryBlock.hidden = !canManageCatalog && !catalogLinked;
+    }
+    if (pickHint) {
+        pickHint.hidden = catalogLinked;
+    }
+
+    if (catalogBlock) {
+        catalogBlock.hidden = catalogLinked;
+    }
+    if (catalogLabel) {
+        catalogLabel.hidden = catalogLinked;
+    }
+
+    if (catalogRoot) {
+        catalogRoot.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+            checkbox.checked = keys.has(checkbox.value);
+        });
+    }
+
+    form.dataset.catalogPlatformKeys = catalogLinked ? [...keys].join(',') : '';
+    form.dataset.catalogPlatformLinked = catalogLinked ? '1' : '0';
+
+    if (ownedRoot && catalogLinked) {
+        ownedRoot.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+            checkbox.checked = false;
+        });
+    }
+
+    syncGameOwnedPlatformChoices(form);
+    form.dispatchEvent(new CustomEvent('game-platforms-changed'));
+}
+
+function syncGameOwnedPlatformChoices(form) {
+    const ownedRoot = form.querySelector('[data-field-name="owned_platforms[]"]');
+    const catalogRoot = form.querySelector('[data-field-name="platforms[]"]');
+    if (!ownedRoot) {
+        return;
+    }
+
+    const linked = form.dataset.catalogPlatformLinked === '1';
+    let allowed;
+    if (linked) {
+        allowed = new Set((form.dataset.catalogPlatformKeys || '').split(',').filter(Boolean));
+    } else if (catalogRoot) {
+        allowed = new Set(
+            [...catalogRoot.querySelectorAll('input[type="checkbox"]:checked')].map((el) => el.value)
+        );
+    } else {
+        return;
+    }
+
+    ownedRoot.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+        const label = checkbox.closest('label');
+        const isAllowed = allowed.has(checkbox.value);
+        checkbox.disabled = !isAllowed;
+        if (label) {
+            label.style.display = isAllowed ? '' : 'none';
+            label.hidden = !isAllowed;
+        }
+        if (!isAllowed) {
+            checkbox.checked = false;
+        }
+    });
+}
+
+function initGamePlatformFields() {
+    document.querySelectorAll('form').forEach((form) => {
+        const catalogRoot = form.querySelector('[data-field-name="platforms[]"]');
+        const ownedRoot = form.querySelector('[data-field-name="owned_platforms[]"]');
+        if (!catalogRoot || !ownedRoot) {
+            return;
+        }
+
+        catalogRoot.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
+            checkbox.addEventListener('change', () => {
+                syncGameOwnedPlatformChoices(form);
+                form.dispatchEvent(new CustomEvent('game-platforms-changed'));
+            });
+        });
+
+        syncGameOwnedPlatformChoices(form);
+    });
+}
+
 function initGameEditionFields() {
     const consoleStoreLabels = {
         ps5: 'PlayStation Store',
@@ -1200,15 +1370,14 @@ function initGameEditionFields() {
     };
 
     document.querySelectorAll('form').forEach((form) => {
-        const platformSelect = form.querySelector('[data-game-platform-select]');
         const linuxField = form.querySelector('[data-game-linux-field]');
 
         const refreshLinuxField = () => {
             if (!linuxField) {
                 return;
             }
-            const isPc = (platformSelect?.value || '') === 'pc';
-            linuxField.hidden = !isPc;
+            const keys = getGameFormPlatformKeys(form);
+            linuxField.hidden = !keys.includes('pc');
         };
 
         const testedBox = form.querySelector('[data-linux-tested]');
@@ -1228,36 +1397,41 @@ function initGameEditionFields() {
         testedBox?.addEventListener('change', () => syncLinuxChecks(testedBox));
         notSupportedBox?.addEventListener('change', () => syncLinuxChecks(notSupportedBox));
 
-        platformSelect?.addEventListener('change', refreshLinuxField);
+        form.addEventListener('game-platforms-changed', refreshLinuxField);
+        form.querySelectorAll('input[name="owned_platforms[]"]').forEach((el) => {
+            el.addEventListener('change', refreshLinuxField);
+        });
         refreshLinuxField();
     });
 
     document.querySelectorAll('[data-game-editions-root]').forEach((root) => {
         const form = root.closest('form');
-        const platformSelect = form?.querySelector('[data-game-platform-select]');
         const digitalToggle = root.querySelector('[data-game-digital-toggle]');
         const pcPanel = root.querySelector('[data-game-digital-pc]');
         const consolePanel = root.querySelector('[data-game-digital-console]');
         const consoleLabel = root.querySelector('[data-game-console-store-label]');
 
         const refresh = () => {
-            const platform = platformSelect?.value || '';
+            const keys = form ? getGameFormPlatformKeys(form) : [];
             const digitalOn = Boolean(digitalToggle?.checked);
-            const isPc = platform === 'pc';
-            const isConsole = Object.prototype.hasOwnProperty.call(consoleStoreLabels, platform);
+            const isPc = keys.includes('pc');
+            const consoleKey = keys.find((key) => Object.prototype.hasOwnProperty.call(consoleStoreLabels, key));
 
             if (pcPanel) {
                 pcPanel.hidden = !(digitalOn && isPc);
             }
             if (consolePanel) {
-                consolePanel.hidden = !(digitalOn && isConsole);
+                consolePanel.hidden = !(digitalOn && consoleKey);
             }
-            if (consoleLabel && isConsole) {
-                consoleLabel.textContent = consoleStoreLabels[platform] || '—';
+            if (consoleLabel && consoleKey) {
+                consoleLabel.textContent = consoleStoreLabels[consoleKey] || '—';
             }
         };
 
-        platformSelect?.addEventListener('change', refresh);
+        form?.addEventListener('game-platforms-changed', refresh);
+        form?.querySelectorAll('input[name="owned_platforms[]"]').forEach((el) => {
+            el.addEventListener('change', refresh);
+        });
         digitalToggle?.addEventListener('change', refresh);
         refresh();
     });

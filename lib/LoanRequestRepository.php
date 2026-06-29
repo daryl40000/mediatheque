@@ -59,21 +59,23 @@ final class LoanRequestRepository
             return 'Action impossible.';
         }
 
-        // Vérifie que l'entrée existe, est en collection, et appartient bien au propriétaire (user_id sur bibliotheque).
-        $stmt = $this->db->prepare(
-            'SELECT id, user_id, statut FROM bibliotheque WHERE id = ? LIMIT 1'
-        );
-        $stmt->execute([$bibliothequeId]);
-        $row = $stmt->fetch();
-        if ($row === false) {
-            return 'Film introuvable.';
+        $row = LoanEligibility::fetchBibliothequeRow($this->db, $bibliothequeId);
+        if ($row === null) {
+            return 'Exemplaire introuvable.';
         }
         if ((string) ($row['statut'] ?? '') !== LibraryStatut::COLLECTION) {
-            return 'Ce film ne fait pas partie de la collection.';
+            return 'Cet exemplaire ne fait pas partie de la collection.';
         }
         if ((int) ($row['user_id'] ?? 0) !== $ownerUserId) {
-            return 'Ce film n’appartient pas à cet utilisateur.';
+            return 'Cet exemplaire n’appartient pas à cet utilisateur.';
         }
+
+        $loanable = LoanEligibility::validateLoanRequest($row);
+        if ($loanable !== true) {
+            return $loanable;
+        }
+
+        $mediaLabel = LoanEligibility::mediaItemLabel((string) ($row['media_domain'] ?? MediaDomain::FILM));
 
         // Refuse si déjà prêté (un prêt en cours existe pour cette entrée).
         if (LoanRepository::tableExists()) {
@@ -82,7 +84,7 @@ final class LoanRequestRepository
             );
             $activeLoan->execute([$bibliothequeId]);
             if ($activeLoan->fetchColumn()) {
-                return 'Ce film est déjà prêté.';
+                return 'Ce ' . $mediaLabel . ' est déjà prêté.';
             }
         }
 
@@ -92,7 +94,7 @@ final class LoanRequestRepository
         );
         $reserved->execute([$bibliothequeId, self::STATUS_ACCEPTED]);
         if ($reserved->fetchColumn()) {
-            return 'Ce film est déjà réservé pour un autre prêt.';
+            return 'Ce ' . $mediaLabel . ' est déjà réservé pour un autre prêt.';
         }
 
         $note = trim($note);
@@ -107,7 +109,7 @@ final class LoanRequestRepository
             )->execute([$bibliothequeId, $ownerUserId, $requesterUserId, self::STATUS_PENDING, $note]);
         } catch (\Throwable $e) {
             // Index unique : demande déjà en cours pour cet utilisateur.
-            return 'Une demande est déjà en cours pour ce film.';
+            return 'Une demande est déjà en cours pour cet exemplaire.';
         }
 
         return (int) $this->db->lastInsertId();
@@ -122,10 +124,10 @@ final class LoanRequestRepository
         $stmt = $this->db->prepare(
             'SELECT lr.id AS request_id, lr.bibliotheque_id, lr.status, lr.requested_at, lr.note,
                     u.id AS requester_id, u.nom AS requester_nom, u.prenom AS requester_prenom, u.pseudo AS requester_pseudo,
-                    ' . CatalogSchema::selectFilmRow() . '
+                    ' . LoanCatalog::selectLoanRow() . '
              FROM loan_requests lr
              INNER JOIN utilisateurs u ON u.id = lr.requester_user_id
-             INNER JOIN ' . CatalogSchema::JOIN . '
+             INNER JOIN ' . CatalogSchema::JOIN . LoanCatalog::joinExtras() . '
              WHERE lr.owner_user_id = ?
                AND lr.status = ?
                AND b.id = lr.bibliotheque_id
@@ -145,10 +147,10 @@ final class LoanRequestRepository
         $stmt = $this->db->prepare(
             'SELECT lr.id AS request_id, lr.bibliotheque_id, lr.status, lr.requested_at, lr.responded_at, lr.note,
                     u.id AS requester_id, u.nom AS requester_nom, u.prenom AS requester_prenom, u.pseudo AS requester_pseudo,
-                    ' . CatalogSchema::selectFilmRow() . '
+                    ' . LoanCatalog::selectLoanRow() . '
              FROM loan_requests lr
              INNER JOIN utilisateurs u ON u.id = lr.requester_user_id
-             INNER JOIN ' . CatalogSchema::JOIN . '
+             INNER JOIN ' . CatalogSchema::JOIN . LoanCatalog::joinExtras() . '
              WHERE lr.owner_user_id = ?
                AND lr.status = ?
                AND b.id = lr.bibliotheque_id
@@ -246,13 +248,13 @@ final class LoanRequestRepository
             return 'Demande invalide.';
         }
 
-        // Un seul réservé par film à la fois.
+        // Un seul réservé par exemplaire à la fois.
         $reserved = $this->db->prepare(
             'SELECT 1 FROM loan_requests WHERE bibliotheque_id = ? AND status = ? LIMIT 1'
         );
         $reserved->execute([$bibliothequeId, self::STATUS_ACCEPTED]);
         if ($reserved->fetchColumn()) {
-            return 'Ce film est déjà réservé.';
+            return 'Cet exemplaire est déjà réservé.';
         }
 
         $this->db->prepare(

@@ -125,10 +125,20 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                         <dt>Éditeur</dt>
                         <dd><?= Moncine\View::escape((string) $game['editeur']) ?></dd>
                     <?php endif; ?>
-                    <?php if ((string) ($game['platform_label'] ?? '') !== ''): ?>
-                        <dt>Plateforme</dt>
-                        <dd class="game-detail__platform-row">
-                            <?= Moncine\View::escape((string) $game['platform_label']) ?>
+                    <?php
+                    $platformDisplayKeys = $game['owned_platform_list']
+                        ?? Moncine\GamePlatformList::ownedKeysFromRow(is_array($game) ? $game : []);
+                    if ($platformDisplayKeys === []) {
+                        $platformDisplayKeys = $game['platform_list']
+                            ?? Moncine\GamePlatformList::catalogKeysFromRow(is_array($game) ? $game : []);
+                    }
+                    ?>
+                    <?php if ($platformDisplayKeys !== []): ?>
+                        <dt>Plateforme<?= count($platformDisplayKeys) > 1 ? 's' : '' ?></dt>
+                        <dd class="game-detail__platform-row game-genre-tags">
+                            <?php foreach ($platformDisplayKeys as $platformKey): ?>
+                                <span class="magazine-tag magazine-tag--game-platform"><?= Moncine\View::escape(Moncine\GamePlatform::shortLabel((string) $platformKey)) ?></span>
+                            <?php endforeach; ?>
                         </dd>
                     <?php endif; ?>
                     <?php if ($genreList !== []): ?>

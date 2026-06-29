@@ -35,11 +35,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && LoanRequestRepository::tableExists(
     if ($action === 'accept') {
         $requestId = (int) ($_POST['request_id'] ?? 0);
         $result = $requests->acceptRequest($requestId, $userId);
-        $success = $result === true ? 'Demande acceptée : film réservé.' : '';
+        $success = $result === true ? 'Demande acceptée : exemplaire réservé.' : '';
         $error = $result === true ? '' : (string) $result;
         if ($result === true && NotificationService::isAvailable()) {
             $stmt = Moncine\Database::getInstance()->prepare(
-                'SELECT lr.requester_user_id, o.titre
+                'SELECT lr.requester_user_id, ' . Moncine\LoanCatalog::notificationSelect() . '
                  FROM loan_requests lr
                  INNER JOIN bibliotheque b ON b.id = lr.bibliotheque_id
                  INNER JOIN oeuvres o ON o.id = b.oeuvre_id
@@ -49,8 +49,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && LoanRequestRepository::tableExists(
             $row = $stmt->fetch();
             $requesterId = (int) ($row['requester_user_id'] ?? 0);
             $titre = (string) ($row['titre'] ?? '');
+            $mediaDomain = (string) ($row['media_domain'] ?? '');
             if ($requesterId > 0) {
-                $notifications->notifyLoanAccepted($requesterId, $userId, $titre);
+                $notifications->notifyLoanAccepted($requesterId, $userId, $titre, $mediaDomain);
             }
         }
     } elseif ($action === 'decline') {
@@ -60,7 +61,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && LoanRequestRepository::tableExists(
         $error = $result === true ? '' : (string) $result;
         if ($result === true && NotificationService::isAvailable()) {
             $stmt = Moncine\Database::getInstance()->prepare(
-                'SELECT lr.requester_user_id, o.titre
+                'SELECT lr.requester_user_id, ' . Moncine\LoanCatalog::notificationSelect() . '
                  FROM loan_requests lr
                  INNER JOIN bibliotheque b ON b.id = lr.bibliotheque_id
                  INNER JOIN oeuvres o ON o.id = b.oeuvre_id
@@ -70,8 +71,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && LoanRequestRepository::tableExists(
             $row = $stmt->fetch();
             $requesterId = (int) ($row['requester_user_id'] ?? 0);
             $titre = (string) ($row['titre'] ?? '');
+            $mediaDomain = (string) ($row['media_domain'] ?? '');
             if ($requesterId > 0) {
-                $notifications->notifyLoanDeclined($requesterId, $userId, $titre);
+                $notifications->notifyLoanDeclined($requesterId, $userId, $titre, $mediaDomain);
             }
         }
     } elseif ($action === 'lend') {
@@ -82,7 +84,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && LoanRequestRepository::tableExists(
             $success = 'Prêt enregistré.';
             if (NotificationService::isAvailable()) {
                 $stmt = Moncine\Database::getInstance()->prepare(
-                    'SELECT lr.requester_user_id, o.titre
+                    'SELECT lr.requester_user_id, ' . Moncine\LoanCatalog::notificationSelect() . '
                      FROM loan_requests lr
                      INNER JOIN bibliotheque b ON b.id = lr.bibliotheque_id
                      INNER JOIN oeuvres o ON o.id = b.oeuvre_id
@@ -92,8 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && LoanRequestRepository::tableExists(
                 $row = $stmt->fetch();
                 $requesterId = (int) ($row['requester_user_id'] ?? 0);
                 $titre = (string) ($row['titre'] ?? '');
+                $mediaDomain = (string) ($row['media_domain'] ?? '');
                 if ($requesterId > 0) {
-                    $notifications->notifyLoanLent($requesterId, $userId, $titre);
+                    $notifications->notifyLoanLent($requesterId, $userId, $titre, $mediaDomain);
                 }
             }
         } else {
@@ -103,9 +106,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && LoanRequestRepository::tableExists(
         $loanId = (int) ($_POST['loan_id'] ?? 0);
         $borrowerId = 0;
         $titre = '';
+        $mediaDomain = '';
         if (NotificationService::isAvailable() && $loanId > 0) {
             $stmt = Moncine\Database::getInstance()->prepare(
-                'SELECT l.borrower_user_id, o.titre
+                'SELECT l.borrower_user_id, ' . Moncine\LoanCatalog::notificationSelect() . '
                  FROM loans l
                  INNER JOIN bibliotheque b ON b.id = l.bibliotheque_id
                  INNER JOIN oeuvres o ON o.id = b.oeuvre_id
@@ -115,12 +119,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && LoanRequestRepository::tableExists(
             $row = $stmt->fetch();
             $borrowerId = (int) ($row['borrower_user_id'] ?? 0);
             $titre = (string) ($row['titre'] ?? '');
+            $mediaDomain = (string) ($row['media_domain'] ?? '');
         }
         $result = $loans->markReturned($loanId, $userId);
         $success = $result === true ? 'Retour enregistré.' : '';
         $error = $result === true ? '' : (string) $result;
         if ($result === true && NotificationService::isAvailable() && $borrowerId > 0) {
-            $notifications->notifyLoanReturned($borrowerId, $userId, $titre);
+            $notifications->notifyLoanReturned($borrowerId, $userId, $titre, $mediaDomain);
         }
     }
 }

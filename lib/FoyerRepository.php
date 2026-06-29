@@ -13,6 +13,9 @@ final class FoyerRepository
 {
     public const DEFAULT_NAME = 'Notre foyer';
 
+    /** Nom du foyer créé automatiquement pour un compte seul. */
+    public const PERSONAL_DEFAULT_NAME = 'Mon foyer';
+
     private PDO $db;
 
     public function __construct()
@@ -220,6 +223,24 @@ final class FoyerRepository
         }
 
         return $foyerId;
+    }
+
+    /**
+     * Garantit un foyer pour un compte seul : en crée un si besoin (« Mon foyer »).
+     * Un utilisateur peut ainsi avoir sa collection sans rejoindre un groupe famille.
+     */
+    public function ensurePersonalFoyerForUser(int $userId, string $nom = self::PERSONAL_DEFAULT_NAME): int
+    {
+        if ($userId <= 0 || !self::tableExists($this->db)) {
+            return 0;
+        }
+
+        $existing = $this->currentFoyerIdForUser($userId);
+        if ($existing > 0) {
+            return $existing;
+        }
+
+        return $this->createDefaultForUser($userId, $nom);
     }
 
     public function findForUser(int $userId): ?array

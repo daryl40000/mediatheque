@@ -75,6 +75,26 @@ final class GameSchema
         return self::hasColumn('bibliotheque', 'linux_not_supported');
     }
 
+    public static function hasNonPretableColumn(): bool
+    {
+        return self::hasColumn('bibliotheque', 'non_pretable');
+    }
+
+    public static function hasGamePlatformTable(): bool
+    {
+        return self::tableExists('game_platform');
+    }
+
+    public static function hasPlatformsColumn(): bool
+    {
+        return self::hasColumn('oeuvre_jeu', 'platforms');
+    }
+
+    public static function hasOwnedPlatformsColumn(): bool
+    {
+        return self::hasColumn('bibliotheque', 'owned_platforms');
+    }
+
     public static function hasIgdbColumns(): bool
     {
         return self::hasColumn('oeuvre_jeu', 'igdb_id')

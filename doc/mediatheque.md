@@ -1,6 +1,6 @@
 # Médiathèque — guide du fork
 
-**Version : 0.6.4** · **Date : 2026-06-16**
+**Version : 0.6.5** · **Date : 2026-06-16**
 
 Ce document décrit ce qu’est la **Médiathèque**, ce qui a été livré en **0.1.0**, et comment cela s’articule avec **Monciné**.
 
@@ -129,7 +129,20 @@ Voir `.gitignore` :
 
 Points essentiels :
 
-- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.6.4**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.6.5**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+
+## Foyers et collection partagée (0.6.5)
+
+La **collection** (films, jeux, magazines en statut `collection`) est rattachée à un **foyer** (`bibliotheque.foyer_id`), pas au compte seul. Les **envies** (`wishlist`) restent personnelles (`bibliotheque.user_id`).
+
+| Situation | Comportement |
+|-----------|--------------|
+| Nouveau compte | Création automatique d’un foyer **« Mon foyer »** à l’inscription ou au premier ajout en collection |
+| Utilisateur seul | Peut utiliser la médiathèque sans intervention admin |
+| Groupe famille | Plusieurs comptes partagent le même foyer via invitations (`FamilyGroupService`) |
+| Changement de foyer | L’utilisateur rejoint le foyer du groupe ; sa collection personnelle reste sous l’ancien foyer tant qu’elle n’est pas migrée |
+
+Implémentation : `FoyerRepository::ensurePersonalFoyerForUser()`, appelée depuis `UserContext::currentFoyerId()` et `BibliothequeRepository::insert()`.
 - **`media_domain`** (onglet Films/BD/…) ≠ **`moncine_kind`** (film/série/spectacle dans l’onglet Films).
 - Nouveau code multi-médias : `MediaDomain`, `MediaContext`, `CatalogSchema::applyMediaDomainFilter()`.
 

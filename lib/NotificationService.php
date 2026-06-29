@@ -278,7 +278,7 @@ final class NotificationService
         $this->sendUserEmail($inviteeId, $title, $body, $link);
     }
 
-    public function notifyLoanRequested(int $ownerUserId, int $requesterUserId, string $filmTitle): void
+    public function notifyLoanRequested(int $ownerUserId, int $requesterUserId, string $filmTitle, string $mediaDomain = ''): void
     {
         if (!self::isAvailable() || $ownerUserId <= 0 || $requesterUserId <= 0) {
             return;
@@ -288,7 +288,7 @@ final class NotificationService
             return;
         }
         $label = View::userDisplayName($requester);
-        $filmTitle = trim($filmTitle) !== '' ? trim($filmTitle) : 'un film';
+        $filmTitle = trim($filmTitle) !== '' ? trim($filmTitle) : self::loanTitleFallback($mediaDomain);
         $title = 'Demande de prêt';
         $body = $label . ' souhaite vous emprunter « ' . $filmTitle . ' ».';
         $link = '/mes-prets.php';
@@ -297,7 +297,7 @@ final class NotificationService
         $this->sendUserEmail($ownerUserId, $title, $body, $link);
     }
 
-    public function notifyLoanAccepted(int $requesterUserId, int $ownerUserId, string $filmTitle): void
+    public function notifyLoanAccepted(int $requesterUserId, int $ownerUserId, string $filmTitle, string $mediaDomain = ''): void
     {
         if (!self::isAvailable() || $requesterUserId <= 0 || $ownerUserId <= 0) {
             return;
@@ -307,16 +307,16 @@ final class NotificationService
             return;
         }
         $label = View::userDisplayName($owner);
-        $filmTitle = trim($filmTitle) !== '' ? trim($filmTitle) : 'un film';
+        $filmTitle = trim($filmTitle) !== '' ? trim($filmTitle) : self::loanTitleFallback($mediaDomain);
         $title = 'Prêt accepté (réservé)';
-        $body = $label . ' a accepté votre demande pour « ' . $filmTitle . ' » (film réservé).';
+        $body = $label . ' a accepté votre demande pour « ' . $filmTitle . ' » (exemplaire réservé).';
         $link = View::userProfileUrl($ownerUserId);
 
         $this->repo->insert($requesterUserId, NotificationRepository::KIND_LOAN_ACCEPTED, $title, $body, $link);
         $this->sendUserEmail($requesterUserId, $title, $body, $link);
     }
 
-    public function notifyLoanDeclined(int $requesterUserId, int $ownerUserId, string $filmTitle): void
+    public function notifyLoanDeclined(int $requesterUserId, int $ownerUserId, string $filmTitle, string $mediaDomain = ''): void
     {
         if (!self::isAvailable() || $requesterUserId <= 0 || $ownerUserId <= 0) {
             return;
@@ -326,7 +326,7 @@ final class NotificationService
             return;
         }
         $label = View::userDisplayName($owner);
-        $filmTitle = trim($filmTitle) !== '' ? trim($filmTitle) : 'un film';
+        $filmTitle = trim($filmTitle) !== '' ? trim($filmTitle) : self::loanTitleFallback($mediaDomain);
         $title = 'Prêt refusé';
         $body = $label . ' a refusé votre demande pour « ' . $filmTitle . ' ».';
         $link = View::userProfileUrl($ownerUserId);
@@ -335,7 +335,7 @@ final class NotificationService
         $this->sendUserEmail($requesterUserId, $title, $body, $link);
     }
 
-    public function notifyLoanLent(int $requesterUserId, int $ownerUserId, string $filmTitle): void
+    public function notifyLoanLent(int $requesterUserId, int $ownerUserId, string $filmTitle, string $mediaDomain = ''): void
     {
         if (!self::isAvailable() || $requesterUserId <= 0 || $ownerUserId <= 0) {
             return;
@@ -345,7 +345,7 @@ final class NotificationService
             return;
         }
         $label = View::userDisplayName($owner);
-        $filmTitle = trim($filmTitle) !== '' ? trim($filmTitle) : 'un film';
+        $filmTitle = trim($filmTitle) !== '' ? trim($filmTitle) : self::loanTitleFallback($mediaDomain);
         $title = 'Prêt validé';
         $body = $label . ' a enregistré le prêt de « ' . $filmTitle . ' ».';
         $link = '/mes-prets.php';
@@ -354,7 +354,7 @@ final class NotificationService
         $this->sendUserEmail($requesterUserId, $title, $body, $link);
     }
 
-    public function notifyLoanReturned(int $requesterUserId, int $ownerUserId, string $filmTitle): void
+    public function notifyLoanReturned(int $requesterUserId, int $ownerUserId, string $filmTitle, string $mediaDomain = ''): void
     {
         if (!self::isAvailable() || $requesterUserId <= 0 || $ownerUserId <= 0) {
             return;
@@ -364,13 +364,18 @@ final class NotificationService
             return;
         }
         $label = View::userDisplayName($owner);
-        $filmTitle = trim($filmTitle) !== '' ? trim($filmTitle) : 'un film';
+        $filmTitle = trim($filmTitle) !== '' ? trim($filmTitle) : self::loanTitleFallback($mediaDomain);
         $title = 'Retour enregistré';
         $body = $label . ' a marqué comme rendu « ' . $filmTitle . ' ».';
         $link = '/mes-prets.php';
 
         $this->repo->insert($requesterUserId, NotificationRepository::KIND_LOAN_RETURNED, $title, $body, $link);
         $this->sendUserEmail($requesterUserId, $title, $body, $link);
+    }
+
+    private static function loanTitleFallback(string $mediaDomain): string
+    {
+        return LoanEligibility::mediaItemLabel($mediaDomain) === 'jeu' ? 'un jeu' : 'un film';
     }
 
     private function sendUserEmail(int $userId, string $subject, string $body, string $path): void

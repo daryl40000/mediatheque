@@ -37,9 +37,13 @@ final class GameRowMapper
         }
 
         $parts = [];
-        $platform = GamePlatform::shortLabel((string) ($row['platform'] ?? ''));
-        if ($platform !== '') {
-            $parts[] = $platform;
+        $platformKeys = GamePlatformList::ownedKeysFromRow($row);
+        if ($platformKeys === []) {
+            $platformKeys = GamePlatformList::catalogKeysFromRow($row);
+        }
+        $platformDisplay = GamePlatformList::shortLabelsDisplay($platformKeys);
+        if ($platformDisplay !== '') {
+            $parts[] = $platformDisplay;
         }
         $annee = (int) ($row['annee'] ?? 0);
         if ($annee > 0) {
@@ -70,7 +74,11 @@ final class GameRowMapper
     {
         $titre = GameTitle::displayTitle($row);
         $annee = (int) ($row['annee'] ?? 0);
-        $platformShort = GamePlatform::shortLabel((string) ($row['platform'] ?? ''));
+        $platformKeys = GamePlatformList::ownedKeysFromRow($row);
+        if ($platformKeys === []) {
+            $platformKeys = GamePlatformList::catalogKeysFromRow($row);
+        }
+        $platformShort = GamePlatformList::shortLabelsDisplay($platformKeys);
 
         return [
             'bib_id' => (int) ($row['bib_id'] ?? 0),
@@ -93,9 +101,11 @@ final class GameRowMapper
         $row['id'] = (int) ($row['id'] ?? 0);
         $row['edition_icon_keys'] = GameEditionIcons::iconKeys($row);
         $row['added_at_label'] = self::formatAddedAt((string) ($row['created_at'] ?? ''));
-        $row['is_pc'] = GamePlatform::normalize((string) ($row['platform'] ?? '')) === GamePlatform::PC;
+        $row['is_pc'] = in_array(GamePlatform::PC, GamePlatformList::ownedKeysFromRow($row), true)
+            || in_array(GamePlatform::PC, GamePlatformList::catalogKeysFromRow($row), true);
         $row['tested_on_linux'] = !empty($row['tested_on_linux']);
         $row['linux_not_supported'] = !empty($row['linux_not_supported']);
+        $row['non_pretable'] = !empty($row['non_pretable']);
         $row['linux_badge'] = $row['tested_on_linux']
             ? 'supported'
             : ($row['linux_not_supported'] ? 'unsupported' : '');
@@ -129,8 +139,15 @@ final class GameRowMapper
         $row['original_game_oeuvre_id'] = (int) ($row['original_game_oeuvre_id'] ?? 0);
         $row['igdb_id'] = (int) ($row['igdb_id'] ?? 0);
         $row['display_titre'] = self::displayTitle($row);
-        $row['platform_label'] = GamePlatform::label((string) ($row['platform'] ?? ''));
-        $row['platform_short'] = GamePlatform::shortLabel((string) ($row['platform'] ?? ''));
+        $row['platform_list'] = GamePlatformList::catalogKeysFromRow($row);
+        $row['owned_platform_list'] = GamePlatformList::ownedKeysFromRow($row);
+        $row['platform_label'] = GamePlatformList::shortLabelsDisplay(
+            $row['owned_platform_list'] !== [] ? $row['owned_platform_list'] : $row['platform_list']
+        );
+        if ($row['platform_label'] === '') {
+            $row['platform_label'] = GamePlatform::label((string) ($row['platform'] ?? ''));
+        }
+        $row['platform_short'] = $row['platform_label'];
         $row['display_label'] = self::displayLabel($row);
         $row['genre_list'] = GameGenre::parseList((string) ($row['genre'] ?? ''));
         $row['genre_label'] = GameGenre::displayLabel((string) ($row['genre'] ?? ''));

@@ -187,7 +187,12 @@ final class UtilisateurRepository
             $role,
         ]);
 
-        return (int) $this->db->lastInsertId();
+        $userId = (int) $this->db->lastInsertId();
+        if ($userId > 0 && FoyerRepository::tableExists($this->db)) {
+            (new FoyerRepository())->ensurePersonalFoyerForUser($userId);
+        }
+
+        return $userId;
     }
 
     /**

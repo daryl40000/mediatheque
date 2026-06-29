@@ -12,6 +12,7 @@ $platformChoices = $platformChoices ?? Moncine\GamePlatform::choices();
 $knownGenres = $knownGenres ?? [];
 $knownSagas = $knownSagas ?? [];
 $useCatalogAutocomplete = $useCatalogAutocomplete ?? false;
+$canManageCatalog = $canManageCatalog ?? Moncine\UserContext::canManageCatalog();
 $gameFormFieldPrefix = $gameFormFieldPrefix ?? '';
 
 $gameRow = is_array($game) ? $game : [];
@@ -67,13 +68,39 @@ $oeuvreIdFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_oeuvre
     <p class="hint catalog-title-autocomplete__hint">
         Les suggestions affichent <strong>titre (plateforme · année)</strong>.
         Choisir une ligne réutilise la fiche catalogue partagée.
+        <?php if ($canManageCatalog): ?>
         Pour créer une <strong>nouvelle</strong> fiche (extension ou remake), ne sélectionnez pas la liste — saisissez le titre puis cochez le type ci-dessous si besoin.
+        <?php else: ?>
+        <strong>Choisissez obligatoirement une ligne du catalogue</strong> — vous ne pouvez pas créer une nouvelle fiche jeu vous-même.
+        <?php endif; ?>
     </p>
 <?php else: ?>
 <input type="text" name="titre" id="<?= Moncine\View::escape($titreFieldId) ?>" required maxlength="200"
        value="<?= Moncine\View::escape((string) ($gameRow['titre'] ?? '')) ?>"
        placeholder="Ex. Elden Ring, Gran Turismo 7">
 <?php endif; ?>
+
+<?php
+$catalogPlatformKeys = $gameRow['platform_list'] ?? Moncine\GamePlatformList::catalogKeysFromRow($gameRow);
+$ownedPlatformKeys = $gameRow['owned_platform_list'] ?? Moncine\GamePlatformList::ownedKeysFromRow($gameRow);
+$catalogLinked = $useCatalogAutocomplete && (int) ($gameRow['oeuvre_id'] ?? 0) > 0;
+$showCatalogEditFields = $canManageCatalog && !$catalogLinked;
+$showLibraryFields = $canManageCatalog || $catalogLinked;
+?>
+
+<?php if ($useCatalogAutocomplete && !$canManageCatalog && !$catalogLinked): ?>
+    <p class="alert alert-info" data-game-pick-catalog-hint>
+        Tapez le titre puis <strong>cliquez sur une suggestion du catalogue</strong> pour afficher les champs de votre exemplaire (plateformes possédées, supports…).
+    </p>
+<?php endif; ?>
+
+<?php if ($catalogLinked && !$canManageCatalog): ?>
+    <p class="alert alert-info">
+        Ce jeu est déjà au catalogue partagé. Indiquez seulement <strong>vos plateformes</strong> et les détails de <strong>votre exemplaire</strong>.
+    </p>
+<?php endif; ?>
+
+<div class="game-catalog-edit-fields" data-game-catalog-edit-fields<?= $showCatalogEditFields ? '' : ' hidden' ?>>
 
 <?php
 $titreOriginalFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_titre_original' : 'titre_original';
@@ -158,45 +185,17 @@ $titreOriginalFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_t
     </fieldset>
 <?php endif; ?>
 
-<label for="platform">Plateforme principale</label>
-<select name="platform" id="platform" data-game-platform-select>
-    <option value="">— Choisir —</option>
-    <?php foreach ($platformChoices as $key => $label): ?>
-        <option value="<?= Moncine\View::escape($key) ?>"<?= $selectedPlatform === $key ? ' selected' : '' ?>>
-            <?= Moncine\View::escape($label) ?>
-        </option>
-    <?php endforeach; ?>
-    </select>
-
+<label for="platform"<?= $catalogLinked ? ' hidden' : '' ?>>Plateformes du jeu (catalogue)</label>
 <?php
-$testedOnLinux = !empty($gameRow['tested_on_linux']);
-$linuxNotSupported = !empty($gameRow['linux_not_supported']);
-$linuxFieldAvailable = Moncine\GameRepository::hasTestedOnLinuxColumn();
-$showLinuxFieldInitially = $linuxFieldAvailable && $selectedPlatform === Moncine\GamePlatform::PC;
+$platformFieldName = 'platforms[]';
+$selectedPlatformKeys = $catalogPlatformKeys;
+$legend = 'Plateformes disponibles pour ce jeu';
+$hint = 'Cochez toutes les plateformes sur lesquelles ce titre existe (ex. PC et PlayStation 5).';
+$hidden = $catalogLinked;
+$allowedPlatformKeys = null;
+$fieldsetExtraAttrs = 'data-game-catalog-platforms-fieldset';
+require MONCINE_ROOT . '/templates/_game_platform_checkboxes.php';
 ?>
-<?php if ($linuxFieldAvailable): ?>
-    <div class="game-linux-field" data-game-linux-field<?= $showLinuxFieldInitially ? '' : ' hidden' ?>>
-        <fieldset class="game-linux-fieldset">
-            <legend class="visually-hidden">Compatibilité Linux</legend>
-            <label class="checkbox-inline game-linux-form__label">
-                <input type="checkbox" name="tested_on_linux" value="1" data-linux-tested
-                    <?= $testedOnLinux ? ' checked' : '' ?>>
-                Testé sur Linux
-            </label>
-            <?php if (Moncine\GameRepository::hasLinuxNotSupportedColumn()): ?>
-                <label class="checkbox-inline game-linux-form__label">
-                    <input type="checkbox" name="linux_not_supported" value="1" data-linux-not-supported
-                        <?= $linuxNotSupported ? ' checked' : '' ?>>
-                    Linux non supporté
-                </label>
-            <?php endif; ?>
-        </fieldset>
-        <p class="hint">
-            Jeux PC uniquement — cochez une seule option pour indiquer si le jeu a été testé sous Linux.
-            Sans case cochée, le statut Linux reste inconnu.
-        </p>
-    </div>
-<?php endif; ?>
 
 <label for="annee">Année de sortie</label>
 <input type="number" name="annee" id="annee" min="1970" max="2100" step="1"
@@ -243,6 +242,69 @@ require MONCINE_ROOT . '/templates/_game_genre_tags_field.php';
        value="<?= Moncine\View::escape((string) ($gameRow['alternative_names'] ?? '')) ?>"
        placeholder="Ex. GTA, FF, TLoZ">
 <p class="hint">Séparez plusieurs valeurs par des virgules. Rempli automatiquement par l’enrichissement IGDB.</p>
+<?php endif; ?>
+
+<label for="cover_file">Jaquette catalogue (JPEG, PNG, WebP)</label>
+<input type="file" name="cover_file" id="cover_file" accept="image/jpeg,image/png,image/webp">
+<p class="hint">Image affichée dans le catalogue partagé.</p>
+
+<label for="poster_url">Ou URL de la jaquette catalogue (facultatif)</label>
+<input type="url" name="poster_url" id="poster_url" maxlength="500" placeholder="https://…"
+       value="<?= Moncine\View::escape((string) ($gameRow['poster_url'] ?? '')) ?>">
+<p class="hint">L’image sera <strong>téléchargée et enregistrée sur le serveur</strong>. HTTPS uniquement.</p>
+
+<label for="synopsis">Description catalogue (facultatif)</label>
+<textarea name="synopsis" id="synopsis" rows="4"><?= Moncine\View::escape((string) ($gameRow['synopsis'] ?? '')) ?></textarea>
+
+</div>
+
+<div class="game-library-fields" data-game-library-fields<?= $showLibraryFields ? '' : ' hidden' ?>>
+
+<?php
+$platformFieldName = 'owned_platforms[]';
+$selectedPlatformKeys = $ownedPlatformKeys !== [] ? $ownedPlatformKeys : [];
+$allowedPlatformKeys = $catalogLinked && $catalogPlatformKeys !== [] ? $catalogPlatformKeys : null;
+$legend = 'Mes plateformes (mon exemplaire)';
+$hint = $catalogLinked
+    ? 'Cochez les plateformes sur lesquelles vous possédez ce jeu.'
+    : 'Indiquez les plateformes que vous possédez (selon celles cochées ci-dessus pour un nouveau jeu).';
+$hidden = false;
+$fieldsetExtraAttrs = 'data-game-owned-platforms-fieldset';
+require MONCINE_ROOT . '/templates/_game_platform_checkboxes.php';
+?>
+<input type="hidden" name="platform" id="platform" data-game-platform-legacy
+       value="<?= Moncine\View::escape((string) ($gameRow['platform'] ?? Moncine\GamePlatformList::primaryKey($catalogPlatformKeys))) ?>">
+
+<?php
+$testedOnLinux = !empty($gameRow['tested_on_linux']);
+$linuxNotSupported = !empty($gameRow['linux_not_supported']);
+$linuxFieldAvailable = Moncine\GameRepository::hasTestedOnLinuxColumn();
+$hasPcOwned = in_array(Moncine\GamePlatform::PC, $ownedPlatformKeys, true)
+    || in_array(Moncine\GamePlatform::PC, $catalogPlatformKeys, true);
+$showLinuxFieldInitially = $linuxFieldAvailable && $hasPcOwned;
+?>
+<?php if ($linuxFieldAvailable): ?>
+    <div class="game-linux-field" data-game-linux-field<?= $showLinuxFieldInitially ? '' : ' hidden' ?>>
+        <fieldset class="game-linux-fieldset">
+            <legend class="visually-hidden">Compatibilité Linux</legend>
+            <label class="checkbox-inline game-linux-form__label">
+                <input type="checkbox" name="tested_on_linux" value="1" data-linux-tested
+                    <?= $testedOnLinux ? ' checked' : '' ?>>
+                Testé sur Linux
+            </label>
+            <?php if (Moncine\GameRepository::hasLinuxNotSupportedColumn()): ?>
+                <label class="checkbox-inline game-linux-form__label">
+                    <input type="checkbox" name="linux_not_supported" value="1" data-linux-not-supported
+                        <?= $linuxNotSupported ? ' checked' : '' ?>>
+                    Linux non supporté
+                </label>
+            <?php endif; ?>
+        </fieldset>
+        <p class="hint">
+            Jeux PC uniquement — cochez une seule option pour indiquer si le jeu a été testé sous Linux.
+            Sans case cochée, le statut Linux reste inconnu.
+        </p>
+    </div>
 <?php endif; ?>
 
 <fieldset class="game-editions-fieldset" data-game-editions-root>
@@ -299,13 +361,23 @@ require MONCINE_ROOT . '/templates/_game_genre_tags_field.php';
     </div>
 </fieldset>
 
-<label for="cover_file">Jaquette (JPEG, PNG, WebP)</label>
-<input type="file" name="cover_file" id="cover_file" accept="image/jpeg,image/png,image/webp">
-<p class="hint">Image affichée dans la liste et sur la fiche jeu. Laissez vide pour conserver l’actuelle.</p>
+<?php
+$loanPrefsRow = array_merge(['media_domain' => Moncine\MediaDomain::JEU], $gameRow);
+$showNonPretableField = Moncine\GameRepository::hasNonPretableColumn()
+    && Moncine\LoanEligibility::canToggleNonPretable($loanPrefsRow);
+?>
+<?php if ($showNonPretableField): ?>
+    <fieldset class="game-loan-fieldset">
+        <legend>Prêt entre amis</legend>
+        <label class="checkbox-inline">
+            <input type="checkbox" name="non_pretable" value="1"
+                <?= !empty($gameRow['non_pretable']) ? ' checked' : '' ?>>
+            Ne pas prêter cet exemplaire
+        </label>
+        <p class="hint">
+            Si coché, vos amis ne pourront pas demander un prêt pour ce jeu sur votre profil public.
+        </p>
+    </fieldset>
+<?php endif; ?>
 
-<label for="poster_url">Ou URL de la jaquette (facultatif)</label>
-<input type="url" name="poster_url" id="poster_url" maxlength="500" placeholder="https://…">
-<p class="hint">L’image sera <strong>téléchargée et enregistrée sur le serveur</strong> (comme pour les films). HTTPS uniquement.</p>
-
-<label for="synopsis">Description (facultatif)</label>
-<textarea name="synopsis" id="synopsis" rows="4"><?= Moncine\View::escape((string) ($gameRow['synopsis'] ?? '')) ?></textarea>
+</div>

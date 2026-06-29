@@ -57,6 +57,7 @@ $result = $repo->updateCatalogByOeuvreId($oeuvreId, array_merge([
     'game_mode' => GameGenre::normalizeInput((string) ($_POST['game_mode'] ?? '')),
     'theme' => GameGenre::normalizeInput((string) ($_POST['theme'] ?? '')),
     'alternative_names' => GameGenre::normalizeInput((string) ($_POST['alternative_names'] ?? '')),
+    'platforms' => $_POST['platforms'] ?? [],
     'platform' => (string) ($_POST['platform'] ?? ''),
     'synopsis' => (string) ($_POST['synopsis'] ?? ''),
     'poster_url' => (string) ($_POST['poster_url'] ?? ''),

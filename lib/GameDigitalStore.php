@@ -42,6 +42,11 @@ final class GameDigitalStore
     /** Store console imposé selon la plateforme (sans lien personnalisé). */
     public static function consoleStoreForPlatform(string $platform): ?string
     {
+        $fromRegistry = GamePlatformRegistry::consoleStoreForPlatform($platform);
+        if ($fromRegistry !== null) {
+            return $fromRegistry;
+        }
+
         return match (GamePlatform::normalize($platform)) {
             GamePlatform::PS5, GamePlatform::PS4 => self::PSN,
             GamePlatform::XBOX_SERIES, GamePlatform::XBOX_ONE => self::XBOX,
@@ -149,6 +154,38 @@ final class GameDigitalStore
         }
 
         return '';
+    }
+
+    /**
+     * Magasins démat pour plusieurs plateformes cochées (PC + console sur un même exemplaire).
+     *
+     * @param array<string, mixed> $post
+     * @param list<string> $platformKeys
+     */
+    public static function buildFromPostForPlatforms(array $post, array $platformKeys): string
+    {
+        if (empty($post['is_digital']) || $platformKeys === []) {
+            return '';
+        }
+
+        $entries = [];
+        $seen = [];
+        foreach (GamePlatformList::orderedKeys($platformKeys) as $platform) {
+            $chunk = self::buildFromPost($post, $platform);
+            foreach (self::parseStoredList($chunk) as $entry) {
+                $store = (string) ($entry['store'] ?? '');
+                if ($store === '' || isset($seen[$store])) {
+                    continue;
+                }
+                $seen[$store] = true;
+                $entries[] = [
+                    'store' => $store,
+                    'url' => (string) ($entry['url'] ?? ''),
+                ];
+            }
+        }
+
+        return self::serializeList($entries);
     }
 
     public static function hasDigitalEdition(string $storedJson, bool $legacyIsDigital = false): bool

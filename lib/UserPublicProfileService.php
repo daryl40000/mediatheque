@@ -722,7 +722,8 @@ final class UserPublicProfileService
 
         [$userWhere, $params] = CatalogSchema::libraryFilter($foyerId, $userId, $statut);
 
-        $sql = 'SELECT ' . CatalogSchema::selectFilmRow() . '
+        $nonPretable = LoanEligibility::hasNonPretableColumn() ? ', b.non_pretable' : '';
+        $sql = 'SELECT ' . CatalogSchema::selectFilmRow() . $nonPretable . '
                 FROM ' . CatalogSchema::JOIN . '
                 WHERE ' . $userWhere . self::publicProfileMediaDomainSql($params, $mediaDomain) . '
                 ORDER BY ' . $sortColumns[$sortBy] . ' ' . $direction;
@@ -732,8 +733,15 @@ final class UserPublicProfileService
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
+        $rows = $stmt->fetchAll() ?: [];
 
-        return $stmt->fetchAll() ?: [];
+        foreach ($rows as &$row) {
+            $row['media_domain'] = $mediaDomain;
+            $row['loanable'] = LoanEligibility::isRowLoanable($row);
+        }
+        unset($row);
+
+        return $rows;
     }
 
     /**
@@ -761,9 +769,16 @@ final class UserPublicProfileService
         [$userWhere, $params] = CatalogSchema::libraryFilter($foyerId, $userId, $statut);
         $params['profile_media_domain'] = MediaDomain::JEU;
 
+        $edition = GameSchema::hasEditionColumns()
+            ? ', oj.physical_supports, oj.digital_stores'
+            : '';
+        $platformsCol = GameSchema::hasPlatformsColumn() ? ', oj.platforms' : '';
+        $nonPretable = LoanEligibility::hasNonPretableColumn() ? ', b.non_pretable' : '';
+        $ownedPlatforms = GameSchema::hasOwnedPlatformsColumn() ? ', b.owned_platforms' : '';
+
         $sql = 'SELECT b.id, b.user_id, b.foyer_id, b.oeuvre_id, b.statut, b.created_at,
                        o.titre, o.annee, o.poster_url,
-                       oj.platform, oj.studio, oj.genre, oj.is_digital
+                       oj.platform, oj.studio, oj.genre, oj.is_digital' . $edition . $platformsCol . $nonPretable . $ownedPlatforms . '
                 FROM bibliotheque b
                 INNER JOIN oeuvres o ON o.id = b.oeuvre_id
                 INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id
@@ -778,8 +793,9 @@ final class UserPublicProfileService
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
         foreach ($rows as &$row) {
-            $row['platform_label'] = GamePlatform::label((string) ($row['platform'] ?? ''));
-            $row['platform_short'] = GamePlatform::shortLabel((string) ($row['platform'] ?? ''));
+            $row = GameRowMapper::hydrateCatalogRow($row);
+            $row['media_domain'] = MediaDomain::JEU;
+            $row['loanable'] = LoanEligibility::isRowLoanable($row);
         }
         unset($row);
 

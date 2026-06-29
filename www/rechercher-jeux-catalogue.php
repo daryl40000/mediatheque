@@ -35,6 +35,7 @@ foreach ($games as $game) {
         'display_label' => (string) ($game['display_label'] ?? ''),
         'annee' => (int) ($game['annee'] ?? 0),
         'platform' => (string) ($game['platform'] ?? ''),
+        'platform_list' => $game['platform_list'] ?? \Moncine\GamePlatformList::catalogKeysFromRow($game),
         'platform_label' => (string) ($game['platform_label'] ?? ''),
         'platform_short' => (string) ($game['platform_short'] ?? ''),
         'studio' => (string) ($game['studio'] ?? ''),

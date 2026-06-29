@@ -95,9 +95,17 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
                         <dd><?= Moncine\View::escape((string) $game['editeur']) ?></dd>
                     <?php endif; ?>
 
-                    <?php if ((string) ($game['platform_label'] ?? '') !== ''): ?>
-                        <dt>Plateforme</dt>
-                        <dd><?= Moncine\View::escape((string) $game['platform_label']) ?></dd>
+                    <?php
+                    $catalogPlatformKeys = $game['platform_list']
+                        ?? Moncine\GamePlatformList::catalogKeysFromRow(is_array($game) ? $game : []);
+                    ?>
+                    <?php if ($catalogPlatformKeys !== []): ?>
+                        <dt>Plateforme<?= count($catalogPlatformKeys) > 1 ? 's' : '' ?></dt>
+                        <dd class="game-genre-tags">
+                            <?php foreach ($catalogPlatformKeys as $platformKey): ?>
+                                <span class="magazine-tag magazine-tag--game-platform"><?= Moncine\View::escape(Moncine\GamePlatform::shortLabel((string) $platformKey)) ?></span>
+                            <?php endforeach; ?>
+                        </dd>
                     <?php endif; ?>
 
                     <?php if ($genreList !== []): ?>

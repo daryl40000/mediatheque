@@ -154,4 +154,36 @@ final class FoyerTest extends MoncineTestCase
         $hist = new HistoriqueRepository();
         $this->assertSame(7.0, $hist->getFoyerAverageNote($libraryId));
     }
+
+    public function testEnsurePersonalFoyerForSoloUser(): void
+    {
+        $this->loginAsAdmin();
+        Auth::logout();
+        $this->startSession();
+
+        $userId = (new UtilisateurRepository())->create(
+            'Solo Test',
+            'solo-foyer@test.local',
+            'TestPass123!',
+            UserRole::USER,
+            0
+        );
+        $this->assertIsInt($userId);
+
+        $foyerRepo = new FoyerRepository();
+        $this->assertSame(0, $foyerRepo->currentFoyerIdForUser($userId));
+
+        $foyerId = $foyerRepo->ensurePersonalFoyerForUser($userId);
+        $this->assertGreaterThan(0, $foyerId);
+        $this->assertSame($foyerId, $foyerRepo->currentFoyerIdForUser($userId));
+
+        $oeuvreId = $this->seedCatalogOeuvre('Film solo foyer');
+        $libraryId = (new BibliothequeRepository())->insert(
+            $userId,
+            0,
+            $oeuvreId,
+            ['statut' => LibraryStatut::COLLECTION]
+        );
+        $this->assertGreaterThan(0, $libraryId);
+    }
 }

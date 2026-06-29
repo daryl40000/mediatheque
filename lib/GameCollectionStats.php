@@ -156,6 +156,60 @@ final class GameCollectionStats
     {
         $extensionSql = $this->extensionExcludeSql();
 
+        if (GameSchema::hasOwnedPlatformsColumn()) {
+            $ownedCol = ', b.owned_platforms';
+            $platformsCol = GameSchema::hasPlatformsColumn() ? ', oj.platforms' : '';
+            $stmt = $this->db->prepare(
+                'SELECT oj.platform' . $platformsCol . $ownedCol . '
+                 FROM bibliotheque b
+                 INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+                 INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id
+                 WHERE o.media_domain = :game_domain
+                   AND b.statut = :collection
+                   AND b.foyer_id = :foyer_id'
+                . $extensionSql
+            );
+            $stmt->execute([
+                'game_domain' => MediaDomain::JEU,
+                'collection' => LibraryStatut::COLLECTION,
+                'foyer_id' => $foyerId,
+            ]);
+
+            $counts = [];
+            foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+                foreach (GamePlatformList::ownedKeysFromRow($row) as $platformKey) {
+                    $counts[$platformKey] = ($counts[$platformKey] ?? 0) + 1;
+                }
+            }
+
+            arsort($counts);
+            $rows = [];
+            foreach ($counts as $platformKey => $gameCount) {
+                $rows[] = [
+                    'platform_key' => $platformKey,
+                    'game_count' => $gameCount,
+                ];
+            }
+
+            return $this->buildBreakdownRows(
+                $rows,
+                $total,
+                'platform_key',
+                static function (string $key): string {
+                    $label = GamePlatform::label($key);
+
+                    return $label !== '' ? $label : 'Non renseignée';
+                },
+                static function (string $key): string {
+                    if ($key === '') {
+                        return View::gamesCollectionUrl(filter: GameListFilter::forPlatform('_none'));
+                    }
+
+                    return View::gamesCollectionUrl(filter: GameListFilter::forPlatform($key));
+                }
+            );
+        }
+
         $stmt = $this->db->prepare(
             'SELECT oj.platform AS platform_key, COUNT(*) AS game_count
              FROM bibliotheque b

@@ -45,6 +45,9 @@ final class UserContext
         }
 
         $foyerId = (new FoyerRepository())->currentFoyerIdForUser($userId);
+        if ($foyerId <= 0 && FoyerRepository::tableExists(Database::getInstance())) {
+            $foyerId = (new FoyerRepository())->ensurePersonalFoyerForUser($userId);
+        }
         $cache[$userId] = $foyerId;
 
         return $foyerId;

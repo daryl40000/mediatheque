@@ -185,6 +185,7 @@ $prefillFilm = $prefillFilm ?? null;
         if ($prefillOeuvreId > 0) {
             $cancelUrl = Moncine\View::oeuvreUrl($prefillOeuvreId);
         }
+        $canManageCatalog = !empty($canManageCatalog);
         require MONCINE_ROOT . '/templates/_film_add_form.php';
         ?>
     <?php endif; ?>

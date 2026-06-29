@@ -42,6 +42,8 @@ $repo = new GameRepository();
 
 $editions = GameRepository::editionPayloadFromPost($_POST);
 $linuxFlags = GameRepository::linuxFlagsFromPost($_POST);
+$platformPayload = GameRepository::catalogPlatformsFromPost($_POST);
+$ownedPayload = GameRepository::ownedPlatformsFromPost($_POST, $platformPayload['platforms']);
 
 $result = $repo->updateCatalog($bibId, array_merge([
     'titre' => (string) ($_POST['titre'] ?? ''),
@@ -54,7 +56,6 @@ $result = $repo->updateCatalog($bibId, array_merge([
     'game_mode' => GameGenre::normalizeInput((string) ($_POST['game_mode'] ?? '')),
     'theme' => GameGenre::normalizeInput((string) ($_POST['theme'] ?? '')),
     'alternative_names' => GameGenre::normalizeInput((string) ($_POST['alternative_names'] ?? '')),
-    'platform' => (string) ($_POST['platform'] ?? ''),
     'synopsis' => (string) ($_POST['synopsis'] ?? ''),
     'is_extension' => !empty($_POST['is_extension']),
     'base_game_oeuvre_id' => (int) ($_POST['base_game_oeuvre_id'] ?? 0),
@@ -62,7 +63,8 @@ $result = $repo->updateCatalog($bibId, array_merge([
     'original_game_oeuvre_id' => (int) ($_POST['original_game_oeuvre_id'] ?? 0),
     'tested_on_linux' => $linuxFlags['tested_on_linux'],
     'linux_not_supported' => $linuxFlags['linux_not_supported'],
-], $editions), $userId, $foyerId);
+    'non_pretable' => GameRepository::nonPretableFromPost($_POST),
+], $editions, $platformPayload, $ownedPayload), $userId, $foyerId);
 
 if ($result !== true) {
     header('Location: ' . $returnUrl . '&error=' . rawurlencode((string) $result));

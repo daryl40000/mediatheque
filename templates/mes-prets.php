@@ -14,8 +14,8 @@ $activeLoans = $activeLoans ?? [];
 <section class="account-page">
     <h1>Mes prêts</h1>
     <p class="lead">
-        Vos amis peuvent demander un prêt. Vous pouvez accepter pour <strong>réserver</strong> un film,
-        puis valider le prêt le jour J.
+        Vos amis peuvent demander un prêt de films ou de jeux physiques. Vous pouvez accepter pour
+        <strong>réserver</strong> un exemplaire, puis valider le prêt le jour J.
     </p>
 
     <?php if ($success !== ''): ?>
@@ -33,7 +33,6 @@ $activeLoans = $activeLoans ?? [];
             <?php foreach ($pendingRequests as $row): ?>
                 <?php
                 $requestId = (int) ($row['request_id'] ?? 0);
-                $filmTitle = (string) ($row['titre'] ?? '');
                 $requester = [
                     'id' => (int) ($row['requester_id'] ?? 0),
                     'nom' => (string) ($row['requester_nom'] ?? ''),
@@ -42,9 +41,7 @@ $activeLoans = $activeLoans ?? [];
                 ];
                 ?>
                 <li class="user-search-results__item">
-                    <span class="user-search-results__name">
-                        <?= Moncine\View::escape($filmTitle) ?>
-                    </span>
+                    <?php require MONCINE_ROOT . '/templates/_loan_list_item_title.php'; ?>
                     <span class="user-search-results__meta">
                         demandé par
                         <a href="<?= Moncine\View::escape(Moncine\View::userProfileUrl((int) $requester['id'])) ?>">
@@ -68,15 +65,14 @@ $activeLoans = $activeLoans ?? [];
         </ul>
     <?php endif; ?>
 
-    <h2>Films réservés (à prêter)</h2>
+    <h2>Exemplaires réservés (à prêter)</h2>
     <?php if ($reservedRequests === []): ?>
-        <p class="hint">Aucun film réservé.</p>
+        <p class="hint">Aucun exemplaire réservé.</p>
     <?php else: ?>
         <ul class="user-search-results">
             <?php foreach ($reservedRequests as $row): ?>
                 <?php
                 $requestId = (int) ($row['request_id'] ?? 0);
-                $filmTitle = (string) ($row['titre'] ?? '');
                 $requester = [
                     'id' => (int) ($row['requester_id'] ?? 0),
                     'nom' => (string) ($row['requester_nom'] ?? ''),
@@ -85,7 +81,7 @@ $activeLoans = $activeLoans ?? [];
                 ];
                 ?>
                 <li class="user-search-results__item">
-                    <span class="user-search-results__name"><?= Moncine\View::escape($filmTitle) ?></span>
+                    <?php require MONCINE_ROOT . '/templates/_loan_list_item_title.php'; ?>
                     <span class="user-search-results__meta">
                         réservé pour
                         <a href="<?= Moncine\View::escape(Moncine\View::userProfileUrl((int) $requester['id'])) ?>">
@@ -115,7 +111,6 @@ $activeLoans = $activeLoans ?? [];
             <?php foreach ($activeLoans as $row): ?>
                 <?php
                 $loanId = (int) ($row['loan_id'] ?? 0);
-                $filmTitle = (string) ($row['titre'] ?? '');
                 $borrower = [
                     'id' => (int) ($row['borrower_id'] ?? 0),
                     'nom' => (string) ($row['borrower_nom'] ?? ''),
@@ -124,7 +119,7 @@ $activeLoans = $activeLoans ?? [];
                 ];
                 ?>
                 <li class="user-search-results__item">
-                    <span class="user-search-results__name"><?= Moncine\View::escape($filmTitle) ?></span>
+                    <?php require MONCINE_ROOT . '/templates/_loan_list_item_title.php'; ?>
                     <span class="user-search-results__meta">
                         prêté à
                         <a href="<?= Moncine\View::escape(Moncine\View::userProfileUrl((int) $borrower['id'])) ?>">

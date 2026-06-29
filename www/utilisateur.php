@@ -140,7 +140,7 @@ $loanUi = [
     'myRequests' => [],
     'reservedByOthers' => [],
 ];
-if ($listMode === 'collection' && !$isSelf && $areFriends && !$isMagazineProfile && !$isGameProfile) {
+if ($listMode === 'collection' && !$isSelf && $areFriends && !$isMagazineProfile) {
     if (LoanRepository::tableExists()) {
         $loanUi['activeLoans'] = (new LoanRepository())->mapActiveLoansByBibliothequeId($targetUserId);
     }

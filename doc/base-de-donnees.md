@@ -120,6 +120,7 @@ Contrainte : `UNIQUE (titre, realisateur)` — pour les jeux, `realisateur` rest
 | `saison_numero`, `saison_label` | Saisons de séries TV |
 | `ean` | Code-barres exemplaire |
 | `tested_on_linux`, `linux_not_supported` | Jeux PC : compatibilité Linux (tri-état) |
+| `non_pretable` | Exemplaire exclu des prêts entre amis (migration 049) |
 
 #### `historique` — notes et dates
 
@@ -269,6 +270,7 @@ Liste complète : voir [`sql/schema.sql`](../sql/schema.sql).
 | 045 | `045_oeuvre_jeu_remakes.sql` | Remakes |
 | 046 | `046_oeuvre_jeu_igdb.sql` | IGDB id + date enrichissement |
 | 047 | `047_oeuvre_jeu_igdb_metadata.sql` | Franchise, modes, thèmes, acronymes |
+| 049 | `049_bibliotheque_non_pretable.sql` | Exemplaire non prêtable (prêts jeux) |
 
 Migration transversale multi-médias : **030** (`media_domain` sur `oeuvres`).
 

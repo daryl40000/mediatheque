@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.6.4** (2026-06-16)  
+**Version actuelle : 0.6.5** (2026-06-16)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -13,12 +13,12 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 
 ---
 
-## Où en est-on ? (synthèse 0.6.3)
+## Où en est-on ? (synthèse 0.6.5)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
 | **Films** | ✅ Production | 0.4.4+ → **0.6.3** | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`, **vue Bibliothèque**) |
-| **Jeux** | ✅ Utilisable | 0.5.0 → **0.6.3** | Complet (extensions, remakes, autocomplétion, recherche tolérante, **IGDB**, **sagas** + **vignettes**, **vue Bibliothèque**, acronymes, **partage visiteur**, **listes imprimables**, **pont magazine ↔ jeux**) |
+| **Jeux** | ✅ Utilisable | 0.5.0 → **0.6.5** | Complet (extensions, remakes, IGDB, sagas, pont magazine, **prêts physiques**, **multi-plateformes**, formulaires bibliothèque) |
 | **Magazines** | ✅ **Complet (M5)** | 0.2.x → **0.6.1** | Import ABM, ajout série/numéro catalogue, retrait série, profil public, export JSON |
 | **BD / Manga** | ⏸️ Repoussé | — | — |
 | **Livres** | ⏸️ Repoussé | — | — |
@@ -40,6 +40,17 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.6.5** — jeux : prêts, plateformes, foyers personnels (2026-06-16)
+
+- Prêts de jeux physiques entre amis (migration 049, `LoanEligibility`).
+- Plateformes configurables admin + multi-plateformes catalogue / « Mes plateformes » (migrations 050–051).
+- Foyer personnel automatique « Mon foyer » pour comptes seuls.
+- Formulaires ajout film/jeu : utilisateur non admin ne voit que les champs exemplaire après choix catalogue.
+
+### ✅ **0.6.4** — fix navigation jeux ↔ magazines (2026-06-16)
+
+- Liens croisés onglets Jeux / Magazines corrigés (`MediaDomainGuards`).
 
 ### ✅ **0.6.3** — pont magazine ↔ jeux (2026-06-16)
 
@@ -412,4 +423,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.6.4** — 2026-06-16 (fix navigation jeux ↔ magazines).*
+*Dernière mise à jour : **0.6.5** — 2026-06-16 (prêts jeux, multi-plateformes, foyers personnels).*
