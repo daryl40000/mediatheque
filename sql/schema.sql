@@ -514,6 +514,24 @@ CREATE INDEX IF NOT EXISTS idx_oeuvre_jeu_base_game ON oeuvre_jeu(base_game_oeuv
 CREATE INDEX IF NOT EXISTS idx_oeuvre_jeu_is_remake ON oeuvre_jeu(is_remake);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_jeu_original_game ON oeuvre_jeu(original_game_oeuvre_id);
 
+CREATE TABLE IF NOT EXISTS oeuvre_bd (
+    oeuvre_id INTEGER PRIMARY KEY REFERENCES oeuvres(id) ON DELETE CASCADE,
+    series_id INTEGER DEFAULT NULL REFERENCES series(id) ON DELETE SET NULL,
+    kind TEXT NOT NULL DEFAULT 'bd',
+    tome_numero INTEGER NOT NULL DEFAULT 0,
+    tome_label TEXT NOT NULL DEFAULT '',
+    scenariste TEXT NOT NULL DEFAULT '',
+    dessinateur TEXT NOT NULL DEFAULT '',
+    editeur TEXT NOT NULL DEFAULT '',
+    genre TEXT NOT NULL DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_series ON oeuvre_bd(series_id);
+CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_kind ON oeuvre_bd(kind);
+CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_scenariste ON oeuvre_bd(scenariste COLLATE NOCASE);
+CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_dessinateur ON oeuvre_bd(dessinateur COLLATE NOCASE);
+CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_editeur ON oeuvre_bd(editeur COLLATE NOCASE);
+
 CREATE TABLE IF NOT EXISTS game_attachment (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     bibliotheque_id INTEGER NOT NULL REFERENCES bibliotheque(id) ON DELETE CASCADE,

@@ -21,7 +21,8 @@ final class MediaDomainTest extends TestCase
         $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::FILM));
         $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::MAGAZINE));
         $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::JEU));
-        $this->assertFalse(MediaDomain::isCollectionImplemented(MediaDomain::BD));
+        $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::BD));
+        $this->assertFalse(MediaDomain::isCollectionImplemented(MediaDomain::LIVRE));
     }
 
     public function testGameCollectionPaths(): void
@@ -40,7 +41,7 @@ final class MediaDomainTest extends TestCase
             MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::MAGAZINE, '/quiz.php', 'reset=1')
         );
         $this->assertSame(
-            '/films.php',
+            '/bd.php',
             MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::BD, '/quiz.php', 'reset=1')
         );
         $this->assertSame(

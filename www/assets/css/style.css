@@ -2900,6 +2900,17 @@ textarea {
     max-width: 200px;
 }
 
+.film-poster--bd {
+    aspect-ratio: 210 / 297;
+    object-fit: cover;
+    object-position: center top;
+}
+
+.film-poster--empty {
+    display: block;
+    background: var(--border);
+}
+
 .film-detail h1 {
     margin-top: 0;
     color: var(--accent);
@@ -2957,8 +2968,9 @@ textarea {
     max-width: 920px;
 }
 
-/* Magazines : utiliser davantage la largeur sur écran PC */
-body.media-domain--magazine.page-wide .container--wide {
+/* Magazines et BD : utiliser davantage la largeur sur écran PC */
+body.media-domain--magazine.page-wide .container--wide,
+body.media-domain--bd.page-wide .container--wide {
     max-width: min(1240px, calc(100vw - 2.5rem));
 }
 
@@ -3883,6 +3895,14 @@ body.media-domain--magazine.page-wide .container--wide {
 .magazine-issue-card--unowned .magazine-issue-card__cover-link:hover .magazine-cover--card {
     filter: grayscale(65%);
     opacity: 1;
+}
+
+.films-table__row--unowned td {
+    color: var(--muted, #888);
+}
+
+.films-table__row--unowned td a {
+    opacity: 0.85;
 }
 
 .magazine-issue-card__cover-link {

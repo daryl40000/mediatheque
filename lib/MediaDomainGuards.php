@@ -48,6 +48,33 @@ final class MediaDomainGuards
         '/export-catalogue-magazines.php',
     ];
 
+    /** Préfixes d’URL réservés à l’onglet BD / Manga. */
+    private const BD_ONLY_PATH_PREFIXES = [
+        '/bd',
+        '/serie-bd.php',
+        '/album-bd.php',
+        '/ajouter-serie-bd.php',
+        '/ajouter-tome-bd.php',
+        '/ajouter-bd.php',
+        '/enregistrer-serie-bd.php',
+        '/enregistrer-bd.php',
+        '/oeuvre-bd.php',
+        '/rechercher-bd-catalogue.php',
+        '/rechercher-series-bd-catalogue.php',
+        '/marquer-bd-lu.php',
+        '/supprimer-bd.php',
+        '/promouvoir-bd-collection.php',
+        '/traiter-tome-bd.php',
+    ];
+
+    /** Pages collection / envies réservées à l’onglet BD. */
+    private const BD_COLLECTION_PATHS = [
+        '/bd.php',
+        '/serie-bd.php',
+        '/album-bd.php',
+        '/bd-envies.php',
+    ];
+
     /** Préfixes d’URL réservés à l’onglet Jeux. */
     private const GAME_ONLY_PATH_PREFIXES = [
         '/jeux',
@@ -110,6 +137,24 @@ final class MediaDomainGuards
         return in_array(self::normalizePath($path), self::GAME_COLLECTION_PATHS, true);
     }
 
+    public static function isBdOnlyPath(string $path): bool
+    {
+        $path = self::normalizePath($path);
+
+        foreach (self::BD_ONLY_PATH_PREFIXES as $prefix) {
+            if (str_starts_with($path, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function isBdCollectionPath(string $path): bool
+    {
+        return in_array(self::normalizePath($path), self::BD_COLLECTION_PATHS, true);
+    }
+
     private static function normalizePath(string $path): string
     {
         $path = parse_url($path, PHP_URL_PATH) ?: $path;
@@ -156,6 +201,22 @@ final class MediaDomainGuards
         }
 
         if (MediaDomain::isMagazine($targetDomain) && self::isGameOnlyPath($pathOnly)) {
+            return MediaDomain::collectionPath($targetDomain);
+        }
+
+        if (MediaDomain::isBd($targetDomain) && (self::isFilmCollectionPath($pathOnly) || self::isMagazineOnlyPath($pathOnly) || self::isGameOnlyPath($pathOnly))) {
+            return MediaDomain::collectionPath($targetDomain);
+        }
+
+        if (MediaDomain::isFilm($targetDomain) && self::isBdOnlyPath($pathOnly)) {
+            return MediaDomain::collectionPath($targetDomain);
+        }
+
+        if (MediaDomain::isMagazine($targetDomain) && self::isBdOnlyPath($pathOnly)) {
+            return MediaDomain::collectionPath($targetDomain);
+        }
+
+        if (MediaDomain::isGame($targetDomain) && self::isBdOnlyPath($pathOnly)) {
             return MediaDomain::collectionPath($targetDomain);
         }
 
@@ -234,6 +295,17 @@ final class MediaDomainGuards
         }
 
         header('Location: ' . self::mediaDomainSwitchUrl(MediaDomain::JEU, $redirectPath, '/jeux.php'));
+        exit;
+    }
+
+    /** Redirige vers l’onglet BD si la page album est ouverte depuis un autre domaine. */
+    public static function ensureBdContext(?string $redirectPath = null): void
+    {
+        if (MediaContext::current() === MediaDomain::BD) {
+            return;
+        }
+
+        header('Location: ' . self::mediaDomainSwitchUrl(MediaDomain::BD, $redirectPath, '/bd.php'));
         exit;
     }
 

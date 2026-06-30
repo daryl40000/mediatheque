@@ -23,7 +23,7 @@ final class LoanEligibility
     {
         $mediaDomain = MediaDomain::normalize($mediaDomain);
 
-        return MediaDomain::isFilm($mediaDomain) || MediaDomain::isGame($mediaDomain);
+        return MediaDomain::isFilm($mediaDomain) || MediaDomain::isGame($mediaDomain) || MediaDomain::isBd($mediaDomain);
     }
 
     /**
@@ -42,6 +42,10 @@ final class LoanEligibility
 
         if (MediaDomain::isGame($mediaDomain)) {
             return self::isPhysicalGameRow($row);
+        }
+
+        if (MediaDomain::isBd($mediaDomain)) {
+            return BdPhysicalSupport::isValid((string) ($row['support_physique'] ?? ''));
         }
 
         return true;
@@ -66,6 +70,9 @@ final class LoanEligibility
 
                 return 'Ce jeu n’est pas prêtable (exemplaire dématérialisé uniquement).';
             }
+            if (MediaDomain::isBd($mediaDomain)) {
+                return 'Cet album n’est pas prêtable (support physique non renseigné).';
+            }
 
             return 'Cet exemplaire n’est pas prêtable.';
         }
@@ -78,7 +85,11 @@ final class LoanEligibility
      */
     public static function mediaItemLabel(string $mediaDomain): string
     {
-        return MediaDomain::isGame($mediaDomain) ? 'jeu' : 'film';
+        return match (true) {
+            MediaDomain::isGame($mediaDomain) => 'jeu',
+            MediaDomain::isBd($mediaDomain) => 'album',
+            default => 'film',
+        };
     }
 
     /**
@@ -89,13 +100,18 @@ final class LoanEligibility
     public static function listSubtitle(array $row): string
     {
         $mediaDomain = MediaDomain::normalize((string) ($row['media_domain'] ?? ''));
-        if (!MediaDomain::isGame($mediaDomain)) {
-            return '';
+        if (MediaDomain::isGame($mediaDomain)) {
+            $platform = GamePlatform::shortLabel((string) ($row['platform'] ?? ''));
+
+            return $platform !== '' ? $platform : 'Jeu';
+        }
+        if (MediaDomain::isBd($mediaDomain)) {
+            $support = BdPhysicalSupport::label((string) ($row['support_physique'] ?? ''));
+
+            return $support !== '' ? $support : 'BD';
         }
 
-        $platform = GamePlatform::shortLabel((string) ($row['platform'] ?? ''));
-
-        return $platform !== '' ? $platform : 'Jeu';
+        return '';
     }
 
     /**
@@ -112,6 +128,10 @@ final class LoanEligibility
         $mediaDomain = MediaDomain::normalize((string) ($row['media_domain'] ?? MediaDomain::JEU));
         if (MediaDomain::isFilm($mediaDomain)) {
             return true;
+        }
+
+        if (MediaDomain::isBd($mediaDomain)) {
+            return BdPhysicalSupport::isValid((string) ($row['support_physique'] ?? ''));
         }
 
         if (!MediaDomain::isGame($mediaDomain)) {

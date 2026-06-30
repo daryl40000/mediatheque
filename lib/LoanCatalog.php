@@ -40,6 +40,8 @@ final class LoanCatalog
             $parts[] = 'b.non_pretable';
         }
 
+        $parts[] = 'b.support_physique';
+
         return implode(', ', $parts);
     }
 
