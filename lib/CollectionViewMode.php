@@ -66,4 +66,30 @@ final class CollectionViewMode
             self::GRID => 'Vignettes',
         ];
     }
+
+    /** @return array<string, string> */
+    public static function bdChoices(): array
+    {
+        return self::listGridChoices();
+    }
+
+    /** Série BD : vignettes par défaut si le paramètre `view` est absent. */
+    public static function normalizeBdSeries(string $raw): string
+    {
+        $raw = mb_strtolower(trim($raw));
+
+        return match ($raw) {
+            self::LIST => self::LIST,
+            self::GRID => self::GRID,
+            default => self::GRID,
+        };
+    }
+
+    /** Paramètre URL pour une série BD (grille = défaut, donc omis). */
+    public static function bdSeriesQueryValue(string $mode): ?string
+    {
+        $mode = self::normalizeBdSeries($mode);
+
+        return $mode === self::GRID ? null : self::LIST;
+    }
 }

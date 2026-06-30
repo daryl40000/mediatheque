@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\Auth;
+use Moncine\BdRepository;
 use Moncine\BibliothequeRepository;
 use Moncine\FilmRepository;
 use Moncine\GameRepository;
@@ -37,6 +38,31 @@ if (MediaDomain::isMagazine($mediaDomain)) {
         'seriesCount' => $seriesCount,
         'issueCount' => $issueCount,
         'setupDone' => isset($_GET['setup']) && (string) $_GET['setup'] === '1',
+    ]);
+    exit;
+}
+
+if (MediaDomain::isBd($mediaDomain)) {
+    $foyerId = UserContext::currentFoyerId();
+    $albumCount = $userId > 0 && BdRepository::isAvailable()
+        ? (new BdRepository())->countSeriesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION)
+        : 0;
+
+    $lastCollection = [];
+    $lastWishlist = [];
+    if ($userId > 0) {
+        $profile = new UserPublicProfileService();
+        $lastCollection = $profile->lastCollectionFilms($userId, 5, MediaDomain::BD);
+        $lastWishlist = $profile->lastWishlistFilms($userId, 5, MediaDomain::BD);
+    }
+
+    View::render('home-bd', [
+        'pageTitle' => 'Accueil',
+        'albumCount' => $albumCount,
+        'setupDone' => isset($_GET['setup']) && (string) $_GET['setup'] === '1',
+        'lastCollection' => $lastCollection,
+        'lastWishlist' => $lastWishlist,
+        'currentUserId' => $userId,
     ]);
     exit;
 }

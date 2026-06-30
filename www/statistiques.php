@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\CollectionStats;
+use Moncine\BdRepository;
 use Moncine\GameCollectionStats;
 use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
@@ -54,6 +55,27 @@ if (MediaDomain::isGame(MediaContext::current())) {
         'pageTitle' => MediaContext::navLabels()['stats'],
         'stats' => (new GameCollectionStats())->getDashboard($userId, $foyerId),
         'wideLayout' => true,
+    ]);
+    exit;
+}
+
+if (MediaDomain::isBd(MediaContext::current())) {
+    MediaDomainGuards::ensureBdContext('/statistiques.php');
+    $userId = UserContext::currentUserId();
+    $foyerId = UserContext::currentFoyerId();
+    $repo = new BdRepository();
+
+    View::render('statistiques-bd', [
+        'pageTitle' => MediaContext::navLabels()['stats'],
+        'seriesCount' => BdRepository::isAvailable()
+            ? $repo->countSeriesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION)
+            : 0,
+        'tomeCount' => BdRepository::isAvailable()
+            ? $repo->countTomesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION)
+            : 0,
+        'wishlistSeriesCount' => BdRepository::isAvailable()
+            ? $repo->countSeriesInLibrary($userId, $foyerId, LibraryStatut::WISHLIST)
+            : 0,
     ]);
     exit;
 }
