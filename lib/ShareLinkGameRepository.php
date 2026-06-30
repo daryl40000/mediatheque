@@ -37,7 +37,8 @@ final class ShareLinkGameRepository
         array $link,
         string $sortBy = 'titre',
         string $sortDir = 'asc',
-        string $searchQuery = ''
+        string $searchQuery = '',
+        ?GameListFilter $filter = null
     ): array {
         if (!GameRepository::isAvailable()) {
             return [];
@@ -47,9 +48,7 @@ final class ShareLinkGameRepository
         }
         $direction = strtolower($sortDir) === 'desc' ? 'DESC' : 'ASC';
         $orderExpr = self::sortOrderExpression($sortBy);
-        if ($sortBy === 'finished_at' && GameCompletionRepository::isAvailable()) {
-            $orderExpr = 'derniere_completion IS NULL ASC, derniere_completion ' . $direction;
-        }
+        $finishedAtSort = $sortBy === 'finished_at' && GameCompletionRepository::isAvailable();
 
         [$userWhere, $params] = $this->libraryFilterForLink($link);
         $params['share_game_domain'] = MediaDomain::JEU;
@@ -66,12 +65,18 @@ final class ShareLinkGameRepository
             $whereParts[] = $searchWhere;
         }
 
+        ($filter ?? GameListFilter::empty())->applyToSql($whereParts, $params);
+
         $sql = 'SELECT ' . self::selectGameRow() . self::selectGameHistoryExtras()
             . ' FROM bibliotheque b'
             . ' INNER JOIN oeuvres o ON o.id = b.oeuvre_id'
             . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
-            . ' WHERE ' . implode(' AND ', $whereParts)
-            . ' ORDER BY ' . $orderExpr . ' ' . $direction;
+            . ' WHERE ' . implode(' AND ', $whereParts);
+        if ($finishedAtSort) {
+            $sql .= ' ORDER BY derniere_completion IS NULL ASC, derniere_completion ' . $direction;
+        } else {
+            $sql .= ' ORDER BY ' . $orderExpr . ' ' . $direction;
+        }
         if ($sortBy !== 'titre') {
             $sql .= ', o.titre COLLATE FRENCH_NOCASE ASC';
         }

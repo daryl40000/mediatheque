@@ -18,14 +18,18 @@
         $resultCount = count($games);
         $totalCount = (int) ($totalCount ?? $resultCount);
         $searched = $searched ?? false;
+        $listFilter = $listFilter ?? Moncine\GameListFilter::empty();
+        $filterActive = $listFilter->isActive();
+        $filterLabel = $listFilter->activeLabel();
         $mediaDomain = Moncine\MediaDomain::JEU;
 
         $shareCollectionUrl = static function (
             string $q = '',
             ?string $sort = null,
             ?string $dir = null,
-            ?string $view = null
-        ) use ($rawToken, $sortBy, $sortDir, $query, $viewMode, $mediaDomain): string {
+            ?string $view = null,
+            ?Moncine\GameListFilter $filter = null
+        ) use ($rawToken, $sortBy, $sortDir, $query, $viewMode, $listFilter, $mediaDomain): string {
             return Moncine\ShareLinkService::collectionUrl(
                 $rawToken,
                 Moncine\ShareLinkService::collectionQueryParams(
@@ -33,7 +37,8 @@
                     $sort ?? $sortBy,
                     $dir ?? $sortDir,
                     '',
-                    $view ?? $viewMode
+                    $view ?? $viewMode,
+                    $filter ?? $listFilter
                 ),
                 $mediaDomain
             );
@@ -45,6 +50,7 @@
             $sortDir,
             $query,
             $viewMode,
+            $listFilter,
             $mediaDomain
         ): void {
             $active = $sortBy === $column;
@@ -62,7 +68,8 @@
                         $query,
                         '',
                         $viewMode,
-                        $mediaDomain
+                        $mediaDomain,
+                        $listFilter
                     )
                 ) ?>">
                     <?= Moncine\View::escape($label) ?><?= Moncine\View::filmsSortIndicator($column, $sortBy, $sortDir) ?>
@@ -78,24 +85,47 @@
             </div>
         </header>
 
-        <form method="get" action="/partage-jeux.php" class="collection-search import-form">
+        <?php if ($filterActive): ?>
+            <div class="alert alert-info collection-filter-banner">
+                Filtre actif : <strong><?= Moncine\View::escape($filterLabel) ?></strong>.
+                <a href="<?= Moncine\View::escape($shareCollectionUrl('', $sortBy, $sortDir, $viewMode, Moncine\GameListFilter::empty())) ?>">
+                    Afficher toute la liste
+                </a>
+            </div>
+        <?php endif; ?>
+
+        <form method="get" action="/partage-jeux.php" class="collection-search collection-search--filters">
             <input type="hidden" name="t" value="<?= Moncine\View::escape($rawToken) ?>">
-            <label for="share_q">Rechercher</label>
-            <div class="collection-search__row">
-                <input type="search" name="q" id="share_q"
-                       value="<?= Moncine\View::escape($query) ?>"
-                       placeholder="Titre, studio, genre…"
-                       autocomplete="off">
-                <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
-                <input type="hidden" name="dir" value="<?= Moncine\View::escape($sortDir) ?>">
-                <?php if ($viewQueryValue !== null): ?>
-                    <input type="hidden" name="view" value="<?= Moncine\View::escape($viewQueryValue) ?>">
-                <?php endif; ?>
-                <button type="submit" class="btn btn-primary">Rechercher</button>
-                <?php if ($searched): ?>
-                    <a href="<?= Moncine\View::escape($shareCollectionUrl('', $sortBy, $sortDir, $viewMode)) ?>"
-                       class="btn btn-secondary">Effacer la recherche</a>
-                <?php endif; ?>
+            <div class="collection-search__toolbar">
+                <div class="collection-search__filter collection-search__filter--query">
+                    <label for="share_q">Rechercher</label>
+                    <input type="search" name="q" id="share_q"
+                           value="<?= Moncine\View::escape($query) ?>"
+                           placeholder="Titre, studio, genre…"
+                           autocomplete="off">
+                </div>
+                <?php require MONCINE_ROOT . '/templates/_games_collection_search_filters.php'; ?>
+                <div class="collection-search__actions">
+                    <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
+                    <input type="hidden" name="dir" value="<?= Moncine\View::escape($sortDir) ?>">
+                    <?php if ($viewQueryValue !== null): ?>
+                        <input type="hidden" name="view" value="<?= Moncine\View::escape($viewQueryValue) ?>">
+                    <?php endif; ?>
+                    <?php
+                    foreach ($listFilter->toQueryParams() as $filterKey => $filterValue):
+                        if (in_array($filterKey, ['platform', 'store', 'support'], true)) {
+                            continue;
+                        }
+                        ?>
+                        <input type="hidden" name="<?= Moncine\View::escape((string) $filterKey) ?>"
+                               value="<?= Moncine\View::escape((string) $filterValue) ?>">
+                    <?php endforeach; ?>
+                    <button type="submit" class="btn btn-secondary btn-sm">Rechercher</button>
+                    <?php if ($searched): ?>
+                        <a href="<?= Moncine\View::escape($shareCollectionUrl('', $sortBy, $sortDir, $viewMode, Moncine\GameListFilter::empty())) ?>"
+                           class="btn btn-secondary btn-sm">Tout effacer</a>
+                    <?php endif; ?>
+                </div>
             </div>
         </form>
 
@@ -115,7 +145,11 @@
         <?php if ($searched): ?>
             <p class="stats">
                 <?= $resultCount ?> résultat<?= $resultCount > 1 ? 's' : '' ?>
-                pour « <?= Moncine\View::escape($query) ?> »
+                <?php if ($query !== ''): ?>
+                    pour « <?= Moncine\View::escape($query) ?> »
+                <?php elseif ($filterActive): ?>
+                    (filtre : <?= Moncine\View::escape($filterLabel) ?>)
+                <?php endif; ?>
             </p>
         <?php else: ?>
             <p class="stats"><?= $totalCount ?> jeu<?= $totalCount > 1 ? 'x' : '' ?></p>
@@ -135,8 +169,12 @@
             <p class="hint">Aucun jeu à afficher pour le moment.</p>
         <?php elseif ($games === []): ?>
             <p class="alert alert-warning">
-                Aucun jeu ne correspond à « <?= Moncine\View::escape($query) ?> ».
-                <a href="<?= Moncine\View::escape($shareCollectionUrl('', $sortBy, $sortDir, $viewMode)) ?>">
+                <?php if ($query !== ''): ?>
+                    Aucun jeu ne correspond à « <?= Moncine\View::escape($query) ?> ».
+                <?php else: ?>
+                    Aucun jeu ne correspond à ce filtre.
+                <?php endif; ?>
+                <a href="<?= Moncine\View::escape($shareCollectionUrl('', $sortBy, $sortDir, $viewMode, Moncine\GameListFilter::empty())) ?>">
                     Voir toute la liste
                 </a>.
             </p>

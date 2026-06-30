@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.6.9**
+**Version : 0.7.0**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -16,7 +16,8 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. L’ong
 | [doc/mediatheque.md](doc/mediatheque.md) | Guide du fork, socle multi-médias |
 | [doc/magazines.md](doc/magazines.md) | Magazines : PDF, recherche, tags, import catalogue ABM (**0.6.0**) |
 | [doc/import-abm.md](doc/import-abm.md) | Import catalogue depuis Abandonware Magazines (CLI + admin) |
-| [doc/jeux.md](doc/jeux.md) | Jeux vidéo : collection, pont magazine, Linux |
+| [doc/jeux.md](doc/jeux.md) | Jeux vidéo : collection, pont magazine, Linux, recherche/filtres |
+| [doc/partage-visiteur.md](doc/partage-visiteur.md) | Liens lecture seule : recherche, filtres, colonnes notes (**0.7.0**) |
 | [doc/pont-magazine-jeu.md](doc/pont-magazine-jeu.md) | Pont magazine ↔ jeux : lien catalogue, homonymes, admin |
 | [doc/import-gog.md](doc/import-gog.md) | **Spécification** import bibliothèque GOG (à implémenter) |
 | [ROADMAP.md](ROADMAP.md) | Plan détaillé M0 → M7 |
@@ -63,6 +64,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.0** | Partage visiteur : filtres jeux (plateforme, support, magasin), colonnes Note/Fini le (jeux) et Note/Dernière vue (films) ; barre recherche Mes jeux sur une ligne ; correctif filtre Steam/Epic |
 | **0.6.9** | Jeux terminés (date, stats, accueil), filtres recherche plateforme/magasin, icône disquette, fix jaquette |
 | **0.6.8** | Propositions jeux au catalogue (comme les films), plateforme SNES, fix validation admin |
 | **0.6.7** | Partage visiteur : pages jeux publiques, jaquettes sans login, extensions/remakes sur fiche partagée |

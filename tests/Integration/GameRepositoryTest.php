@@ -597,6 +597,53 @@ final class GameRepositoryTest extends MoncineTestCase
         $this->assertSame(2, (int) ($row['completion_count'] ?? 0));
     }
 
+    public function testListFilterByPhysicalAndDigitalSupport(): void
+    {
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new GameRepository();
+
+        $physicalBibId = $repo->createWithLibrary([
+            'titre' => 'Physical Support Filter Test',
+            'platform' => GamePlatform::PC,
+            'is_digital' => false,
+            'physical_supports' => GamePhysicalSupport::CD_DVD,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($physicalBibId);
+
+        $digitalBibId = $repo->createWithLibrary([
+            'titre' => 'Digital Support Filter Test',
+            'platform' => GamePlatform::PC,
+            'is_digital' => true,
+            'digital_stores' => json_encode([['store' => 'steam', 'url' => '']], JSON_UNESCAPED_UNICODE),
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($digitalBibId);
+
+        $physicalGames = $repo->listInLibrary(
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'titre',
+            'asc',
+            '',
+            GameListFilter::forSupport(GameListFilter::SUPPORT_PHYSICAL)
+        );
+        $this->assertCount(1, $physicalGames);
+        $this->assertSame('Physical Support Filter Test', $physicalGames[0]['titre']);
+
+        $digitalGames = $repo->listInLibrary(
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'titre',
+            'asc',
+            '',
+            GameListFilter::forSupport(GameListFilter::SUPPORT_DIGITAL)
+        );
+        $this->assertCount(1, $digitalGames);
+        $this->assertSame('Digital Support Filter Test', $digitalGames[0]['titre']);
+    }
+
     public function testListFilterByDigitalStoreAndPlatformKind(): void
     {
         if (!GameRepository::hasEditionColumns()) {

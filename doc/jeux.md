@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.6.9** · **Date : 2026-07-01**
+**Version : 0.7.0** · **Date : 2026-06-16**
 
 ## Objectif
 
@@ -147,15 +147,22 @@ Inspiré des **sagas films** (`/sagas.php`), adapté aux jeux vidéo :
 
 **Correctif 0.5.6 — filtre genre (statistiques → Mes jeux) :** un jeu avec plusieurs genres (`Aventure, RPG, …`) est bien retrouvé pour **chaque** genre cliqué dans les statistiques.
 
-### Recherche et filtres Mes jeux (**0.6.9**)
+### Recherche et filtres Mes jeux (**0.6.9** → **0.7.0**)
 
 Sur `/jeux.php`, en plus du champ texte (titre, studio, genre…) :
 
-| Filtre | Paramètre URL | Exemple |
-|--------|---------------|---------|
-| Type de plateforme | `platform_kind` | `pc`, `console`, `mobile`, `multi` |
-| Plateforme précise | `platform` | `ps5`, `switch`, `snes`… |
+| Filtre | Paramètre URL | Interface (0.7.0) |
+|--------|---------------|-------------------|
+| Plateforme précise | `platform` | Liste déroulante |
+| Type de support | `support` | `physical` ou `digital` |
 | Magasin démat | `store` | `steam`, `epic`, `gog`, `psn`, `xbox`, `eshop` |
+| Type de plateforme | `platform_kind` | Liens **statistiques** uniquement (`pc`, `console`, `mobile`, `multi`) |
+
+**Barre de recherche (0.7.0)** : champ texte + menus sur **une seule ligne** (PC) — classes `collection-search--filters` / `collection-search__toolbar`.
+
+**Filtre magasin (0.7.0)** : `GameDigitalStore::sqlStoredJsonContains()` analyse le JSON `digital_stores` via `json_each` (plus de `LIKE` fragile).
+
+**Partage visiteur (0.7.0)** : mêmes filtres et colonnes **Note** / **Fini le** sur `/partage-jeux.php` — voir [partage-visiteur.md](partage-visiteur.md).
 
 Les filtres issus des **statistiques** (genre, décennie, extensions…) restent actifs via les liens existants. Classe : `GameListFilter` ; template : `_games_collection_search_filters.php`.
 

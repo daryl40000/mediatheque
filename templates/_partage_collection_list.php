@@ -39,6 +39,8 @@ $listContext = Moncine\ShareLinkService::collectionQueryParams(
                 <th scope="col">Versions recherchées</th>
             <?php else: ?>
                 <?php $shareSortHeader('Support', 'support_physique'); ?>
+                <?php $shareSortHeader('Note', 'note'); ?>
+                <?php $shareSortHeader('Dernière vue', 'derniere_vue'); ?>
             <?php endif; ?>
         </tr>
     </thead>
@@ -102,6 +104,10 @@ $listContext = Moncine\ShareLinkService::collectionQueryParams(
                     <td><?= Moncine\View::escape(
                         Moncine\SupportPhysique::label((string) ($film['support_physique'] ?? '')) ?: '—'
                     ) ?></td>
+                    <td><?php $showFoyerAverage = true; $layout = 'stacked'; require MONCINE_ROOT . '/templates/_film_ratings.php'; ?></td>
+                    <td><?= !empty($film['derniere_vue'])
+                        ? Moncine\View::escape(Moncine\HistoriqueRepository::formatDateVue((string) $film['derniere_vue']))
+                        : '—' ?></td>
                 <?php endif; ?>
             </tr>
         <?php endforeach; ?>

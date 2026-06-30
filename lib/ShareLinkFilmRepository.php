@@ -20,6 +20,8 @@ final class ShareLinkFilmRepository
         'duree_min' => 'o.duree_min',
         'styles' => 'o.styles COLLATE FRENCH_NOCASE',
         'support_physique' => 'b.support_physique COLLATE FRENCH_NOCASE',
+        'note' => 'note_max',
+        'derniere_vue' => 'derniere_vue',
     ];
 
     public function __construct()
@@ -44,10 +46,17 @@ final class ShareLinkFilmRepository
         $direction = strtolower($sortDir) === 'desc' ? 'DESC' : 'ASC';
         $orderExpr = self::SORT_COLUMNS[$sortBy];
 
-        $sql = 'SELECT ' . CatalogSchema::selectFilmRow()
+        $scope = ShareLinkScope::normalize((string) ($link['scope'] ?? ''));
+        $includeFoyerAverage = $scope === ShareLinkScope::COLLECTION;
+
+        $sql = 'SELECT ' . CatalogSchema::selectFilmRow() . self::historyExtrasSql($includeFoyerAverage)
             . ' FROM ' . CatalogSchema::JOIN;
 
         [$userWhere, $params] = $this->libraryFilterForLink($link);
+        $params['history_user_id'] = (int) ($link['user_id'] ?? 0);
+        if ($includeFoyerAverage) {
+            $params['foyer_id_rating'] = (int) ($link['foyer_id'] ?? 0);
+        }
         $whereParts = [$userWhere];
 
         $searchWhere = $this->searchWhereSql($searchQuery, $params);
@@ -66,7 +75,11 @@ final class ShareLinkFilmRepository
         }
 
         $sql .= ' WHERE ' . implode(' AND ', $whereParts);
-        $sql .= ' ORDER BY ' . $orderExpr . ' ' . $direction;
+        if ($sortBy === 'derniere_vue') {
+            $sql .= ' ORDER BY derniere_vue IS NULL ASC, derniere_vue ' . $direction;
+        } else {
+            $sql .= ' ORDER BY ' . $orderExpr . ' ' . $direction;
+        }
         if ($sortBy !== 'titre') {
             $sql .= ', o.titre COLLATE FRENCH_NOCASE ASC';
         }
@@ -154,5 +167,19 @@ final class ShareLinkFilmRepository
         }
 
         return '(' . implode(' OR ', $parts) . ')';
+    }
+
+    private static function historyExtrasSql(bool $includeFoyerAverage): string
+    {
+        $sql = ',
+                (SELECT MAX(h.date_vue) FROM historique h WHERE h.film_id = b.id AND h.user_id = :history_user_id) AS derniere_vue,
+                (SELECT MAX(h.note) FROM historique h
+                 WHERE h.film_id = b.id AND h.user_id = :history_user_id AND h.note IS NOT NULL AND h.note >= 1) AS note_max';
+
+        if ($includeFoyerAverage) {
+            $sql .= ',' . CatalogSchema::foyerAverageNoteSubquery('b.id', ':foyer_id_rating');
+        }
+
+        return $sql;
     }
 }

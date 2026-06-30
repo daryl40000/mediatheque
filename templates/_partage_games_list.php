@@ -9,13 +9,16 @@
  * @var string $sortDir
  * @var string $query
  * @var string $viewMode
+ * @var Moncine\GameListFilter $listFilter
  */
+$listFilter = $listFilter ?? Moncine\GameListFilter::empty();
 $listContext = Moncine\ShareLinkService::collectionQueryParams(
     $query ?? '',
     $sortBy ?? 'titre',
     $sortDir ?? 'asc',
     '',
-    $viewMode ?? ''
+    $viewMode ?? '',
+    $listFilter
 );
 $mediaDomain = Moncine\MediaDomain::JEU;
 ?>
@@ -31,6 +34,8 @@ $mediaDomain = Moncine\MediaDomain::JEU;
             <?php $shareSortHeader('Studio', 'studio'); ?>
             <?php $shareSortHeader('Genres', 'genre'); ?>
             <?php $shareSortHeader('Support', 'support'); ?>
+            <?php $shareSortHeader('Note', 'note'); ?>
+            <?php $shareSortHeader('Fini le', 'finished_at'); ?>
         </tr>
     </thead>
     <tbody>
@@ -76,6 +81,10 @@ $mediaDomain = Moncine\MediaDomain::JEU;
                     require MONCINE_ROOT . '/templates/_game_edition_icons.php';
                     ?>
                 </td>
+                <td><?php $film = $game; $showFoyerAverage = true; $layout = 'stacked'; require MONCINE_ROOT . '/templates/_film_ratings.php'; ?></td>
+                <td><?= (string) ($game['finished_at_label'] ?? '') !== ''
+                    ? Moncine\View::escape((string) $game['finished_at_label'])
+                    : '—' ?></td>
             </tr>
         <?php endforeach; ?>
     </tbody>

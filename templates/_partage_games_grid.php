@@ -8,22 +8,25 @@
  * @var string $sortDir
  * @var string $query
  * @var string $viewMode
+ * @var Moncine\GameListFilter $listFilter
  */
+$listFilter = $listFilter ?? Moncine\GameListFilter::empty();
 $mediaDomain = Moncine\MediaDomain::JEU;
-$listContext = Moncine\ShareLinkService::collectionQueryParams($query, $sortBy, $sortDir, '', $viewMode);
+$listContext = Moncine\ShareLinkService::collectionQueryParams($query, $sortBy, $sortDir, '', $viewMode, $listFilter);
 $gridSortLink = static function (string $label, string $column) use (
     $rawToken,
     $sortBy,
     $sortDir,
     $query,
     $viewMode,
+    $listFilter,
     $mediaDomain
 ): void {
     $active = $sortBy === $column;
     $class = 'collection-grid-sort__link' . ($active ? ' is-active' : '');
     ?>
     <a href="<?= Moncine\View::escape(
-        Moncine\ShareLinkService::sortUrl($rawToken, $column, $sortBy, $sortDir, $query, '', $viewMode, $mediaDomain)
+        Moncine\ShareLinkService::sortUrl($rawToken, $column, $sortBy, $sortDir, $query, '', $viewMode, $mediaDomain, $listFilter)
     ) ?>"
        class="<?= $class ?>">
         <?= Moncine\View::escape($label) ?><?= Moncine\View::filmsSortIndicator($column, $sortBy, $sortDir) ?>

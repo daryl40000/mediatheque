@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\GameListFilter;
 use Moncine\MediaDomain;
 use Moncine\GameRepository;
 use Moncine\GameSchema;
@@ -49,7 +50,8 @@ $listContext = ShareLinkService::collectionQueryParams(
     (string) ($_GET['sort'] ?? 'titre'),
     (string) ($_GET['dir'] ?? 'asc'),
     '',
-    (string) ($_GET['view'] ?? '')
+    (string) ($_GET['view'] ?? ''),
+    GameListFilter::fromQuery($_GET)
 );
 $listUrl = ShareLinkService::listBackUrl($rawToken, $listContext, MediaDomain::JEU);
 

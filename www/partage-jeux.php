@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\CollectionViewMode;
 use Moncine\FoyerRepository;
+use Moncine\GameListFilter;
 use Moncine\MediaDomain;
 use Moncine\ShareLinkGameRepository;
 use Moncine\ShareLinkRepository;
@@ -45,8 +46,9 @@ $sortBy = (string) ($_GET['sort'] ?? 'titre');
 $sortDir = (string) ($_GET['dir'] ?? 'asc');
 $query = trim((string) ($_GET['q'] ?? ''));
 $viewMode = CollectionViewMode::normalize((string) ($_GET['view'] ?? ''));
+$listFilter = GameListFilter::fromQuery($_GET);
 
-$games = (new ShareLinkGameRepository())->findAllForLink($link, $sortBy, $sortDir, $query);
+$games = (new ShareLinkGameRepository())->findAllForLink($link, $sortBy, $sortDir, $query, $listFilter);
 
 $scope = ShareLinkScope::normalize((string) ($link['scope'] ?? ''));
 $owner = (new UtilisateurRepository())->findById((int) ($link['user_id'] ?? 0));
@@ -73,6 +75,7 @@ View::render('partage-jeux', [
     'sortDir' => $sortDir,
     'query' => $query,
     'viewMode' => $viewMode,
-    'searched' => $query !== '',
+    'listFilter' => $listFilter,
+    'searched' => $query !== '' || $listFilter->isActive(),
     'totalCount' => count($games),
 ]);

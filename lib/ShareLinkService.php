@@ -165,7 +165,8 @@ final class ShareLinkService
         string $searchQuery = '',
         string $kindFilter = '',
         string $viewMode = '',
-        string $mediaDomain = MediaDomain::FILM
+        string $mediaDomain = MediaDomain::FILM,
+        ?GameListFilter $gameFilter = null
     ): string {
         $dir = 'asc';
         if ($currentSort === $column && strtolower($currentDir) === 'asc') {
@@ -177,7 +178,8 @@ final class ShareLinkService
             $column,
             $dir,
             $kindFilter,
-            $viewMode
+            $viewMode,
+            $gameFilter
         ), $mediaDomain);
     }
 
@@ -189,7 +191,8 @@ final class ShareLinkService
         string $sortBy = 'titre',
         string $sortDir = 'asc',
         string $kindFilter = '',
-        string $viewMode = ''
+        string $viewMode = '',
+        ?GameListFilter $gameFilter = null
     ): array {
         $params = [];
         $searchQuery = trim($searchQuery);
@@ -208,6 +211,12 @@ final class ShareLinkService
         }
         if ($viewParam = CollectionViewMode::queryValue($viewMode)) {
             $params['view'] = $viewParam;
+        }
+
+        if ($gameFilter !== null) {
+            foreach ($gameFilter->toQueryParams() as $key => $value) {
+                $params[$key] = (string) $value;
+            }
         }
 
         return $params;

@@ -233,10 +233,46 @@ final class GameDigitalStore
         return isset(self::filterChoices()[$key]) ? $key : '';
     }
 
-    /** Condition SQL : le JSON `digital_stores` contient le magasin (paramètre LIKE). */
-    public static function sqlStoredJsonContains(string $columnExpr, string $paramName): string
+    /** Condition SQL : le JSON `digital_stores` contient le magasin (clé exacte). */
+    public static function sqlStoredJsonContains(string $columnExpr, string $storeParamName): string
     {
-        return '(' . $columnExpr . ' LIKE ' . $paramName . ')';
+        $jsonArray = 'CASE
+            WHEN json_valid(' . $columnExpr . ") AND json_type(" . $columnExpr . ") = 'array'
+            THEN " . $columnExpr . "
+            ELSE '[]'
+        END";
+
+        return '(
+            EXISTS (
+                SELECT 1
+                FROM json_each(' . $jsonArray . ') AS store_row
+                WHERE json_extract(store_row.value, \'$.store\') = ' . $storeParamName . '
+            )
+            OR ' . self::sqlImplicitConsoleStoreMatch($storeParamName) . '
+        )';
+    }
+
+    /** Jeux démat console sans JSON explicite (store implicite selon la plateforme). */
+    public static function sqlImplicitConsoleStoreMatch(string $storeParamName): string
+    {
+        if (!GamePlatformRegistry::isAvailable()) {
+            return '0';
+        }
+
+        return '(
+            oj.is_digital = 1
+            AND TRIM(COALESCE(oj.digital_stores, \'\')) IN (\'\', \'[]\')
+            AND EXISTS (
+                SELECT 1 FROM game_platform gp
+                WHERE gp.console_store = ' . $storeParamName . '
+                  AND gp.active = 1
+                  AND (
+                    ' . GamePlatformList::sqlCsvContains('b.owned_platforms', 'gp.platform_key') . '
+                    OR ' . GamePlatformList::sqlCsvContains('oj.platforms', 'gp.platform_key') . '
+                    OR oj.platform = gp.platform_key
+                  )
+            )
+        )';
     }
 
     private static function normalizeStoreKey(string $raw): string

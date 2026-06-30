@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.6.9** (2026-07-01)  
+**Version actuelle : 0.7.0** (2026-06-16)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -40,6 +40,13 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.7.0** — partage visiteur : recherche jeux et colonnes historique (2026-06-16)
+
+- Filtres **plateforme / support / magasin** sur `/partage-jeux.php` (visiteurs non connectés).
+- Colonnes **Note** et **Fini le** (jeux) / **Dernière vue** (films) sur listes partagées.
+- Barre recherche Mes jeux sur une ligne ; filtre support physique/démat ; correctif filtre Steam/Epic (`json_each`).
+- Doc : [doc/partage-visiteur.md](doc/partage-visiteur.md).
 
 ### ✅ **0.6.9** — jeux terminés, filtres recherche, icône disquette (2026-07-01)
 
@@ -441,4 +448,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.6.9** — 2026-07-01 (jeux terminés, filtres recherche, icône disquette).*
+*Dernière mise à jour : **0.7.0** — 2026-06-16 (partage visiteur : filtres jeux, colonnes notes/vues, recherche unifiée).*

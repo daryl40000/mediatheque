@@ -1,12 +1,12 @@
 <?php
 /**
- * Filtres plateforme / magasin démat pour la recherche « Mes jeux ».
+ * Filtres plateforme / support / magasin démat pour la recherche « Mes jeux ».
  *
  * @var Moncine\GameListFilter $listFilter
  */
 $listFilter = $listFilter ?? Moncine\GameListFilter::empty();
 $platformChoices = Moncine\GamePlatformRegistry::choices();
-$platformKindChoices = Moncine\GameListFilter::platformKindChoices();
+$supportChoices = Moncine\GameListFilter::supportChoices();
 $pcStores = Moncine\GameDigitalStore::pcStoreChoices();
 $consoleStores = [
     Moncine\GameDigitalStore::PSN => Moncine\GameDigitalStore::label(Moncine\GameDigitalStore::PSN),
@@ -14,28 +14,27 @@ $consoleStores = [
     Moncine\GameDigitalStore::ESHOP => Moncine\GameDigitalStore::label(Moncine\GameDigitalStore::ESHOP),
 ];
 ?>
-<div class="collection-search__filters">
-    <div class="collection-search__filter">
-        <label for="jeux_platform_kind">Type de plateforme</label>
-        <select name="platform_kind" id="jeux_platform_kind">
-            <option value="">Tous les types</option>
-            <?php foreach ($platformKindChoices as $kindKey => $kindLabel): ?>
-                <option value="<?= Moncine\View::escape($kindKey) ?>"
-                    <?= ($listFilter->platformKind ?? '') === $kindKey ? ' selected' : '' ?>>
-                    <?= Moncine\View::escape($kindLabel) ?>
-                </option>
-            <?php endforeach; ?>
-        </select>
-    </div>
-
-    <div class="collection-search__filter">
-        <label for="jeux_platform">Plateforme</label>
+<div class="collection-search__filter">
+    <label for="jeux_platform">Plateforme</label>
         <select name="platform" id="jeux_platform">
             <option value="">Toutes les plateformes</option>
             <?php foreach ($platformChoices as $platformKey => $platformLabel): ?>
                 <option value="<?= Moncine\View::escape($platformKey) ?>"
                     <?= ($listFilter->platform ?? '') === $platformKey ? ' selected' : '' ?>>
                     <?= Moncine\View::escape($platformLabel) ?>
+                </option>
+            <?php endforeach; ?>
+        </select>
+    </div>
+
+    <div class="collection-search__filter">
+        <label for="jeux_support">Type de support</label>
+        <select name="support" id="jeux_support">
+            <option value="">Tous les supports</option>
+            <?php foreach ($supportChoices as $supportKey => $supportLabel): ?>
+                <option value="<?= Moncine\View::escape($supportKey) ?>"
+                    <?= ($listFilter->support ?? '') === $supportKey ? ' selected' : '' ?>>
+                    <?= Moncine\View::escape($supportLabel) ?>
                 </option>
             <?php endforeach; ?>
         </select>
@@ -63,4 +62,3 @@ $consoleStores = [
             </optgroup>
         </select>
     </div>
-</div>

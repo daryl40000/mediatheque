@@ -91,33 +91,37 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
     <?php endif; ?>
 
     <form method="get" action="/jeux.php" class="collection-search collection-search--filters">
-        <label for="jeux_q">Rechercher</label>
-        <div class="collection-search__row">
-            <input type="search" name="q" id="jeux_q"
-                   value="<?= Moncine\View::escape($query) ?>"
-                   placeholder="Titre, studio, genre…">
-            <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
-            <input type="hidden" name="dir" value="<?= Moncine\View::escape($sortDir) ?>">
-            <?php if ($viewQueryValue !== null): ?>
-                <input type="hidden" name="view" value="<?= Moncine\View::escape($viewQueryValue) ?>">
-            <?php endif; ?>
-            <?php
-            // Filtres issus des statistiques (genre, décennie, extensions…) : champs cachés.
-            foreach ($listFilter->toQueryParams() as $filterKey => $filterValue):
-                if (in_array($filterKey, ['platform', 'platform_kind', 'store'], true)) {
-                    continue;
-                }
-                ?>
-                <input type="hidden" name="<?= Moncine\View::escape((string) $filterKey) ?>"
-                       value="<?= Moncine\View::escape((string) $filterValue) ?>">
-            <?php endforeach; ?>
-            <button type="submit" class="btn btn-secondary btn-sm">Rechercher</button>
-            <?php if ($query !== '' || $filterActive): ?>
-                <a href="<?= Moncine\View::escape(Moncine\View::gamesCollectionUrl('', $sortBy, $sortDir, $viewMode)) ?>"
-                   class="btn btn-secondary btn-sm">Tout effacer</a>
-            <?php endif; ?>
+        <div class="collection-search__toolbar">
+            <div class="collection-search__filter collection-search__filter--query">
+                <label for="jeux_q">Rechercher</label>
+                <input type="search" name="q" id="jeux_q"
+                       value="<?= Moncine\View::escape($query) ?>"
+                       placeholder="Titre, studio, genre…">
+            </div>
+            <?php require MONCINE_ROOT . '/templates/_games_collection_search_filters.php'; ?>
+            <div class="collection-search__actions">
+                <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
+                <input type="hidden" name="dir" value="<?= Moncine\View::escape($sortDir) ?>">
+                <?php if ($viewQueryValue !== null): ?>
+                    <input type="hidden" name="view" value="<?= Moncine\View::escape($viewQueryValue) ?>">
+                <?php endif; ?>
+                <?php
+                // Filtres issus des statistiques (genre, décennie, extensions…) : champs cachés.
+                foreach ($listFilter->toQueryParams() as $filterKey => $filterValue):
+                    if (in_array($filterKey, ['platform', 'store', 'support'], true)) {
+                        continue;
+                    }
+                    ?>
+                    <input type="hidden" name="<?= Moncine\View::escape((string) $filterKey) ?>"
+                           value="<?= Moncine\View::escape((string) $filterValue) ?>">
+                <?php endforeach; ?>
+                <button type="submit" class="btn btn-secondary btn-sm">Rechercher</button>
+                <?php if ($query !== '' || $filterActive): ?>
+                    <a href="<?= Moncine\View::escape(Moncine\View::gamesCollectionUrl('', $sortBy, $sortDir, $viewMode)) ?>"
+                       class="btn btn-secondary btn-sm">Tout effacer</a>
+                <?php endif; ?>
+            </div>
         </div>
-        <?php require MONCINE_ROOT . '/templates/_games_collection_search_filters.php'; ?>
     </form>
 
     <nav class="ui-pill-bar" aria-label="Mode d’affichage">

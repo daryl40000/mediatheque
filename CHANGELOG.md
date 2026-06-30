@@ -13,6 +13,31 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+---
+
+## [0.7.0] — 2026-06-16
+
+**Partage visiteur, recherche jeux unifiée, colonnes historique sur listes partagées**
+
+### Ajouté
+
+- **Partage jeux — filtres** : sur `/partage-jeux.php`, mêmes menus que Mes jeux (**plateforme**, **type de support** physique/démat, **magasin démat.** Steam/Epic/…) pour les visiteurs non connectés ; `ShareLinkGameRepository::findAllForLink()` accepte `GameListFilter` ; `ShareLinkService::collectionQueryParams()` propage les filtres dans tri, vues et fiches.
+- **Partage jeux — colonnes** : **Note** et **Fini le** dans le tableau visiteur (`_partage_games_list.php`) ; tri `note` / `finished_at` déjà supporté côté dépôt.
+- **Partage films — colonnes** : **Note** et **Dernière vue** sur les listes collection (`ShareLinkFilmRepository::historyExtrasSql()`, `_partage_collection_list.php`).
+- **Mes jeux — filtre support** : menu **Physique uniquement** / **Dématérialisé uniquement** (`GameListFilter::supportChoices()`, `templates/_games_collection_search_filters.php`).
+- **Mes jeux — barre recherche** : champ texte et listes déroulantes sur **une ligne** (PC) — `collection-search__toolbar` + CSS `collection-search--filters`.
+- **Documentation** : [doc/partage-visiteur.md](doc/partage-visiteur.md) (liens, filtres, colonnes, fichiers, tests).
+- **Tests** : `ShareFeaturesTest::testGameShareLinkAppliesListFilters` ; `GameRepositoryTest::testListFilterByPhysicalAndDigitalSupport`.
+
+### Modifié
+
+- **Mes jeux** : retrait du menu **type de plateforme** (`platform_kind`) de l’interface (le paramètre reste actif via liens statistiques en champ caché).
+- **Tri partagé** : correction `ORDER BY` pour **Fini le** / **dernière vue** (évite le double `DESC` SQL invalide).
+
+### Corrigé
+
+- **Filtre magasin démat.** : recherche Steam, Epic, GOG, etc. via `json_each` / `json_extract` sur `digital_stores` au lieu d’un `LIKE` fragile (`GameDigitalStore::sqlStoredJsonContains()` + repli console implicite).
+
 ## [0.6.9] — 2026-07-01
 
 **Jeux : fin de partie, filtres recherche, icône disquette, correctif jaquette**

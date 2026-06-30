@@ -310,4 +310,4 @@ Détails : [conventions-techniques.md](conventions-techniques.md) §4.
 
 ---
 
-*Dernière mise à jour : **0.6.9** (2026-07-01) — fins de partie jeux, filtres recherche, icône disquette.*
+*Dernière mise à jour : **0.7.0** (2026-06-16) — partage visiteur : filtres jeux, colonnes historique, filtre magasin JSON.*

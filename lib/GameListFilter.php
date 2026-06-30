@@ -43,6 +43,15 @@ final class GameListFilter
         ];
     }
 
+    /** @return array<string, string> */
+    public static function supportChoices(): array
+    {
+        return [
+            self::SUPPORT_PHYSICAL => 'Physique uniquement',
+            self::SUPPORT_DIGITAL => 'Dématérialisé uniquement',
+        ];
+    }
+
     /** @param array<string, mixed> $query */
     public static function fromQuery(array $query): self
     {
@@ -239,7 +248,7 @@ final class GameListFilter
 
         if ($this->store !== '' && GameRepository::hasEditionColumns()) {
             $where[] = GameDigitalStore::sqlStoredJsonContains('oj.digital_stores', ':filter_digital_store');
-            $params['filter_digital_store'] = '%"store":"' . $this->store . '"%';
+            $params['filter_digital_store'] = $this->store;
         }
 
         if ($this->genre !== '') {

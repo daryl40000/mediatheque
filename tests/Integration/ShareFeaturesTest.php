@@ -4,7 +4,14 @@ declare(strict_types=1);
 
 namespace Moncine\Tests\Integration;
 
+use Moncine\GameDigitalStore;
+use Moncine\GameListFilter;
+use Moncine\GamePhysicalSupport;
+use Moncine\GamePlatform;
+use Moncine\GameRepository;
+use Moncine\GameSchema;
 use Moncine\LibraryStatut;
+use Moncine\MediaDomain;
 use Moncine\OeuvreEanRepository;
 use Moncine\SchemaMigrator;
 use Moncine\ShareLinkFilmRepository;
@@ -14,8 +21,6 @@ use Moncine\ShareLinkRepository;
 use Moncine\ShareLinkScope;
 use Moncine\ShareLinkService;
 use Moncine\SupportPhysique;
-use Moncine\GameRepository;
-use Moncine\GameSchema;
 use Moncine\Tests\Support\MoncineTestCase;
 use Moncine\UserContext;
 use Moncine\WishlistTargetRepository;
@@ -202,6 +207,76 @@ final class ShareFeaturesTest extends MoncineTestCase
 
         $this->assertNull($gameRepo->findByIdForLink($colLink, $wishId));
         $this->assertNotNull($gameRepo->findByIdForLink($colLink, $gameId));
+    }
+
+    public function testGameShareLinkAppliesListFilters(): void
+    {
+        if (!GameRepository::isAvailable() || !GameRepository::hasEditionColumns()) {
+            $this->markTestSkipped('Filtres éditions jeux indisponibles.');
+        }
+
+        $userId = $this->loginAsAdmin();
+        $foyerId = UserContext::currentFoyerId();
+        $gameRepo = new GameRepository();
+        $shareRepo = new ShareLinkGameRepository();
+
+        $physicalBibId = $gameRepo->createWithLibrary([
+            'titre' => 'Share Physical Game',
+            'platform' => GamePlatform::PC,
+            'is_digital' => false,
+            'physical_supports' => GamePhysicalSupport::CD_DVD,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($physicalBibId);
+
+        $digitalBibId = $gameRepo->createWithLibrary([
+            'titre' => 'Share Steam Game',
+            'platform' => GamePlatform::PC,
+            'is_digital' => true,
+            'digital_stores' => json_encode([['store' => 'steam', 'url' => '']], JSON_UNESCAPED_UNICODE),
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($digitalBibId);
+
+        $created = (new ShareLinkService())->create(
+            $userId,
+            $foyerId,
+            ShareLinkScope::COLLECTION,
+            'filtres jeux',
+            null,
+            MediaDomain::JEU
+        );
+        $this->assertIsArray($created);
+        $link = (new ShareLinkService())->resolve((string) $created['token']);
+        $this->assertNotNull($link);
+
+        $physicalGames = $shareRepo->findAllForLink(
+            $link,
+            'titre',
+            'asc',
+            '',
+            GameListFilter::forSupport(GameListFilter::SUPPORT_PHYSICAL)
+        );
+        $this->assertCount(1, $physicalGames);
+        $this->assertSame('Share Physical Game', $physicalGames[0]['titre']);
+
+        $steamGames = $shareRepo->findAllForLink(
+            $link,
+            'titre',
+            'asc',
+            '',
+            GameListFilter::forDigitalStore(GameDigitalStore::STEAM)
+        );
+        $this->assertCount(1, $steamGames);
+        $this->assertSame('Share Steam Game', $steamGames[0]['titre']);
+
+        $queryParams = ShareLinkService::collectionQueryParams(
+            '',
+            'titre',
+            'asc',
+            '',
+            '',
+            GameListFilter::forDigitalStore(GameDigitalStore::STEAM)
+        );
+        $this->assertSame('steam', $queryParams['store'] ?? '');
     }
 
     public function testGameShareLinkShowsExtensionRelations(): void

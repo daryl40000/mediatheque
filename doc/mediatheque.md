@@ -1,6 +1,6 @@
 # Médiathèque — guide du fork
 
-**Version : 0.6.9** · **Date : 2026-07-01**
+**Version : 0.7.0** · **Date : 2026-06-16**
 
 Ce document décrit ce qu’est la **Médiathèque**, ce qui a été livré en **0.1.0**, et comment cela s’articule avec **Monciné**.
 
@@ -129,7 +129,7 @@ Voir `.gitignore` :
 
 Points essentiels :
 
-- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.6.9**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.7.0**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
 
 ## Foyers et collection partagée (0.6.5)
 
@@ -143,6 +143,11 @@ La **collection** (films, jeux, magazines en statut `collection`) est rattachée
 | Changement de foyer | L’utilisateur rejoint le foyer du groupe ; sa collection personnelle reste sous l’ancien foyer tant qu’elle n’est pas migrée |
 
 Implémentation : `FoyerRepository::ensurePersonalFoyerForUser()`, appelée depuis `UserContext::currentFoyerId()` et `BibliothequeRepository::insert()`.
+
+### Partage visiteur (0.7.0)
+
+Liens lecture seule vers collection ou envies (films et jeux), sans compte. Depuis **0.7.0** : **mêmes filtres de recherche jeux** que Mes jeux sur `/partage-jeux.php` ; colonnes **Note** / **Dernière vue** (films) et **Note** / **Fini le** (jeux) sur les tableaux partagés. Documentation complète : [partage-visiteur.md](partage-visiteur.md).
+
 - **`media_domain`** (onglet Films/BD/…) ≠ **`moncine_kind`** (film/série/spectacle dans l’onglet Films).
 - Nouveau code multi-médias : `MediaDomain`, `MediaContext`, `CatalogSchema::applyMediaDomainFilter()`.
 
