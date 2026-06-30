@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.6.8** · **Date : 2026-06-30**
+**Version : 0.6.9** · **Date : 2026-07-01**
 
 ## Objectif
 
@@ -47,6 +47,17 @@ Liste des plateformes configurables par l’administrateur (`/plateformes-jeux.p
 ### Colonne `bibliotheque.owned_platforms` (migration **051**)
 
 Plateformes que **vous possédez** pour cet exemplaire (sous-ensemble de `oeuvre_jeu.platforms`). Exemple : un jeu catalogue `pc,ps5` peut être dans votre collection avec `pc` seulement si vous ne l’avez que sur PC.
+
+### Table `game_completion` (migration **054**, **0.6.9**)
+
+| Colonne | Rôle |
+|---------|------|
+| `bibliotheque_id` | Entrée bibliothèque (jeu) |
+| `user_id` | Utilisateur ayant terminé le jeu |
+| `completed_at` | Date de fin (ISO `AAAA-MM-JJ`) |
+| `created_at` | Horodatage d’enregistrement |
+
+Plusieurs lignes par jeu et par utilisateur (rejeu, nouvelle partie). Les **notes** restent dans `historique` (sans date obligatoire) ; les **fins** sont séparées.
 
 ### Table `game_attachment`
 
@@ -136,6 +147,34 @@ Inspiré des **sagas films** (`/sagas.php`), adapté aux jeux vidéo :
 
 **Correctif 0.5.6 — filtre genre (statistiques → Mes jeux) :** un jeu avec plusieurs genres (`Aventure, RPG, …`) est bien retrouvé pour **chaque** genre cliqué dans les statistiques.
 
+### Recherche et filtres Mes jeux (**0.6.9**)
+
+Sur `/jeux.php`, en plus du champ texte (titre, studio, genre…) :
+
+| Filtre | Paramètre URL | Exemple |
+|--------|---------------|---------|
+| Type de plateforme | `platform_kind` | `pc`, `console`, `mobile`, `multi` |
+| Plateforme précise | `platform` | `ps5`, `switch`, `snes`… |
+| Magasin démat | `store` | `steam`, `epic`, `gog`, `psn`, `xbox`, `eshop` |
+
+Les filtres issus des **statistiques** (genre, décennie, extensions…) restent actifs via les liens existants. Classe : `GameListFilter` ; template : `_games_collection_search_filters.php`.
+
+### Jeu terminé (**0.6.9**)
+
+Même principe que « marquer un film comme vu » :
+
+- Formulaire sur la fiche `/jeu.php` (date du jour ou passée) ;
+- **Plusieurs fins** enregistrables (historique sur la fiche) ;
+- Liste Mes jeux : colonne **Fini le** (dernière date) à la place de « Ajouté le », triable ;
+- Accueil onglet Jeux : **5 derniers jeux finis** ;
+- Statistiques : jeux terminés au moins une fois, pourcentage de la collection, total des fins (reprises incluses).
+
+Handler : `/marquer-jeu-fini.php` · Classe : `GameCompletionRepository`.
+
+### Icônes support / magasin (**0.6.9**)
+
+Fichiers dans `www/assets/img/game-editions/` : `cd_dvd`, `disquette`, `steam`, `gog`, `epic` (PNG ou SVG). La **disquette/cartouche** utilise une icône dédiée (CF2) en listes et sur la fiche jeu (section Exemplaires). Classe : `GameEditionIcons`.
+
 #### Classes PHP (IGDB)
 
 | Classe | Rôle |
@@ -201,6 +240,7 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | `/modifier-jeu.php?id=` | Modification fiche catalogue (admin) |
 | `/rechercher-jeux-catalogue.php` | API JSON autocomplétion catalogue |
 | `/marquer-joue.php` | Enregistrer une note sur 10 |
+| `/marquer-jeu-fini.php` | Marquer un jeu comme terminé (date, plusieurs fois) |
 | `/supprimer-jeu.php` | Retirer un jeu de la collection ou des envies |
 | `/promouvoir-jeu-collection.php` | Passer une envie en collection (« J’ai acheté ») |
 | `/enregistrer-fichier-jeu.php` | Ajouter un fichier joint (POST) |
@@ -221,9 +261,10 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | `GameRelatedSections` | Bandeaux extensions / remakes |
 | `SearchMatch` | Recherche tolérante (accents, casse, faute) pour autocomplétion |
 | `GameAttachmentRepository` | Upload, liste et suppression des fichiers joints |
-| `GameEditionIcons` | URLs des icônes support (images ou repli SVG) |
+| `GameEditionIcons` | Icônes support (CD/DVD, disquette, Steam…) — PNG/SVG dans `www/assets/img/game-editions/` |
 | `GameGenre` | Genres réutilisables (tags, comme magazines) |
 | `GameCollectionStats` | Statistiques collection jeux |
+| `GameCompletionRepository` | Fins de partie (date, historique, stats) |
 | `GamePlatform` | Liste et normalisation des plateformes (délègue au registre) |
 | `GamePlatformRegistry` | Lecture plateformes depuis `game_platform` (**0.6.5**) |
 | `GamePlatformAdmin` | CRUD admin plateformes (**0.6.5**) |

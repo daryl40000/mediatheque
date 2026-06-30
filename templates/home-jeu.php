@@ -5,6 +5,7 @@
  * @var int $gameCount
  * @var bool $setupDone
  * @var list<array<string, mixed>> $lastNoted
+ * @var list<array<string, mixed>> $lastFinished
  * @var list<array<string, mixed>> $lastCollection
  * @var list<array<string, mixed>> $lastWishlist
  * @var int $currentUserId
@@ -47,6 +48,16 @@ $mediaNav = Moncine\MediaContext::navLabels();
             <?php
             $films = $lastNoted;
             $emptyHint = 'Aucune note enregistrée pour le moment.';
+            $linkToGame = true;
+            require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
+            ?>
+        </section>
+
+        <section class="social-profile-section" aria-labelledby="home-last-finished-heading">
+            <h2 id="home-last-finished-heading">5 derniers jeux finis</h2>
+            <?php
+            $films = $lastFinished ?? [];
+            $emptyHint = 'Aucun jeu marqué comme terminé pour le moment.';
             $linkToGame = true;
             require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
             ?>

@@ -1,6 +1,6 @@
 <?php
 /**
- * Filtres de la liste « Mes jeux » (plateforme, genre, décennie, support, extensions).
+ * Filtres de la liste « Mes jeux » (plateforme, genre, décennie, support, magasin démat, extensions).
  */
 
 declare(strict_types=1);
@@ -18,6 +18,8 @@ final class GameListFilter
 
     private function __construct(
         public readonly string $platform = '',
+        public readonly string $platformKind = '',
+        public readonly string $store = '',
         public readonly string $genre = '',
         public readonly int $decade = 0,
         public readonly string $support = '',
@@ -30,11 +32,25 @@ final class GameListFilter
         return new self();
     }
 
+    /** @return array<string, string> */
+    public static function platformKindChoices(): array
+    {
+        return [
+            'pc' => 'PC',
+            'console' => 'Consoles',
+            'mobile' => 'Mobile',
+            'multi' => 'Multi-plateformes',
+        ];
+    }
+
     /** @param array<string, mixed> $query */
     public static function fromQuery(array $query): self
     {
         $platformRaw = trim((string) ($query['platform'] ?? ''));
         $platform = $platformRaw === '_none' ? '_none' : GamePlatform::normalize($platformRaw);
+
+        $platformKind = self::normalizePlatformKind((string) ($query['platform_kind'] ?? ''));
+        $store = GameDigitalStore::normalizeFilterKey((string) ($query['store'] ?? ''));
 
         $genre = mb_strtolower(trim((string) ($query['genre'] ?? '')));
 
@@ -46,7 +62,7 @@ final class GameListFilter
         $support = self::normalizeSupport((string) ($query['support'] ?? ''));
         $extensions = self::normalizeExtensions((string) ($query['extensions'] ?? ''));
 
-        return new self($platform, $genre, $decade, $support, $extensions);
+        return new self($platform, $platformKind, $store, $genre, $decade, $support, $extensions);
     }
 
     public static function forPlatform(string $platformKey): self
@@ -87,6 +103,14 @@ final class GameListFilter
         );
     }
 
+    public static function forDigitalStore(string $storeKey): self
+    {
+        return new self(
+            store: GameDigitalStore::normalizeFilterKey($storeKey),
+            extensions: self::EXTENSIONS_EXCLUDE,
+        );
+    }
+
     public static function forExtensionsOnly(): self
     {
         return new self(extensions: self::EXTENSIONS_ONLY);
@@ -100,6 +124,8 @@ final class GameListFilter
     public function isActive(): bool
     {
         return $this->platform !== ''
+            || $this->platformKind !== ''
+            || $this->store !== ''
             || $this->genre !== ''
             || $this->decade > 0
             || $this->support !== ''
@@ -117,11 +143,19 @@ final class GameListFilter
             $parts[] = 'Jeux de base uniquement';
         }
 
+        if ($this->platformKind !== '') {
+            $parts[] = self::platformKindChoices()[$this->platformKind] ?? $this->platformKind;
+        }
+
         if ($this->platform === '_none') {
             $parts[] = 'Plateforme non renseignée';
         } elseif ($this->platform !== '') {
             $label = GamePlatform::label($this->platform);
             $parts[] = $label !== '' ? $label : $this->platform;
+        }
+
+        if ($this->store !== '') {
+            $parts[] = GameDigitalStore::label($this->store);
         }
 
         if ($this->genre !== '') {
@@ -146,10 +180,18 @@ final class GameListFilter
     {
         $params = [];
 
+        if ($this->platformKind !== '') {
+            $params['platform_kind'] = $this->platformKind;
+        }
+
         if ($this->platform === '_none') {
             $params['platform'] = '_none';
         } elseif ($this->platform !== '') {
             $params['platform'] = $this->platform;
+        }
+
+        if ($this->store !== '') {
+            $params['store'] = $this->store;
         }
 
         if ($this->genre !== '') {
@@ -179,6 +221,10 @@ final class GameListFilter
      */
     public function applyToSql(array &$where, array &$params): void
     {
+        if ($this->platformKind !== '') {
+            $this->appendPlatformKindSql($where, $params);
+        }
+
         if ($this->platform === '_none') {
             $where[] = '(TRIM(COALESCE(oj.platform, \'\')) = \'\' AND TRIM(COALESCE(oj.platforms, \'\')) = \'\''
                 . ' AND TRIM(COALESCE(b.owned_platforms, \'\')) = \'\')';
@@ -189,6 +235,11 @@ final class GameListFilter
                 . ' OR oj.platform = :filter_platform'
                 . ')';
             $params['filter_platform'] = $this->platform;
+        }
+
+        if ($this->store !== '' && GameRepository::hasEditionColumns()) {
+            $where[] = GameDigitalStore::sqlStoredJsonContains('oj.digital_stores', ':filter_digital_store');
+            $params['filter_digital_store'] = '%"store":"' . $this->store . '"%';
         }
 
         if ($this->genre !== '') {
@@ -217,6 +268,61 @@ final class GameListFilter
         } elseif ($this->extensions === self::EXTENSIONS_EXCLUDE && GameRepository::hasExtensionColumns()) {
             $where[] = '(oj.is_extension = 0 OR oj.is_extension IS NULL)';
         }
+    }
+
+    /**
+     * @param list<string> $where
+     * @param array<string, mixed> $params
+     */
+    private function appendPlatformKindSql(array &$where, array &$params): void
+    {
+        if (GamePlatformRegistry::isAvailable()) {
+            $where[] = 'EXISTS (
+                SELECT 1 FROM game_platform gp
+                WHERE gp.kind = :filter_platform_kind
+                  AND gp.active = 1
+                  AND (
+                    ' . GamePlatformList::sqlCsvContains('b.owned_platforms', 'gp.platform_key') . '
+                    OR ' . GamePlatformList::sqlCsvContains('oj.platforms', 'gp.platform_key') . '
+                    OR oj.platform = gp.platform_key
+                  )
+            )';
+            $params['filter_platform_kind'] = $this->platformKind;
+
+            return;
+        }
+
+        $orParts = [];
+        $index = 0;
+        foreach (array_keys(GamePlatform::choices()) as $platformKey) {
+            if (GamePlatformRegistry::kind($platformKey) !== $this->platformKind) {
+                continue;
+            }
+
+            $param = 'filter_kind_platform_' . $index;
+            $index++;
+            $orParts[] = '('
+                . GamePlatformList::sqlCsvContains('b.owned_platforms', ':' . $param)
+                . ' OR ' . GamePlatformList::sqlCsvContains('oj.platforms', ':' . $param)
+                . ' OR oj.platform = :' . $param
+                . ')';
+            $params[$param] = $platformKey;
+        }
+
+        if ($orParts === []) {
+            $where[] = '1 = 0';
+
+            return;
+        }
+
+        $where[] = '(' . implode(' OR ', $orParts) . ')';
+    }
+
+    private static function normalizePlatformKind(string $value): string
+    {
+        $value = strtolower(trim($value));
+
+        return isset(self::platformKindChoices()[$value]) ? $value : '';
     }
 
     private static function normalizeSupport(string $value): string

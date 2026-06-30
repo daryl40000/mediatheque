@@ -66,6 +66,16 @@ final class GameRowMapper
         return HistoriqueRepository::formatDateVue(substr($createdAt, 0, 10));
     }
 
+    public static function formatFinishedAt(string $completedAt): string
+    {
+        $completedAt = trim($completedAt);
+        if ($completedAt === '') {
+            return '';
+        }
+
+        return HistoriqueRepository::formatDateVue(substr($completedAt, 0, 10));
+    }
+
     /**
      * @param array<string, mixed> $row
      * @return array{bib_id:int, oeuvre_id:int, titre:string, annee:int, poster_url:string, platform_short:string, display_label:string}
@@ -101,6 +111,8 @@ final class GameRowMapper
         $row['id'] = (int) ($row['id'] ?? 0);
         $row['edition_icon_keys'] = GameEditionIcons::iconKeys($row);
         $row['added_at_label'] = self::formatAddedAt((string) ($row['created_at'] ?? ''));
+        $row['finished_at_label'] = self::formatFinishedAt((string) ($row['derniere_completion'] ?? ''));
+        $row['completion_count'] = (int) ($row['completion_count'] ?? 0);
         $row['is_pc'] = in_array(GamePlatform::PC, GamePlatformList::ownedKeysFromRow($row), true)
             || in_array(GamePlatform::PC, GamePlatformList::catalogKeysFromRow($row), true);
         $row['tested_on_linux'] = !empty($row['tested_on_linux']);

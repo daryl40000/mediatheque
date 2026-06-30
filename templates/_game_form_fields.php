@@ -249,9 +249,10 @@ require MONCINE_ROOT . '/templates/_game_genre_tags_field.php';
 <p class="hint">Image affichée dans le catalogue partagé.</p>
 
 <label for="poster_url">Ou URL de la jaquette catalogue (facultatif)</label>
-<input type="url" name="poster_url" id="poster_url" maxlength="500" placeholder="https://…"
+<input type="text" name="poster_url" id="poster_url" maxlength="500"
+       placeholder="https://… ou /posters/123.jpg"
        value="<?= Moncine\View::escape((string) ($gameRow['poster_url'] ?? '')) ?>">
-<p class="hint">L’image sera <strong>téléchargée et enregistrée sur le serveur</strong>. HTTPS uniquement.</p>
+<p class="hint">Chemin local <code>/posters/…</code> ou URL <strong>HTTPS</strong> ; l’image distante sera téléchargée sur le serveur.</p>
 
 <label for="synopsis">Description catalogue (facultatif)</label>
 <textarea name="synopsis" id="synopsis" rows="4"><?= Moncine\View::escape((string) ($gameRow['synopsis'] ?? '')) ?></textarea>

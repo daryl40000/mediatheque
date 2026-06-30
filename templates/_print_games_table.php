@@ -16,7 +16,7 @@
             <th>Genres</th>
             <th class="col-narrow">Support</th>
             <th class="col-narrow">Note</th>
-            <th class="col-narrow">Ajouté le</th>
+            <th class="col-narrow">Fini le</th>
         </tr>
     </thead>
     <tbody>
@@ -46,8 +46,8 @@
                 <td><?= $genreList !== [] ? Moncine\View::escape(implode(', ', $genreList)) : '—' ?></td>
                 <td class="col-narrow"><?= $supportText !== '' ? Moncine\View::escape($supportText) : '—' ?></td>
                 <td class="col-narrow"><?= $noteLabel !== '' ? Moncine\View::escape($noteLabel) : '—' ?></td>
-                <td class="col-narrow"><?= (string) ($game['added_at_label'] ?? '') !== ''
-                    ? Moncine\View::escape((string) $game['added_at_label'])
+                <td class="col-narrow"><?= (string) ($game['finished_at_label'] ?? '') !== ''
+                    ? Moncine\View::escape((string) $game['finished_at_label'])
                     : '—' ?></td>
             </tr>
         <?php endforeach; ?>

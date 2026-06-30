@@ -90,7 +90,7 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
         </div>
     <?php endif; ?>
 
-    <form method="get" action="/jeux.php" class="collection-search">
+    <form method="get" action="/jeux.php" class="collection-search collection-search--filters">
         <label for="jeux_q">Rechercher</label>
         <div class="collection-search__row">
             <input type="search" name="q" id="jeux_q"
@@ -101,16 +101,23 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
             <?php if ($viewQueryValue !== null): ?>
                 <input type="hidden" name="view" value="<?= Moncine\View::escape($viewQueryValue) ?>">
             <?php endif; ?>
-            <?php foreach ($listFilter->toQueryParams() as $filterKey => $filterValue): ?>
+            <?php
+            // Filtres issus des statistiques (genre, décennie, extensions…) : champs cachés.
+            foreach ($listFilter->toQueryParams() as $filterKey => $filterValue):
+                if (in_array($filterKey, ['platform', 'platform_kind', 'store'], true)) {
+                    continue;
+                }
+                ?>
                 <input type="hidden" name="<?= Moncine\View::escape((string) $filterKey) ?>"
                        value="<?= Moncine\View::escape((string) $filterValue) ?>">
             <?php endforeach; ?>
             <button type="submit" class="btn btn-secondary btn-sm">Rechercher</button>
-            <?php if ($query !== ''): ?>
-                <a href="<?= Moncine\View::escape(Moncine\View::gamesCollectionUrl('', $sortBy, $sortDir, $viewMode, $listFilter)) ?>"
-                   class="btn btn-secondary btn-sm">Effacer la recherche</a>
+            <?php if ($query !== '' || $filterActive): ?>
+                <a href="<?= Moncine\View::escape(Moncine\View::gamesCollectionUrl('', $sortBy, $sortDir, $viewMode)) ?>"
+                   class="btn btn-secondary btn-sm">Tout effacer</a>
             <?php endif; ?>
         </div>
+        <?php require MONCINE_ROOT . '/templates/_games_collection_search_filters.php'; ?>
     </form>
 
     <nav class="ui-pill-bar" aria-label="Mode d’affichage">

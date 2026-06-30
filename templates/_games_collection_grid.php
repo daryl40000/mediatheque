@@ -35,7 +35,7 @@ $gridSortLink = static function (string $label, string $column) use ($sortBy, $s
         <?php $gridSortLink('Année', 'annee'); ?>
         <?php $gridSortLink('Note', 'note'); ?>
         <?php $gridSortLink('Studio', 'studio'); ?>
-        <?php $gridSortLink('Ajouté le', 'added_at'); ?>
+        <?php $gridSortLink('Fini le', 'finished_at'); ?>
     </nav>
 </div>
 

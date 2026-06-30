@@ -51,6 +51,25 @@ $physicalListUrl = Moncine\View::gamesCollectionUrl(filter: Moncine\GameListFilt
                 <p class="stat-card__hint">DLC, season pass, add-ons…</p>
             </article>
         <?php endif; ?>
+        <?php if ($collectionCount > 0 && Moncine\GameCompletionRepository::isAvailable()): ?>
+            <article class="stat-card">
+                <p class="stat-card__value"><?= (int) ($s['finished_count'] ?? 0) ?></p>
+                <p class="stat-card__label">Jeux terminés</p>
+                <?php if ((float) ($s['finished_percent'] ?? 0) > 0): ?>
+                    <p class="stat-card__hint">
+                        <?= Moncine\View::escape(Moncine\CollectionStats::formatPercent((float) ($s['finished_percent'] ?? 0))) ?>
+                        de la collection de base
+                    </p>
+                <?php endif; ?>
+            </article>
+            <?php if ((int) ($s['completions_total'] ?? 0) > (int) ($s['finished_count'] ?? 0)): ?>
+                <article class="stat-card">
+                    <p class="stat-card__value"><?= (int) ($s['completions_total'] ?? 0) ?></p>
+                    <p class="stat-card__label">Fins de partie enregistrées</p>
+                    <p class="stat-card__hint">Reprises et nouvelles parties incluses</p>
+                </article>
+            <?php endif; ?>
+        <?php endif; ?>
         <?php if ((int) ($s['wishlist_count'] ?? 0) > 0): ?>
             <article class="stat-card">
                 <p class="stat-card__value"><?= (int) ($s['wishlist_count'] ?? 0) ?></p>

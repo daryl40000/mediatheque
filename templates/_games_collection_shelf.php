@@ -39,7 +39,7 @@ $spineHeightPx = Moncine\View::gameShelfSpineHeightPx();
         <?php $shelfSortLink('Année', 'annee'); ?>
         <?php $shelfSortLink('Note', 'note'); ?>
         <?php $shelfSortLink('Studio', 'studio'); ?>
-        <?php $shelfSortLink('Ajouté le', 'added_at'); ?>
+        <?php $shelfSortLink('Fini le', 'finished_at'); ?>
     </nav>
 </div>
 

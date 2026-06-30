@@ -10,6 +10,7 @@ namespace Moncine;
 final class GameEditionIcons
 {
     public const CD_DVD = 'cd_dvd';
+    public const DISKETTE = 'disquette';
     public const STEAM = 'steam';
     public const GOG = 'gog';
     public const EPIC = 'epic';
@@ -22,6 +23,8 @@ final class GameEditionIcons
         foreach (GamePhysicalSupport::parseList((string) ($gameRow['physical_supports'] ?? '')) as $support) {
             if ($support === GamePhysicalSupport::CD_DVD) {
                 $keys[self::CD_DVD] = self::CD_DVD;
+            } elseif ($support === GamePhysicalSupport::DISKETTE) {
+                $keys[self::DISKETTE] = self::DISKETTE;
             }
         }
 
@@ -35,15 +38,16 @@ final class GameEditionIcons
         return array_values($keys);
     }
 
-    /** Texte pour supports sans icône dédiée (disquette/cartouche, stores console…). */
+    /** Texte pour supports sans icône dédiée (stores console sans logo…). */
     public static function supplementalText(array $gameRow): string
     {
         $parts = [];
 
         foreach (GamePhysicalSupport::parseList((string) ($gameRow['physical_supports'] ?? '')) as $support) {
-            if ($support !== GamePhysicalSupport::CD_DVD) {
-                $parts[] = GamePhysicalSupport::label($support);
+            if ($support === GamePhysicalSupport::CD_DVD || $support === GamePhysicalSupport::DISKETTE) {
+                continue;
             }
+            $parts[] = GamePhysicalSupport::label($support);
         }
 
         foreach (GameDigitalStore::parseStoredList((string) ($gameRow['digital_stores'] ?? '')) as $entry) {
@@ -74,6 +78,7 @@ final class GameEditionIcons
     {
         return match ($iconKey) {
             self::CD_DVD => 'CD / DVD',
+            self::DISKETTE => 'Disquette/cartouche',
             self::STEAM => 'Steam',
             self::GOG => 'GOG',
             self::EPIC => 'Epic Games Store',
@@ -86,6 +91,7 @@ final class GameEditionIcons
     {
         return match ($iconKey) {
             self::CD_DVD => 'cd_dvd',
+            self::DISKETTE => 'disquette',
             self::STEAM => 'steam',
             self::GOG => 'gog',
             self::EPIC => 'epic',

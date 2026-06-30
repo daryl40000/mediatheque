@@ -208,6 +208,37 @@ final class GameDigitalStore
         return array_values(array_filter($labels, static fn (string $label): bool => $label !== ''));
     }
 
+    /** @return array<string, string> choix pour le filtre liste « Mes jeux » */
+    public static function filterChoices(): array
+    {
+        return [
+            self::STEAM => self::label(self::STEAM),
+            self::GOG => self::label(self::GOG),
+            self::EPIC => self::label(self::EPIC),
+            self::PSN => self::label(self::PSN),
+            self::XBOX => self::label(self::XBOX),
+            self::ESHOP => self::label(self::ESHOP),
+        ];
+    }
+
+    public static function isValidFilterKey(string $raw): bool
+    {
+        return self::normalizeFilterKey($raw) !== '';
+    }
+
+    public static function normalizeFilterKey(string $raw): string
+    {
+        $key = self::normalizeStoreKey($raw);
+
+        return isset(self::filterChoices()[$key]) ? $key : '';
+    }
+
+    /** Condition SQL : le JSON `digital_stores` contient le magasin (paramètre LIKE). */
+    public static function sqlStoredJsonContains(string $columnExpr, string $paramName): string
+    {
+        return '(' . $columnExpr . ' LIKE ' . $paramName . ')';
+    }
+
     private static function normalizeStoreKey(string $raw): string
     {
         $raw = mb_strtolower(trim($raw));

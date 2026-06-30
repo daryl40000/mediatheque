@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.6.8** (2026-06-30)  
+**Version actuelle : 0.6.9** (2026-07-01)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
 
 ---
@@ -40,6 +40,11 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.6.9** — jeux terminés, filtres recherche, icône disquette (2026-07-01)
+
+- Fin de partie avec date (plusieurs fois) ; colonne **Fini le** ; accueil et statistiques.
+- Filtres Mes jeux : type/plateforme/magasin démat ; icône **disquette/cartouche** ; fix sauvegarde jaquette `/posters/…`.
 
 ### ✅ **0.6.8** — propositions jeux au catalogue (2026-06-30)
 
@@ -436,4 +441,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.6.8** — 2026-06-30 (propositions jeux catalogue, SNES).*
+*Dernière mise à jour : **0.6.9** — 2026-07-01 (jeux terminés, filtres recherche, icône disquette).*

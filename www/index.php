@@ -48,11 +48,13 @@ if (MediaDomain::isGame($mediaDomain)) {
         : 0;
 
     $lastNoted = [];
+    $lastFinished = [];
     $lastCollection = [];
     $lastWishlist = [];
     if ($userId > 0) {
         $profile = new UserPublicProfileService();
         $lastNoted = $profile->lastNotedGames($userId, 5);
+        $lastFinished = $profile->lastFinishedGames($userId, 5);
         $lastCollection = $profile->lastCollectionFilms($userId, 5, MediaDomain::JEU);
         $lastWishlist = $profile->lastWishlistFilms($userId, 5, MediaDomain::JEU);
     }
@@ -62,6 +64,7 @@ if (MediaDomain::isGame($mediaDomain)) {
         'gameCount' => $gameCount,
         'setupDone' => isset($_GET['setup']) && (string) $_GET['setup'] === '1',
         'lastNoted' => $lastNoted,
+        'lastFinished' => $lastFinished,
         'lastCollection' => $lastCollection,
         'lastWishlist' => $lastWishlist,
         'currentUserId' => $userId,

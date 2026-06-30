@@ -143,9 +143,9 @@ $genreTagsList = $gameRow['genre_list'] ?? Moncine\GameGenre::parseList((string)
 require MONCINE_ROOT . '/templates/_game_genre_tags_field.php';
 ?>
 
-<label for="<?= Moncine\View::escape($fieldPrefix) ?>_poster_url">Jaquette (URL HTTPS)</label>
-<input type="url" name="poster_url" id="<?= Moncine\View::escape($fieldPrefix) ?>_poster_url" maxlength="500"
-       placeholder="https://…"
+<label for="<?= Moncine\View::escape($fieldPrefix) ?>_poster_url">Jaquette (URL ou /posters/…)</label>
+<input type="text" name="poster_url" id="<?= Moncine\View::escape($fieldPrefix) ?>_poster_url" maxlength="500"
+       placeholder="https://… ou /posters/123.jpg"
        value="<?= Moncine\View::escape((string) ($gameRow['poster_url'] ?? '')) ?>">
 
 <label for="<?= Moncine\View::escape($fieldPrefix) ?>_synopsis">Description (facultatif)</label>

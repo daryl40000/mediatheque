@@ -1088,6 +1088,33 @@ textarea {
     margin-bottom: 1.25rem;
 }
 
+.collection-page .collection-search--filters {
+    max-width: 52rem;
+}
+
+.collection-search__filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1rem;
+    margin-top: 0.75rem;
+}
+
+.collection-search__filter {
+    flex: 1 1 10rem;
+    min-width: 0;
+}
+
+.collection-search__filter label {
+    display: block;
+    font-size: 0.875rem;
+    margin-bottom: 0.25rem;
+}
+
+.collection-search__filter select {
+    width: 100%;
+    max-width: 100%;
+}
+
 .collection-search__row {
     display: flex;
     flex-wrap: wrap;
@@ -4004,6 +4031,23 @@ body.media-domain--magazine.page-wide .container--wide {
     margin-bottom: 0.35rem;
 }
 
+.game-editions-display__list--icons .game-editions-display__item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.45rem;
+}
+
+.game-editions-display__icon {
+    display: inline-flex;
+    flex-shrink: 0;
+    line-height: 0;
+}
+
+.game-editions-display__label {
+    font-size: 0.95rem;
+}
+
 .game-detail-page__toolbar {
     margin: 0.75rem 0 1rem;
 }
@@ -4380,6 +4424,14 @@ td .game-linux-badge--plain {
     height: 1.35rem;
     border-radius: 999px;
     box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.game-edition-icon--disquette,
+.game-edition-icon--disquette.game-edition-icon--img {
+    width: 1.05rem;
+    height: 1.35rem;
+    border-radius: 2px;
+    box-shadow: none;
 }
 
 .game-edition-icon--img {

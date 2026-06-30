@@ -188,6 +188,31 @@ final class UserPublicProfileService
     }
 
     /** @return list<array<string, mixed>> */
+    public function lastFinishedGames(int $userId, int $limit = 5): array
+    {
+        if ($userId <= 0 || $limit <= 0 || !GameCompletionRepository::isAvailable()) {
+            return [];
+        }
+
+        $params = ['profile_user_id' => $userId];
+        $domainSql = self::publicProfileMediaDomainSql($params, MediaDomain::JEU, 'o');
+        $stmt = $this->db->prepare(
+            'SELECT ' . CatalogSchema::selectFilmRow() . ',
+                    MAX(gc.completed_at) AS derniere_fin
+             FROM game_completion gc
+             INNER JOIN bibliotheque b ON b.id = gc.bibliotheque_id
+             INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+             WHERE gc.user_id = :profile_user_id' . $domainSql . '
+             GROUP BY b.id
+             ORDER BY derniere_fin DESC, b.id DESC
+             LIMIT ' . (int) $limit
+        );
+        $stmt->execute($params);
+
+        return $stmt->fetchAll() ?: [];
+    }
+
+    /** @return list<array<string, mixed>> */
     public function lastWishlistFilms(int $userId, int $limit = 5, string $mediaDomain = MediaDomain::FILM): array
     {
         $mediaDomain = MediaDomain::normalize($mediaDomain);

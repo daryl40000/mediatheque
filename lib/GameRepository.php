@@ -19,13 +19,13 @@ final class GameRepository
         'studio' => 'oj.studio COLLATE FRENCH_NOCASE',
         'genre' => 'oj.genre COLLATE FRENCH_NOCASE',
         'note' => 'note_max',
-        'added_at' => 'b.created_at',
+        'finished_at' => 'derniere_completion',
     ];
 
     /** @return list<string> */
     public static function sortableColumns(): array
     {
-        return ['titre', 'annee', 'genre', 'studio', 'support', 'note', 'added_at'];
+        return ['titre', 'annee', 'genre', 'studio', 'support', 'note', 'finished_at'];
     }
 
     public static function isValidSortColumn(string $sortBy): bool
@@ -41,6 +41,10 @@ final class GameRepository
             }
 
             return 'oj.is_digital';
+        }
+
+        if ($sortBy === 'finished_at' && !GameCompletionRepository::isAvailable()) {
+            return self::SORT_COLUMNS['titre'];
         }
 
         return self::SORT_COLUMNS[$sortBy] ?? self::SORT_COLUMNS['titre'];
@@ -389,6 +393,9 @@ final class GameRepository
         }
         $direction = strtolower($sortDir) === 'desc' ? 'DESC' : 'ASC';
         $orderExpr = self::sortOrderExpression($sortBy);
+        if ($sortBy === 'finished_at' && GameCompletionRepository::isAvailable()) {
+            $orderExpr = 'derniere_completion IS NULL ASC, derniere_completion ' . $direction;
+        }
 
         $params = [];
         [$userWhere, $params] = CatalogSchema::libraryFilter($foyerId, $userId, LibraryStatut::normalize($statut));
@@ -1283,7 +1290,8 @@ final class GameRepository
             . ' (SELECT MAX(h.note) FROM historique h'
             . '  WHERE h.film_id = b.id AND h.user_id = :history_user_id'
             . '    AND h.note IS NOT NULL AND h.note >= 1) AS note_max,'
-            . CatalogSchema::foyerAverageNoteSubquery('b.id', ':foyer_id_rating');
+            . CatalogSchema::foyerAverageNoteSubquery('b.id', ':foyer_id_rating')
+            . GameCompletionRepository::selectListExtrasSql();
     }
 
     private static function selectCatalogRow(): string

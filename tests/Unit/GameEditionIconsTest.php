@@ -14,7 +14,10 @@ final class GameEditionIconsTest extends TestCase
     public function testIconKeysFromPhysicalAndDigital(): void
     {
         $keys = GameEditionIcons::iconKeys([
-            'physical_supports' => GamePhysicalSupport::CD_DVD,
+            'physical_supports' => GamePhysicalSupport::serializeList([
+                GamePhysicalSupport::CD_DVD,
+                GamePhysicalSupport::DISKETTE,
+            ]),
             'digital_stores' => GameDigitalStore::serializeList([
                 ['store' => GameDigitalStore::STEAM, 'url' => ''],
                 ['store' => GameDigitalStore::GOG, 'url' => ''],
@@ -22,9 +25,20 @@ final class GameEditionIconsTest extends TestCase
         ]);
 
         $this->assertSame(
-            [GameEditionIcons::CD_DVD, GameDigitalStore::STEAM, GameDigitalStore::GOG],
+            [
+                GameEditionIcons::CD_DVD,
+                GameEditionIcons::DISKETTE,
+                GameDigitalStore::STEAM,
+                GameDigitalStore::GOG,
+            ],
             $keys
         );
+    }
+
+    public function testDisquetteIconImageExists(): void
+    {
+        $url = GameEditionIcons::iconImageUrl(GameEditionIcons::DISKETTE);
+        $this->assertStringContainsString('disquette.', $url);
     }
 
     public function testIconKeysEmptyWhenNoEdition(): void

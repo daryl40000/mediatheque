@@ -31,7 +31,7 @@ final class PrintListHelper
         'genre' => 'Genres',
         'support' => 'Support',
         'note' => 'Notes',
-        'added_at' => 'Ajouté le',
+        'finished_at' => 'Fini le',
     ];
 
     public static function sortLabel(string $sortBy): string

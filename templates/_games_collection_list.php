@@ -33,7 +33,7 @@ if (!$showBulkSelect && isset($existingFranchises)) {
                 <?php $sortHeader('Genres', 'genre'); ?>
                 <?php $sortHeader('Support', 'support'); ?>
                 <?php $sortHeader('Note', 'note'); ?>
-                <?php $sortHeader('Ajouté le', 'added_at'); ?>
+                <?php $sortHeader('Fini le', 'finished_at'); ?>
             </tr>
         </thead>
         <tbody>
@@ -97,8 +97,8 @@ if (!$showBulkSelect && isset($existingFranchises)) {
                         ?>
                     </td>
                     <td><?php $film = $game; $showFoyerAverage = true; $layout = 'stacked'; require MONCINE_ROOT . '/templates/_film_ratings.php'; ?></td>
-                    <td><?= (string) ($game['added_at_label'] ?? '') !== ''
-                        ? Moncine\View::escape((string) $game['added_at_label'])
+                    <td><?= (string) ($game['finished_at_label'] ?? '') !== ''
+                        ? Moncine\View::escape((string) $game['finished_at_label'])
                         : '—' ?></td>
                 </tr>
             <?php endforeach; ?>

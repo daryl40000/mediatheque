@@ -41,6 +41,12 @@ final class GameCollectionStats
         $magazineLinksCount = MagazineGameLink::isAvailable()
             ? $this->countMagazineLinksInLibrary($userId, $foyerId)
             : 0;
+        $finishedCount = GameCompletionRepository::isAvailable()
+            ? (new GameCompletionRepository())->countDistinctFinishedInCollection($userId, $foyerId)
+            : 0;
+        $completionsTotal = GameCompletionRepository::isAvailable()
+            ? (new GameCompletionRepository())->countTotalCompletions($userId, $foyerId)
+            : 0;
 
         return [
             'collection_count' => $collectionCount,
@@ -50,6 +56,11 @@ final class GameCollectionStats
             'physical_count' => $physicalCount,
             'digital_percent' => $collectionCount > 0
                 ? round(($digitalCount / $collectionCount) * 100, 1)
+                : 0.0,
+            'finished_count' => $finishedCount,
+            'completions_total' => $completionsTotal,
+            'finished_percent' => $collectionCount > 0
+                ? round(($finishedCount / $collectionCount) * 100, 1)
                 : 0.0,
             'platform_breakdown' => $platformBreakdown,
             'genre_breakdown' => $genreBreakdown,
@@ -74,6 +85,9 @@ final class GameCollectionStats
             'genre_breakdown' => ['items' => [], 'max' => 1],
             'decade_breakdown' => ['items' => [], 'max' => 1],
             'magazine_links_count' => 0,
+            'finished_count' => 0,
+            'completions_total' => 0,
+            'finished_percent' => 0.0,
         ];
     }
 

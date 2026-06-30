@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\GameAttachmentRepository;
+use Moncine\GameCompletionRepository;
 use Moncine\GameRepository;
 use Moncine\HistoriqueRepository;
 use Moncine\IgdbConfig;
@@ -72,6 +73,14 @@ $magazineCoverage = MagazineGameLink::isAvailable()
     ? (new MagazineGameLink())->listMagazineCoverageForGame((int) ($game['oeuvre_id'] ?? 0), $userId, $foyerId)
     : [];
 
+$gameCompletions = [];
+$completionCount = 0;
+if (!$isWishlist && GameCompletionRepository::isAvailable()) {
+    $completionRepo = new GameCompletionRepository();
+    $gameCompletions = $completionRepo->listForGame($bibId, $userId);
+    $completionCount = count($gameCompletions);
+}
+
 $baseGame = null;
 $extensions = [];
 $originalGame = null;
@@ -134,6 +143,8 @@ View::render('jeu', [
     'listBackUrl' => $listBackUrl,
     'noteSur10' => $noteSur10,
     'noteFoyerMoyenne' => $noteFoyerMoyenne,
+    'gameCompletions' => $gameCompletions,
+    'completionCount' => $completionCount,
     'addedAtLabel' => GameRepository::formatAddedAt((string) ($game['created_at'] ?? '')),
     'attachments' => $attachments,
 ]);

@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.6.8**
+**Version : 0.6.9**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -63,6 +63,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.6.9** | Jeux terminés (date, stats, accueil), filtres recherche plateforme/magasin, icône disquette, fix jaquette |
 | **0.6.8** | Propositions jeux au catalogue (comme les films), plateforme SNES, fix validation admin |
 | **0.6.7** | Partage visiteur : pages jeux publiques, jaquettes sans login, extensions/remakes sur fiche partagée |
 | **0.6.5** | Prêts jeux physiques, multi-plateformes, admin plateformes, foyer personnel auto, formulaires bibliothèque utilisateur, **sagas films catalogue partagé** |

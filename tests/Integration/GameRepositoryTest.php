@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Moncine\Tests\Integration;
 
 use Moncine\GameDigitalStore;
+use Moncine\GameDigitalStore;
 use Moncine\GameListFilter;
 use Moncine\GamePhysicalSupport;
 use Moncine\GamePlatform;
@@ -327,7 +328,7 @@ final class GameRepositoryTest extends MoncineTestCase
     public function testSortableColumnsIncludeSupport(): void
     {
         $this->assertSame(
-            ['titre', 'annee', 'genre', 'studio', 'support', 'note', 'added_at'],
+            ['titre', 'annee', 'genre', 'studio', 'support', 'note', 'finished_at'],
             GameRepository::sortableColumns()
         );
         $this->assertTrue(GameRepository::isValidSortColumn('genre'));
@@ -558,5 +559,101 @@ final class GameRepositoryTest extends MoncineTestCase
             'original_game_oeuvre_id' => 2,
         ]);
         $this->assertNotNull($bothTypesError);
+    }
+
+    public function testGameCompletionRecordedAndListed(): void
+    {
+        if (!\Moncine\GameCompletionRepository::isAvailable()) {
+            $this->markTestSkipped('Table game_completion absente.');
+        }
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new GameRepository();
+        $completionRepo = new \Moncine\GameCompletionRepository();
+
+        $bibId = $repo->createWithLibrary([
+            'titre' => 'Completion Test Game',
+            'platform' => GamePlatform::SWITCH,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        $completionRepo->recordCompletion($bibId, $userId, '2024-03-15');
+        $completionRepo->recordCompletion($bibId, $userId, '2025-01-10');
+
+        $this->assertSame(2, $completionRepo->countForGame($bibId, $userId));
+        $this->assertSame('2025-01-10', $completionRepo->lastCompletedAt($bibId, $userId));
+
+        $games = $repo->listInLibrary($userId, $foyerId, LibraryStatut::COLLECTION);
+        $row = null;
+        foreach ($games as $game) {
+            if ((int) ($game['id'] ?? 0) === $bibId) {
+                $row = $game;
+                break;
+            }
+        }
+        $this->assertNotNull($row);
+        $this->assertSame('10-01-2025', (string) ($row['finished_at_label'] ?? ''));
+        $this->assertSame(2, (int) ($row['completion_count'] ?? 0));
+    }
+
+    public function testListFilterByDigitalStoreAndPlatformKind(): void
+    {
+        if (!GameRepository::hasEditionColumns()) {
+            $this->markTestSkipped('Colonnes éditions non disponibles.');
+        }
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new GameRepository();
+
+        $steamBibId = $repo->createWithLibrary([
+            'titre' => 'Steam Filter Test',
+            'platform' => GamePlatform::PC,
+            'digital_stores' => json_encode([['store' => 'steam', 'url' => '']], JSON_UNESCAPED_UNICODE),
+            'is_digital' => true,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($steamBibId);
+
+        $epicBibId = $repo->createWithLibrary([
+            'titre' => 'Epic Filter Test',
+            'platform' => GamePlatform::PC,
+            'digital_stores' => json_encode([['store' => 'epic', 'url' => '']], JSON_UNESCAPED_UNICODE),
+            'is_digital' => true,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($epicBibId);
+
+        $switchBibId = $repo->createWithLibrary([
+            'titre' => 'Switch Filter Test',
+            'platform' => GamePlatform::SWITCH,
+            'digital_stores' => json_encode([['store' => 'eshop', 'url' => '']], JSON_UNESCAPED_UNICODE),
+            'is_digital' => true,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($switchBibId);
+
+        $steamGames = $repo->listInLibrary(
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'titre',
+            'asc',
+            '',
+            GameListFilter::forDigitalStore(GameDigitalStore::STEAM)
+        );
+        $this->assertCount(1, $steamGames);
+        $this->assertSame('Steam Filter Test', $steamGames[0]['titre']);
+
+        $consoleGames = $repo->listInLibrary(
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'titre',
+            'asc',
+            '',
+            new GameListFilter(platformKind: 'console')
+        );
+        $titles = array_map(static fn (array $row): string => (string) ($row['titre'] ?? ''), $consoleGames);
+        $this->assertContains('Switch Filter Test', $titles);
+        $this->assertNotContains('Steam Filter Test', $titles);
     }
 }

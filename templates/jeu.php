@@ -49,6 +49,16 @@ if ($linuxBadge === '' && $linuxNotSupported) {
         <?php if (!empty($_GET['promote_error'])): ?>
             <p class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['promote_error']) ?></p>
         <?php endif; ?>
+        <?php if (!empty($_GET['fin'])): ?>
+            <div class="alert alert-success">
+                Fin de partie enregistrée<?php if (!empty($_GET['date'])): ?>
+                    (<?= Moncine\View::escape(Moncine\HistoriqueRepository::formatDateVue((string) $_GET['date'])) ?>)
+                <?php endif; ?>.
+            </div>
+        <?php endif; ?>
+        <?php if (!empty($_GET['fin_error'])): ?>
+            <p class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['fin_error']) ?></p>
+        <?php endif; ?>
         <?php if (isset($_GET['note']) && (int) $_GET['note'] >= 1): ?>
             <div class="alert alert-success">Note enregistrée : <?= (int) $_GET['note'] ?>/10.</div>
         <?php endif; ?>
@@ -253,6 +263,17 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                         ?>
                     </section>
                 <?php else: ?>
+                    <?php if (Moncine\GameCompletionRepository::isAvailable() && (int) ($completionCount ?? 0) > 0): ?>
+                        <p class="game-completion-summary">
+                            Terminé <?= (int) $completionCount ?> fois
+                            <?php if (!empty($gameCompletions[0]['completed_at'])): ?>
+                                · dernière fin le
+                                <?= Moncine\View::escape(
+                                    Moncine\HistoriqueRepository::formatDateVue((string) $gameCompletions[0]['completed_at'])
+                                ) ?>
+                            <?php endif; ?>
+                        </p>
+                    <?php endif; ?>
                     <section class="marquer-vu-panel">
                         <h2 class="marquer-vu-panel__title">Votre note</h2>
                         <?php
@@ -260,6 +281,24 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                         require MONCINE_ROOT . '/templates/_marquer_joue_form.php';
                         ?>
                     </section>
+                    <?php if (Moncine\GameCompletionRepository::isAvailable()): ?>
+                        <?php if (!empty($gameCompletions)): ?>
+                            <h2>Historique des fins de partie</h2>
+                            <ul class="viewings-list">
+                                <?php foreach ($gameCompletions as $completion):
+                                    $cDate = Moncine\HistoriqueRepository::formatDateVue((string) ($completion['completed_at'] ?? ''));
+                                    ?>
+                                    <li class="viewings-list__item">
+                                        <span class="viewings-list__info"><?= Moncine\View::escape($cDate) ?></span>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        <?php endif; ?>
+                        <section class="marquer-vu-panel">
+                            <h2 class="marquer-vu-panel__title">Marquer comme terminé</h2>
+                            <?php require MONCINE_ROOT . '/templates/_marquer_jeu_fini_form.php'; ?>
+                        </section>
+                    <?php endif; ?>
                 <?php endif; ?>
 
                 <div class="result-actions result-actions--with-delete">

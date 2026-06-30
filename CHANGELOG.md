@@ -13,6 +13,23 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.6.9] — 2026-07-01
+
+**Jeux : fin de partie, filtres recherche, icône disquette, correctif jaquette**
+
+### Ajouté
+
+- **Jeu terminé** : table `game_completion` (migration **054**) ; formulaire avec date sur `/jeu.php` ; handler `/marquer-jeu-fini.php` ; plusieurs fins possibles ; colonne **Fini le** (remplace « Ajouté le ») dans Mes jeux ; bloc **5 derniers jeux finis** sur l’accueil ; statistiques (jeux terminés, % collection, reprises).
+- **Recherche Mes jeux** : filtres **type de plateforme** (PC, consoles…), **plateforme** et **magasin démat** (Steam, Epic, GOG, PSN, Xbox, eShop) — `GameListFilter` + `templates/_games_collection_search_filters.php`.
+- **Icône disquette/cartouche** : `www/assets/img/game-editions/disquette.png` (+ SVG de secours) ; affichage listes et fiche jeu (`GameEditionIcons`, `_game_editions_display.php`).
+- **Classes** : `GameCompletionRepository` ; filtres magasin dans `GameDigitalStore::filterChoices()`.
+- **Tests** : fin de partie et filtres magasin/plateforme (`GameRepositoryTest`) ; icône disquette (`GameEditionIconsTest`).
+
+### Corrigé
+
+- **Modification jeu** : le champ jaquette catalogue accepte les chemins `/posters/…` (`type="text"` au lieu de `type="url"` qui bloquait la sauvegarde côté navigateur).
+- **`GameListFilter.php`** : erreur de syntaxe PHP sur `normalizeSupport` (régression 0.6.9).
+
 ## [0.6.8] — 2026-06-30
 
 **Jeux : propositions au catalogue, plateforme SNES, correctifs validation admin**

@@ -80,6 +80,11 @@ final class GameSchema
         return self::hasColumn('bibliotheque', 'non_pretable');
     }
 
+    public static function completionTableExists(): bool
+    {
+        return self::tableExists('game_completion');
+    }
+
     public static function hasGamePlatformTable(): bool
     {
         return self::tableExists('game_platform');

@@ -526,6 +526,17 @@ CREATE TABLE IF NOT EXISTS game_attachment (
 CREATE INDEX IF NOT EXISTS idx_game_attachment_bib ON game_attachment(bibliotheque_id);
 CREATE UNIQUE INDEX IF NOT EXISTS idx_game_attachment_object ON game_attachment(stored_object_id);
 
+CREATE TABLE IF NOT EXISTS game_completion (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    bibliotheque_id INTEGER NOT NULL REFERENCES bibliotheque(id) ON DELETE CASCADE,
+    user_id INTEGER NOT NULL REFERENCES utilisateurs(id) ON DELETE CASCADE,
+    completed_at TEXT NOT NULL DEFAULT (date('now')),
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_game_completion_bib_user ON game_completion(bibliotheque_id, user_id);
+CREATE INDEX IF NOT EXISTS idx_game_completion_user_date ON game_completion(user_id, completed_at DESC);
+
 CREATE TABLE IF NOT EXISTS magazine_subject (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     category TEXT NOT NULL,

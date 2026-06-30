@@ -313,6 +313,7 @@ final class GameFranchiseRepository
             . ' (SELECT MAX(h.note) FROM historique h'
             . '  WHERE h.film_id = b.id AND h.user_id = :history_user_id'
             . '    AND h.note IS NOT NULL AND h.note >= 1) AS note_max,'
-            . CatalogSchema::foyerAverageNoteSubquery('b.id', ':foyer_id_rating');
+            . CatalogSchema::foyerAverageNoteSubquery('b.id', ':foyer_id_rating')
+            . GameCompletionRepository::selectListExtrasSql();
     }
 }
