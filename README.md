@@ -1,6 +1,6 @@
 # Médiathèque
 
-**Version : 0.7.0**
+**Version : 0.7.1**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -64,6 +64,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.1** | Correctif tri « Fini le » sur Mes jeux (erreur 500 SQL) |
 | **0.7.0** | Partage visiteur : filtres jeux (plateforme, support, magasin), colonnes Note/Fini le (jeux) et Note/Dernière vue (films) ; barre recherche Mes jeux sur une ligne ; correctif filtre Steam/Epic |
 | **0.6.9** | Jeux terminés (date, stats, accueil), filtres recherche plateforme/magasin, icône disquette, fix jaquette |
 | **0.6.8** | Propositions jeux au catalogue (comme les films), plateforme SNES, fix validation admin |

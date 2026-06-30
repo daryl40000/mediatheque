@@ -393,9 +393,7 @@ final class GameRepository
         }
         $direction = strtolower($sortDir) === 'desc' ? 'DESC' : 'ASC';
         $orderExpr = self::sortOrderExpression($sortBy);
-        if ($sortBy === 'finished_at' && GameCompletionRepository::isAvailable()) {
-            $orderExpr = 'derniere_completion IS NULL ASC, derniere_completion ' . $direction;
-        }
+        $finishedAtSort = $sortBy === 'finished_at' && GameCompletionRepository::isAvailable();
 
         $params = [];
         [$userWhere, $params] = CatalogSchema::libraryFilter($foyerId, $userId, LibraryStatut::normalize($statut));
@@ -428,8 +426,12 @@ final class GameRepository
             . ' FROM bibliotheque b'
             . ' INNER JOIN oeuvres o ON o.id = b.oeuvre_id'
             . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
-            . ' WHERE ' . implode(' AND ', $where)
-            . ' ORDER BY ' . $orderExpr . ' ' . $direction;
+            . ' WHERE ' . implode(' AND ', $where);
+        if ($finishedAtSort) {
+            $sql .= ' ORDER BY derniere_completion IS NULL ASC, derniere_completion ' . $direction;
+        } else {
+            $sql .= ' ORDER BY ' . $orderExpr . ' ' . $direction;
+        }
         if ($sortBy !== 'titre') {
             $sql .= ', o.titre COLLATE FRENCH_NOCASE ASC';
         }

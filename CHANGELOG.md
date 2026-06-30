@@ -15,6 +15,16 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+---
+
+## [0.7.1] — 2026-06-16
+
+**Correctif tri « Fini le » sur Mes jeux**
+
+### Corrigé
+
+- **Mes jeux** : clic sur la colonne **Fini le** provoquait une erreur **500** (SQL invalide `ORDER BY … DESC DESC`) ; alignement sur la logique déjà corrigée pour le partage visiteur (`GameRepository::listInLibrary()`).
+
 ## [0.7.0] — 2026-06-16
 
 **Partage visiteur, recherche jeux unifiée, colonnes historique sur listes partagées**

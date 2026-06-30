@@ -5,7 +5,6 @@ declare(strict_types=1);
 namespace Moncine\Tests\Integration;
 
 use Moncine\GameDigitalStore;
-use Moncine\GameDigitalStore;
 use Moncine\GameListFilter;
 use Moncine\GamePhysicalSupport;
 use Moncine\GamePlatform;
@@ -595,6 +594,24 @@ final class GameRepositoryTest extends MoncineTestCase
         $this->assertNotNull($row);
         $this->assertSame('10-01-2025', (string) ($row['finished_at_label'] ?? ''));
         $this->assertSame(2, (int) ($row['completion_count'] ?? 0));
+
+        $sortedDesc = $repo->listInLibrary(
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'finished_at',
+            'desc'
+        );
+        $this->assertNotEmpty($sortedDesc);
+
+        $sortedAsc = $repo->listInLibrary(
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'finished_at',
+            'asc'
+        );
+        $this->assertNotEmpty($sortedAsc);
     }
 
     public function testListFilterByPhysicalAndDigitalSupport(): void
