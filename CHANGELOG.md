@@ -17,6 +17,29 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+---
+
+## [0.7.2] — 2026-06-16
+
+**BD / Manga : polish profil public, partage visiteur, impression et comptage possession**
+
+### Ajouté
+
+- **Profil public BD** : onglet sur `/utilisateur.php?domain=bd`, séries, tomes (`utilisateur-serie-bd`, `utilisateur-album-bd`) ; stats et bandeaux récents.
+- **Partage visiteur BD** : `/partage-bd.php`, `/partage-serie-bd.php`, `/partage-album-bd.php` ; option BD dans `/gerer-partages.php` ; boutons Partager sur Mes BD et envies.
+- **Liste imprimable** : `/imprimer-serie-bd.php` et bouton « Exporter en PDF » sur la fiche série (`BdPrintListService`).
+- **Classes** : `ShareLinkBdRepository`, `BdPrintListService` ; méthodes BD dans `UserPublicProfileService`.
+- **Tests** : `UserPublicProfileBdTest`, `BdPrintListServiceTest`, partage BD dans `ShareFeaturesTest`.
+
+### Corrigé
+
+- **Comptage possession** : tomes référencés mais non possédés ne sont plus comptés comme possédés (stats, liste séries « x possédé sur z », en-tête de série).
+- **Profil public** : l’onglet BD n’était plus traité comme les films (grille incorrecte).
+
+### Modifié
+
+- **Documentation** : [doc/bd.md](doc/bd.md) (pages profil, partage, impression).
+
 ## [0.7.1] — 2026-06-16
 
 **Correctif tri « Fini le » sur Mes jeux**

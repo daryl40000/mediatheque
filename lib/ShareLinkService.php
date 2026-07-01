@@ -130,9 +130,11 @@ final class ShareLinkService
 
     public static function collectionPath(string $mediaDomain = MediaDomain::FILM): string
     {
-        return MediaDomain::normalize($mediaDomain) === MediaDomain::JEU
-            ? '/partage-jeux.php'
-            : '/partage.php';
+        return match (MediaDomain::normalize($mediaDomain)) {
+            MediaDomain::JEU => '/partage-jeux.php',
+            MediaDomain::BD => '/partage-bd.php',
+            default => '/partage.php',
+        };
     }
 
     /**
@@ -234,6 +236,20 @@ final class ShareLinkService
         $query = array_merge(['t' => $rawToken, 'id' => $gameId], $listContext);
 
         return '/partage-jeu.php?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    public static function bdSeriesUrl(string $rawToken, int $seriesId, array $listContext = []): string
+    {
+        $query = array_merge(['t' => $rawToken, 'series_id' => $seriesId], $listContext);
+
+        return '/partage-serie-bd.php?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    public static function bdAlbumUrl(string $rawToken, int $bibId, array $listContext = []): string
+    {
+        $query = array_merge(['t' => $rawToken, 'id' => $bibId], $listContext);
+
+        return '/partage-album-bd.php?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
     }
 
     /** URL de retour vers la liste partagée (conserve recherche, tri, filtre, vue). */

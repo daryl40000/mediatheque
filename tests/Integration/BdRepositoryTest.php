@@ -216,4 +216,36 @@ final class BdRepositoryTest extends MoncineTestCase
         $this->assertSame(BdPhysicalSupport::ALBUM, $after['support_physique']);
         $this->assertSame('/posters/' . $oeuvreId . '.jpg', $after['poster_url'] ?? '');
     }
+
+    public function testUnownedTomeNotCountedAsPossessed(): void
+    {
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new BdRepository();
+        $seriesId = $this->createTestSeries('Comptage possession');
+
+        $repo->registerSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId);
+
+        $ownedId = $repo->createTomeWithLibrary($seriesId, [
+            'tome_numero' => 1,
+            'support_physique' => BdPhysicalSupport::ALBUM,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($ownedId);
+
+        $unownedId = $repo->createTomeWithLibrary($seriesId, [
+            'tome_numero' => 2,
+            'support_physique' => '',
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($unownedId);
+
+        $this->assertSame(1, $repo->countPossessedTomesForSeries($seriesId, $userId, $foyerId, LibraryStatut::COLLECTION));
+        $this->assertSame(2, $repo->countCatalogTomesForSeries($seriesId));
+        $this->assertSame(1, $repo->countTomesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION));
+
+        $seriesList = $repo->listSeriesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION);
+        $this->assertCount(1, $seriesList);
+        $this->assertSame(1, (int) $seriesList[0]['possessed_tome_count']);
+        $this->assertSame(1, (int) $seriesList[0]['tome_count']);
+        $this->assertSame(2, (int) $seriesList[0]['catalog_tome_count']);
+    }
 }

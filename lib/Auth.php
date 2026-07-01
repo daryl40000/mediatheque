@@ -28,6 +28,9 @@ final class Auth
         '/partage-film.php',
         '/partage-jeux.php',
         '/partage-jeu.php',
+        '/partage-bd.php',
+        '/partage-serie-bd.php',
+        '/partage-album-bd.php',
         '/poster.php',
     ];
 

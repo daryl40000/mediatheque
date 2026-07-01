@@ -9,6 +9,8 @@
 /** @var int $totalCount */
 /** @var int $suggestTomeNumero */
 /** @var string $kindLabel */
+/** @var int $possessedCount */
+/** @var int $catalogTomeCount */
 /** @var bool $seriesInLibrary */
 ?>
 <section>
@@ -45,6 +47,10 @@
                         <?php if (trim((string) ($series['editeur'] ?? '')) !== ''): ?>
                             · <?= Moncine\View::escape((string) $series['editeur']) ?>
                         <?php endif; ?>
+                        <?php if (!$isWishlist): ?>
+                            · <?= (int) ($possessedCount ?? 0) ?> possédé<?= (int) ($possessedCount ?? 0) > 1 ? 's' : '' ?>
+                            sur <?= (int) ($catalogTomeCount ?? 0) ?>
+                        <?php endif; ?>
                     </p>
                     <?php if (trim((string) ($series['notes'] ?? '')) !== ''): ?>
                         <p class="hint"><?= nl2br(Moncine\View::escape((string) $series['notes'])) ?></p>
@@ -54,6 +60,18 @@
             <p>
                 <a href="<?= Moncine\View::escape(Moncine\View::bdAddTomeUrl($seriesId, $statut)) ?>"
                    class="btn btn-accent">Ajouter un tome</a>
+                <?php if ($totalCount > 0): ?>
+                    <a href="<?= Moncine\View::escape(Moncine\View::bdSeriesPrintUrl(
+                        $seriesId,
+                        $sortBy ?? 'tome',
+                        $sortDir ?? 'asc',
+                        array_filter([
+                            'statut' => $statut,
+                            'q' => trim($searchQuery) !== '' ? $searchQuery : null,
+                        ])
+                    )) ?>"
+                       class="btn btn-secondary">Exporter en PDF</a>
+                <?php endif; ?>
             </p>
         </header>
 

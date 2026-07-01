@@ -42,6 +42,8 @@ if ($series === null) {
         'searchQuery' => '',
         'viewMode' => '',
         'totalCount' => 0,
+        'possessedCount' => 0,
+        'catalogTomeCount' => 0,
         'suggestTomeNumero' => 1,
         'kindLabel' => '',
     ]);
@@ -68,6 +70,12 @@ View::render('serie-bd', [
     'searchQuery' => $searchQuery,
     'viewMode' => $viewMode,
     'totalCount' => count($tomes),
+    'possessedCount' => BdRepository::isAvailable()
+        ? $repo->countPossessedTomesForSeries($seriesId, $userId, $foyerId, $statut)
+        : 0,
+    'catalogTomeCount' => BdRepository::isAvailable()
+        ? $repo->countCatalogTomesForSeries($seriesId)
+        : 0,
     'suggestTomeNumero' => BdRepository::suggestNextTomeNumero($repo->maxTomeNumeroForSeries($seriesId)),
     'kindLabel' => BdSeriesMetadata::kindLabelFromSeries($series),
     'seriesInLibrary' => BdRepository::isAvailable()

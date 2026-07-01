@@ -4,6 +4,9 @@ declare(strict_types=1);
 
 namespace Moncine\Tests\Integration;
 
+use Moncine\BdKind;
+use Moncine\BdPhysicalSupport;
+use Moncine\BdRepository;
 use Moncine\GameDigitalStore;
 use Moncine\GameListFilter;
 use Moncine\GamePhysicalSupport;
@@ -14,6 +17,8 @@ use Moncine\LibraryStatut;
 use Moncine\MediaDomain;
 use Moncine\OeuvreEanRepository;
 use Moncine\SchemaMigrator;
+use Moncine\SeriesRepository;
+use Moncine\ShareLinkBdRepository;
 use Moncine\ShareLinkFilmRepository;
 use Moncine\ShareLinkGameRepository;
 use Moncine\ShareLinkRateLimit;
@@ -347,5 +352,57 @@ final class ShareFeaturesTest extends MoncineTestCase
         );
         $this->assertNotEmpty($sections);
         $this->assertSame('Jeu de base', $sections[0]['title'] ?? '');
+    }
+
+    public function testBdShareLinkListsSeriesAndTomes(): void
+    {
+        if (!BdRepository::isAvailable()) {
+            $this->markTestSkipped('Module BD indisponible.');
+        }
+
+        $userId = $this->loginAsAdmin();
+        $foyerId = UserContext::currentFoyerId();
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Partage BD',
+            'tags' => BdKind::BD,
+        ], MediaDomain::BD);
+        $this->assertIsInt($seriesId);
+
+        $repo = new BdRepository();
+        $repo->registerSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId);
+        $bibId = $repo->createTomeWithLibrary($seriesId, [
+            'tome_numero' => 1,
+            'support_physique' => BdPhysicalSupport::ALBUM,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        $service = new ShareLinkService();
+        $created = $service->create(
+            $userId,
+            $foyerId,
+            ShareLinkScope::COLLECTION,
+            'bd coll',
+            null,
+            MediaDomain::BD
+        );
+        $this->assertIsArray($created);
+        $link = $service->resolve((string) $created['token']);
+        $this->assertNotNull($link);
+        $this->assertSame(MediaDomain::BD, ShareLinkRepository::mediaDomainFromRow($link));
+
+        $shareRepo = new ShareLinkBdRepository();
+        $seriesList = $shareRepo->listSeriesForLink($link);
+        $this->assertCount(1, $seriesList);
+        $this->assertSame('Partage BD', (string) ($seriesList[0]['titre'] ?? ''));
+
+        $tomes = $shareRepo->listTomesForSeriesForLink($link, $seriesId);
+        $this->assertCount(1, $tomes);
+        $this->assertSame($bibId, (int) ($tomes[0]['id'] ?? 0));
+        $this->assertNotNull($shareRepo->findByBibIdForLink($link, $bibId));
+
+        $this->assertSame(
+            '/partage-bd.php',
+            ShareLinkService::collectionPath(MediaDomain::BD)
+        );
     }
 }

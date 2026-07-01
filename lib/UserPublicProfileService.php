@@ -108,6 +108,10 @@ final class UserPublicProfileService
             return $this->getMagazineStats($userId, $year);
         }
 
+        if (MediaDomain::isBd($mediaDomain)) {
+            return $this->getBdStats($userId, $year);
+        }
+
         return $this->getFilmStats($userId, $mediaDomain, $year);
     }
 
@@ -141,6 +145,9 @@ final class UserPublicProfileService
         $mediaDomain = MediaDomain::normalize($mediaDomain);
         if (MediaDomain::isMagazine($mediaDomain)) {
             return $this->lastMagazineIssues($userId, LibraryStatut::COLLECTION, $limit);
+        }
+        if (MediaDomain::isBd($mediaDomain)) {
+            return $this->lastBdTomes($userId, LibraryStatut::COLLECTION, $limit);
         }
 
         $foyerId = $this->foyerIdForUser($userId);
@@ -219,6 +226,9 @@ final class UserPublicProfileService
         if (MediaDomain::isMagazine($mediaDomain)) {
             return $this->lastMagazineIssues($userId, LibraryStatut::WISHLIST, $limit);
         }
+        if (MediaDomain::isBd($mediaDomain)) {
+            return $this->lastBdTomes($userId, LibraryStatut::WISHLIST, $limit);
+        }
 
         if ($userId <= 0 || $limit <= 0) {
             return [];
@@ -253,6 +263,9 @@ final class UserPublicProfileService
         if (MediaDomain::isMagazine($mediaDomain)) {
             return $this->listMagazineSeries($userId, LibraryStatut::COLLECTION, $sortBy, $sortDir);
         }
+        if (MediaDomain::isBd($mediaDomain)) {
+            return $this->listBdSeries($userId, LibraryStatut::COLLECTION, $sortBy, $sortDir);
+        }
 
         $foyerId = $this->foyerIdForUser($userId);
         if ($foyerId <= 0) {
@@ -281,6 +294,9 @@ final class UserPublicProfileService
         $mediaDomain = MediaDomain::normalize($mediaDomain);
         if (MediaDomain::isMagazine($mediaDomain)) {
             return $this->listMagazineSeries($userId, LibraryStatut::WISHLIST, $sortBy, $sortDir);
+        }
+        if (MediaDomain::isBd($mediaDomain)) {
+            return $this->listBdSeries($userId, LibraryStatut::WISHLIST, $sortBy, $sortDir);
         }
 
         return $this->listLibraryForUser(0, $userId, LibraryStatut::WISHLIST, $sortBy, $sortDir, $mediaDomain);
@@ -721,6 +737,114 @@ final class UserPublicProfileService
     }
 
     /**
+     * @return true|string
+     */
+    public function canViewBdSeries(int $viewerId, int $targetUserId, int $seriesId): bool|string
+    {
+        $access = $this->canView($viewerId, $targetUserId);
+        if ($access !== true) {
+            return $access;
+        }
+        if ($seriesId <= 0) {
+            return 'Série introuvable.';
+        }
+        if (!BdRepository::isAvailable()) {
+            return 'Module BD non disponible.';
+        }
+        if ((new SeriesRepository())->findById($seriesId, MediaDomain::BD) === null) {
+            return 'Série introuvable.';
+        }
+        if (!$this->bdSeriesVisibleOnProfile($targetUserId, $seriesId)) {
+            return 'Cette série n’est pas partagée sur ce profil.';
+        }
+
+        return true;
+    }
+
+    /**
+     * @return true|string
+     */
+    public function canViewBdTome(int $viewerId, int $targetUserId, int $bibId): bool|string
+    {
+        $access = $this->canView($viewerId, $targetUserId);
+        if ($access !== true) {
+            return $access;
+        }
+        if ($bibId <= 0 || !BdRepository::isAvailable()) {
+            return 'Tome introuvable.';
+        }
+
+        $foyerId = $this->foyerIdForUser($targetUserId);
+        $tome = (new BdRepository())->findByBibId($bibId, $targetUserId, $foyerId);
+        if ($tome === null) {
+            return 'Tome introuvable.';
+        }
+
+        return true;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function findBdTomeForProfile(int $targetUserId, int $bibId): ?array
+    {
+        if ($targetUserId <= 0 || $bibId <= 0 || !BdRepository::isAvailable()) {
+            return null;
+        }
+
+        $foyerId = $this->foyerIdForUser($targetUserId);
+
+        return (new BdRepository())->findByBibId($bibId, $targetUserId, $foyerId);
+    }
+
+    /**
+     * @return list<array<string, mixed>>
+     */
+    public function listBdTomesForSeries(
+        int $targetUserId,
+        int $seriesId,
+        string $statut = LibraryStatut::COLLECTION,
+        string $sortBy = 'tome',
+        string $sortDir = 'asc',
+        string $searchQuery = ''
+    ): array {
+        if (!BdRepository::isAvailable() || $seriesId <= 0) {
+            return [];
+        }
+
+        $foyerId = $this->foyerIdForUser($targetUserId);
+
+        return (new BdRepository())->listTomesForSeries(
+            $seriesId,
+            $targetUserId,
+            $foyerId,
+            LibraryStatut::normalize($statut),
+            $sortBy,
+            $sortDir,
+            $searchQuery
+        );
+    }
+
+    public function countBdTomesForSeries(
+        int $targetUserId,
+        int $seriesId,
+        string $statut = LibraryStatut::COLLECTION,
+        string $searchQuery = ''
+    ): int {
+        if (!BdRepository::isAvailable() || $seriesId <= 0) {
+            return 0;
+        }
+
+        $foyerId = $this->foyerIdForUser($targetUserId);
+
+        return (new BdRepository())->countTomesForSeries(
+            $seriesId,
+            $targetUserId,
+            $foyerId,
+            LibraryStatut::normalize($statut),
+            $searchQuery
+        );
+    }
+
+    /**
      * @return list<array<string, mixed>>
      */
     private function listLibraryForUser(
@@ -893,5 +1017,150 @@ final class UserPublicProfileService
         $stmt->execute($params);
 
         return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * @return array{
+     *   media_domain: string,
+     *   collection_count: int,
+     *   wishlist_count: int,
+     *   tome_count: int,
+     *   films_vus_count: int,
+     *   films_vus_year_count: int,
+     *   year: int
+     * }
+     */
+    private function getBdStats(int $userId, int $year): array
+    {
+        $foyerId = $this->foyerIdForUser($userId);
+        $repo = new BdRepository();
+        $available = BdRepository::isAvailable();
+
+        $seriesCollection = $foyerId > 0 && $available
+            ? $repo->countSeriesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION)
+            : 0;
+        $seriesWishlist = $available
+            ? $repo->countSeriesInLibrary($userId, $foyerId, LibraryStatut::WISHLIST)
+            : 0;
+        $tomeCount = $foyerId > 0 && $available
+            ? $repo->countTomesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION)
+            : 0;
+
+        return [
+            'media_domain' => MediaDomain::BD,
+            'collection_count' => $seriesCollection,
+            'wishlist_count' => $seriesWishlist,
+            'tome_count' => $tomeCount,
+            'films_vus_count' => 0,
+            'films_vus_year_count' => 0,
+            'year' => $year,
+        ];
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function listBdSeries(
+        int $userId,
+        string $statut,
+        string $sortBy,
+        string $sortDir
+    ): array {
+        if (!BdRepository::isAvailable()) {
+            return [];
+        }
+
+        $foyerId = $this->foyerIdForUser($userId);
+        if ($statut === LibraryStatut::COLLECTION && $foyerId <= 0) {
+            return [];
+        }
+
+        $bdSort = match ($sortBy) {
+            'tomes' => 'tomes',
+            'kind' => 'kind',
+            'editeur' => 'editeur',
+            default => 'titre',
+        };
+
+        return (new BdRepository())->listSeriesInLibrary(
+            $userId,
+            $foyerId,
+            $statut,
+            $bdSort,
+            $sortDir
+        );
+    }
+
+    /** @return list<array<string, mixed>> */
+    private function lastBdTomes(int $userId, string $statut, int $limit): array
+    {
+        if ($userId <= 0 || $limit <= 0 || !BdRepository::isAvailable()) {
+            return [];
+        }
+
+        $statut = LibraryStatut::normalize($statut);
+        $foyerId = $this->foyerIdForUser($userId);
+        $params = [
+            'domain_oeuvre' => MediaDomain::BD,
+            'bib_statut' => $statut,
+            'limit' => $limit,
+        ];
+
+        if ($statut === LibraryStatut::COLLECTION) {
+            if ($foyerId <= 0) {
+                return [];
+            }
+            $scopeSql = 'b.statut = :bib_statut AND b.foyer_id = :bib_foyer_id';
+            $params['bib_foyer_id'] = $foyerId;
+        } else {
+            $scopeSql = 'b.statut = :bib_statut AND b.user_id = :bib_user_id';
+            $params['bib_user_id'] = $userId;
+        }
+
+        $sql = 'SELECT b.id AS bib_id, o.id AS oeuvre_id, o.titre, o.poster_url, o.annee,
+                    ob.tome_numero, ob.tome_label,
+                    s.id AS series_id, s.titre AS series_titre
+                FROM bibliotheque b
+                INNER JOIN oeuvres o ON o.id = b.oeuvre_id AND o.media_domain = :domain_oeuvre
+                INNER JOIN oeuvre_bd ob ON ob.oeuvre_id = o.id
+                INNER JOIN series s ON s.id = ob.series_id
+                WHERE ' . $scopeSql . '
+                ORDER BY b.created_at DESC, b.id DESC
+                LIMIT :limit';
+
+        $stmt = $this->db->prepare($sql);
+        foreach ($params as $key => $value) {
+            $stmt->bindValue(':' . $key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
+        }
+        $stmt->execute();
+
+        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+    }
+
+    private function bdSeriesVisibleOnProfile(int $targetUserId, int $seriesId): bool
+    {
+        $foyerId = $this->foyerIdForUser($targetUserId);
+
+        if (BdRepository::seriesLibraryTableExists()) {
+            $stmt = $this->db->prepare(
+                'SELECT 1 FROM series_bibliotheque sb
+                 WHERE sb.series_id = :series_id
+                   AND (
+                        (sb.statut = :collection AND sb.foyer_id = :foyer_id)
+                        OR (sb.statut = :wishlist AND sb.user_id = :user_id)
+                   )
+                 LIMIT 1'
+            );
+            $stmt->execute([
+                'series_id' => $seriesId,
+                'collection' => LibraryStatut::COLLECTION,
+                'foyer_id' => $foyerId,
+                'wishlist' => LibraryStatut::WISHLIST,
+                'user_id' => $targetUserId,
+            ]);
+            if ($stmt->fetchColumn() !== false) {
+                return true;
+            }
+        }
+
+        return (new BdRepository())->countTomesForSeries($seriesId, $targetUserId, $foyerId, null) > 0;
     }
 }

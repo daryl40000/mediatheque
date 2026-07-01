@@ -54,6 +54,7 @@ $emptyRenderData = static function (string $accessDenied, int $httpCode = 403) u
         'listFilms' => [],
         'listGames' => [],
         'listMagazineSeries' => [],
+        'listBdSeries' => [],
         'listViewings' => [],
         'listMode' => '',
         'listTitle' => '',
@@ -82,6 +83,7 @@ $profileNav = MediaDomain::navLabels($profileDomain);
 $profileDomainImplemented = MediaDomain::isCollectionImplemented($profileDomain);
 $isMagazineProfile = MediaDomain::isMagazine($profileDomain);
 $isGameProfile = MediaDomain::isGame($profileDomain);
+$isBdProfile = MediaDomain::isBd($profileDomain);
 
 $areFriends = false;
 if (!$isSelf && FriendshipRepository::isAvailable()) {
@@ -91,6 +93,7 @@ if (!$isSelf && FriendshipRepository::isAvailable()) {
 $listFilms = [];
 $listGames = [];
 $listMagazineSeries = [];
+$listBdSeries = [];
 $listViewings = [];
 $listMode = '';
 $listTitle = '';
@@ -103,11 +106,13 @@ if ($anneeParam > 0) {
 if ($profileDomainImplemented) {
     if ($liste === 'collection') {
         $listMode = 'collection';
-        $listTitle = $isMagazineProfile || $isGameProfile
+        $listTitle = $isMagazineProfile || $isGameProfile || $isBdProfile
             ? $profileNav['collection'] . ' — ' . $displayName
             : 'Films de ' . $displayName;
         if ($isMagazineProfile) {
             $listMagazineSeries = $profile->listCollection($targetUserId, $sortBy, $sortDir, $profileDomain);
+        } elseif ($isBdProfile) {
+            $listBdSeries = $profile->listCollection($targetUserId, $sortBy, $sortDir, $profileDomain);
         } elseif ($isGameProfile) {
             $listGames = $profile->listCollection($targetUserId, $sortBy, $sortDir, $profileDomain);
         } else {
@@ -115,17 +120,19 @@ if ($profileDomainImplemented) {
         }
     } elseif ($liste === 'envies') {
         $listMode = 'envies';
-        $listTitle = $isMagazineProfile || $isGameProfile
+        $listTitle = $isMagazineProfile || $isGameProfile || $isBdProfile
             ? $profileNav['wishlist'] . ' — ' . $displayName
             : 'Envies de ' . $displayName;
         if ($isMagazineProfile) {
             $listMagazineSeries = $profile->listWishlist($targetUserId, $sortBy, $sortDir, $profileDomain);
+        } elseif ($isBdProfile) {
+            $listBdSeries = $profile->listWishlist($targetUserId, $sortBy, $sortDir, $profileDomain);
         } elseif ($isGameProfile) {
             $listGames = $profile->listWishlist($targetUserId, $sortBy, $sortDir, $profileDomain);
         } else {
             $listFilms = $profile->listWishlist($targetUserId, $sortBy, $sortDir, $profileDomain);
         }
-    } elseif ($liste === 'vus' && !$isMagazineProfile && !$isGameProfile) {
+    } elseif ($liste === 'vus' && !$isMagazineProfile && !$isGameProfile && !$isBdProfile) {
         $listMode = 'vus';
         $listTitle = $yearFilter !== null
             ? 'Films vus en ' . $yearFilter . ' — ' . $displayName
@@ -140,7 +147,7 @@ $loanUi = [
     'myRequests' => [],
     'reservedByOthers' => [],
 ];
-if ($listMode === 'collection' && !$isSelf && $areFriends && !$isMagazineProfile) {
+if ($listMode === 'collection' && !$isSelf && $areFriends && !$isMagazineProfile && !$isBdProfile) {
     if (LoanRepository::tableExists()) {
         $loanUi['activeLoans'] = (new LoanRepository())->mapActiveLoansByBibliothequeId($targetUserId);
     }
@@ -164,7 +171,7 @@ View::render('utilisateur', [
     'profileDomainImplemented' => $profileDomainImplemented,
     'pageMediaDomain' => $profileDomain,
     'stats' => $listMode === '' && $profileDomainImplemented ? $profile->getStats($targetUserId, $profileDomain) : [],
-    'lastViewed' => $listMode === '' && !$isMagazineProfile && !$isGameProfile
+    'lastViewed' => $listMode === '' && !$isMagazineProfile && !$isGameProfile && !$isBdProfile
         ? $profile->lastViewedFilms($targetUserId, 5)
         : [],
     'lastNoted' => $listMode === '' && $isGameProfile
@@ -179,6 +186,7 @@ View::render('utilisateur', [
     'listFilms' => $listFilms,
     'listGames' => $listGames,
     'listMagazineSeries' => $listMagazineSeries,
+    'listBdSeries' => $listBdSeries,
     'listViewings' => $listViewings,
     'listMode' => $listMode,
     'listTitle' => $listTitle,

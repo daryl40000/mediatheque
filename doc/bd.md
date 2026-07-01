@@ -25,6 +25,14 @@ La page **Mes BD** (`/bd.php`) affiche vos **séries**. Cliquez sur une série p
 | `/ajouter-tome-bd.php?series_id=` | Nouveau tome |
 | `/album-bd.php?id=` | Fiche d’un tome |
 | `/bd-envies.php` | Séries en envies |
+| `/utilisateur.php?domain=bd` | Profil public (amis) — séries et tomes |
+| `/utilisateur-serie-bd.php` | Tomes d’une série sur un profil ami |
+| `/utilisateur-album-bd.php` | Fiche tome sur un profil ami |
+| `/partage-bd.php?t=` | Liste partagée (visiteur sans compte) |
+| `/partage-serie-bd.php` | Tomes d’une série partagée |
+| `/partage-album-bd.php` | Fiche tome partagée |
+| `/imprimer-serie-bd.php` | Liste imprimable / PDF d’une série |
+| `/gerer-partages.php?domain=bd` | Créer un lien de partage |
 
 ## Parcours utilisateur
 
@@ -43,5 +51,5 @@ L’ancien lien `/ajouter-bd.php` redirige vers la création de série ou l’aj
 ## Limites v0.8.x
 
 - Pas d’import CSV ni d’API externe.
-- Pas de listes partagées visiteur.
+- Profil public, partage visiteur et liste imprimable par série : disponibles (comme magazines / jeux).
 - Modification de série limitée (pas encore de page dédiée).

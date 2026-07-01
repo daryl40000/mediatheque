@@ -65,6 +65,9 @@ final class MediaDomainGuards
         '/supprimer-bd.php',
         '/promouvoir-bd-collection.php',
         '/traiter-tome-bd.php',
+        '/imprimer-serie-bd.php',
+        '/utilisateur-serie-bd.php',
+        '/utilisateur-album-bd.php',
     ];
 
     /** Pages collection / envies réservées à l’onglet BD. */

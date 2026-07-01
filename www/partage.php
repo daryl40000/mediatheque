@@ -41,6 +41,11 @@ if (\Moncine\ShareLinkRepository::mediaDomainFromRow($link) === \Moncine\MediaDo
     exit;
 }
 
+if (\Moncine\ShareLinkRepository::mediaDomainFromRow($link) === \Moncine\MediaDomain::BD) {
+    header('Location: ' . ShareLinkService::collectionUrl($rawToken, [], \Moncine\MediaDomain::BD));
+    exit;
+}
+
 $sortBy = (string) ($_GET['sort'] ?? 'titre');
 $sortDir = (string) ($_GET['dir'] ?? 'asc');
 $query = trim((string) ($_GET['q'] ?? ''));

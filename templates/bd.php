@@ -14,6 +14,9 @@
             (Astérix, One Piece…). Créez d’abord une série, puis ajoutez les tomes.
         </p>
         <div class="collection-page__actions">
+            <a class="btn btn-secondary" href="/gerer-partages.php?domain=<?= Moncine\MediaDomain::BD ?>&scope=<?= Moncine\ShareLinkScope::COLLECTION ?>">
+                Partager
+            </a>
             <a href="/ajouter-serie-bd.php" class="btn btn-accent">Ajouter une série</a>
         </div>
     </header>
@@ -47,7 +50,8 @@
                 $seriesId = (int) ($series['id'] ?? 0);
                 $poster = trim((string) ($series['poster_url'] ?? $series['latest_poster_url'] ?? ''));
                 $posterSrc = Moncine\View::posterSrc($poster !== '' ? $poster : null);
-                $tomeCount = (int) ($series['tome_count'] ?? 0);
+                $possessedCount = (int) ($series['possessed_tome_count'] ?? $series['tome_count'] ?? 0);
+                $catalogCount = (int) ($series['catalog_tome_count'] ?? 0);
                 ?>
                 <a href="<?= Moncine\View::escape(Moncine\View::bdSeriesUrl($seriesId)) ?>"
                    class="magazine-series-card">
@@ -60,7 +64,10 @@
                         <h2 class="magazine-series-card__title"><?= Moncine\View::escape((string) ($series['titre'] ?? '')) ?></h2>
                         <p class="hint">
                             <?= Moncine\View::escape((string) ($series['kind_label'] ?? '')) ?>
-                            · <?= $tomeCount ?> tome<?= $tomeCount > 1 ? 's' : '' ?> possédé<?= $tomeCount > 1 ? 's' : '' ?><?= $tomeCount === 0 ? ' — ajoutez le premier' : '' ?>
+                            · <?= $possessedCount ?> possédé<?= $possessedCount > 1 ? 's' : '' ?> sur <?= $catalogCount ?>
+                            <?php if ($possessedCount === 0 && $catalogCount === 0): ?>
+                                — ajoutez le premier tome
+                            <?php endif; ?>
                         </p>
                         <?php if (trim((string) ($series['editeur'] ?? '')) !== ''): ?>
                             <p class="hint"><?= Moncine\View::escape((string) $series['editeur']) ?></p>

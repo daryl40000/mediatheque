@@ -14,6 +14,7 @@
  * @var list<array<string, mixed>> $listFilms
  * @var list<array<string, mixed>> $listGames
  * @var list<array<string, mixed>> $listMagazineSeries
+ * @var list<array<string, mixed>> $listBdSeries
  * @var list<array<string, mixed>> $listViewings
  * @var string $listMode
  * @var int|null $yearFilter
@@ -30,7 +31,8 @@ $profileDomain = MediaDomain::normalize($profileDomain ?? MediaDomain::FILM);
 $profileNav = $profileNav ?? MediaDomain::navLabels($profileDomain);
 $isMagazineProfile = MediaDomain::isMagazine($profileDomain);
 $isGameProfile = MediaDomain::isGame($profileDomain);
-$isFilmProfile = !$isMagazineProfile && !$isGameProfile;
+$isBdProfile = MediaDomain::isBd($profileDomain);
+$isFilmProfile = !$isMagazineProfile && !$isGameProfile && !$isBdProfile;
 $profileDomainImplemented = !empty($profileDomainImplemented);
 ?>
 <section class="account-page social-profile-page">
@@ -68,6 +70,11 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
             ?>
         <?php elseif ($isMagazineProfile): ?>
             <?php require MONCINE_ROOT . '/templates/_user_public_magazine_series_grid.php'; ?>
+        <?php elseif ($isBdProfile): ?>
+            <?php
+            $listBdSeries = $listBdSeries ?? [];
+            require MONCINE_ROOT . '/templates/_user_public_bd_series_grid.php';
+            ?>
         <?php elseif ($isGameProfile): ?>
             <?php
             $games = $listGames ?? [];
@@ -113,7 +120,7 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                     La consultation du profil pour les <strong><?= Moncine\View::escape(MediaDomain::label($profileDomain)) ?></strong>
                     n’est pas encore disponible.
                 </p>
-                <p class="hint">Utilisez les onglets Films, Jeux ou Magazines pour voir ce que cette personne partage déjà.</p>
+                <p class="hint">Utilisez les onglets Films, Jeux, Magazines ou BD pour voir ce que cette personne partage déjà.</p>
             </section>
         <?php else: ?>
             <section class="social-profile-stats" aria-labelledby="social-stats-heading">
@@ -122,6 +129,8 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                     <div>
                         <dt>
                             <?php if ($isMagazineProfile): ?>
+                                Séries en collection
+                            <?php elseif ($isBdProfile): ?>
                                 Séries en collection
                             <?php elseif ($isGameProfile): ?>
                                 Jeux en collection
@@ -143,9 +152,17 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                             <dd><?= (int) ($stats['issue_count'] ?? 0) ?></dd>
                         </div>
                     <?php endif; ?>
+                    <?php if ($isBdProfile && (int) ($stats['tome_count'] ?? 0) > 0): ?>
+                        <div>
+                            <dt>Tomes possédés</dt>
+                            <dd><?= (int) ($stats['tome_count'] ?? 0) ?></dd>
+                        </div>
+                    <?php endif; ?>
                     <div>
                         <dt>
                             <?php if ($isMagazineProfile): ?>
+                                Séries dans les envies
+                            <?php elseif ($isBdProfile): ?>
                                 Séries dans les envies
                             <?php elseif ($isGameProfile): ?>
                                 Jeux dans les envies
@@ -229,6 +246,8 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                     <h2 id="social-last-collection-heading">
                         <?php if ($isMagazineProfile): ?>
                             5 derniers numéros ajoutés à la collection
+                        <?php elseif ($isBdProfile): ?>
+                            5 derniers tomes ajoutés à la collection
                         <?php elseif ($isGameProfile): ?>
                             5 derniers jeux ajoutés à la collection
                         <?php else: ?>
@@ -240,6 +259,12 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                         $issuesList = $lastCollection ?? [];
                         $emptyHint = 'Aucun numéro en collection pour le moment.';
                         require MONCINE_ROOT . '/templates/_user_profile_magazine_issues_strip.php';
+                        ?>
+                    <?php elseif ($isBdProfile): ?>
+                        <?php
+                        $tomesList = $lastCollection ?? [];
+                        $emptyHint = 'Aucun tome en collection pour le moment.';
+                        require MONCINE_ROOT . '/templates/_user_profile_bd_tomes_strip.php';
                         ?>
                     <?php else: ?>
                         <?php
@@ -258,6 +283,8 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                 <h2 id="social-last-wishlist-heading">
                     <?php if ($isMagazineProfile): ?>
                         5 derniers numéros ajoutés aux envies
+                    <?php elseif ($isBdProfile): ?>
+                        5 derniers tomes ajoutés aux envies
                     <?php elseif ($isGameProfile): ?>
                         5 derniers jeux ajoutés aux envies
                     <?php else: ?>
@@ -269,6 +296,12 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                     $issuesList = $lastWishlist ?? [];
                     $emptyHint = 'Aucun numéro dans les envies pour le moment.';
                     require MONCINE_ROOT . '/templates/_user_profile_magazine_issues_strip.php';
+                    ?>
+                <?php elseif ($isBdProfile): ?>
+                    <?php
+                    $tomesList = $lastWishlist ?? [];
+                    $emptyHint = 'Aucun tome dans les envies pour le moment.';
+                    require MONCINE_ROOT . '/templates/_user_profile_bd_tomes_strip.php';
                     ?>
                 <?php else: ?>
                     <?php

@@ -14,7 +14,7 @@
 
     <ul class="stats-summary">
         <li><strong><?= (int) $seriesCount ?></strong> série<?= $seriesCount > 1 ? 's' : '' ?> en collection</li>
-        <li><strong><?= (int) $tomeCount ?></strong> tome<?= $tomeCount > 1 ? 's' : '' ?> possédé<?= $tomeCount > 1 ? 's' : '' ?></li>
+        <li><strong><?= (int) $tomeCount ?></strong> tome<?= $tomeCount > 1 ? 's' : '' ?> possédé<?= $tomeCount > 1 ? 's' : '' ?> en collection</li>
         <li><strong><?= (int) $wishlistSeriesCount ?></strong> envie<?= $wishlistSeriesCount > 1 ? 's' : '' ?> (séries)</li>
     </ul>
 </section>

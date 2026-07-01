@@ -73,6 +73,8 @@ final class View
             'serie-magazine',
             'utilisateur-serie-magazine',
             'utilisateur-numero-magazine',
+            'utilisateur-serie-bd',
+            'utilisateur-album-bd',
             'bd',
             'bd-envies',
             'serie-bd',
@@ -889,6 +891,81 @@ final class View
             'id' => (string) $targetUserId,
             'bib_id' => (string) $bibId,
         ], '', '&', PHP_QUERY_RFC3986);
+    }
+
+    public static function userProfileBdSeriesUrl(
+        int $targetUserId,
+        int $seriesId,
+        string $listMode = 'collection',
+        string $sort = 'tome',
+        string $dir = 'asc',
+        array $queryExtra = []
+    ): string {
+        if ($targetUserId <= 0 || $seriesId <= 0) {
+            return self::userProfileUrl($targetUserId, MediaDomain::BD);
+        }
+
+        $statut = $listMode === 'envies' ? LibraryStatut::WISHLIST : LibraryStatut::COLLECTION;
+        $params = [
+            'id' => (string) $targetUserId,
+            'series_id' => (string) $seriesId,
+            'statut' => $statut,
+            'sort' => $sort,
+            'dir' => $dir,
+        ];
+
+        foreach ($queryExtra as $key => $value) {
+            if (!is_string($key) || $key === '') {
+                continue;
+            }
+            $value = is_string($value) ? trim($value) : (string) $value;
+            if ($value !== '') {
+                $params[$key] = $value;
+            }
+        }
+
+        return '/utilisateur-serie-bd.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    public static function userProfileBdAlbumUrl(int $targetUserId, int $bibId): string
+    {
+        if ($targetUserId <= 0 || $bibId <= 0) {
+            return self::userProfileUrl($targetUserId, MediaDomain::BD);
+        }
+
+        return '/utilisateur-album-bd.php?' . http_build_query([
+            'id' => (string) $targetUserId,
+            'bib_id' => (string) $bibId,
+        ], '', '&', PHP_QUERY_RFC3986);
+    }
+
+    public static function bdSeriesPrintUrl(
+        int $seriesId,
+        string $sort = 'tome',
+        string $dir = 'asc',
+        array $queryExtra = []
+    ): string {
+        if ($seriesId <= 0) {
+            return '/bd.php';
+        }
+
+        $params = [
+            'series_id' => $seriesId,
+            'sort' => $sort,
+            'dir' => $dir,
+        ];
+
+        foreach ($queryExtra as $key => $value) {
+            if (!is_string($key) || $key === '') {
+                continue;
+            }
+            $value = is_string($value) ? trim($value) : (string) $value;
+            if ($value !== '') {
+                $params[$key] = $value;
+            }
+        }
+
+        return '/imprimer-serie-bd.php?' . http_build_query($params);
     }
 
     public static function gamesCollectionUrl(

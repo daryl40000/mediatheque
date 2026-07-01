@@ -162,10 +162,20 @@ final class BdRepository
         }
 
         $order = $this->seriesOrderClause($sortBy, $sortDir);
+        $ownedOnly = $statut !== LibraryStatut::WISHLIST;
+        $ownedSql = $ownedOnly ? ' AND ' . $this->sqlTomePossessedCondition('b') : '';
+        if ($statut === LibraryStatut::WISHLIST) {
+            $tomeScopeSql = ' AND b.user_id = :tome_scope_user_id';
+            $params['tome_scope_user_id'] = $userId;
+        } else {
+            $tomeScopeSql = ' AND b.foyer_id = :tome_scope_foyer_id';
+            $params['tome_scope_foyer_id'] = $foyerId;
+        }
 
         $sql = 'SELECT s.*,
-                    COUNT(DISTINCT CASE WHEN b.statut = :tome_stat THEN b.id END) AS tome_count,
-                    MAX(CASE WHEN b.statut = :tome_stat THEN ob.tome_numero END) AS last_tome_numero,
+                    (SELECT COUNT(*) FROM oeuvre_bd ob_cat WHERE ob_cat.series_id = s.id) AS catalog_tome_count,
+                    COUNT(DISTINCT CASE WHEN b.statut = :tome_stat' . $tomeScopeSql . $ownedSql . ' THEN b.id END) AS possessed_tome_count,
+                    MAX(CASE WHEN b.statut = :tome_stat' . $tomeScopeSql . $ownedSql . ' THEN ob.tome_numero END) AS last_tome_numero,
                     MAX(CASE WHEN TRIM(o.poster_url) != \'\' THEN o.poster_url END) AS latest_poster_url
                 FROM series s
                 INNER JOIN series_bibliotheque sb ON sb.series_id = s.id
@@ -181,7 +191,9 @@ final class BdRepository
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
         foreach ($rows as &$row) {
-            $row['tome_count'] = (int) ($row['tome_count'] ?? 0);
+            $row['catalog_tome_count'] = (int) ($row['catalog_tome_count'] ?? 0);
+            $row['possessed_tome_count'] = (int) ($row['possessed_tome_count'] ?? 0);
+            $row['tome_count'] = $row['possessed_tome_count'];
             $row['kind'] = BdSeriesMetadata::kindFromSeries($row);
             $row['kind_label'] = BdKind::label($row['kind']);
         }
@@ -208,14 +220,65 @@ final class BdRepository
         [$statutSql, $statutParams] = $this->libraryStatutFilter($statut, $userId, $foyerId);
         $params = array_merge(['domain_oeuvre' => MediaDomain::BD], $statutParams);
 
-        $stmt = $this->db->prepare(
-            'SELECT COUNT(DISTINCT b.id)
+        $where = [$statutSql];
+        if ($statut !== LibraryStatut::WISHLIST) {
+            $where[] = $this->sqlTomePossessedCondition('b');
+        }
+
+        $sql = 'SELECT COUNT(DISTINCT b.id)
              FROM bibliotheque b
              INNER JOIN oeuvres o ON o.id = b.oeuvre_id AND o.media_domain = :domain_oeuvre
              INNER JOIN oeuvre_bd ob ON ob.oeuvre_id = o.id
-             WHERE ' . $statutSql
-        );
-        $sql = 'SELECT COUNT(DISTINCT b.id) FROM bibliotheque b INNER JOIN oeuvres o ON o.id = b.oeuvre_id AND o.media_domain = :domain_oeuvre INNER JOIN oeuvre_bd ob ON ob.oeuvre_id = o.id WHERE ' . $statutSql;
+             WHERE ' . implode(' AND ', $where);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($this->filterParamsForSql($sql, $params));
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function countCatalogTomesForSeries(int $seriesId): int
+    {
+        if (!self::isAvailable() || $seriesId <= 0) {
+            return 0;
+        }
+
+        $stmt = $this->db->prepare('SELECT COUNT(*) FROM oeuvre_bd WHERE series_id = ?');
+        $stmt->execute([$seriesId]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function countPossessedTomesForSeries(
+        int $seriesId,
+        int $userId,
+        int $foyerId,
+        ?string $statut = null
+    ): int {
+        if (!self::isAvailable() || $seriesId <= 0) {
+            return 0;
+        }
+
+        $statut = $statut !== null ? LibraryStatut::normalize($statut) : LibraryStatut::COLLECTION;
+        [$statutSql, $statutParams] = $this->libraryStatutFilter($statut, $userId, $foyerId);
+        $params = array_merge([
+            'series_id' => $seriesId,
+            'domain_oeuvre' => MediaDomain::BD,
+        ], $statutParams);
+
+        $where = [
+            'ob.series_id = :series_id',
+            $statutSql,
+        ];
+        if ($statut !== LibraryStatut::WISHLIST) {
+            $where[] = $this->sqlTomePossessedCondition('b');
+        }
+
+        $sql = 'SELECT COUNT(DISTINCT b.id)
+                FROM bibliotheque b
+                INNER JOIN oeuvres o ON o.id = b.oeuvre_id AND o.media_domain = :domain_oeuvre
+                INNER JOIN oeuvre_bd ob ON ob.oeuvre_id = o.id
+                WHERE ' . implode(' AND ', $where);
+        $stmt = $this->db->prepare($sql);
         $stmt->execute($this->filterParamsForSql($sql, $params));
 
         return (int) $stmt->fetchColumn();
@@ -1241,10 +1304,21 @@ final class BdRepository
         $dir = strtolower($sortDir) === 'desc' ? 'DESC' : 'ASC';
 
         return match ($sortBy) {
-            'tomes' => 'tome_count ' . $dir . ', s.titre COLLATE FRENCH_NOCASE ASC',
+            'tomes' => 'possessed_tome_count ' . $dir . ', s.titre COLLATE FRENCH_NOCASE ASC',
             'kind' => 's.tags COLLATE NOCASE ' . $dir . ', s.titre COLLATE FRENCH_NOCASE ASC',
             'editeur' => 's.editeur COLLATE FRENCH_NOCASE ' . $dir,
             default => 's.titre COLLATE FRENCH_NOCASE ' . $dir,
         };
+    }
+
+    /** Tome possédé : support physique BD valide (album, relié, etc.). */
+    private function sqlTomePossessedCondition(string $bAlias): string
+    {
+        $keys = array_map(
+            static fn (string $key): string => "'" . str_replace("'", "''", $key) . "'",
+            array_keys(BdPhysicalSupport::choices())
+        );
+
+        return 'LOWER(TRIM(' . $bAlias . '.support_physique)) IN (' . implode(', ', $keys) . ')';
     }
 }

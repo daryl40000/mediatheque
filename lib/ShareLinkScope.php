@@ -24,8 +24,16 @@ final class ShareLinkScope
         $domain = MediaDomain::normalize($mediaDomain);
 
         return match (self::normalize($scope)) {
-            self::WISHLIST => $domain === MediaDomain::JEU ? 'Mes envies jeux' : 'Mes envies',
-            default => $domain === MediaDomain::JEU ? 'Mes jeux' : 'Mes films',
+            self::WISHLIST => match ($domain) {
+                MediaDomain::JEU => 'Mes envies jeux',
+                MediaDomain::BD => 'Mes envies BD',
+                default => 'Mes envies',
+            },
+            default => match ($domain) {
+                MediaDomain::JEU => 'Mes jeux',
+                MediaDomain::BD => 'Mes BD',
+                default => 'Mes films',
+            },
         };
     }
 }

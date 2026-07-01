@@ -9,7 +9,12 @@
 <section class="collection-page wishlist-page">
     <div class="collection-page__head">
         <h1><?= Moncine\View::escape(Moncine\MediaContext::navLabels()['wishlist']) ?></h1>
-        <a class="btn btn-primary" href="/ajouter-serie-bd.php?statut=wishlist">Ajouter une envie (série)</a>
+        <div class="collection-page__head-actions">
+            <a class="btn btn-secondary" href="/gerer-partages.php?domain=<?= Moncine\MediaDomain::BD ?>&scope=<?= Moncine\ShareLinkScope::WISHLIST ?>">
+                Partager
+            </a>
+            <a class="btn btn-primary" href="/ajouter-serie-bd.php?statut=wishlist">Ajouter une envie (série)</a>
+        </div>
     </div>
 
     <p class="lead">Séries BD / manga que vous souhaitez acquérir.</p>
