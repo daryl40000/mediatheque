@@ -11,7 +11,6 @@ use Moncine\BdRepository;
 use Moncine\Csrf;
 use Moncine\LibraryStatut;
 use Moncine\MediaDomainGuards;
-use Moncine\PosterStorage;
 use Moncine\UserContext;
 use Moncine\View;
 
@@ -80,16 +79,15 @@ if (!is_int($result)) {
 $album = $repo->findByBibId($result, $userId, $foyerId);
 $oeuvreId = (int) ($album['oeuvre_id'] ?? 0);
 
-if (
-    $oeuvreId > 0
-    && isset($_FILES['cover_file'])
-    && (int) ($_FILES['cover_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK
-) {
-    $binary = (string) file_get_contents((string) $_FILES['cover_file']['tmp_name']);
-    $posterUrl = (new PosterStorage())->importBinaryForOeuvre($oeuvreId, $binary);
-    if ($posterUrl !== '') {
-        $repo->updatePosterUrl($oeuvreId, $posterUrl);
+if ($oeuvreId > 0) {
+    $uploadedBinary = null;
+    if (
+        isset($_FILES['cover_file'])
+        && (int) ($_FILES['cover_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK
+    ) {
+        $uploadedBinary = (string) file_get_contents((string) $_FILES['cover_file']['tmp_name']);
     }
+    $repo->savePoster($oeuvreId, (string) ($_POST['poster_url'] ?? ''), $uploadedBinary);
 }
 
 header('Location: ' . View::bdUrl($result) . '?saved=1');

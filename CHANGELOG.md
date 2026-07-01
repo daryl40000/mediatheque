@@ -19,6 +19,23 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.3] — 2026-06-16
+
+**BD / Manga : couverture par URL et correction possession à l’ajout**
+
+### Ajouté
+
+- **Couverture par URL** : à l’ajout ou à la modification d’un tome, champ URL HTTPS (comme les jeux) ; téléchargement local via `BdRepository::savePoster()` ; partial `_bd_cover_fields.php`.
+- **Tests** : possession à la création, `savePoster` avec chemin local existant.
+
+### Corrigé
+
+- **Possession à l’ajout** : cocher « Je possède cet exemplaire » lors de la création d’un tome est bien enregistré dès la première sauvegarde (`BibliothequeRepository::normalizeSupportPhysiqueForStorage()` reconnaît les supports BD).
+
+### Modifié
+
+- **Documentation** : [doc/bd.md](doc/bd.md) (section couverture).
+
 ## [0.7.2] — 2026-06-16
 
 **BD / Manga : polish profil public, partage visiteur, impression et comptage possession**

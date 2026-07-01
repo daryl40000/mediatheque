@@ -68,6 +68,30 @@ final class BdRepositoryTest extends MoncineTestCase
         $this->assertCount(1, $tomes);
         $this->assertStringContainsString('Astérix Test', (string) $tomes[0]['display_titre']);
         $this->assertStringContainsString('Tome 1', (string) $tomes[0]['display_titre']);
+        $this->assertTrue($tomes[0]['is_possessed']);
+        $this->assertSame(BdPhysicalSupport::ALBUM, $tomes[0]['support_physique']);
+    }
+
+    public function testCreateTomeWithPossessionFromPostDefaultsToAlbum(): void
+    {
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new BdRepository();
+        $seriesId = $this->createTestSeries('Possession à la création');
+
+        $support = BdRepository::supportFromPost(['support_possede' => '1']);
+        $this->assertSame(BdPhysicalSupport::ALBUM, $support);
+
+        $bibId = $repo->createTomeWithLibrary($seriesId, [
+            'tome_numero' => 1,
+            'support_physique' => $support,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        $tome = $repo->findByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($tome);
+        $this->assertTrue($tome['is_possessed']);
+        $this->assertSame(BdPhysicalSupport::ALBUM, $tome['support_physique']);
     }
 
     public function testSortByReadAtDoesNotCrash(): void
@@ -215,6 +239,31 @@ final class BdRepositoryTest extends MoncineTestCase
         $this->assertTrue($after['is_possessed']);
         $this->assertSame(BdPhysicalSupport::ALBUM, $after['support_physique']);
         $this->assertSame('/posters/' . $oeuvreId . '.jpg', $after['poster_url'] ?? '');
+    }
+
+    public function testSavePosterKeepsLocalPathForExistingLocalUrl(): void
+    {
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new BdRepository();
+        $seriesId = $this->createTestSeries('Poster URL Test');
+
+        $bibId = $repo->createTomeWithLibrary($seriesId, [
+            'tome_numero' => 4,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        $tome = $repo->findByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($tome);
+        $oeuvreId = (int) $tome['oeuvre_id'];
+
+        $localPath = '/posters/' . $oeuvreId . '.png';
+        $repo->updatePosterUrl($oeuvreId, $localPath);
+        $repo->savePoster($oeuvreId, $localPath, null);
+
+        $updated = $repo->findByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($updated);
+        $this->assertSame($localPath, (string) ($updated['poster_url'] ?? ''));
     }
 
     public function testUnownedTomeNotCountedAsPossessed(): void

@@ -35,9 +35,7 @@ $seriesId = (int) ($series['id'] ?? 0);
         require MONCINE_ROOT . '/templates/_bd_form_fields.php';
         ?>
 
-        <label for="bd_cover_file">Couverture (JPEG, PNG, WebP)</label>
-        <input type="file" name="cover_file" id="bd_cover_file" accept="image/jpeg,image/png,image/webp">
-        <p class="hint">Taille max. <?= Moncine\View::escape(Moncine\UploadLimits::maxPosterBytesLabel()) ?>.</p>
+        <?php require MONCINE_ROOT . '/templates/_bd_cover_fields.php'; ?>
 
         <button type="submit" class="btn btn-primary"<?= $moduleAvailable ? '' : ' disabled' ?>>Enregistrer le tome</button>
     </form>

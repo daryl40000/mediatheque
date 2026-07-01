@@ -297,7 +297,7 @@ final class BibliothequeRepository
     }
 
     /**
-     * Films : clés dvd / bluray. Magazines : tags papier / pdf (MagazineSupport).
+     * Films : dvd / bluray. BD : album / relié / etc. Magazines : tags papier / pdf.
      */
     private static function normalizeSupportPhysiqueForStorage(string $raw): string
     {
@@ -309,6 +309,11 @@ final class BibliothequeRepository
         $filmSupport = SupportPhysique::normalize($raw);
         if ($filmSupport !== '') {
             return $filmSupport;
+        }
+
+        $bdSupport = BdPhysicalSupport::normalize($raw);
+        if ($bdSupport !== '') {
+            return $bdSupport;
         }
 
         if (MagazineSupport::parseTags($raw) === []) {

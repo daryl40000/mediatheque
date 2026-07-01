@@ -48,6 +48,15 @@ L’ancien lien `/ajouter-bd.php` redirige vers la création de série ou l’aj
 - `BdSeriesMetadata` — type BD/manga/comic sur la série
 - `BdRowMapper`, `BdKind`, `BdPhysicalSupport`
 
+## Couverture d’un tome
+
+À l’**ajout** ou à la **modification** d’un tome :
+
+- **Fichier** : JPEG, PNG ou WebP (taille max. configurée sur le serveur).
+- **URL HTTPS** : comme pour les jeux vidéo, collez un lien direct vers l’image ; Médiathèque la **télécharge** et l’enregistre localement sous `/posters/{oeuvre_id}.ext` (`BdRepository::savePoster()` → `PosterStorage::ensureLocalForOeuvre()`).
+
+Le fichier uploadé est prioritaire si les deux sont fournis.
+
 ## Limites v0.8.x
 
 - Pas d’import CSV ni d’API externe.

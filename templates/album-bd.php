@@ -211,9 +211,11 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
                         require MONCINE_ROOT . '/templates/_bd_form_fields.php';
                         ?>
 
-                        <label for="edit_bd_cover">Nouvelle couverture (JPEG, PNG, WebP)</label>
-                        <input type="file" name="cover_file" id="edit_bd_cover" accept="image/jpeg,image/png,image/webp">
-                        <p class="hint">Taille max. <?= Moncine\View::escape(Moncine\UploadLimits::maxPosterBytesLabel()) ?>.</p>
+                        <?php
+                        $coverInputId = 'edit_bd_cover';
+                        $posterUrlInputId = 'edit_bd_poster_url';
+                        require MONCINE_ROOT . '/templates/_bd_cover_fields.php';
+                        ?>
 
                         <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
                     </form>

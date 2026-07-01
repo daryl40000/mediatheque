@@ -10,7 +10,6 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\BdRepository;
 use Moncine\Csrf;
 use Moncine\MediaDomainGuards;
-use Moncine\PosterStorage;
 use Moncine\UserContext;
 use Moncine\View;
 
@@ -53,24 +52,27 @@ if ($result !== true) {
 $album = $repo->findByBibId($bibId, $userId, $foyerId);
 $oeuvreId = (int) ($album['oeuvre_id'] ?? 0);
 
-if (
-    $oeuvreId > 0
-    && isset($_FILES['cover_file'])
-    && (int) ($_FILES['cover_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK
-) {
-    $binary = (string) file_get_contents((string) $_FILES['cover_file']['tmp_name']);
-    $posterUrl = (new PosterStorage())->importBinaryForOeuvre($oeuvreId, $binary);
-    if ($posterUrl === '') {
-        header('Location: ' . $returnUrl . '&edit_error=' . rawurlencode(
-            'Couverture non enregistrée (format ou taille invalide).'
-        ));
-        exit;
-    }
-    if (!$repo->updatePosterUrl($oeuvreId, $posterUrl)) {
-        header('Location: ' . $returnUrl . '&edit_error=' . rawurlencode(
-            'Erreur lors de l’enregistrement de la couverture.'
-        ));
-        exit;
+if ($oeuvreId > 0) {
+    $uploadedBinary = null;
+    if (
+        isset($_FILES['cover_file'])
+        && (int) ($_FILES['cover_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK
+    ) {
+        $uploadedBinary = (string) file_get_contents((string) $_FILES['cover_file']['tmp_name']);
+        if ($uploadedBinary !== '') {
+            $beforePoster = trim((string) ($album['poster_url'] ?? ''));
+            $repo->savePoster($oeuvreId, '', $uploadedBinary);
+            $after = $repo->findByBibId($bibId, $userId, $foyerId);
+            $afterPoster = trim((string) ($after['poster_url'] ?? ''));
+            if ($afterPoster === '' || $afterPoster === $beforePoster) {
+                header('Location: ' . $returnUrl . '&edit_error=' . rawurlencode(
+                    'Couverture non enregistrée (format ou taille invalide).'
+                ));
+                exit;
+            }
+        }
+    } else {
+        $repo->savePoster($oeuvreId, (string) ($_POST['poster_url'] ?? ''), null);
     }
 }
 

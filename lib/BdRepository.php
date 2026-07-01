@@ -1068,6 +1068,44 @@ final class BdRepository
         return true;
     }
 
+    /**
+     * Enregistre la couverture : fichier upload prioritaire, sinon téléchargement URL → stockage local.
+     */
+    public function savePoster(int $oeuvreId, string $posterUrlInput, ?string $uploadedBinary = null): void
+    {
+        if ($oeuvreId <= 0 || !self::isAvailable()) {
+            return;
+        }
+
+        $storage = new PosterStorage();
+
+        if ($uploadedBinary !== null && $uploadedBinary !== '') {
+            $local = $storage->importBinaryForOeuvre($oeuvreId, $uploadedBinary);
+            if ($local !== '') {
+                $this->updatePosterUrl($oeuvreId, $local);
+            }
+
+            return;
+        }
+
+        $posterUrlInput = trim($posterUrlInput);
+        if ($posterUrlInput === '') {
+            return;
+        }
+
+        $local = $storage->ensureLocalForOeuvre($oeuvreId, $posterUrlInput);
+        if ($local !== '') {
+            $this->updatePosterUrl($oeuvreId, $local);
+
+            return;
+        }
+
+        $sanitized = SecureUrl::sanitizePosterUrl($posterUrlInput);
+        if ($sanitized !== '') {
+            $this->updatePosterUrl($oeuvreId, $sanitized);
+        }
+    }
+
     public function promoteToCollection(int $bibId, int $userId, int $foyerId): bool
     {
         $album = $this->findByBibId($bibId, $userId, $foyerId);
