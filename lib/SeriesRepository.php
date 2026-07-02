@@ -33,14 +33,28 @@ final class SeriesRepository
             return null;
         }
 
-        $domain = $mediaDomain ?? MediaContext::current();
-        $stmt = $this->db->prepare(
-            'SELECT * FROM series WHERE id = ? AND media_domain = ? LIMIT 1'
-        );
-        $stmt->execute([$id, MediaDomain::normalize($domain)]);
+        if ($mediaDomain === null && $this->shouldScopeFindByIdToCurrentDomain()) {
+            $mediaDomain = MediaContext::current();
+        }
+
+        if ($mediaDomain === null) {
+            $stmt = $this->db->prepare('SELECT * FROM series WHERE id = ? LIMIT 1');
+            $stmt->execute([$id]);
+        } else {
+            $stmt = $this->db->prepare(
+                'SELECT * FROM series WHERE id = ? AND media_domain = ? LIMIT 1'
+            );
+            $stmt->execute([$id, MediaDomain::normalize($mediaDomain)]);
+        }
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return $row !== false ? $row : null;
+    }
+
+    /** En HTTP, findById sans domaine explicite reste limité au domaine actif. */
+    private function shouldScopeFindByIdToCurrentDomain(): bool
+    {
+        return PHP_SAPI !== 'cli';
     }
 
     /**

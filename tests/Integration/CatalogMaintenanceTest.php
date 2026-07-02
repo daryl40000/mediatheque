@@ -77,6 +77,41 @@ final class CatalogMaintenanceTest extends MoncineTestCase
         @unlink($orphan);
     }
 
+    public function testFindOrphanPosterFilesIgnoresSeriesPosterUrl(): void
+    {
+        $this->loginAsAdmin();
+        MediaContext::set(MediaDomain::MAGAZINE);
+
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Série logo maintenance',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $dir = PosterStorage::postersFilesystemDir();
+        if (!is_dir($dir)) {
+            mkdir($dir, 0755, true);
+        }
+
+        $seriesPoster = $dir . '/s' . $seriesId . '.jpg';
+        $orphan = $dir . '/88888.jpg';
+        file_put_contents($seriesPoster, "\xFF\xD8\xFF\xE0" . str_repeat('2', 100));
+        file_put_contents($orphan, "\xFF\xD8\xFF\xE0" . str_repeat('3', 100));
+
+        (new SeriesRepository())->update($seriesId, [
+            'poster_url' => '/posters/s' . $seriesId . '.jpg',
+        ]);
+
+        $orphans = (new CatalogMaintenance())->findOrphanPosterFiles();
+        $basenames = array_map('basename', $orphans);
+
+        $this->assertContains('88888.jpg', $basenames);
+        $this->assertNotContains('s' . $seriesId . '.jpg', $basenames);
+
+        @unlink($seriesPoster);
+        @unlink($orphan);
+    }
+
     public function testFindDuplicateGroupsByTmdb(): void
     {
         $this->loginAsAdmin();

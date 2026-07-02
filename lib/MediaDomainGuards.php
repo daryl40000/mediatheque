@@ -54,6 +54,8 @@ final class MediaDomainGuards
         '/serie-bd.php',
         '/album-bd.php',
         '/ajouter-serie-bd.php',
+        '/modifier-serie-bd.php',
+        '/enregistrer-modification-serie-bd.php',
         '/ajouter-tome-bd.php',
         '/ajouter-bd.php',
         '/enregistrer-serie-bd.php',

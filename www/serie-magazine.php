@@ -12,6 +12,7 @@ use Moncine\MagazinePdfTextExtractor;
 use Moncine\MagazineRepository;
 use Moncine\MediaDomainGuards;
 use Moncine\PublicationType;
+use Moncine\SeriesPoster;
 use Moncine\SeriesRepository;
 use Moncine\UserContext;
 use Moncine\View;
@@ -40,6 +41,9 @@ $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
 
 $series = (new SeriesRepository())->findById($seriesId, \Moncine\MediaDomain::MAGAZINE);
+if ($series !== null) {
+    $series = SeriesPoster::enrichSeries($series);
+}
 if ($series === null) {
     View::render('serie-magazine', [
         'pageTitle' => 'Série introuvable',

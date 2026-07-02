@@ -313,16 +313,7 @@ final class CatalogMaintenance
             return [];
         }
 
-        $referenced = [];
-        $stmt = $this->db->query(
-            "SELECT id, poster_url FROM oeuvres WHERE TRIM(poster_url) LIKE '/posters/%'"
-        );
-        foreach ($stmt->fetchAll() ?: [] as $row) {
-            $path = PosterStorage::filesystemPathFromWeb((string) ($row['poster_url'] ?? ''));
-            if ($path !== null && is_file($path)) {
-                $referenced[realpath($path) ?: $path] = true;
-            }
-        }
+        $referenced = SeriesPoster::referencedFilesystemPaths($this->db);
 
         $orphans = [];
         foreach (glob($dir . '/*.{jpg,jpeg,png,webp}', GLOB_BRACE) ?: [] as $file) {

@@ -13,6 +13,7 @@ use Moncine\CollectionViewMode;
 use Moncine\LibraryStatut;
 use Moncine\MediaDomain;
 use Moncine\MediaDomainGuards;
+use Moncine\SeriesPoster;
 use Moncine\SeriesRepository;
 use Moncine\UserContext;
 use Moncine\View;
@@ -32,6 +33,9 @@ $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
 
 $series = (new SeriesRepository())->findById($seriesId, MediaDomain::BD);
+if ($series !== null) {
+    $series = SeriesPoster::enrichSeries($series);
+}
 if ($series === null) {
     View::render('serie-bd', [
         'pageTitle' => 'Série introuvable',

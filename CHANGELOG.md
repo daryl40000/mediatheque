@@ -21,6 +21,28 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+---
+
+## [0.7.5] — 2026-06-16
+
+**BD / Magazines : modification série BD, repli couverture tome/numéro 1, maintenance affiches**
+
+### Ajouté
+
+- **BD — modifier une série** : `/modifier-serie-bd.php` (titre, type, éditeur, notes, couverture) ; bouton sur la fiche série.
+- **Affiches de série** : `SeriesPoster` — repli automatique sur la couverture du **tome 1** (BD) ou **numéro 1** (magazine) si pas de logo dédié ; `View::seriesPosterSrc()`.
+- **Tests** : `SeriesPosterTest` ; maintenance ignore les logos série (`s{id}.jpg`).
+
+### Corrigé
+
+- **Maintenance catalogue** : les fichiers `/posters/s{id}.jpg` référencés par `series.poster_url` ne sont plus proposés comme affiches orphelines.
+- **Couverture série** : si le logo série pointe vers un fichier supprimé, bascule vers le tome/numéro 1 ; priorité explicite sur le volume n°1.
+- **SeriesRepository** : `update()` et `findById()` en CLI/tests ne bloquent plus sur le domaine média actif.
+
+### Modifié
+
+- **Documentation** : [doc/bd.md](doc/bd.md), [doc/magazines.md](doc/magazines.md) ; hint maintenance catalogue.
+
 ## [0.7.4] — 2026-06-16
 
 **Magazines : hors-série, doublons et fiche catalogue — BD tome 0 — maintenance catalogue — refactor jeux/films**

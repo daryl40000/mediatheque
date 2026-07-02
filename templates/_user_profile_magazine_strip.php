@@ -21,8 +21,7 @@ $magazineListMode = (string) ($magazineListMode ?? 'collection');
             $seriesUrl = $targetUserId > 0 && $seriesId > 0
                 ? Moncine\View::userProfileMagazineSeriesUrl($targetUserId, $seriesId, $magazineListMode)
                 : '';
-            $poster = trim((string) ($series['poster_url'] ?? $series['latest_poster_url'] ?? ''));
-            $posterSrc = Moncine\View::posterSrc($poster !== '' ? $poster : null);
+            $posterSrc = Moncine\View::seriesPosterSrc($series);
             $titre = (string) ($series['titre'] ?? '');
             $issueCount = (int) ($series['issue_count'] ?? 0);
             ?>

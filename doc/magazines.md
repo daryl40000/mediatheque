@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.7.4** · **Date : 2026-06-16**
+**Version : 0.7.5** · **Date : 2026-06-16**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -50,6 +50,10 @@ Les couvertures de numéros et les logos de séries utilisent le même stockage 
 
 - Taille max. par fichier image : **10 Mo** (`MONCINE_POSTER_MAX_BYTES` dans `lib/config.php`).
 - Formats : JPEG, PNG, WebP.
+
+**Logo de série** : sans image dédiée sur la fiche série, la liste « Mes magazines » affiche automatiquement la couverture du **numéro 1** (hors-série exclus). Vous pouvez téléverser un logo propre via **Modifier la série** (`/modifier-serie-magazine.php`).
+
+**Maintenance catalogue — affiches orphelines** : seuls les fichiers non référencés par `oeuvres.poster_url` ou `series.poster_url` sont proposés à la suppression. Une couverture utilisée via le numéro 1 n’est pas orpheline même sans logo de série.
 
 ---
 

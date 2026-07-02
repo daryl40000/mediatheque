@@ -230,6 +230,7 @@ final class BdRepository
                     (SELECT COUNT(*) FROM oeuvre_bd ob_cat WHERE ob_cat.series_id = s.id) AS catalog_tome_count,
                     COUNT(DISTINCT CASE WHEN b.statut = :tome_stat' . $tomeScopeSql . $ownedSql . ' THEN b.id END) AS possessed_tome_count,
                     MAX(CASE WHEN b.statut = :tome_stat' . $tomeScopeSql . $ownedSql . ' THEN ob.tome_numero END) AS last_tome_numero,
+                    ' . SeriesPoster::sqlFirstVolumePosterSubquery(MediaDomain::BD) . ' AS first_volume_poster_url,
                     MAX(CASE WHEN TRIM(o.poster_url) != \'\' THEN o.poster_url END) AS latest_poster_url
                 FROM series s
                 INNER JOIN series_bibliotheque sb ON sb.series_id = s.id
@@ -250,6 +251,7 @@ final class BdRepository
             $row['tome_count'] = $row['possessed_tome_count'];
             $row['kind'] = BdSeriesMetadata::kindFromSeries($row);
             $row['kind_label'] = BdKind::label($row['kind']);
+            $row = SeriesPoster::enrichSeries($row);
         }
         unset($row);
 

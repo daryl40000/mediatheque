@@ -22,6 +22,7 @@ La page **Mes BD** (`/bd.php`) affiche vos **séries**. Cliquez sur une série p
 | `/bd.php` | Liste des séries en collection |
 | `/serie-bd.php?series_id=` | Tomes d’une série |
 | `/ajouter-serie-bd.php` | Nouvelle série |
+| `/modifier-serie-bd.php?series_id=` | Modifier titre, type, éditeur, notes, couverture |
 | `/ajouter-tome-bd.php?series_id=` | Nouveau tome |
 | `/album-bd.php?id=` | Fiche d’un tome |
 | `/bd-envies.php` | Séries en envies |
@@ -72,4 +73,5 @@ Sur la fiche série (`/serie-bd.php`), filtre **Afficher : Hors-série** (collec
 
 - Pas d’import CSV ni d’API externe.
 - Profil public, partage visiteur et liste imprimable par série : disponibles (comme magazines / jeux).
-- Modification de série limitée (pas encore de page dédiée).
+- **Couverture de série** : sans image dédiée, l’application affiche automatiquement la couverture du **tome 1** (hors-série exclus). Vous pouvez aussi téléverser une couverture propre à la série via **Modifier la série**.
+- **Maintenance catalogue** : les logos de série (`/posters/s{id}.jpg`) ne sont plus traités comme des affiches orphelines.

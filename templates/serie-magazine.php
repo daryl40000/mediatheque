@@ -27,7 +27,7 @@
     <?php else: ?>
         <?php
         $seriesId = (int) ($series['id'] ?? 0);
-        $posterSrc = Moncine\View::posterSrc(trim((string) ($series['poster_url'] ?? '')) ?: null);
+        $posterSrc = Moncine\View::seriesPosterSrc($series);
         $isWishlist = $statut === Moncine\LibraryStatut::WISHLIST;
         $seriesQuery = ['statut' => $statut];
         if (($possessionFilter ?? Moncine\MagazineRepository::POSSESSION_ALL) !== Moncine\MagazineRepository::POSSESSION_ALL) {

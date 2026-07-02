@@ -236,6 +236,25 @@ final class View
         return $safe !== '' ? self::escape($safe) : '';
     }
 
+    /**
+     * Affiche d’une série : logo dédié, sinon couverture du 1er tome/numéro, sinon dernière connue.
+     *
+     * @param array<string, mixed> $series
+     */
+    public static function seriesPosterSrc(array $series): string
+    {
+        $series = SeriesPoster::enrichSeries($series);
+
+        foreach (SeriesPoster::candidateWebPaths($series) as $url) {
+            $src = self::posterSrc($url);
+            if ($src !== '') {
+                return $src;
+            }
+        }
+
+        return '';
+    }
+
     /** Champ caché à inclure dans les formulaires POST protégés. */
     public static function csrfField(): string
     {

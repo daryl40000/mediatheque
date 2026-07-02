@@ -1,50 +1,53 @@
 <?php
 /**
- * Formulaire : modifier une série magazine.
+ * Formulaire : modifier une série BD / manga.
  */
 
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\BdKind;
+use Moncine\BdRepository;
+use Moncine\BdSeriesMetadata;
 use Moncine\LibraryStatut;
-use Moncine\MagazineRepository;
 use Moncine\MediaDomain;
 use Moncine\MediaDomainGuards;
-use Moncine\PublicationType;
+use Moncine\SeriesPoster;
 use Moncine\SeriesRepository;
 use Moncine\UserContext;
 use Moncine\View;
 
 MediaDomainGuards::renderCollectionPageOrExit();
-MediaDomainGuards::ensureMagazineContext('/magazines.php');
+MediaDomainGuards::ensureBdContext('/bd.php');
 
 $seriesId = (int) ($_GET['series_id'] ?? 0);
-$series = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE);
+$series = (new SeriesRepository())->findById($seriesId, MediaDomain::BD);
 if ($series === null) {
-    header('Location: /magazines.php');
+    header('Location: /bd.php');
     exit;
 }
 
-$series = \Moncine\SeriesPoster::enrichSeries($series);
+$series = SeriesPoster::enrichSeries($series);
 
 $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
-$repo = new MagazineRepository();
+$repo = new BdRepository();
 $libraryStatut = LibraryStatut::COLLECTION;
-$seriesInLibrary = MagazineRepository::isAvailable()
+$seriesInLibrary = BdRepository::isAvailable()
     && $repo->isSeriesInLibrary($seriesId, $libraryStatut, $userId, $foyerId);
-$libraryIssueCount = $seriesInLibrary
-    ? $repo->countIssuesForSeries($seriesId, $userId, $foyerId, $libraryStatut)
+$tomeCount = $seriesInLibrary
+    ? $repo->countTomesForSeries($seriesId, $userId, $foyerId, $libraryStatut)
     : 0;
 
-View::render('modifier-serie-magazine', [
+View::render('modifier-serie-bd', [
     'pageTitle' => 'Modifier — ' . (string) ($series['titre'] ?? ''),
-    'publicationTypes' => PublicationType::choices(),
+    'kindChoices' => BdKind::choices(),
     'series' => $series,
+    'kind' => BdSeriesMetadata::kindFromSeries($series),
     'error' => (string) ($_GET['error'] ?? ''),
     'saved' => isset($_GET['saved']),
     'seriesInLibrary' => $seriesInLibrary,
     'libraryStatut' => $libraryStatut,
-    'libraryIssueCount' => $libraryIssueCount,
+    'tomeCount' => $tomeCount,
 ]);

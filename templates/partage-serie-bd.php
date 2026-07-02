@@ -16,7 +16,7 @@
         $rawToken = (string) ($rawToken ?? '');
         $listContext = $listContext ?? [];
         $isWishlist = ($statut ?? '') === Moncine\LibraryStatut::WISHLIST;
-        $posterSrc = Moncine\View::posterSrc(trim((string) ($series['poster_url'] ?? '')) ?: null);
+        $posterSrc = Moncine\View::seriesPosterSrc($series);
         $tomeUrlForBibId = static fn (int $bibId): string => Moncine\ShareLinkService::bdAlbumUrl(
             $rawToken,
             $bibId,

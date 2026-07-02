@@ -143,8 +143,7 @@ $canManageCatalog = $canManageCatalog ?? false;
             <?php foreach ($seriesList as $series): ?>
                 <?php
                 $seriesId = (int) ($series['id'] ?? 0);
-                $poster = trim((string) ($series['poster_url'] ?? $series['latest_poster_url'] ?? ''));
-                $posterSrc = Moncine\View::posterSrc($poster !== '' ? $poster : null);
+                $posterSrc = Moncine\View::seriesPosterSrc($series);
                 ?>
                 <a href="<?= Moncine\View::escape(Moncine\View::magazineSeriesUrl($seriesId)) ?>"
                    class="magazine-series-card">

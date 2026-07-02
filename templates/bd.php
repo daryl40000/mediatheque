@@ -48,8 +48,7 @@
             <?php foreach ($seriesList as $series): ?>
                 <?php
                 $seriesId = (int) ($series['id'] ?? 0);
-                $poster = trim((string) ($series['poster_url'] ?? $series['latest_poster_url'] ?? ''));
-                $posterSrc = Moncine\View::posterSrc($poster !== '' ? $poster : null);
+                $posterSrc = Moncine\View::seriesPosterSrc($series);
                 $possessedCount = (int) ($series['possessed_tome_count'] ?? $series['tome_count'] ?? 0);
                 $catalogCount = (int) ($series['catalog_tome_count'] ?? 0);
                 ?>

@@ -276,7 +276,9 @@
     <section class="catalog-maintenance-panel">
         <h2>Affiches orphelines</h2>
         <p class="hint">
-            Fichiers dans le dossier <code>posters/</code> non référencés par une fiche catalogue.
+            Fichiers dans le dossier <code>posters/</code> non référencés par une fiche catalogue
+            (<code>oeuvres.poster_url</code> ou logo de série <code>series.poster_url</code>).
+            Les couvertures affichées via le tome 1 ou le numéro 1 ne sont pas des fichiers orphelins.
         </p>
         <?php if ($orphanPosters === []): ?>
             <p class="alert alert-info">Aucune affiche orpheline.</p>

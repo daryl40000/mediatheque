@@ -43,7 +43,7 @@
             <?php foreach ($seriesList as $series): ?>
                 <?php
                 $seriesId = (int) ($series['id'] ?? 0);
-                $posterSrc = Moncine\View::posterSrc(trim((string) ($series['poster_url'] ?? '')) ?: null);
+                $posterSrc = Moncine\View::seriesPosterSrc($series);
                 ?>
                 <a href="<?= Moncine\View::escape(Moncine\View::bdSeriesUrl($seriesId, 'tome', 'asc', ['statut' => Moncine\LibraryStatut::WISHLIST])) ?>"
                    class="magazine-series-card">

@@ -22,7 +22,7 @@
     <?php else: ?>
         <?php
         $seriesId = (int) ($series['id'] ?? 0);
-        $posterSrc = Moncine\View::posterSrc(trim((string) ($series['poster_url'] ?? '')) ?: null);
+        $posterSrc = Moncine\View::seriesPosterSrc($series);
         $isWishlist = $statut === Moncine\LibraryStatut::WISHLIST;
         $possessionFilter = Moncine\BdRepository::normalizePossessionFilter($possessionFilter ?? '');
         $hasSearch = trim($searchQuery) !== '';
@@ -67,6 +67,8 @@
             <p>
                 <a href="<?= Moncine\View::escape(Moncine\View::bdAddTomeUrl($seriesId, $statut)) ?>"
                    class="btn btn-accent">Ajouter un tome</a>
+                <a href="/modifier-serie-bd.php?series_id=<?= $seriesId ?>"
+                   class="btn btn-secondary">Modifier la série</a>
                 <?php if ($totalCount > 0): ?>
                     <a href="<?= Moncine\View::escape(Moncine\View::bdSeriesPrintUrl(
                         $seriesId,

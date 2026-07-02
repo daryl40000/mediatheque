@@ -523,6 +523,7 @@ final class UserPublicProfileService
         }
 
         $sql = 'SELECT s.*,
+                    ' . SeriesPoster::sqlFirstVolumePosterSubquery(MediaDomain::MAGAZINE) . ' AS first_volume_poster_url,
                     MAX(CASE WHEN TRIM(o.poster_url) != \'\' THEN o.poster_url END) AS latest_poster_url,
                     COUNT(DISTINCT CASE WHEN b.statut = sb.statut THEN b.id END) AS issue_count
                 FROM series s
@@ -541,7 +542,13 @@ final class UserPublicProfileService
         }
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows as &$row) {
+            $row = SeriesPoster::enrichSeries($row);
+        }
+        unset($row);
+
+        return $rows;
     }
 
     /** @return list<array<string, mixed>> */

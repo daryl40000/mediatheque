@@ -4,7 +4,8 @@
 /** @var string $error */
 /** @var bool $saved */
 $seriesId = (int) ($series['id'] ?? 0);
-$posterSrc = Moncine\View::posterSrc(trim((string) ($series['poster_url'] ?? '')) ?: null);
+$hasDedicatedPoster = trim((string) ($series['poster_url'] ?? '')) !== '';
+$posterSrc = Moncine\View::seriesPosterSrc($series);
 ?>
 <section>
     <h1>Modifier la série</h1>
@@ -25,6 +26,9 @@ $posterSrc = Moncine\View::posterSrc(trim((string) ($series['poster_url'] ?? '')
         <p>
             <img src="<?= $posterSrc ?>" alt="Logo actuel" class="magazine-cover magazine-cover--header">
         </p>
+        <?php if (!$hasDedicatedPoster): ?>
+            <p class="hint">Couverture affichée automatiquement depuis le numéro 1 du catalogue. Téléversez une image ci-dessous pour un logo de série dédié.</p>
+        <?php endif; ?>
     <?php endif; ?>
 
     <form method="post" action="/enregistrer-modification-serie-magazine.php" class="import-form" enctype="multipart/form-data">
@@ -52,7 +56,7 @@ $posterSrc = Moncine\View::posterSrc(trim((string) ($series['poster_url'] ?? '')
 
         <label for="cover_file">Logo ou couverture type (JPEG, PNG, WebP)</label>
         <input type="file" name="cover_file" id="cover_file" accept="image/jpeg,image/png,image/webp">
-        <p class="hint">Image affichée dans la liste « Mes magazines ». Vous pourrez la remplacer en téléversant une nouvelle image.</p>
+        <p class="hint">Image affichée dans la liste « Mes magazines ». Sans logo dédié, la couverture du numéro 1 est utilisée automatiquement.</p>
 
         <label for="editeur">Éditeur</label>
         <input type="text" name="editeur" id="editeur" maxlength="120"

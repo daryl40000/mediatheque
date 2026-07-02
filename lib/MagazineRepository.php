@@ -313,6 +313,7 @@ final class MagazineRepository
                     COUNT(DISTINCT CASE WHEN b.statut = :issue_stat' . $ownedSql . ' THEN b.id END) AS issue_count,
                     MAX(CASE WHEN b.statut = :issue_stat' . $ownedSql . ' THEN om.numero_ordre END) AS last_numero_ordre,
                     MAX(CASE WHEN b.statut = :issue_stat' . $ownedSql . ' THEN om.date_parution END) AS last_date_parution,
+                    ' . SeriesPoster::sqlFirstVolumePosterSubquery(MediaDomain::MAGAZINE) . ' AS first_volume_poster_url,
                     MAX(CASE WHEN TRIM(o.poster_url) != \'\' THEN o.poster_url END) AS latest_poster_url
                 FROM series s
                 INNER JOIN series_bibliotheque sb ON sb.series_id = s.id
@@ -325,8 +326,14 @@ final class MagazineRepository
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($this->filterParamsForSql($sql, $params));
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        foreach ($rows as &$row) {
+            $row = SeriesPoster::enrichSeries($row);
+        }
+        unset($row);
+
+        return $rows;
     }
 
     public function countSeriesInLibrary(int $userId, int $foyerId, ?string $statut = null, string $query = ''): int

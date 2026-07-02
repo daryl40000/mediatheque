@@ -50,8 +50,7 @@ $sortLink = static function (string $label, string $column) use (
             <?php
             $seriesId = (int) ($series['id'] ?? 0);
             $seriesUrl = Moncine\View::userProfileMagazineSeriesUrl($targetUserId, $seriesId, $listMode);
-            $poster = trim((string) ($series['poster_url'] ?? $series['latest_poster_url'] ?? ''));
-            $posterSrc = Moncine\View::posterSrc($poster !== '' ? $poster : null);
+            $posterSrc = Moncine\View::seriesPosterSrc($series);
             ?>
             <a href="<?= Moncine\View::escape($seriesUrl) ?>" class="magazine-series-card">
                 <?php if ($posterSrc !== ''): ?>
