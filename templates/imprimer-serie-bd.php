@@ -55,11 +55,13 @@ $seriesTitle = (string) ($series['titre'] ?? 'Série');
                 <?php foreach ($rows as $row): ?>
                     <tr>
                         <td class="col-narrow">
+                            <?php if (!empty($row['est_hors_serie'])): ?>
+                                <span class="badge">HS</span>
+                            <?php endif; ?>
                             <?php
+                            $label = trim((string) ($row['tome_label'] ?? ''));
                             $num = (int) ($row['tome_numero'] ?? 0);
-                            echo $num > 0
-                                ? Moncine\View::escape((string) $num)
-                                : Moncine\View::escape((string) ($row['tome_label'] ?? '—'));
+                            echo Moncine\View::escape($label !== '' ? $label : (string) $num);
                             ?>
                         </td>
                         <td><?= Moncine\View::escape((string) ($row['display_titre'] ?? '')) ?></td>

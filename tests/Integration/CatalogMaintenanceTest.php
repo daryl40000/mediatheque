@@ -6,10 +6,16 @@ namespace Moncine\Tests\Integration;
 
 use Moncine\BibliothequeRepository;
 use Moncine\CatalogMaintenance;
+use Moncine\Database;
 use Moncine\FoyerRepository;
 use Moncine\HistoriqueRepository;
+use Moncine\MagazineRepository;
+use Moncine\MediaContext;
+use Moncine\MediaDomain;
 use Moncine\OeuvreRepository;
 use Moncine\PosterStorage;
+use Moncine\PublicationType;
+use Moncine\SeriesRepository;
 use Moncine\Tests\Support\MoncineTestCase;
 
 final class CatalogMaintenanceTest extends MoncineTestCase
@@ -81,5 +87,48 @@ final class CatalogMaintenanceTest extends MoncineTestCase
         $this->assertNotEmpty($groups);
         $this->assertSame(550, $groups[0]['tmdb_id']);
         $this->assertGreaterThanOrEqual(2, $groups[0]['count']);
+        $this->assertNotEmpty($groups[0]['oeuvres'] ?? []);
+        $this->assertGreaterThanOrEqual(2, count($groups[0]['oeuvres']));
+    }
+
+    public function testFindDuplicateMagazineIssueGroups(): void
+    {
+        $this->loginAsAdmin();
+        MediaContext::set(MediaDomain::MAGAZINE);
+
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Doublon magazine maintenance',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $repo = new MagazineRepository();
+        $oeuvreId1 = $repo->createCatalogIssue($seriesId, ['numero' => 'dup-maint']);
+        $this->assertIsInt($oeuvreId1);
+
+        $oeuvreId2 = (new OeuvreRepository())->insert([
+            'titre' => 'Doublon magazine maintenance — n°dup-maint bis',
+            'realisateur' => '',
+            'media_domain' => MediaDomain::MAGAZINE,
+        ]);
+        Database::getInstance()->prepare(
+            'INSERT INTO oeuvre_magazine (oeuvre_id, series_id, numero, numero_ordre, est_hors_serie)
+             VALUES (?, ?, ?, ?, ?)'
+        )->execute([$oeuvreId2, $seriesId, 'dup-maint', 99, 0]);
+
+        $groups = (new CatalogMaintenance())->findDuplicateMagazineIssueGroups();
+        $match = null;
+        foreach ($groups as $group) {
+            if ((int) ($group['series_id'] ?? 0) === $seriesId) {
+                $match = $group;
+                break;
+            }
+        }
+
+        $this->assertNotNull($match);
+        $this->assertGreaterThanOrEqual(2, (int) ($match['count'] ?? 0));
+        $this->assertContains($oeuvreId1, $match['ids']);
+        $this->assertContains($oeuvreId2, $match['ids']);
+        $this->assertNotEmpty($match['oeuvres'] ?? []);
     }
 }

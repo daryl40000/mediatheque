@@ -45,7 +45,8 @@ final class BdPrintListService
             $params['statut'],
             $params['sortBy'],
             $params['sortDir'],
-            $params['searchQuery']
+            $params['searchQuery'],
+            $params['possessionFilter']
         );
 
         $totalCount = count($tomes);
@@ -59,6 +60,7 @@ final class BdPrintListService
             $rows[] = [
                 'tome_numero' => (int) ($tome['tome_numero'] ?? 0),
                 'tome_label' => (string) ($tome['tome_label'] ?? ''),
+                'est_hors_serie' => !empty($tome['est_hors_serie']),
                 'display_titre' => (string) ($tome['display_titre'] ?? BdRowMapper::displayTitle($tome)),
                 'annee' => (int) ($tome['annee'] ?? 0),
                 'possession_label' => BdPossession::possessionStatusLabel($tome),
@@ -72,6 +74,9 @@ final class BdPrintListService
         $backQuery = array_filter([
             'statut' => $params['statut'],
             'q' => $params['searchQuery'] !== '' ? $params['searchQuery'] : null,
+            'possession' => ($params['possessionFilter'] ?? null) !== null
+                ? (string) $params['possessionFilter']
+                : null,
         ]);
 
         $kindLabel = BdKind::label(BdSeriesMetadata::kindFromSeries($series));
@@ -95,20 +100,23 @@ final class BdPrintListService
     /**
      * @param array<string, mixed> $query
      *
-     * @return array{statut: string, sortBy: string, sortDir: string, searchQuery: string}
+     * @return array{statut: string, sortBy: string, sortDir: string, searchQuery: string, possessionFilter: ?string}
      */
     public static function paramsFromQuery(array $query): array
     {
+        $possession = BdRepository::normalizePossessionFilter((string) ($query['possession'] ?? ''));
+
         return [
             'statut' => LibraryStatut::normalize((string) ($query['statut'] ?? LibraryStatut::COLLECTION)),
             'sortBy' => (string) ($query['sort'] ?? 'tome'),
             'sortDir' => (string) ($query['dir'] ?? 'asc'),
             'searchQuery' => trim((string) ($query['q'] ?? '')),
+            'possessionFilter' => $possession !== BdRepository::POSSESSION_ALL ? $possession : null,
         ];
     }
 
     /**
-     * @param array{statut: string, searchQuery: string} $params
+     * @param array{statut: string, searchQuery: string, possessionFilter?: ?string} $params
      */
     public static function filterSummary(array $params): string
     {
@@ -118,6 +126,15 @@ final class BdPrintListService
             $parts[] = 'Mes envies';
         } else {
             $parts[] = 'Collection du foyer';
+        }
+
+        $possession = $params['possessionFilter'] ?? null;
+        if ($possession === BdRepository::FILTER_HORS_SERIE) {
+            $parts[] = 'hors-série uniquement';
+        } elseif ($possession === BdRepository::POSSESSION_OWNED) {
+            $parts[] = 'possédés uniquement';
+        } elseif ($possession === BdRepository::POSSESSION_UNOWNED) {
+            $parts[] = 'non possédés uniquement';
         }
 
         if ($params['searchQuery'] !== '') {

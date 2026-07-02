@@ -33,6 +33,16 @@ final class MagazineRepository
             && CatalogSchema::usesCatalogTables(Database::getInstance());
     }
 
+    /** Titre catalogue d’un numéro (suffixe HS pour éviter les doublons de titre œuvre). */
+    public static function buildCatalogIssueTitle(string $seriesTitre, string $numero, bool $horsSerie = false): string
+    {
+        $seriesTitre = trim($seriesTitre);
+        $numero = trim($numero);
+        $base = $seriesTitre !== '' ? $seriesTitre . ' — n°' . $numero : 'n°' . $numero;
+
+        return $horsSerie ? $base . ' (HS)' : $base;
+    }
+
     public static function seriesLibraryTableExists(): bool
     {
         $stmt = Database::getInstance()->query(
@@ -709,11 +719,16 @@ final class MagazineRepository
 
     /**
      * Numéro catalogue existant pour une série (correspondance sur le libellé numéro).
+     * Un numéro classique et un hors-série peuvent partager le même libellé (ex. « 1 »).
      *
      * @return array<string, mixed>|null
      */
-    public function findCatalogIssueBySeriesNumero(int $seriesId, string $numero): ?array
-    {
+    public function findCatalogIssueBySeriesNumero(
+        int $seriesId,
+        string $numero,
+        ?bool $horsSerie = null,
+        ?int $excludeOeuvreId = null
+    ): ?array {
         if (!self::isAvailable() || $seriesId <= 0) {
             return null;
         }
@@ -723,19 +738,100 @@ final class MagazineRepository
             return null;
         }
 
-        $stmt = $this->db->prepare(
-            'SELECT o.id AS oeuvre_id, o.titre, o.poster_url,
+        $sql = 'SELECT o.id AS oeuvre_id, o.titre, o.poster_url,
                     om.series_id, om.numero, om.numero_ordre, om.date_parution,
                     om.est_hors_serie
              FROM oeuvre_magazine om
              INNER JOIN oeuvres o ON o.id = om.oeuvre_id AND o.media_domain = ?
-             WHERE om.series_id = ? AND LOWER(TRIM(om.numero)) = LOWER(?)
-             LIMIT 1'
-        );
-        $stmt->execute([MediaDomain::MAGAZINE, $seriesId, $numero]);
+             WHERE om.series_id = ? AND LOWER(TRIM(om.numero)) = LOWER(?)';
+        $params = [MediaDomain::MAGAZINE, $seriesId, $numero];
+
+        if ($horsSerie !== null) {
+            $sql .= ' AND om.est_hors_serie = ?';
+            $params[] = $horsSerie ? 1 : 0;
+        }
+        if ($excludeOeuvreId !== null && $excludeOeuvreId > 0) {
+            $sql .= ' AND om.oeuvre_id != ?';
+            $params[] = $excludeOeuvreId;
+        }
+
+        $sql .= ' LIMIT 1';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return $row !== false ? $row : null;
+    }
+
+    /**
+     * @return string|null message d’erreur si le numéro entre en conflit
+     */
+    public function validateNumeroForSeries(
+        int $seriesId,
+        string $numero,
+        bool $horsSerie,
+        ?int $excludeOeuvreId = null
+    ): ?string {
+        if ($this->findCatalogIssueBySeriesNumero($seriesId, $numero, $horsSerie, $excludeOeuvreId) !== null) {
+            return $horsSerie
+                ? 'Un autre hors-série avec ce numéro existe déjà pour cette revue.'
+                : 'Ce numéro existe déjà pour cette série.';
+        }
+
+        return null;
+    }
+
+    /** Décale l’ordre de tri pour les hors-série (ex. 16 → 16.5). */
+    private function adjustNumeroOrdreForHorsSerie(float $numeroOrdre, bool $horsSerie): float
+    {
+        if ($horsSerie && $numeroOrdre > 0 && $numeroOrdre === (float) (int) $numeroOrdre) {
+            return $numeroOrdre + 0.5;
+        }
+
+        if (
+            !$horsSerie
+            && $numeroOrdre > 0
+            && $numeroOrdre === (float) (int) $numeroOrdre + 0.5
+        ) {
+            return (float) (int) $numeroOrdre;
+        }
+
+        return $numeroOrdre;
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @param array<string, mixed> $issue
+     */
+    private function horsSerieFromData(array $data, array $issue): bool
+    {
+        if (!array_key_exists('est_hors_serie', $data)) {
+            return !empty($issue['est_hors_serie']);
+        }
+
+        if (is_bool($data['est_hors_serie'])) {
+            return $data['est_hors_serie'];
+        }
+
+        return FormCheckbox::isChecked(['est_hors_serie' => $data['est_hors_serie']], 'est_hors_serie');
+    }
+
+    /** Évite les collisions sur UNIQUE (titre, réalisateur) lors d’une mise à jour catalogue. */
+    private function validateCatalogIssueTitleUnique(string $titre, int $oeuvreId): ?string
+    {
+        $existing = (new OeuvreRepository())->findByTitreRealisateurAndDomain(
+            $titre,
+            '',
+            MediaDomain::MAGAZINE
+        );
+        if ($existing !== null && (int) ($existing['id'] ?? 0) !== $oeuvreId) {
+            return 'Une autre fiche catalogue utilise déjà le titre « ' . $titre
+                . ' » (œuvre #' . (int) $existing['id']
+                . '). Fusionnez les doublons depuis Maintenance catalogue.';
+        }
+
+        return null;
     }
 
     /**
@@ -760,8 +856,10 @@ final class MagazineRepository
             return 'Le numéro est obligatoire.';
         }
 
-        if ($this->findCatalogIssueBySeriesNumero($seriesId, $numero) !== null) {
-            return 'Ce numéro existe déjà pour cette série.';
+        $horsSerie = !empty($data['est_hors_serie']);
+        $numeroError = $this->validateNumeroForSeries($seriesId, $numero, $horsSerie);
+        if ($numeroError !== null) {
+            return $numeroError;
         }
 
         $numeroOrdre = (float) ($data['numero_ordre'] ?? 0);
@@ -771,13 +869,12 @@ final class MagazineRepository
                 : $this->maxNumeroOrdreForSeries($seriesId) + 1;
         }
 
-        $horsSerie = !empty($data['est_hors_serie']);
         if ($horsSerie && $numeroOrdre === (float) (int) $numeroOrdre) {
             $numeroOrdre += 0.5;
         }
 
         $seriesTitre = trim((string) ($data['series_titre'] ?? $series['titre'] ?? ''));
-        $titre = $seriesTitre !== '' ? $seriesTitre . ' — n°' . $numero : 'n°' . $numero;
+        $titre = self::buildCatalogIssueTitle($seriesTitre, $numero, $horsSerie);
         $dateParution = trim((string) ($data['date_parution'] ?? ''));
         $annee = max(0, (int) ($data['annee'] ?? 0));
         $posterUrl = SecureUrl::sanitizePosterUrl((string) ($data['poster_url'] ?? ''));
@@ -934,9 +1031,12 @@ final class MagazineRepository
             return 'Le numéro est obligatoire.';
         }
 
+        $horsSerie = $this->horsSerieFromData($data, $issue);
+        $wasHorsSerie = !empty($issue['est_hors_serie']);
+
         $series = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE);
         $seriesTitre = trim((string) ($series['titre'] ?? $issue['series_titre'] ?? ''));
-        $titre = $seriesTitre !== '' ? $seriesTitre . ' — n°' . $numero : (string) ($issue['titre'] ?? '');
+        $titre = self::buildCatalogIssueTitle($seriesTitre, $numero, $horsSerie);
 
         $numeroOrdre = (float) ($data['numero_ordre'] ?? $issue['numero_ordre'] ?? 0);
         if ($numeroOrdre <= 0) {
@@ -945,17 +1045,28 @@ final class MagazineRepository
                 : $this->maxNumeroOrdreForSeries($seriesId) + 1;
         }
 
-        $horsSerie = array_key_exists('est_hors_serie', $data)
-            ? !empty($data['est_hors_serie'])
-            : !empty($issue['est_hors_serie']);
-        if ($horsSerie && $numeroOrdre === (float) (int) $numeroOrdre) {
-            $numeroOrdre += 0.5;
+        $numeroError = $this->validateNumeroForSeries($seriesId, $numero, $horsSerie, $oeuvreId);
+        if ($numeroError !== null) {
+            if ($wasHorsSerie && !$horsSerie) {
+                return 'Impossible de retirer le hors-série : un numéro classique « '
+                    . $numero . ' » existe déjà pour cette revue. '
+                    . 'Fusionnez les doublons depuis Maintenance catalogue → Doublons magazines.';
+            }
+
+            return $numeroError;
         }
+
+        $numeroOrdre = $this->adjustNumeroOrdreForHorsSerie($numeroOrdre, $horsSerie);
 
         $dateParution = trim((string) ($data['date_parution'] ?? $issue['date_parution'] ?? ''));
         $sommaire = trim((string) ($data['sommaire'] ?? $issue['sommaire'] ?? ''));
         $pages = max(0, (int) ($data['pages'] ?? $issue['pages'] ?? 0));
         $posterUrl = SecureUrl::sanitizePosterUrl(trim((string) ($data['poster_url'] ?? $issue['poster_url'] ?? '')));
+
+        $titleError = $this->validateCatalogIssueTitleUnique($titre, $oeuvreId);
+        if ($titleError !== null) {
+            return $titleError;
+        }
 
         $this->db->beginTransaction();
         try {
@@ -1019,17 +1130,22 @@ final class MagazineRepository
             return 'Le numéro est obligatoire.';
         }
 
+        $horsSerie = !empty($data['est_hors_serie']);
+        $numeroError = $this->validateNumeroForSeries($seriesId, $numero, $horsSerie);
+        if ($numeroError !== null) {
+            return $numeroError;
+        }
+
         $numeroOrdre = (float) ($data['numero_ordre'] ?? 0);
         if ($numeroOrdre <= 0) {
             $numeroOrdre = is_numeric($numero) ? (float) $numero : $this->maxNumeroOrdreForSeries($seriesId) + 1;
         }
 
-        $horsSerie = !empty($data['est_hors_serie']);
         if ($horsSerie && $numeroOrdre === (float) (int) $numeroOrdre) {
             $numeroOrdre += 0.5;
         }
 
-        $titre = trim((string) ($series['titre'] ?? '')) . ' — n°' . $numero;
+        $titre = self::buildCatalogIssueTitle(trim((string) ($series['titre'] ?? '')), $numero, $horsSerie);
         $dateParution = trim((string) ($data['date_parution'] ?? ''));
         $sommaire = trim((string) ($data['sommaire'] ?? ''));
         $pages = max(0, (int) ($data['pages'] ?? 0));
@@ -1116,25 +1232,43 @@ final class MagazineRepository
             return 'Le numéro est obligatoire.';
         }
 
-        $series = (new SeriesRepository())->findById($seriesId);
-        $seriesTitre = trim((string) ($series['titre'] ?? ''));
-        $titre = $seriesTitre !== '' ? $seriesTitre . ' — n°' . $numero : (string) ($issue['titre'] ?? '');
+        $horsSerie = $this->horsSerieFromData($data, $issue);
+        $wasHorsSerie = !empty($issue['est_hors_serie']);
+
+        $series = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE);
+        $seriesTitre = trim((string) ($series['titre'] ?? $issue['series_titre'] ?? ''));
+        $titre = self::buildCatalogIssueTitle($seriesTitre, $numero, $horsSerie);
 
         $numeroOrdre = (float) ($data['numero_ordre'] ?? $issue['numero_ordre'] ?? 0);
-        $horsSerie = array_key_exists('est_hors_serie', $data)
-            ? !empty($data['est_hors_serie'])
-            : !empty($issue['est_hors_serie']);
+        $numeroError = $this->validateNumeroForSeries($seriesId, $numero, $horsSerie, $oeuvreId);
+        if ($numeroError !== null) {
+            if ($wasHorsSerie && !$horsSerie) {
+                return 'Impossible de retirer le hors-série : un numéro classique « '
+                    . $numero . ' » existe déjà pour cette revue. '
+                    . 'Fusionnez les doublons depuis Maintenance catalogue → Doublons magazines.';
+            }
+
+            return $numeroError;
+        }
+
+        $numeroOrdre = $this->adjustNumeroOrdreForHorsSerie($numeroOrdre, $horsSerie);
+
         $dateParution = trim((string) ($data['date_parution'] ?? $issue['date_parution'] ?? ''));
         $sommaire = trim((string) ($data['sommaire'] ?? $issue['sommaire'] ?? ''));
         $pages = max(0, (int) ($data['pages'] ?? $issue['pages'] ?? 0));
         $posterUrl = trim((string) ($data['poster_url'] ?? $issue['poster_url'] ?? ''));
+
+        $titleError = $this->validateCatalogIssueTitleUnique($titre, $oeuvreId);
+        if ($titleError !== null) {
+            return $titleError;
+        }
 
         $this->db->beginTransaction();
         try {
             (new OeuvreRepository())->update($oeuvreId, [
                 'titre' => $titre,
                 'poster_url' => $posterUrl,
-            ]);
+            ], ['titre', 'poster_url']);
 
             $storedObjectId = null;
             if (array_key_exists('stored_object_id', $data)) {

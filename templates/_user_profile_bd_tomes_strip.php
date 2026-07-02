@@ -23,7 +23,9 @@ $targetUserId = (int) ($targetUserId ?? 0);
             $posterSrc = Moncine\View::posterSrc($poster !== '' ? $poster : null);
             $seriesTitre = (string) ($tome['series_titre'] ?? '');
             $tomeNumero = (int) ($tome['tome_numero'] ?? 0);
-            $tomeLabel = $tomeNumero > 0 ? 'Tome ' . $tomeNumero : trim((string) ($tome['tome_label'] ?? ''));
+            $tomeLabel = trim((string) ($tome['tome_label'] ?? '')) !== ''
+                ? trim((string) ($tome['tome_label'] ?? ''))
+                : Moncine\BdRowMapper::tomeSummary($tome);
             ?>
             <li class="social-poster-strip__item" role="listitem">
                 <?php if ($tomeUrl !== ''): ?>

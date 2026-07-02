@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\CatalogAdmin;
 use Moncine\CatalogListContext;
 use Moncine\Csrf;
+use Moncine\FormCheckbox;
 use Moncine\MagazineRepository;
 use Moncine\View;
 
@@ -41,7 +42,7 @@ $result = (new MagazineRepository())->updateCatalogByOeuvreId($oeuvreId, [
     'numero' => (string) ($_POST['numero'] ?? ''),
     'date_parution' => (string) ($_POST['date_parution'] ?? ''),
     'pages' => (int) ($_POST['pages'] ?? 0),
-    'est_hors_serie' => !empty($_POST['est_hors_serie']),
+    'est_hors_serie' => FormCheckbox::isChecked($_POST, 'est_hors_serie'),
     'sommaire' => (string) ($_POST['sommaire'] ?? ''),
     'poster_url' => (string) ($_POST['poster_url'] ?? ''),
 ]);
@@ -51,5 +52,5 @@ if ($result !== true) {
     exit;
 }
 
-header('Location: ' . $returnUrl . '&saved=1');
+header('Location: ' . $returnUrl . '&saved=1&edit=1');
 exit;

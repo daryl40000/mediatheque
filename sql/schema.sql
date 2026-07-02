@@ -519,7 +519,9 @@ CREATE TABLE IF NOT EXISTS oeuvre_bd (
     series_id INTEGER DEFAULT NULL REFERENCES series(id) ON DELETE SET NULL,
     kind TEXT NOT NULL DEFAULT 'bd',
     tome_numero INTEGER NOT NULL DEFAULT 0,
+    tome_ordre REAL NOT NULL DEFAULT 0,
     tome_label TEXT NOT NULL DEFAULT '',
+    est_hors_serie INTEGER NOT NULL DEFAULT 0,
     scenariste TEXT NOT NULL DEFAULT '',
     dessinateur TEXT NOT NULL DEFAULT '',
     editeur TEXT NOT NULL DEFAULT '',
@@ -527,6 +529,7 @@ CREATE TABLE IF NOT EXISTS oeuvre_bd (
 );
 
 CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_series ON oeuvre_bd(series_id);
+CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_series_ordre ON oeuvre_bd(series_id, tome_ordre);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_kind ON oeuvre_bd(kind);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_scenariste ON oeuvre_bd(scenariste COLLATE NOCASE);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_dessinateur ON oeuvre_bd(dessinateur COLLATE NOCASE);

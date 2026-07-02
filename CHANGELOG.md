@@ -19,6 +19,35 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+---
+
+## [0.7.4] — 2026-06-16
+
+**Magazines : hors-série, doublons et fiche catalogue — BD tome 0 — maintenance catalogue — refactor jeux/films**
+
+### Ajouté
+
+- **Magazines — doublons catalogue** : section **Doublons magazines (série + numéro)** sur `/maintenance-catalogue.php` (`CatalogMaintenance::findDuplicateMagazineIssueGroups()`).
+- **Maintenance catalogue** : liste détaillée des fiches en doublon avec lien **Ouvrir la fiche** (`_catalog_maintenance_duplicate_oeuvres.php`, `oeuvreSummariesForIds()`).
+- **BD — tome 0** : saisie et tri du tome 0 (préquel, hors chronologie) ; migration `056_oeuvre_bd_hors_serie.sql` ; doc [doc/bd.md](doc/bd.md).
+- **Films** : actions groupées extraites vers `FilmBulkActionService` ; `ValidationException`.
+- **Jeux** : début du découpage de `GameRepository` (`GameFormPayload`, `GameCatalogSql`, `GameCatalogWriter`, `GameLibraryFields`).
+- **Formulaires** : `FormCheckbox` pour une lecture fiable des cases à cocher POST.
+- **Tests** : magazines (HS partagé, bascule catalogue, mise à jour partielle), maintenance doublons magazines, `FormCheckboxTest`, `GameFormPayloadTest`, `FilmBulkActionServiceTest`.
+
+### Corrigé
+
+- **Fiche catalogue magazine** : champ couverture en `type="text"` — les chemins `/posters/…` ne sont plus rejetés par le navigateur.
+- **Magazines — hors-série** : enregistrement à la modification (catalogue et collection) ; correction de l’ordre `$horsSerie` dans `updateCatalogByOeuvreId` ; message explicite si le retrait du HS entre en conflit avec un numéro classique existant.
+- **Magazines — HS vs doublons** : un classique et un hors-série peuvent partager le même libellé de numéro (`findCatalogIssueBySeriesNumero` filtre `est_hors_serie`).
+- **Magazines — mise à jour** : `updateIssue` ne réécrit plus toute la ligne œuvre (évite l’erreur SQL sur `saga`).
+- **Import admin** : balise `<?php endif; ?>` manquante sur `/import.php` (page blanche).
+- **BD** : badge et filtre hors-série sur les grilles et pages partage/profil.
+
+### Modifié
+
+- **Documentation** : [doc/magazines.md](doc/magazines.md), [doc/bd.md](doc/bd.md).
+
 ## [0.7.3] — 2026-06-16
 
 **BD / Manga : couverture par URL et correction possession à l’ajout**

@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
+use Moncine\FormCheckbox;
 use Moncine\MediaDomainGuards;
 use Moncine\PosterStorage;
 use Moncine\UploadLimits;
@@ -143,7 +144,7 @@ $data = [
     'date_parution' => (string) ($_POST['date_parution'] ?? $issue['date_parution'] ?? ''),
     'sommaire' => (string) ($_POST['sommaire'] ?? $issue['sommaire'] ?? ''),
     'pages' => (int) ($_POST['pages'] ?? $issue['pages'] ?? 0),
-    'est_hors_serie' => isset($_POST['est_hors_serie']) ? !empty($_POST['est_hors_serie']) : !empty($issue['est_hors_serie']),
+    'est_hors_serie' => FormCheckbox::isChecked($_POST, 'est_hors_serie'),
     'support_papier' => isset($_POST['support_papier']),
 ];
 

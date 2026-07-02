@@ -7,6 +7,8 @@
 /** @var string $searchQuery */
 /** @var string $viewMode */
 /** @var int $totalCount */
+/** @var int $totalAllTomes */
+/** @var string $possessionFilter */
 /** @var int $suggestTomeNumero */
 /** @var string $kindLabel */
 /** @var int $possessedCount */
@@ -22,11 +24,16 @@
         $seriesId = (int) ($series['id'] ?? 0);
         $posterSrc = Moncine\View::posterSrc(trim((string) ($series['poster_url'] ?? '')) ?: null);
         $isWishlist = $statut === Moncine\LibraryStatut::WISHLIST;
+        $possessionFilter = Moncine\BdRepository::normalizePossessionFilter($possessionFilter ?? '');
+        $hasSearch = trim($searchQuery) !== '';
         $viewMode = Moncine\CollectionViewMode::normalizeBdSeries($viewMode ?? '');
         $isGridView = Moncine\CollectionViewMode::isGrid($viewMode);
         $seriesQuery = array_filter([
             'statut' => $statut,
-            'q' => trim($searchQuery) !== '' ? $searchQuery : null,
+            'q' => $hasSearch ? $searchQuery : null,
+            'possession' => (!$isWishlist && $possessionFilter !== Moncine\BdRepository::POSSESSION_ALL)
+                ? $possessionFilter
+                : null,
         ]);
         $seriesViewUrl = static function (string $mode) use ($seriesId, $sortBy, $sortDir, $seriesQuery): string {
             return Moncine\View::bdSeriesUrl($seriesId, $sortBy, $sortDir, $seriesQuery, $mode);
@@ -95,11 +102,64 @@
             <button type="submit" class="btn btn-secondary btn-sm">Rechercher</button>
         </form>
 
+        <?php if (!$isWishlist && ($totalAllTomes ?? $totalCount) > 0): ?>
+            <?php
+            $possessionBaseQuery = ['statut' => $statut];
+            if ($hasSearch) {
+                $possessionBaseQuery['q'] = $searchQuery;
+            }
+            $possessionLink = static function (string $filter) use ($seriesId, $sortBy, $sortDir, $possessionBaseQuery, $viewMode): string {
+                $params = $possessionBaseQuery;
+                if ($filter !== Moncine\BdRepository::POSSESSION_ALL) {
+                    $params['possession'] = $filter;
+                }
+
+                return Moncine\View::bdSeriesUrl($seriesId, $sortBy, $sortDir, $params, $viewMode);
+            };
+            ?>
+            <nav class="magazine-possession-filter" aria-label="Filtrer les tomes affichés">
+                <span class="magazine-possession-filter__label">Afficher :</span>
+                <a href="<?= Moncine\View::escape($possessionLink(Moncine\BdRepository::POSSESSION_ALL)) ?>"
+                   class="btn btn-secondary btn-sm<?= $possessionFilter === Moncine\BdRepository::POSSESSION_ALL ? ' is-active' : '' ?>">Tous</a>
+                <a href="<?= Moncine\View::escape($possessionLink(Moncine\BdRepository::POSSESSION_OWNED)) ?>"
+                   class="btn btn-secondary btn-sm<?= $possessionFilter === Moncine\BdRepository::POSSESSION_OWNED ? ' is-active' : '' ?>">Possédés</a>
+                <a href="<?= Moncine\View::escape($possessionLink(Moncine\BdRepository::POSSESSION_UNOWNED)) ?>"
+                   class="btn btn-secondary btn-sm<?= $possessionFilter === Moncine\BdRepository::POSSESSION_UNOWNED ? ' is-active' : '' ?>">Non possédés</a>
+                <a href="<?= Moncine\View::escape($possessionLink(Moncine\BdRepository::FILTER_HORS_SERIE)) ?>"
+                   class="btn btn-secondary btn-sm<?= $possessionFilter === Moncine\BdRepository::FILTER_HORS_SERIE ? ' is-active' : '' ?>">Hors-série</a>
+            </nav>
+        <?php endif; ?>
+
         <?php if ($totalCount === 0): ?>
-            <p class="hint">Aucun tome pour l’instant. <a href="<?= Moncine\View::escape(Moncine\View::bdAddTomeUrl($seriesId, $statut)) ?>">Ajouter le premier tome</a>.</p>
+            <p class="hint">
+                <?php if ($hasSearch): ?>
+                    Aucun tome ne correspond à votre recherche.
+                <?php elseif ($possessionFilter === Moncine\BdRepository::FILTER_HORS_SERIE): ?>
+                    Aucun tome hors-série dans cette série.
+                <?php elseif ($possessionFilter !== Moncine\BdRepository::POSSESSION_ALL): ?>
+                    Aucun tome avec ce filtre.
+                <?php else: ?>
+                    Aucun tome pour l’instant. <a href="<?= Moncine\View::escape(Moncine\View::bdAddTomeUrl($seriesId, $statut)) ?>">Ajouter le premier tome</a>.
+                <?php endif; ?>
+            </p>
         <?php else: ?>
             <p class="hint">
-                <?= (int) $totalCount ?> tome<?= $totalCount > 1 ? 's' : '' ?>.
+                <?php if ($hasSearch): ?>
+                    <?= (int) $totalCount ?> tome<?= $totalCount > 1 ? 's' : '' ?> trouvé<?= $totalCount > 1 ? 's' : '' ?>
+                    sur <?= (int) ($totalAllTomes ?? $totalCount) ?>.
+                <?php elseif ($possessionFilter !== Moncine\BdRepository::POSSESSION_ALL): ?>
+                    <?= (int) $totalCount ?> tome<?= $totalCount > 1 ? 's' : '' ?>
+                    <?php if ($possessionFilter === Moncine\BdRepository::FILTER_HORS_SERIE): ?>
+                        hors-série
+                    <?php elseif ($possessionFilter === Moncine\BdRepository::POSSESSION_UNOWNED): ?>
+                        non possédé<?= $totalCount > 1 ? 's' : '' ?>
+                    <?php else: ?>
+                        possédé<?= $totalCount > 1 ? 's' : '' ?>
+                    <?php endif; ?>
+                    sur <?= (int) ($totalAllTomes ?? $totalCount) ?> au total.
+                <?php else: ?>
+                    <?= (int) $totalCount ?> tome<?= $totalCount > 1 ? 's' : '' ?>.
+                <?php endif; ?>
                 <?php if ($isGridView): ?>
                     Cliquez sur une vignette pour ouvrir la fiche.
                 <?php else: ?>
@@ -145,7 +205,12 @@
                                 $rowClass = (!$isWishlist && !$isPossessed) ? ' films-table__row--unowned' : '';
                                 ?>
                                 <tr class="<?= trim($rowClass) ?>">
-                                    <td><?= Moncine\View::escape((string) ($tome['tome_summary'] ?? '')) ?: '—' ?></td>
+                                    <td>
+                                        <?php if (!empty($tome['est_hors_serie'])): ?>
+                                            <span class="badge">HS</span>
+                                        <?php endif; ?>
+                                        <?= Moncine\View::escape((string) ($tome['tome_summary'] ?? '')) ?: '—' ?>
+                                    </td>
                                     <td>
                                         <a href="<?= Moncine\View::escape(Moncine\View::bdUrl($bibId)) ?>">
                                             <?= Moncine\View::escape((string) ($tome['display_titre'] ?? '')) ?>

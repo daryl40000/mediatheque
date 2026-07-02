@@ -8,12 +8,21 @@
  * @var array<string, mixed>|null $album
  * @var int $prefillOeuvreId
  * @var int $suggestTomeNumero
+ * @var float $suggestTomeOrdre
  * @var bool $showPossessionHint
  */
 $album = is_array($album ?? null) ? $album : null;
 $prefillOeuvreId = (int) ($prefillOeuvreId ?? ($album['oeuvre_id'] ?? 0));
 $seriesId = (int) ($series['id'] ?? 0);
 $suggestTomeNumero = (int) ($suggestTomeNumero ?? 1);
+$suggestTomeOrdre = (float) ($suggestTomeOrdre ?? $suggestTomeNumero);
+$prefillOrdre = $album !== null
+    ? (float) ($album['tome_ordre'] ?? 0)
+    : $suggestTomeOrdre;
+if ($prefillOrdre <= 0) {
+    $prefillOrdre = $suggestTomeOrdre > 0 ? $suggestTomeOrdre : (float) $suggestTomeNumero;
+}
+$prefillHorsSerie = !empty($album['est_hors_serie']);
 $isPossessed = $album !== null && !empty($album['is_possessed']);
 $showPossessionHint = ($showPossessionHint ?? true) === true;
 ?>
@@ -21,10 +30,22 @@ $showPossessionHint = ($showPossessionHint ?? true) === true;
 <input type="hidden" name="oeuvre_id" id="bd_oeuvre_id" value="<?= $prefillOeuvreId > 0 ? $prefillOeuvreId : '' ?>">
 
 <label for="bd_tome_numero">Numéro de tome <span class="required">*</span></label>
-<input type="number" name="tome_numero" id="bd_tome_numero" min="1" step="1" required
-       value="<?= (int) ($album['tome_numero'] ?? 0) > 0
-           ? (int) $album['tome_numero']
+<input type="number" name="tome_numero" id="bd_tome_numero" min="0" step="1" required
+       value="<?= $album !== null
+           ? (int) ($album['tome_numero'] ?? 0)
            : $suggestTomeNumero ?>">
+<p class="hint">Utilisez <strong>0</strong> pour un tome 0 (préquel, hors chronologie). Pour un album sans numéro, laissez un libellé alternatif ci-dessous.</p>
+
+<label for="bd_tome_ordre">Ordre de tri</label>
+<input type="number" step="0.1" name="tome_ordre" id="bd_tome_ordre"
+       value="<?= Moncine\View::escape((string) $prefillOrdre) ?>">
+<p class="hint">Utilisé pour trier les tomes (1, 2, 3… ; hors-série : 38.5 entre 38 et 39).</p>
+
+<label class="checkbox">
+    <input type="checkbox" name="est_hors_serie" id="bd_est_hors_serie" value="1"
+        <?= $prefillHorsSerie ? ' checked' : '' ?>>
+    Hors-série / album spécial (film, intégrale…)
+</label>
 
 <label for="bd_tome_label">Libellé alternatif (optionnel)</label>
 <input type="text" name="tome_label" id="bd_tome_label"

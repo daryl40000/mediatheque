@@ -29,6 +29,7 @@ if ($series === null) {
 
 $repo = new BdRepository();
 $suggestTome = BdRepository::suggestNextTomeNumero($repo->maxTomeNumeroForSeries($seriesId));
+$suggestOrdre = BdRepository::suggestNextTomeOrdre($repo->maxTomeOrdreForSeries($seriesId));
 
 $prefillAlbum = null;
 $prefillOeuvreId = max(0, (int) ($_GET['oeuvre_id'] ?? 0));
@@ -44,6 +45,7 @@ View::render('ajouter-tome-bd', [
     'series' => $series,
     'statut' => $statut,
     'suggestTomeNumero' => $suggestTome,
+    'suggestTomeOrdre' => $suggestOrdre,
     'kindLabel' => BdSeriesMetadata::kindLabelFromSeries($series),
     'supportChoices' => \Moncine\BdPhysicalSupport::choices(),
     'knownGenres' => BdRepository::isAvailable() ? $repo->listKnownGenres() : [],

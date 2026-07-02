@@ -14,7 +14,7 @@
         $tomeNumero = (int) ($tome['tome_numero'] ?? 0);
         $tomeLabel = trim((string) ($tome['tome_label'] ?? ''));
         $albumTitle = trim((string) ($tome['titre'] ?? ''));
-        $numeroLabel = $tomeNumero > 0 ? (string) $tomeNumero : $tomeLabel;
+        $numeroLabel = Moncine\BdRowMapper::tomeNumeroLabel($tomeNumero, $tomeLabel);
         $isPossessed = !empty($tome['is_possessed']);
         $cardClass = 'magazine-issue-card';
         if (!$isWishlist && !$isPossessed) {
@@ -31,7 +31,12 @@
             </a>
             <div class="magazine-issue-card__body">
                 <?php if ($numeroLabel !== ''): ?>
-                    <h2 class="magazine-issue-card__title"><?= Moncine\View::escape($numeroLabel) ?></h2>
+                    <h2 class="magazine-issue-card__title">
+                        <?php if (!empty($tome['est_hors_serie'])): ?>
+                            <span class="badge">HS</span>
+                        <?php endif; ?>
+                        <?= Moncine\View::escape($numeroLabel) ?>
+                    </h2>
                 <?php endif; ?>
                 <?php if ($albumTitle !== ''): ?>
                     <p class="magazine-issue-card__meta hint"><?= Moncine\View::escape($albumTitle) ?></p>

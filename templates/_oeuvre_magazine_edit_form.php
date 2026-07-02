@@ -50,14 +50,18 @@ $catalogPage = (int) ($catalogPage ?? 1);
                value="<?= (int) ($issue['pages'] ?? 0) > 0 ? (int) $issue['pages'] : '' ?>">
 
         <label class="checkbox-inline">
-            <input type="checkbox" name="est_hors_serie" value="1"<?= !empty($issue['est_hors_serie']) ? ' checked' : '' ?>>
+            <input type="checkbox" name="est_hors_serie" id="oeuvre_mag_est_hors_serie" value="1"<?= !empty($issue['est_hors_serie']) ? ' checked' : '' ?>>
             Numéro hors-série
         </label>
 
-        <label for="oeuvre_mag_poster">Couverture (URL HTTPS)</label>
-        <input type="url" name="poster_url" id="oeuvre_mag_poster" maxlength="500"
-               placeholder="https://…"
+        <label for="oeuvre_mag_poster">Couverture (URL ou chemin local)</label>
+        <input type="text" name="poster_url" id="oeuvre_mag_poster" maxlength="500"
+               placeholder="https://… ou /posters/123.jpg"
                value="<?= Moncine\View::escape((string) ($issue['poster_url'] ?? '')) ?>">
+        <p class="hint">
+            Chemin local <code>/posters/…</code> ou URL <strong>HTTPS</strong> ;
+            vous pouvez aussi envoyer un fichier via la section « Couverture » ci-dessous.
+        </p>
 
         <label for="oeuvre_mag_sommaire">Sommaire</label>
         <textarea name="sommaire" id="oeuvre_mag_sommaire" rows="5"><?= Moncine\View::escape((string) ($issue['sommaire'] ?? '')) ?></textarea>

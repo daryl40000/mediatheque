@@ -297,4 +297,97 @@ final class BdRepositoryTest extends MoncineTestCase
         $this->assertSame(1, (int) $seriesList[0]['tome_count']);
         $this->assertSame(2, (int) $seriesList[0]['catalog_tome_count']);
     }
+
+    public function testHorsSerieTomeUsesDecimalOrdreAndFilter(): void
+    {
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new BdRepository();
+        $seriesId = $this->createTestSeries('Hors-série Test');
+
+        $repo->registerSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId);
+
+        $standardId = $repo->createTomeWithLibrary($seriesId, [
+            'tome_numero' => 38,
+            'tome_ordre' => 38,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($standardId);
+
+        $hsId = $repo->createTomeWithLibrary($seriesId, [
+            'titre' => 'Astérix et Obélix : Mission Cléopâtre',
+            'tome_numero' => 38,
+            'tome_ordre' => 38,
+            'est_hors_serie' => true,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($hsId);
+
+        $hsTome = $repo->findByBibId($hsId, $userId, $foyerId);
+        $this->assertNotNull($hsTome);
+        $this->assertTrue($hsTome['est_hors_serie']);
+        $this->assertSame(38.5, (float) ($hsTome['tome_ordre'] ?? 0));
+
+        $ordered = $repo->listTomesForSeries($seriesId, $userId, $foyerId, LibraryStatut::COLLECTION);
+        $this->assertCount(2, $ordered);
+        $this->assertSame($standardId, (int) $ordered[0]['id']);
+        $this->assertSame($hsId, (int) $ordered[1]['id']);
+
+        $hsOnly = $repo->listTomesForSeries(
+            $seriesId,
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'tome',
+            'asc',
+            '',
+            BdRepository::FILTER_HORS_SERIE
+        );
+        $this->assertCount(1, $hsOnly);
+        $this->assertSame($hsId, (int) $hsOnly[0]['id']);
+        $this->assertStringContainsString('Mission Cléopâtre', (string) $hsOnly[0]['titre']);
+    }
+
+    public function testResolveTomeOrdreAddsHalfForHorsSerie(): void
+    {
+        $ordre = BdRepository::resolveTomeOrdre([
+            'tome_numero' => 5,
+            'tome_ordre' => 5,
+            'est_hors_serie' => true,
+        ], 1);
+
+        $this->assertSame(5.5, $ordre);
+    }
+
+    public function testCreateTomeZeroSortsBeforeTomeOne(): void
+    {
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new BdRepository();
+        $seriesId = $this->createTestSeries('Tome zéro Test');
+
+        $repo->registerSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId);
+
+        $tome1Id = $repo->createTomeWithLibrary($seriesId, [
+            'tome_numero' => 1,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($tome1Id);
+
+        $tome0Id = $repo->createTomeWithLibrary($seriesId, [
+            'tome_numero' => 0,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($tome0Id);
+
+        $tome0 = $repo->findByBibId($tome0Id, $userId, $foyerId);
+        $this->assertNotNull($tome0);
+        $this->assertSame(0, (int) ($tome0['tome_numero'] ?? -1));
+        $this->assertSame(0.0, (float) ($tome0['tome_ordre'] ?? -1));
+        $this->assertStringContainsString('Tome 0', (string) ($tome0['display_titre'] ?? ''));
+
+        $ordered = $repo->listTomesForSeries($seriesId, $userId, $foyerId, LibraryStatut::COLLECTION);
+        $this->assertCount(2, $ordered);
+        $this->assertSame($tome0Id, (int) $ordered[0]['id']);
+        $this->assertSame($tome1Id, (int) $ordered[1]['id']);
+
+        $duplicateError = $repo->validateTomeNumeroForSeries($seriesId, 0, false);
+        $this->assertSame('Un autre tome avec ce numéro existe déjà pour cette série.', $duplicateError);
+    }
 }

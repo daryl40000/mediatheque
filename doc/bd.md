@@ -57,6 +57,17 @@ L’ancien lien `/ajouter-bd.php` redirige vers la création de série ou l’aj
 
 Le fichier uploadé est prioritaire si les deux sont fournis.
 
+## Numérotation et hors-série
+
+Comme pour les **magazines**, deux champs distincts :
+
+- **Numéro de tome** (`tome_numero`) — numéro affiché (0, 1, 2, 38…). Le **tome 0** est accepté (préquel, hors chronologie). Pour un album **sans numéro**, utilisez plutôt un **libellé alternatif** (intégrale, HS…).
+- **Ordre de tri** (`tome_ordre`) — nombre décimal pour classer la liste (ex. `38`, `38.5`, `38.1`).
+
+**Hors-série** : case à cocher + badge **HS** sur les cartes. À la **création**, si l’ordre est un entier (ex. `38`) et la case est cochée, l’ordre devient **38.5** (entre 38 et 39). Utile pour les albums dérivés (films Astérix, intégrales, etc.).
+
+Sur la fiche série (`/serie-bd.php`), filtre **Afficher : Hors-série** (collection uniquement).
+
 ## Limites v0.8.x
 
 - Pas d’import CSV ni d’API externe.

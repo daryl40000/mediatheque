@@ -29,14 +29,11 @@ final class BdRowMapper
         if ($series === '') {
             return 'Sans titre';
         }
-        if ($tomeNum > 0) {
-            return $series . ' — Tome ' . $tomeNum;
-        }
         if ($tomeLabel !== '') {
             return $series . ' — ' . $tomeLabel;
         }
 
-        return $series;
+        return $series . ' — Tome ' . $tomeNum;
     }
 
     /** Libellé pour autocomplétion (ex. « Astérix — Tome 1 (1961) »). */
@@ -88,14 +85,24 @@ final class BdRowMapper
     {
         $tomeNum = (int) ($row['tome_numero'] ?? 0);
         $tomeLabel = trim((string) ($row['tome_label'] ?? ''));
-        if ($tomeNum > 0) {
-            return 'Tome ' . $tomeNum;
-        }
         if ($tomeLabel !== '') {
             return $tomeLabel;
         }
 
-        return '';
+        $summary = 'Tome ' . $tomeNum;
+        if (!empty($row['est_hors_serie'])) {
+            return $summary . ' (HS)';
+        }
+
+        return $summary;
+    }
+
+    /** Libellé court pour listes (numéro ou libellé alternatif). */
+    public static function tomeNumeroLabel(int $tomeNumero, string $tomeLabel = ''): string
+    {
+        $tomeLabel = trim($tomeLabel);
+
+        return $tomeLabel !== '' ? $tomeLabel : (string) $tomeNumero;
     }
 
     /**
@@ -136,6 +143,8 @@ final class BdRowMapper
         $row['annee'] = (int) ($row['annee'] ?? 0);
         $row['series_id'] = (int) ($row['series_id'] ?? 0);
         $row['tome_numero'] = (int) ($row['tome_numero'] ?? 0);
+        $row['tome_ordre'] = (float) ($row['tome_ordre'] ?? 0);
+        $row['est_hors_serie'] = (int) ($row['est_hors_serie'] ?? 0) === 1;
         $row['kind'] = BdKind::normalize((string) ($row['kind'] ?? BdKind::BD));
         $row['kind_label'] = BdKind::label($row['kind']);
         $row['display_titre'] = self::displayTitle($row);

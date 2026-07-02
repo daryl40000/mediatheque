@@ -1962,6 +1962,15 @@ textarea {
     padding-left: 1.25rem;
 }
 
+.catalog-maintenance-duplicate__item {
+    margin-bottom: 0.5rem;
+}
+
+.catalog-maintenance-duplicate__synopsis {
+    display: inline-block;
+    max-width: 42rem;
+}
+
 .collection-toolbar {
     margin: 0 0 1rem;
     padding: 0.85rem 1rem;

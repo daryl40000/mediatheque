@@ -191,7 +191,7 @@
                     <?php endif; ?>
                 </fieldset>
                 <label class="checkbox">
-                    <input type="checkbox" name="est_hors_serie" value="1"<?= !empty($issue['est_hors_serie']) ? ' checked' : '' ?>>
+                    <input type="checkbox" name="est_hors_serie" id="edit_est_hors_serie" value="1"<?= !empty($issue['est_hors_serie']) ? ' checked' : '' ?>>
                     Hors-série
                 </label>
 

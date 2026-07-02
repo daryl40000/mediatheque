@@ -26,6 +26,7 @@ $sortDir = (string) ($_GET['dir'] ?? 'asc');
 $statut = LibraryStatut::normalize((string) ($_GET['statut'] ?? LibraryStatut::COLLECTION));
 $searchQuery = trim((string) ($_GET['q'] ?? ''));
 $viewMode = CollectionViewMode::normalizeBdSeries((string) ($_GET['view'] ?? ''));
+$possessionFilter = BdRepository::normalizePossessionFilter((string) ($_GET['possession'] ?? ''));
 
 $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
@@ -41,7 +42,9 @@ if ($series === null) {
         'sortDir' => $sortDir,
         'searchQuery' => '',
         'viewMode' => '',
+        'possessionFilter' => BdRepository::POSSESSION_ALL,
         'totalCount' => 0,
+        'totalAllTomes' => 0,
         'possessedCount' => 0,
         'catalogTomeCount' => 0,
         'suggestTomeNumero' => 1,
@@ -57,8 +60,21 @@ if (BdRepository::isAvailable()) {
 }
 
 $tomes = BdRepository::isAvailable()
-    ? $repo->listTomesForSeries($seriesId, $userId, $foyerId, $statut, $sortBy, $sortDir, $searchQuery)
+    ? $repo->listTomesForSeries(
+        $seriesId,
+        $userId,
+        $foyerId,
+        $statut,
+        $sortBy,
+        $sortDir,
+        $searchQuery,
+        $possessionFilter !== BdRepository::POSSESSION_ALL ? $possessionFilter : null
+    )
     : [];
+
+$totalAllTomes = BdRepository::isAvailable()
+    ? $repo->countTomesForSeries($seriesId, $userId, $foyerId, $statut, $searchQuery)
+    : 0;
 
 View::render('serie-bd', [
     'pageTitle' => (string) ($series['titre'] ?? 'Série'),
@@ -69,7 +85,9 @@ View::render('serie-bd', [
     'sortDir' => $sortDir,
     'searchQuery' => $searchQuery,
     'viewMode' => $viewMode,
+    'possessionFilter' => $possessionFilter,
     'totalCount' => count($tomes),
+    'totalAllTomes' => $totalAllTomes,
     'possessedCount' => BdRepository::isAvailable()
         ? $repo->countPossessedTomesForSeries($seriesId, $userId, $foyerId, $statut)
         : 0,
@@ -77,6 +95,7 @@ View::render('serie-bd', [
         ? $repo->countCatalogTomesForSeries($seriesId)
         : 0,
     'suggestTomeNumero' => BdRepository::suggestNextTomeNumero($repo->maxTomeNumeroForSeries($seriesId)),
+    'suggestTomeOrdre' => BdRepository::suggestNextTomeOrdre($repo->maxTomeOrdreForSeries($seriesId)),
     'kindLabel' => BdSeriesMetadata::kindLabelFromSeries($series),
     'seriesInLibrary' => BdRepository::isAvailable()
         && $repo->isSeriesInLibrary($seriesId, $statut, $userId, $foyerId),

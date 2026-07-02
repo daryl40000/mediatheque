@@ -34,7 +34,7 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
         $h1Title = $albumTitle !== '' ? $albumTitle : (string) ($album['display_titre'] ?? 'Album');
         $tomeNumero = (int) ($album['tome_numero'] ?? 0);
         $tomeLabel = trim((string) ($album['tome_label'] ?? ''));
-        $numeroLabel = $tomeNumero > 0 ? (string) $tomeNumero : $tomeLabel;
+        $numeroLabel = Moncine\BdRowMapper::tomeNumeroLabel($tomeNumero, $tomeLabel);
         $isPossessed = !empty($album['is_possessed']);
         ?>
 
@@ -85,7 +85,11 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
                             <?= Moncine\View::escape($seriesTitre) ?>
                         <?php endif; ?>
                         <?php if ($numeroLabel !== ''): ?>
-                            <?= $seriesTitre !== '' ? ' · ' : '' ?>Tome <?= Moncine\View::escape($numeroLabel) ?>
+                            <?= $seriesTitre !== '' ? ' · ' : '' ?>
+                            <?php if (!empty($album['est_hors_serie'])): ?>
+                                <span class="badge">HS</span>
+                            <?php endif; ?>
+                            Tome <?= Moncine\View::escape($numeroLabel) ?>
                         <?php endif; ?>
                         <?php if ((string) ($album['kind_label'] ?? '') !== ''): ?>
                             · <?= Moncine\View::escape((string) $album['kind_label']) ?>

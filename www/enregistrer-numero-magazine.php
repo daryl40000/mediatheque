@@ -51,7 +51,8 @@ if ($oeuvreIdFromCatalog > 0) {
     $result = $repo->addFromCatalogOeuvre($oeuvreIdFromCatalog, $statut, $userId, $foyerId);
 } else {
     $numero = trim((string) ($_POST['numero'] ?? ''));
-    if ($numero !== '' && $repo->findCatalogIssueBySeriesNumero($seriesId, $numero) !== null) {
+    $horsSerie = isset($_POST['est_hors_serie']);
+    if ($numero !== '' && $repo->findCatalogIssueBySeriesNumero($seriesId, $numero, $horsSerie) !== null) {
         header('Location: ' . $returnUrl . '&error=' . rawurlencode(
             'Ce numéro existe déjà au catalogue — sélectionnez-le dans la liste de suggestions.'
         ));

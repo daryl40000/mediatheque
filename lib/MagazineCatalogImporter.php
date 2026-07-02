@@ -170,7 +170,8 @@ final class MagazineCatalogImporter
                 }
 
                 $coverUrl = self::normalizePosterUrl((string) ($issue['cover_url'] ?? ''));
-                $existing = $magRepo->findCatalogIssueBySeriesNumero($seriesId, $numero);
+                $horsSerie = !empty($issue['hors_serie']);
+                $existing = $magRepo->findCatalogIssueBySeriesNumero($seriesId, $numero, $horsSerie);
 
                 if ($existing !== null && $skipExisting) {
                     $result['issues_skipped']++;
@@ -522,7 +523,8 @@ final class MagazineCatalogImporter
                     continue;
                 }
 
-                $existing = $magRepo->findCatalogIssueBySeriesNumero($seriesId, $numero);
+                $horsSerie = !empty($issue['hors_serie']);
+                $existing = $magRepo->findCatalogIssueBySeriesNumero($seriesId, $numero, $horsSerie);
                 if ($existing === null || $this->issueNeedsCoverDownload($existing, $coverUrl)) {
                     $pending++;
                 }

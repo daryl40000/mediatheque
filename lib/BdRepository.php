@@ -11,12 +11,17 @@ use PDO;
 
 final class BdRepository
 {
+    public const POSSESSION_ALL = 'all';
+    public const POSSESSION_OWNED = 'owned';
+    public const POSSESSION_UNOWNED = 'unowned';
+    public const FILTER_HORS_SERIE = 'hors_serie';
+
     /** Colonnes triables sur les listes BD. */
     private const SORT_COLUMNS = [
         'titre' => 'o.titre COLLATE FRENCH_NOCASE',
         'annee' => 'o.annee',
         'series' => 's.titre COLLATE FRENCH_NOCASE',
-        'tome' => 'ob.tome_numero',
+        'tome' => 'ob.tome_ordre',
         'scenariste' => 'ob.scenariste COLLATE FRENCH_NOCASE',
         'dessinateur' => 'ob.dessinateur COLLATE FRENCH_NOCASE',
         'editeur' => 'ob.editeur COLLATE FRENCH_NOCASE',
@@ -47,6 +52,55 @@ final class BdRepository
     public static function isValidSortColumn(string $sortBy): bool
     {
         return in_array($sortBy, self::sortableColumns(), true);
+    }
+
+    public static function normalizePossessionFilter(string $raw): string
+    {
+        $raw = strtolower(trim($raw));
+
+        return match ($raw) {
+            self::POSSESSION_OWNED, 'possede', 'possédé', 'owned' => self::POSSESSION_OWNED,
+            self::POSSESSION_UNOWNED, 'non_possede', 'non-possede', 'unowned' => self::POSSESSION_UNOWNED,
+            self::FILTER_HORS_SERIE, 'hors-serie', 'hors_série', 'special' => self::FILTER_HORS_SERIE,
+            default => self::POSSESSION_ALL,
+        };
+    }
+
+    /**
+     * Calcule l’ordre de tri (décimal si hors-série, ex. 38.5 entre 38 et 39).
+     *
+     * @param array<string, mixed> $data
+     */
+    public static function resolveTomeOrdre(array $data, int $seriesId, float $fallbackOrdre = 0): float
+    {
+        $tomeOrdre = (float) ($data['tome_ordre'] ?? 0);
+        $tomeNum = max(0, (int) ($data['tome_numero'] ?? 0));
+        $tomeLabel = trim((string) ($data['tome_label'] ?? ''));
+        $horsSerie = !empty($data['est_hors_serie']);
+        $isExplicitTomeZero = $tomeNum === 0 && $tomeLabel === '';
+
+        if ($isExplicitTomeZero) {
+            if ($tomeOrdre <= 0) {
+                $tomeOrdre = 0.0;
+            }
+            if ($horsSerie && $tomeOrdre === (float) (int) $tomeOrdre) {
+                $tomeOrdre += 0.5;
+            }
+
+            return $tomeOrdre;
+        }
+
+        if ($tomeOrdre <= 0) {
+            $tomeOrdre = $tomeNum > 0 ? (float) $tomeNum : $fallbackOrdre;
+        }
+        if ($tomeOrdre <= 0 && $seriesId > 0) {
+            $tomeOrdre = (new self())->maxTomeOrdreForSeries($seriesId) + 1.0;
+        }
+        if ($horsSerie && $tomeOrdre === (float) (int) $tomeOrdre) {
+            $tomeOrdre += 0.5;
+        }
+
+        return $tomeOrdre;
     }
 
     private static function sortOrderExpression(string $sortBy): string
@@ -298,9 +352,76 @@ final class BdRepository
         return (int) $stmt->fetchColumn();
     }
 
+    public function maxTomeOrdreForSeries(int $seriesId): float
+    {
+        if ($seriesId <= 0) {
+            return 0.0;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT MAX(tome_ordre) FROM oeuvre_bd WHERE series_id = ?'
+        );
+        $stmt->execute([$seriesId]);
+
+        return (float) $stmt->fetchColumn();
+    }
+
     public static function suggestNextTomeNumero(int $lastTome): int
     {
         return $lastTome > 0 ? $lastTome + 1 : 1;
+    }
+
+    public static function suggestNextTomeOrdre(float $lastOrdre): float
+    {
+        return $lastOrdre > 0 ? $lastOrdre + 1.0 : 1.0;
+    }
+
+    /**
+     * Tome « normal » (non hors-série) avec ce numéro dans la série.
+     */
+    public function findStandardTomeBySeriesAndNumero(int $seriesId, int $tomeNumero): ?array
+    {
+        if ($seriesId <= 0 || $tomeNumero < 0) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT ' . self::selectCatalogRow()
+            . ' FROM oeuvres o'
+            . ' INNER JOIN oeuvre_bd ob ON ob.oeuvre_id = o.id'
+            . ' LEFT JOIN series s ON s.id = ob.series_id'
+            . ' WHERE ob.series_id = ? AND ob.tome_numero = ? AND ob.est_hors_serie = 0'
+            . ' AND o.media_domain = ? LIMIT 1'
+        );
+        $stmt->execute([$seriesId, $tomeNumero, MediaDomain::BD]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row !== false ? BdRowMapper::hydrateCatalogRow($row) : null;
+    }
+
+    /**
+     * @return string|null message d’erreur si le numéro entre en conflit
+     */
+    public function validateTomeNumeroForSeries(
+        int $seriesId,
+        int $tomeNumero,
+        bool $horsSerie,
+        ?int $excludeOeuvreId = null
+    ): ?string {
+        if ($seriesId <= 0 || $tomeNumero < 0 || $horsSerie) {
+            return null;
+        }
+
+        $existing = $this->findStandardTomeBySeriesAndNumero($seriesId, $tomeNumero);
+        if ($existing === null) {
+            return null;
+        }
+
+        if ($excludeOeuvreId !== null && (int) ($existing['oeuvre_id'] ?? 0) === $excludeOeuvreId) {
+            return null;
+        }
+
+        return 'Un autre tome avec ce numéro existe déjà pour cette série.';
     }
 
     /**
@@ -315,7 +436,8 @@ final class BdRepository
         ?string $statut = null,
         string $sortBy = 'tome',
         string $sortDir = 'asc',
-        string $searchQuery = ''
+        string $searchQuery = '',
+        ?string $possessionFilter = null
     ): array {
         if (!self::isAvailable() || $seriesId <= 0) {
             return [];
@@ -344,13 +466,15 @@ final class BdRepository
             }
         }
 
+        $this->appendPossessionFilterToWhere($where, $statut, $possessionFilter);
+
         $direction = strtolower($sortDir) === 'desc' ? 'DESC' : 'ASC';
         $order = match ($sortBy) {
             'titre' => 'o.titre COLLATE FRENCH_NOCASE ' . $direction,
-            'annee' => 'o.annee ' . $direction . ', ob.tome_numero ASC',
+            'annee' => 'o.annee ' . $direction . ', ob.tome_ordre ASC',
             'read_at' => 'derniere_lecture IS NULL ASC, derniere_lecture ' . $direction,
             'note' => 'note_max IS NULL ASC, note_max ' . $direction,
-            default => 'ob.tome_numero ' . $direction . ', o.titre COLLATE FRENCH_NOCASE ASC',
+            default => 'ob.tome_ordre ' . $direction . ', o.titre COLLATE FRENCH_NOCASE ASC',
         };
 
         $sql = 'SELECT ' . self::selectBdRow() . self::selectBdHistoryExtras()
@@ -372,7 +496,8 @@ final class BdRepository
         int $userId,
         int $foyerId,
         ?string $statut = null,
-        string $searchQuery = ''
+        string $searchQuery = '',
+        ?string $possessionFilter = null
     ): int {
         return count($this->listTomesForSeries(
             $seriesId,
@@ -381,7 +506,8 @@ final class BdRepository
             $statut,
             'tome',
             'asc',
-            $searchQuery
+            $searchQuery,
+            $possessionFilter
         ));
     }
 
@@ -453,7 +579,7 @@ final class BdRepository
         }
 
         $stmt = $this->db->prepare(
-            'SELECT oeuvre_id FROM oeuvre_bd WHERE series_id = ? ORDER BY tome_numero ASC'
+            'SELECT oeuvre_id FROM oeuvre_bd WHERE series_id = ? ORDER BY tome_ordre ASC'
         );
         $stmt->execute([$seriesId]);
 
@@ -474,7 +600,7 @@ final class BdRepository
 
     public function findCatalogTomeBySeriesAndNumero(int $seriesId, int $tomeNumero): ?array
     {
-        if ($seriesId <= 0 || $tomeNumero <= 0) {
+        if ($seriesId <= 0 || $tomeNumero < 0) {
             return null;
         }
 
@@ -946,6 +1072,9 @@ final class BdRepository
             $oeuvreFields[] = 'poster_url';
         }
 
+        $existing = $this->findCatalogByOeuvreId($oeuvreId);
+        $catalogFields = $this->prepareCatalogTomeFields($data, $seriesId, $existing);
+
         $this->db->beginTransaction();
         try {
             (new OeuvreRepository())->update($oeuvreId, $oeuvreUpdate, $oeuvreFields);
@@ -955,7 +1084,9 @@ final class BdRepository
                     series_id = ?,
                     kind = ?,
                     tome_numero = ?,
+                    tome_ordre = ?,
                     tome_label = ?,
+                    est_hors_serie = ?,
                     scenariste = ?,
                     dessinateur = ?,
                     editeur = ?,
@@ -964,12 +1095,14 @@ final class BdRepository
             )->execute([
                 $seriesId > 0 ? $seriesId : null,
                 $kind,
-                max(0, (int) ($data['tome_numero'] ?? 0)),
-                trim((string) ($data['tome_label'] ?? '')),
-                trim((string) ($data['scenariste'] ?? '')),
-                trim((string) ($data['dessinateur'] ?? '')),
-                trim((string) ($data['editeur'] ?? '')),
-                trim((string) ($data['genre'] ?? '')),
+                $catalogFields['tome_numero'],
+                $catalogFields['tome_ordre'],
+                $catalogFields['tome_label'],
+                $catalogFields['est_hors_serie'],
+                $catalogFields['scenariste'],
+                $catalogFields['dessinateur'],
+                $catalogFields['editeur'],
+                $catalogFields['genre'],
                 $oeuvreId,
             ]);
 
@@ -1011,11 +1144,12 @@ final class BdRepository
 
         $data['series_id'] = $seriesId;
         $tomeNum = max(0, (int) ($data['tome_numero'] ?? $album['tome_numero'] ?? 0));
-        if ($tomeNum > 0) {
-            $duplicate = $this->findCatalogTomeBySeriesAndNumero($seriesId, $tomeNum);
-            if ($duplicate !== null && (int) ($duplicate['oeuvre_id'] ?? 0) !== $oeuvreId) {
-                return 'Un autre tome avec ce numéro existe déjà pour cette série.';
-            }
+        $horsSerie = array_key_exists('est_hors_serie', $data)
+            ? !empty($data['est_hors_serie'])
+            : !empty($album['est_hors_serie']);
+        $numeroError = $this->validateTomeNumeroForSeries($seriesId, $tomeNum, $horsSerie, $oeuvreId);
+        if ($numeroError !== null) {
+            return $numeroError;
         }
 
         if (array_key_exists('support_possede', $data)) {
@@ -1144,8 +1278,8 @@ final class BdRepository
             return 'Choisissez d’abord une série, ou créez-en une nouvelle.';
         }
 
-        if ($tomeNum <= 0 && $tomeLabel === '' && $titre === '') {
-            return 'Indiquez au minimum un numéro de tome ou un titre.';
+        if ($tomeNum < 0) {
+            return 'Le numéro de tome ne peut pas être négatif.';
         }
 
         if ($titre === '') {
@@ -1169,29 +1303,71 @@ final class BdRepository
      */
     private function insertCatalogBdRow(int $oeuvreId, array $data, int $seriesId, string $kind): void
     {
+        $catalogFields = $this->prepareCatalogTomeFields($data, $seriesId, null);
+
         $this->db->prepare(
             'INSERT INTO oeuvre_bd (
-                oeuvre_id, series_id, kind, tome_numero, tome_label,
+                oeuvre_id, series_id, kind, tome_numero, tome_ordre, tome_label, est_hors_serie,
                 scenariste, dessinateur, editeur, genre
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
         )->execute([
             $oeuvreId,
             $seriesId > 0 ? $seriesId : null,
             $kind,
-            max(0, (int) ($data['tome_numero'] ?? 0)),
-            trim((string) ($data['tome_label'] ?? '')),
-            trim((string) ($data['scenariste'] ?? '')),
-            trim((string) ($data['dessinateur'] ?? '')),
-            trim((string) ($data['editeur'] ?? '')),
-            trim((string) ($data['genre'] ?? '')),
+            $catalogFields['tome_numero'],
+            $catalogFields['tome_ordre'],
+            $catalogFields['tome_label'],
+            $catalogFields['est_hors_serie'],
+            $catalogFields['scenariste'],
+            $catalogFields['dessinateur'],
+            $catalogFields['editeur'],
+            $catalogFields['genre'],
         ]);
+    }
+
+    /**
+     * @param array<string, mixed>|null $existing
+     *
+     * @return array{
+     *     tome_numero: int,
+     *     tome_ordre: float,
+     *     tome_label: string,
+     *     est_hors_serie: int,
+     *     scenariste: string,
+     *     dessinateur: string,
+     *     editeur: string,
+     *     genre: string
+     * }
+     */
+    private function prepareCatalogTomeFields(array $data, int $seriesId, ?array $existing): array
+    {
+        $horsSerie = array_key_exists('est_hors_serie', $data)
+            ? !empty($data['est_hors_serie'])
+            : !empty($existing['est_hors_serie']);
+
+        $ordreData = [
+            'tome_ordre' => $data['tome_ordre'] ?? ($existing['tome_ordre'] ?? 0),
+            'tome_numero' => $data['tome_numero'] ?? ($existing['tome_numero'] ?? 0),
+            'est_hors_serie' => $horsSerie,
+        ];
+
+        return [
+            'tome_numero' => max(0, (int) ($data['tome_numero'] ?? $existing['tome_numero'] ?? 0)),
+            'tome_ordre' => self::resolveTomeOrdre($ordreData, $seriesId),
+            'tome_label' => trim((string) ($data['tome_label'] ?? $existing['tome_label'] ?? '')),
+            'est_hors_serie' => $horsSerie ? 1 : 0,
+            'scenariste' => trim((string) ($data['scenariste'] ?? $existing['scenariste'] ?? '')),
+            'dessinateur' => trim((string) ($data['dessinateur'] ?? $existing['dessinateur'] ?? '')),
+            'editeur' => trim((string) ($data['editeur'] ?? $existing['editeur'] ?? '')),
+            'genre' => trim((string) ($data['genre'] ?? $existing['genre'] ?? '')),
+        ];
     }
 
     private static function selectBdRow(): string
     {
         return 'b.id, b.user_id, b.foyer_id, b.oeuvre_id, b.statut, b.support_physique, b.created_at,'
             . ' o.titre, o.titre_original, o.annee, o.poster_url, o.synopsis,'
-            . ' ob.series_id, ob.kind, ob.tome_numero, ob.tome_label,'
+            . ' ob.series_id, ob.kind, ob.tome_numero, ob.tome_ordre, ob.tome_label, ob.est_hors_serie,'
             . ' ob.scenariste, ob.dessinateur, ob.editeur, ob.genre,'
             . ' s.titre AS series_titre';
     }
@@ -1210,7 +1386,7 @@ final class BdRepository
     private static function selectCatalogRow(): string
     {
         return 'o.id AS oeuvre_id, o.titre, o.titre_original, o.annee, o.poster_url, o.synopsis,'
-            . ' ob.series_id, ob.kind, ob.tome_numero, ob.tome_label,'
+            . ' ob.series_id, ob.kind, ob.tome_numero, ob.tome_ordre, ob.tome_label, ob.est_hors_serie,'
             . ' ob.scenariste, ob.dessinateur, ob.editeur, ob.genre,'
             . ' s.titre AS series_titre';
     }
@@ -1358,5 +1534,33 @@ final class BdRepository
         );
 
         return 'LOWER(TRIM(' . $bAlias . '.support_physique)) IN (' . implode(', ', $keys) . ')';
+    }
+
+    /** @param list<string> $where */
+    private function appendPossessionFilterToWhere(
+        array &$where,
+        ?string $statut,
+        ?string $possessionFilter
+    ): void {
+        if ($possessionFilter === null || $possessionFilter === '') {
+            return;
+        }
+
+        $possessionFilter = self::normalizePossessionFilter($possessionFilter);
+        if ($possessionFilter === self::FILTER_HORS_SERIE) {
+            $where[] = 'ob.est_hors_serie = 1';
+
+            return;
+        }
+
+        if ($statut !== LibraryStatut::COLLECTION) {
+            return;
+        }
+
+        if ($possessionFilter === self::POSSESSION_OWNED) {
+            $where[] = $this->sqlTomePossessedCondition('b');
+        } elseif ($possessionFilter === self::POSSESSION_UNOWNED) {
+            $where[] = 'NOT ' . $this->sqlTomePossessedCondition('b');
+        }
     }
 }

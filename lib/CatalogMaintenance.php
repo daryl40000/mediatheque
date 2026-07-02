@@ -29,6 +29,7 @@ final class CatalogMaintenance
      *   total_oeuvres: int,
      *   duplicate_title_groups: int,
      *   duplicate_tmdb_groups: int,
+     *   duplicate_magazine_groups: int,
      *   incomplete_count: int,
      *   orphan_posters: int,
      *   invalid_tmdb_count: int
@@ -40,6 +41,7 @@ final class CatalogMaintenance
             'total_oeuvres' => (int) $this->db->query('SELECT COUNT(*) FROM oeuvres')->fetchColumn(),
             'duplicate_title_groups' => count($this->findDuplicateGroupsByTitle()),
             'duplicate_tmdb_groups' => count($this->findDuplicateGroupsByTmdb()),
+            'duplicate_magazine_groups' => count($this->findDuplicateMagazineIssueGroups()),
             'incomplete_count' => count($this->findIncompleteOeuvres()),
             'orphan_posters' => count($this->findOrphanPosterFiles()),
             'invalid_tmdb_count' => count($this->findDuplicateTmdbOeuvreIds()),
@@ -85,10 +87,70 @@ final class CatalogMaintenance
                 'realisateur' => (string) ($first['realisateur'] ?? ''),
                 'ids' => $ids,
                 'count' => count($ids),
+                'oeuvres' => $this->oeuvreSummariesForIds($ids),
             ];
         }
 
         usort($out, static fn (array $a, array $b): int => $b['count'] <=> $a['count']);
+
+        return $out;
+    }
+
+    /**
+     * Doublons magazine : même série, même libellé de numéro et même statut hors-série.
+     *
+     * @return list<array{
+     *   series_id: int,
+     *   series_titre: string,
+     *   numero: string,
+     *   est_hors_serie: bool,
+     *   ids: list<int>,
+     *   count: int,
+     *   oeuvres: list<array<string, mixed>>
+     * }>
+     */
+    public function findDuplicateMagazineIssueGroups(): array
+    {
+        if (!MagazineRepository::isAvailable()) {
+            return [];
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT om.series_id, LOWER(TRIM(om.numero)) AS numero_key,
+                    MIN(TRIM(om.numero)) AS numero_label,
+                    om.est_hors_serie,
+                    GROUP_CONCAT(om.oeuvre_id) AS ids,
+                    COUNT(*) AS c,
+                    s.titre AS series_titre
+             FROM oeuvre_magazine om
+             INNER JOIN oeuvres o ON o.id = om.oeuvre_id AND o.media_domain = ?
+             INNER JOIN series s ON s.id = om.series_id
+             GROUP BY om.series_id, numero_key, om.est_hors_serie
+             HAVING c > 1
+             ORDER BY c DESC, s.titre COLLATE FRENCH_NOCASE, numero_key ASC'
+        );
+        $stmt->execute([MediaDomain::MAGAZINE]);
+        $rows = $stmt->fetchAll() ?: [];
+
+        $out = [];
+        foreach ($rows as $row) {
+            $ids = array_values(array_filter(array_map(
+                'intval',
+                explode(',', (string) ($row['ids'] ?? ''))
+            )));
+            if (count($ids) < 2) {
+                continue;
+            }
+            $out[] = [
+                'series_id' => (int) ($row['series_id'] ?? 0),
+                'series_titre' => (string) ($row['series_titre'] ?? ''),
+                'numero' => (string) ($row['numero_label'] ?? ''),
+                'est_hors_serie' => (int) ($row['est_hors_serie'] ?? 0) === 1,
+                'ids' => $ids,
+                'count' => count($ids),
+                'oeuvres' => $this->oeuvreSummariesForIds($ids),
+            ];
+        }
 
         return $out;
     }
@@ -120,10 +182,85 @@ final class CatalogMaintenance
                 'tmdb_id' => (int) ($row['tmdb_id'] ?? 0),
                 'ids' => $ids,
                 'count' => (int) ($row['c'] ?? count($ids)),
+                'oeuvres' => $this->oeuvreSummariesForIds($ids),
             ];
         }
 
         return $out;
+    }
+
+    /**
+     * Résumés catalogue pour comparer des doublons avant fusion.
+     *
+     * @param list<int> $ids
+     * @return list<array<string, mixed>>
+     */
+    public function oeuvreSummariesForIds(array $ids): array
+    {
+        $ids = array_values(array_unique(array_filter(
+            array_map(static fn (mixed $id): int => (int) $id, $ids),
+            static fn (int $id): bool => $id > 0
+        )));
+        if ($ids === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $this->db->prepare(
+            'SELECT o.id, o.titre, o.realisateur, o.annee, o.poster_url, o.tmdb_id, o.media_domain, o.synopsis,
+                om.numero AS mag_numero, om.est_hors_serie AS mag_est_hors_serie,
+                s.titre AS mag_series_titre,
+                (SELECT COUNT(*) FROM bibliotheque b WHERE b.oeuvre_id = o.id) AS library_count
+             FROM oeuvres o
+             LEFT JOIN oeuvre_magazine om ON om.oeuvre_id = o.id
+             LEFT JOIN series s ON s.id = om.series_id
+             WHERE o.id IN (' . $placeholders . ')
+             ORDER BY o.id ASC'
+        );
+        $stmt->execute($ids);
+
+        return $stmt->fetchAll() ?: [];
+    }
+
+    /** Libellé lisible pour les listes déroulantes de fusion. */
+    public static function mergeOptionLabel(array $oeuvre): string
+    {
+        $parts = ['#' . (int) ($oeuvre['id'] ?? 0)];
+        $titre = trim((string) ($oeuvre['titre'] ?? ''));
+        $magNumero = trim((string) ($oeuvre['mag_numero'] ?? ''));
+        $seriesTitre = trim((string) ($oeuvre['mag_series_titre'] ?? ''));
+        if (
+            MediaDomain::normalize((string) ($oeuvre['media_domain'] ?? '')) === MediaDomain::MAGAZINE
+            && $seriesTitre !== ''
+            && $magNumero !== ''
+        ) {
+            $parts[] = $seriesTitre . ' — n°' . $magNumero
+                . (!empty($oeuvre['mag_est_hors_serie']) ? ' (HS)' : '');
+        } elseif ($titre !== '') {
+            $parts[] = $titre;
+        }
+        $realisateur = trim((string) ($oeuvre['realisateur'] ?? ''));
+        if ($realisateur !== '') {
+            $parts[] = $realisateur;
+        }
+        $annee = (int) ($oeuvre['annee'] ?? 0);
+        if ($annee > 0) {
+            $parts[] = '(' . $annee . ')';
+        }
+        $libraryCount = (int) ($oeuvre['library_count'] ?? 0);
+        $parts[] = $libraryCount . ' bib.';
+        $tmdbId = (int) ($oeuvre['tmdb_id'] ?? 0);
+        if ($tmdbId > 0) {
+            $parts[] = 'TMDB ' . $tmdbId;
+        }
+        if (trim((string) ($oeuvre['poster_url'] ?? '')) !== '') {
+            $parts[] = 'affiche';
+        }
+        if (trim((string) ($oeuvre['synopsis'] ?? '')) !== '') {
+            $parts[] = 'synopsis';
+        }
+
+        return implode(' — ', $parts);
     }
 
     /**

@@ -508,4 +508,118 @@ final class MagazineTest extends MoncineTestCase
         $this->assertSame([], $repo->listSeriesInLibrary($userId, $foyerId, LibraryStatut::COLLECTION));
         $this->assertNotNull($repo->findCatalogIssueByOeuvreId($oeuvreId));
     }
+
+    public function testStandardAndHorsSerieCanShareSameNumero(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Numero HS partage Test',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+        $repo->registerSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId);
+
+        $standardId = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '1',
+            'numero_ordre' => 1,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($standardId);
+        $this->assertNull($repo->validateNumeroForSeries($seriesId, '1', true));
+
+        $horsSerieId = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '1',
+            'numero_ordre' => 1,
+            'est_hors_serie' => true,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($horsSerieId);
+
+        $standard = $repo->findIssueByBibId($standardId, $userId, $foyerId);
+        $horsSerie = $repo->findIssueByBibId($horsSerieId, $userId, $foyerId);
+        $this->assertNotNull($standard);
+        $this->assertNotNull($horsSerie);
+        $this->assertSame('1', $standard['numero']);
+        $this->assertSame('1', $horsSerie['numero']);
+        $this->assertSame(0, (int) ($standard['est_hors_serie'] ?? 1));
+        $this->assertSame(1, (int) ($horsSerie['est_hors_serie'] ?? 0));
+
+        $duplicateError = $repo->validateNumeroForSeries($seriesId, '1', false);
+        $this->assertSame('Ce numéro existe déjà pour cette série.', $duplicateError);
+        $this->assertSame(
+            'Un autre hors-série avec ce numéro existe déjà pour cette revue.',
+            $repo->validateNumeroForSeries($seriesId, '1', true)
+        );
+    }
+
+    public function testUpdateCatalogPreservesAndTogglesHorsSerie(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Toggle HS catalogue',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $repo = new MagazineRepository();
+        $oeuvreId = $repo->createCatalogIssue($seriesId, [
+            'numero' => '42',
+            'est_hors_serie' => true,
+        ]);
+        $this->assertIsInt($oeuvreId);
+
+        $issue = $repo->findCatalogIssueByOeuvreId($oeuvreId);
+        $this->assertNotNull($issue);
+        $this->assertSame(1, (int) ($issue['est_hors_serie'] ?? 0));
+
+        $this->assertTrue($repo->updateCatalogByOeuvreId($oeuvreId, [
+            'numero' => '42',
+            'sommaire' => 'Sommaire mis à jour',
+            'est_hors_serie' => true,
+        ]));
+
+        $issueAfterSommaire = $repo->findCatalogIssueByOeuvreId($oeuvreId);
+        $this->assertNotNull($issueAfterSommaire);
+        $this->assertSame(1, (int) ($issueAfterSommaire['est_hors_serie'] ?? 0));
+        $this->assertSame('Sommaire mis à jour', $issueAfterSommaire['sommaire']);
+
+        $this->assertTrue($repo->updateCatalogByOeuvreId($oeuvreId, [
+            'numero' => '42',
+            'est_hors_serie' => false,
+        ]));
+
+        $issueStandard = $repo->findCatalogIssueByOeuvreId($oeuvreId);
+        $this->assertNotNull($issueStandard);
+        $this->assertSame(0, (int) ($issueStandard['est_hors_serie'] ?? 1));
+    }
+
+    public function testUncheckHorsSerieBlockedWhenStandardNumeroExists(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Uncheck HS conflict',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $repo = new MagazineRepository();
+        $standardOeuvreId = $repo->createCatalogIssue($seriesId, ['numero' => '7']);
+        $this->assertIsInt($standardOeuvreId);
+
+        $horsSerieOeuvreId = $repo->createCatalogIssue($seriesId, [
+            'numero' => '7',
+            'est_hors_serie' => true,
+        ]);
+        $this->assertIsInt($horsSerieOeuvreId);
+
+        $error = $repo->updateCatalogByOeuvreId($horsSerieOeuvreId, [
+            'numero' => '7',
+            'est_hors_serie' => false,
+        ]);
+        $this->assertIsString($error);
+        $this->assertStringContainsString('Impossible de retirer le hors-série', $error);
+
+        $issue = $repo->findCatalogIssueByOeuvreId($horsSerieOeuvreId);
+        $this->assertNotNull($issue);
+        $this->assertSame(1, (int) ($issue['est_hors_serie'] ?? 0));
+    }
 }

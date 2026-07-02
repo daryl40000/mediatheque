@@ -73,7 +73,7 @@ if ($issue === null) {
 
 $saveError = (string) ($_GET['save_error'] ?? '');
 $posterUploadError = (string) ($_GET['poster_error'] ?? '');
-$editOpen = isset($_GET['edit']) || $saveError !== '';
+$editOpen = isset($_GET['edit']) || $saveError !== '' || (isset($_GET['saved']) && (string) $_GET['saved'] === '1');
 $posterUploadOpen = $posterUploadError !== '';
 
 if (isset($_GET['poster_uploaded']) && (string) $_GET['poster_uploaded'] === '1') {

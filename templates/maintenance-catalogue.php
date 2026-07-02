@@ -3,6 +3,7 @@
  * @var array<string, int> $stats
  * @var list<array<string, mixed>> $duplicateTitleGroups
  * @var list<array<string, mixed>> $duplicateTmdbGroups
+ * @var list<array<string, mixed>> $duplicateMagazineGroups
  * @var list<array<string, mixed>> $incompleteOeuvres
  * @var list<string> $orphanPosters
  * @var list<array<string, mixed>> $auditLog
@@ -50,6 +51,10 @@
                 <span class="catalog-maintenance-stat__value"><?= (int) $stats['duplicate_tmdb_groups'] ?></span>
                 <span class="catalog-maintenance-stat__label">Doublons TMDB</span>
             </li>
+            <li class="catalog-maintenance-stat<?= (int) ($stats['duplicate_magazine_groups'] ?? 0) > 0 ? ' catalog-maintenance-stat--warn' : '' ?>">
+                <span class="catalog-maintenance-stat__value"><?= (int) ($stats['duplicate_magazine_groups'] ?? 0) ?></span>
+                <span class="catalog-maintenance-stat__label">Doublons magazines</span>
+            </li>
             <li class="catalog-maintenance-stat">
                 <span class="catalog-maintenance-stat__value"><?= (int) $stats['incomplete_count'] ?></span>
                 <span class="catalog-maintenance-stat__label">Fiches incomplètes</span>
@@ -63,7 +68,7 @@
 
     <section class="catalog-maintenance-panel">
         <h2>Doublons (titre + réalisateur)</h2>
-        <p class="hint">Regroupement insensible à la casse et aux espaces en trop.</p>
+        <p class="hint">Regroupement insensible à la casse et aux espaces en trop. Ouvrez chaque fiche pour comparer avant de fusionner.</p>
         <?php if ($duplicateTitleGroups === []): ?>
             <p class="alert alert-info">Aucun doublon détecté sur le titre et le réalisateur.</p>
         <?php else: ?>
@@ -75,21 +80,38 @@
                             <span class="hint">— <?= Moncine\View::escape((string) $group['realisateur']) ?></span>
                         <?php endif; ?>
                     </h3>
-                    <p class="hint">IDs : <?= Moncine\View::escape(implode(', ', array_map('strval', $group['ids'] ?? []))) ?></p>
+                    <?php
+                    $oeuvres = $group['oeuvres'] ?? [];
+                    require MONCINE_ROOT . '/templates/_catalog_maintenance_duplicate_oeuvres.php';
+                    ?>
                     <form method="post" class="catalog-maintenance-merge-form import-form">
                         <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
                         <input type="hidden" name="action" value="merge_oeuvres">
                         <label for="keep_title_<?= Moncine\View::escape((string) ($group['key'] ?? '')) ?>">Conserver</label>
                         <select name="keep_id" id="keep_title_<?= Moncine\View::escape((string) ($group['key'] ?? '')) ?>" required>
-                            <?php foreach ($group['ids'] as $id): ?>
-                                <option value="<?= (int) $id ?>">#<?= (int) $id ?></option>
+                            <?php foreach ($oeuvres as $oeuvre): ?>
+                                <option value="<?= (int) ($oeuvre['id'] ?? 0) ?>">
+                                    <?= Moncine\View::escape(Moncine\CatalogMaintenance::mergeOptionLabel($oeuvre)) ?>
+                                </option>
                             <?php endforeach; ?>
+                            <?php if ($oeuvres === []): ?>
+                                <?php foreach ($group['ids'] as $id): ?>
+                                    <option value="<?= (int) $id ?>">#<?= (int) $id ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </select>
                         <label for="remove_title_<?= Moncine\View::escape((string) ($group['key'] ?? '')) ?>">Fusionner / supprimer</label>
                         <select name="remove_id" id="remove_title_<?= Moncine\View::escape((string) ($group['key'] ?? '')) ?>" required>
-                            <?php foreach ($group['ids'] as $id): ?>
-                                <option value="<?= (int) $id ?>">#<?= (int) $id ?></option>
+                            <?php foreach ($oeuvres as $oeuvre): ?>
+                                <option value="<?= (int) ($oeuvre['id'] ?? 0) ?>">
+                                    <?= Moncine\View::escape(Moncine\CatalogMaintenance::mergeOptionLabel($oeuvre)) ?>
+                                </option>
                             <?php endforeach; ?>
+                            <?php if ($oeuvres === []): ?>
+                                <?php foreach ($group['ids'] as $id): ?>
+                                    <option value="<?= (int) $id ?>">#<?= (int) $id ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </select>
                         <button type="submit" class="btn btn-primary btn-sm"
                                 onclick="return confirm('Fusionner ces deux fiches ? Les bibliothèques utilisateur seront conservées.');">
@@ -103,31 +125,110 @@
 
     <section class="catalog-maintenance-panel">
         <h2>Doublons TMDB</h2>
-        <p class="hint">Plusieurs fiches catalogue partagent le même identifiant TMDB.</p>
+        <p class="hint">Plusieurs fiches catalogue partagent le même identifiant TMDB. Comparez les fiches avant fusion.</p>
         <?php if ($duplicateTmdbGroups === []): ?>
             <p class="alert alert-info">Aucun doublon TMDB.</p>
         <?php else: ?>
             <?php foreach ($duplicateTmdbGroups as $group): ?>
                 <article class="catalog-maintenance-duplicate">
                     <h3>TMDB #<?= (int) ($group['tmdb_id'] ?? 0) ?></h3>
-                    <p class="hint">IDs catalogue : <?= Moncine\View::escape(implode(', ', array_map('strval', $group['ids'] ?? []))) ?></p>
+                    <?php
+                    $oeuvres = $group['oeuvres'] ?? [];
+                    require MONCINE_ROOT . '/templates/_catalog_maintenance_duplicate_oeuvres.php';
+                    ?>
                     <form method="post" class="catalog-maintenance-merge-form import-form">
                         <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
                         <input type="hidden" name="action" value="merge_oeuvres">
                         <label>Conserver</label>
                         <select name="keep_id" required>
-                            <?php foreach ($group['ids'] as $id): ?>
-                                <option value="<?= (int) $id ?>">#<?= (int) $id ?></option>
+                            <?php foreach ($oeuvres as $oeuvre): ?>
+                                <option value="<?= (int) ($oeuvre['id'] ?? 0) ?>">
+                                    <?= Moncine\View::escape(Moncine\CatalogMaintenance::mergeOptionLabel($oeuvre)) ?>
+                                </option>
                             <?php endforeach; ?>
+                            <?php if ($oeuvres === []): ?>
+                                <?php foreach ($group['ids'] as $id): ?>
+                                    <option value="<?= (int) $id ?>">#<?= (int) $id ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </select>
                         <label>Fusionner / supprimer</label>
                         <select name="remove_id" required>
-                            <?php foreach ($group['ids'] as $id): ?>
-                                <option value="<?= (int) $id ?>">#<?= (int) $id ?></option>
+                            <?php foreach ($oeuvres as $oeuvre): ?>
+                                <option value="<?= (int) ($oeuvre['id'] ?? 0) ?>">
+                                    <?= Moncine\View::escape(Moncine\CatalogMaintenance::mergeOptionLabel($oeuvre)) ?>
+                                </option>
                             <?php endforeach; ?>
+                            <?php if ($oeuvres === []): ?>
+                                <?php foreach ($group['ids'] as $id): ?>
+                                    <option value="<?= (int) $id ?>">#<?= (int) $id ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
                         </select>
                         <button type="submit" class="btn btn-primary btn-sm"
                                 onclick="return confirm('Fusionner ces deux fiches TMDB ?');">
+                            Fusionner
+                        </button>
+                    </form>
+                </article>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </section>
+
+    <section class="catalog-maintenance-panel">
+        <h2>Doublons magazines (série + numéro)</h2>
+        <p class="hint">
+            Plusieurs fiches catalogue partagent la même revue, le même libellé de numéro
+            et le même statut hors-série. Un numéro classique et un hors-série portant le même
+            chiffre ne sont pas des doublons.
+        </p>
+        <?php if (($duplicateMagazineGroups ?? []) === []): ?>
+            <p class="alert alert-info">Aucun doublon magazine détecté.</p>
+        <?php else: ?>
+            <?php foreach ($duplicateMagazineGroups as $group): ?>
+                <article class="catalog-maintenance-duplicate">
+                    <h3>
+                        <?= Moncine\View::escape((string) ($group['series_titre'] ?? '')) ?>
+                        — n°<?= Moncine\View::escape((string) ($group['numero'] ?? '')) ?>
+                        <?php if (!empty($group['est_hors_serie'])): ?>
+                            <span class="magazine-tag">Hors-série</span>
+                        <?php endif; ?>
+                    </h3>
+                    <?php
+                    $oeuvres = $group['oeuvres'] ?? [];
+                    require MONCINE_ROOT . '/templates/_catalog_maintenance_duplicate_oeuvres.php';
+                    ?>
+                    <form method="post" class="catalog-maintenance-merge-form import-form">
+                        <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                        <input type="hidden" name="action" value="merge_oeuvres">
+                        <label>Conserver</label>
+                        <select name="keep_id" required>
+                            <?php foreach ($oeuvres as $oeuvre): ?>
+                                <option value="<?= (int) ($oeuvre['id'] ?? 0) ?>">
+                                    <?= Moncine\View::escape(Moncine\CatalogMaintenance::mergeOptionLabel($oeuvre)) ?>
+                                </option>
+                            <?php endforeach; ?>
+                            <?php if ($oeuvres === []): ?>
+                                <?php foreach ($group['ids'] as $id): ?>
+                                    <option value="<?= (int) $id ?>">#<?= (int) $id ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                        <label>Fusionner / supprimer</label>
+                        <select name="remove_id" required>
+                            <?php foreach ($oeuvres as $oeuvre): ?>
+                                <option value="<?= (int) ($oeuvre['id'] ?? 0) ?>">
+                                    <?= Moncine\View::escape(Moncine\CatalogMaintenance::mergeOptionLabel($oeuvre)) ?>
+                                </option>
+                            <?php endforeach; ?>
+                            <?php if ($oeuvres === []): ?>
+                                <?php foreach ($group['ids'] as $id): ?>
+                                    <option value="<?= (int) $id ?>">#<?= (int) $id ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm"
+                                onclick="return confirm('Fusionner ces deux numéros magazine ?');">
                             Fusionner
                         </button>
                     </form>

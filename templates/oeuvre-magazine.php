@@ -96,6 +96,9 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::MAGAZINE);
                 <?php if (!empty($posterUploaded)): ?>
                     <p class="alert alert-success">Couverture enregistrée.</p>
                 <?php endif; ?>
+                <?php if (($saveError ?? '') !== ''): ?>
+                    <p class="alert alert-warning"><?= Moncine\View::escape((string) $saveError) ?></p>
+                <?php endif; ?>
 
                 <?php require MONCINE_ROOT . '/templates/_oeuvre_magazine_edit_form.php'; ?>
 

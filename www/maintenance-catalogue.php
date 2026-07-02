@@ -114,6 +114,7 @@ View::render('maintenance-catalogue', [
     'stats' => $maintenance->dashboardStats(),
     'duplicateTitleGroups' => $maintenance->findDuplicateGroupsByTitle(),
     'duplicateTmdbGroups' => $maintenance->findDuplicateGroupsByTmdb(),
+    'duplicateMagazineGroups' => $maintenance->findDuplicateMagazineIssueGroups(),
     'incompleteOeuvres' => $maintenance->findIncompleteOeuvres(),
     'orphanPosters' => $maintenance->findOrphanPosterFiles(),
     'auditLog' => $audit->listRecent(25),

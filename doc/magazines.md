@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.6.1** · **Date : 2026-06-16**
+**Version : 0.7.4** · **Date : 2026-06-16**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -75,9 +75,13 @@ Deux champs distincts :
 - **Numéro** (`numero`) — texte affiché (`123`, `HS 8`, `8 bis`…).
 - **Ordre de tri** (`numero_ordre`) — nombre décimal pour classer la liste (ex. `123`, `8.5`, `8.1`).
 
-**Hors-série** : case à cocher + badge **HS** sur la carte. À la **création**, si l’ordre est un entier (ex. `8`) et la case est cochée, l’ordre devient **8.5** (entre 8 et 9).
+**Hors-série** : case à cocher + badge **HS** sur la carte. À la **création**, si l’ordre est un entier (ex. `8`) et la case est cochée, l’ordre devient **8.5** (entre 8 et 9). Un **numéro classique** et un **hors-série** peuvent porter le même libellé (ex. n°1 et HS n°1) : ce ne sont pas des doublons.
 
 Pour un numéro oublié au milieu de la série : modifiez **uniquement** ce numéro et mettez un ordre **entre** les voisins (ex. `8.1` ou `8.5`) — inutile de renuméroter toute la collection.
+
+**Modification catalogue** (`/oeuvre-magazine.php`, administrateur) : la case hors-série est enregistrée explicitement (cochée ou décochée). Si un **numéro classique** portant le même libellé existe déjà, le retrait du hors-série est refusé avec un message explicite — fusionnez d’abord les doublons (voir ci-dessous). Le champ couverture accepte les chemins locaux `/posters/…` (pas seulement les URL HTTPS).
+
+**Doublons numéros** : page **Maintenance catalogue** → section **Doublons magazines (série + numéro)** — regroupe les fiches ayant la même revue, le même libellé de numéro et le même statut hors-série ; liens « Ouvrir la fiche » et fusion.
 
 ---
 

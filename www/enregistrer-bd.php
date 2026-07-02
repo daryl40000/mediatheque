@@ -50,10 +50,10 @@ if ($oeuvreIdFromCatalog > 0) {
     ]);
 } else {
     $tomeNumero = max(0, (int) ($_POST['tome_numero'] ?? 0));
-    if ($tomeNumero > 0 && $repo->findCatalogTomeBySeriesAndNumero($seriesId, $tomeNumero) !== null) {
-        header('Location: ' . $returnUrl . '&error=' . rawurlencode(
-            'Ce tome existe déjà au catalogue pour cette série.'
-        ));
+    $horsSerie = !empty($_POST['est_hors_serie']);
+    $numeroError = $repo->validateTomeNumeroForSeries($seriesId, $tomeNumero, $horsSerie);
+    if ($numeroError !== null) {
+        header('Location: ' . $returnUrl . '&error=' . rawurlencode($numeroError));
         exit;
     }
 
@@ -62,7 +62,9 @@ if ($oeuvreIdFromCatalog > 0) {
         'annee' => (int) ($_POST['annee'] ?? 0),
         'synopsis' => (string) ($_POST['synopsis'] ?? ''),
         'tome_numero' => $tomeNumero,
+        'tome_ordre' => (float) ($_POST['tome_ordre'] ?? 0),
         'tome_label' => (string) ($_POST['tome_label'] ?? ''),
+        'est_hors_serie' => $horsSerie,
         'scenariste' => (string) ($_POST['scenariste'] ?? ''),
         'dessinateur' => (string) ($_POST['dessinateur'] ?? ''),
         'editeur' => (string) ($_POST['editeur'] ?? ''),

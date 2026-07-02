@@ -20,7 +20,7 @@
                 <?= Moncine\View::escape((string) ($tome['series_titre'] ?? 'Série')) ?>
             </a>
             <span aria-hidden="true"> › </span>
-            <span><?= $tomeNumero > 0 ? 'Tome ' . $tomeNumero : 'Tome' ?></span>
+            <span><?= Moncine\View::escape(Moncine\BdRowMapper::tomeSummary($tome) ?: 'Tome') ?></span>
         </p>
 
         <div class="magazine-issue-layout">
@@ -34,8 +34,13 @@
             <div class="magazine-issue-layout__main">
                 <h1><?= Moncine\View::escape((string) ($tome['display_titre'] ?? $tome['titre'] ?? '')) ?></h1>
                 <p class="lead">
-                    <?php if ($tomeNumero > 0): ?>
+                    <?php if (trim((string) ($tome['tome_label'] ?? '')) === ''): ?>
+                        <?php if (!empty($tome['est_hors_serie'])): ?>
+                            <span class="badge">HS</span>
+                        <?php endif; ?>
                         Tome <strong><?= $tomeNumero ?></strong>
+                    <?php else: ?>
+                        <?= Moncine\View::escape((string) $tome['tome_label']) ?>
                     <?php endif; ?>
                     <?php if ((int) ($tome['annee'] ?? 0) > 0): ?>
                         · <?= (int) $tome['annee'] ?>

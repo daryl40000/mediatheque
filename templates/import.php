@@ -145,6 +145,7 @@
         </details>
     <?php endif; ?>
 </section>
+<?php endif; ?>
 
 <?php if (!empty($canManageCatalog)): ?>
 <section class="export-panel">
