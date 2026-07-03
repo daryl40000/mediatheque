@@ -73,7 +73,12 @@ $sortLink = static function (string $label, string $column) use (
                         <td><?= Moncine\View::escape($dateVue) ?></td>
                         <td>
                             <?php if ($note !== null && $note !== ''): ?>
-                                <span class="film-note"><?= (int) $note ?>/10</span>
+                                <?php
+                                $score = (int) $note;
+                                $showLabel = false;
+                                $size = 'small';
+                                require MONCINE_ROOT . '/templates/_ressenti_badge.php';
+                                ?>
                             <?php else: ?>
                                 <span class="hint">—</span>
                             <?php endif; ?>

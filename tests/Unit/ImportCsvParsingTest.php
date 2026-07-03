@@ -40,9 +40,9 @@ final class ImportCsvParsingTest extends TestCase
 
     public function testParseNoteClampsToValidRange(): void
     {
-        $this->assertSame(8, ImportCsv::parseNote('8'));
-        $this->assertNull(ImportCsv::parseNote(''));
-        $this->assertSame(10, ImportCsv::parseNote('11'));
+        $this->assertSame(4, \Moncine\ImportCsv::parseNote('8'));
+        $this->assertNull(\Moncine\ImportCsv::parseNote(''));
+        $this->assertSame(5, \Moncine\ImportCsv::parseNote('11'));
     }
 
     /** BOM + guillemets sur la 1re colonne (export Excel / LibreOffice). */

@@ -284,7 +284,6 @@ final class GameRepository
         ];
         $params['game_domain'] = MediaDomain::JEU;
         $params['history_user_id'] = $userId;
-        $params['foyer_id_rating'] = $foyerId;
 
         $searchQuery = trim($searchQuery);
         if ($searchQuery !== '') {

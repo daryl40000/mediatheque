@@ -83,7 +83,7 @@ final class ImportCsv
         return HistoriqueRepository::parseVueDate($raw);
     }
 
-    /** Note sur 10. */
+    /** Ressenti 1–5 (convertit une ancienne note 1–10 si besoin). */
     public static function parseNote(string $raw): ?int
     {
         $raw = trim($raw);
@@ -95,6 +95,10 @@ final class ImportCsv
             return null;
         }
 
-        return min($note, 10);
+        if ($note <= RessentiNote::MAX_SCORE) {
+            return RessentiNote::normalizeScore($note);
+        }
+
+        return RessentiNote::scoreFromLegacyTen(min($note, 10));
     }
 }

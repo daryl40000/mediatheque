@@ -11,7 +11,9 @@ use Moncine\BdPhysicalSupport;
 use Moncine\BdRepository;
 use Moncine\HistoriqueRepository;
 use Moncine\LibraryStatut;
+use Moncine\MediaDomain;
 use Moncine\MediaDomainGuards;
+use Moncine\SocialRessentiService;
 use Moncine\UserContext;
 use Moncine\View;
 
@@ -45,10 +47,19 @@ $listBackUrl = $seriesId > 0
     : ($isWishlist ? '/bd-envies.php' : '/bd.php');
 
 $historique = new HistoriqueRepository();
-$noteSur10 = $isWishlist ? null : $historique->getNoteSur10($bibId);
-$noteFoyerMoyenne = $isWishlist ? null : $historique->getFoyerAverageNote($bibId);
+$monRessenti = $isWishlist ? null : $historique->getBestRessentiScore($bibId);
 $readHistory = $isWishlist ? [] : $historique->findViewingsByFilm($bibId);
 $everRead = $isWishlist ? false : $historique->wasEverSeen($bibId);
+
+$oeuvreId = (int) ($album['oeuvre_id'] ?? 0);
+$socialRessentis = !$isWishlist && $oeuvreId > 0
+    ? (new SocialRessentiService())->listAroundOeuvre(
+        $oeuvreId,
+        MediaDomain::BD,
+        $userId,
+        $foyerId
+    )
+    : ['foyer' => [], 'friends' => []];
 
 View::render('album-bd', [
     'pageTitle' => (string) ($album['display_titre'] ?? 'Album'),
@@ -57,8 +68,8 @@ View::render('album-bd', [
     'albumId' => $bibId,
     'isWishlist' => $isWishlist,
     'listBackUrl' => $listBackUrl,
-    'noteSur10' => $noteSur10,
-    'noteFoyerMoyenne' => $noteFoyerMoyenne,
+    'monRessenti' => $monRessenti,
+    'socialRessentis' => $socialRessentis,
     'readHistory' => $readHistory,
     'everRead' => $everRead,
     'supportChoices' => BdPhysicalSupport::choices(),

@@ -27,8 +27,11 @@ final class HistoriqueRepository
     /** Enregistre ou met à jour la note personnelle sur un jeu (sans saisie de date). */
     public function setPersonalNote(int $libraryId, ?int $note): void
     {
-        if ($note !== null && ($note < 1 || $note > 10)) {
-            throw new \InvalidArgumentException('La note doit être entre 1 et 10.');
+        if ($note !== null) {
+            $note = self::normalizeStoredNote($note);
+            if ($note === null) {
+                throw new \InvalidArgumentException('Ressenti invalide.');
+            }
         }
 
         $userId = UserContext::currentUserId();
@@ -127,31 +130,42 @@ final class HistoriqueRepository
     /** @return array{ok: true, note: ?int}|array{ok: false, error: string} */
     public static function parseNoteInput(string $raw): array
     {
-        $raw = trim($raw);
-        if ($raw === '') {
-            return ['ok' => true, 'note' => null];
+        $parsed = RessentiNote::parseInput($raw);
+        if (!$parsed['ok']) {
+            return $parsed;
         }
 
-        if (!is_numeric($raw)) {
-            return [
-                'ok' => false,
-                'error' => 'Note invalide. Choisissez un nombre de 1 à 10.',
-            ];
-        }
+        return ['ok' => true, 'note' => $parsed['score']];
+    }
 
-        $note = ImportCsv::parseNote($raw);
+    /** @deprecated Utiliser parseNoteInput() */
+    public static function parseRessentiInput(string $raw): array
+    {
+        return self::parseNoteInput($raw);
+    }
+
+    private static function ressentiWhereSql(string $alias = 'h'): string
+    {
+        return RessentiNote::sqlValidNote($alias);
+    }
+
+    private static function normalizeStoredNote(?int $note): ?int
+    {
         if ($note === null) {
-            return [
-                'ok' => false,
-                'error' => 'La note doit être entre 1 et 10.',
-            ];
+            return null;
         }
 
-        return ['ok' => true, 'note' => $note];
+        $score = RessentiNote::normalizeScore($note);
+        if ($score !== null) {
+            return $score;
+        }
+
+        return RessentiNote::scoreFromLegacyTen($note);
     }
 
     public function recordViewing(int $filmId, string $dateVue, ?int $note = null): bool
     {
+        $note = self::normalizeStoredNote($note);
         $userId = UserContext::currentUserId();
         if (!$this->libraryEntryExists($filmId, $userId)) {
             throw new \RuntimeException('Cette fiche est introuvable dans votre bibliothèque.');
@@ -286,74 +300,49 @@ final class HistoriqueRepository
         return $row ?: null;
     }
 
-    public function getNoteSur10(int $filmId): ?int
+    public function getBestRessentiScore(int $filmId): ?int
     {
         $userId = UserContext::currentUserId();
         $stmt = $this->db->prepare(
-            'SELECT MAX(note) FROM historique
-             WHERE film_id = ? AND user_id = ? AND note IS NOT NULL AND note >= 1'
+            'SELECT MAX(h.note) FROM historique h
+             WHERE h.film_id = ? AND h.user_id = ? AND ' . self::ressentiWhereSql('h')
         );
         $stmt->execute([$filmId, $userId]);
         $note = $stmt->fetchColumn();
         if ($note === false || $note === null) {
             return null;
         }
-        $n = (int) $note;
 
-        return $n >= 1 ? min(10, $n) : null;
+        return RessentiNote::normalizeScore((int) $note);
     }
 
-    /** Moyenne des meilleures notes des membres du foyer pour ce film. */
-    public function getFoyerAverageNote(int $filmId): ?float
+    /** @deprecated Utiliser getBestRessentiScore() */
+    public function getNoteSur10(int $filmId): ?int
     {
-        if (!CatalogSchema::usesFoyerModel($this->db)) {
-            return null;
-        }
-
-        $foyerId = UserContext::currentFoyerId();
-        if ($foyerId <= 0 || $filmId <= 0) {
-            return null;
-        }
-
-        $stmt = $this->db->prepare(
-            'SELECT ROUND(AVG(member_note.best_note), 2)
-             FROM (
-                 SELECT MAX(h.note) AS best_note
-                 FROM historique h
-                 INNER JOIN utilisateurs u ON u.id = h.user_id
-                 WHERE h.film_id = ?
-                   AND u.foyer_id = ?
-                   AND h.note IS NOT NULL AND h.note >= 1 AND h.note <= 10
-                 GROUP BY h.user_id
-             ) member_note'
-        );
-        $stmt->execute([$filmId, $foyerId]);
-        $value = $stmt->fetchColumn();
-        if ($value === false || $value === null) {
-            return null;
-        }
-
-        $average = (float) $value;
-
-        return $average >= 1 ? min(10.0, $average) : null;
+        return $this->getBestRessentiScore($filmId);
     }
 
+    public static function formatRessentiScore(?int $score): string
+    {
+        return RessentiNote::labelFromScore(RessentiNote::normalizeScore($score));
+    }
+
+    /** @deprecated Utiliser formatRessentiScore() */
     public static function formatNoteSur10(?int $note): string
     {
-        if ($note === null || $note < 1) {
-            return '';
-        }
-
-        return min(10, $note) . '/10';
+        return self::formatRessentiScore($note);
     }
 
+    /** @deprecated Notes foyer supprimées */
+    public function getFoyerAverageNote(int $filmId): ?float
+    {
+        return null;
+    }
+
+    /** @deprecated Notes foyer supprimées */
     public static function formatAverageNote(?float $note): string
     {
-        if ($note === null || $note < 1) {
-            return '';
-        }
-
-        return number_format(min(10.0, $note), 1, ',', ' ') . '/10';
+        return '';
     }
 
     public static function formatDateVue(?string $date): string

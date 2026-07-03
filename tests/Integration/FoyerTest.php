@@ -11,6 +11,9 @@ use Moncine\FilmRepository;
 use Moncine\FoyerRepository;
 use Moncine\HistoriqueRepository;
 use Moncine\LibraryStatut;
+use Moncine\MediaDomain;
+use Moncine\RessentiNote;
+use Moncine\SocialRessentiService;
 use Moncine\Tests\Support\MoncineTestCase;
 use Moncine\UserRole;
 use Moncine\UtilisateurRepository;
@@ -50,7 +53,7 @@ final class FoyerTest extends MoncineTestCase
         $hist = new HistoriqueRepository();
         $this->assertFalse($hist->wasEverSeen($libraryId));
         $hist->recordViewing($libraryId, '2024-02-01', 6);
-        $this->assertSame(6, $hist->getNoteSur10($libraryId));
+        $this->assertSame(3, $hist->getBestRessentiScore($libraryId));
     }
 
     public function testWishlistRemainsPersonal(): void
@@ -112,13 +115,12 @@ final class FoyerTest extends MoncineTestCase
         $films = (new FilmRepository())->findAll();
         $this->assertCount(1, $films);
         $this->assertNull($films[0]['note_max'] ?? null);
-        $this->assertNull($films[0]['note_foyer_moy'] ?? null);
 
         $wishlist = (new FilmRepository())->findAllWishlist();
         $this->assertSame([], $wishlist);
     }
 
-    public function testFoyerAverageRatingAcrossMembers(): void
+    public function testSocialRessentisAcrossMembers(): void
     {
         $adminId = $this->loginAsAdmin();
         $foyerId = (new FoyerRepository())->currentFoyerIdForUser($adminId);
@@ -148,11 +150,17 @@ final class FoyerTest extends MoncineTestCase
 
         $films = (new FilmRepository())->findAll();
         $this->assertCount(1, $films);
-        $this->assertSame(6, (int) ($films[0]['note_max'] ?? 0));
-        $this->assertSame(7.0, (float) ($films[0]['note_foyer_moy'] ?? 0));
+        $this->assertSame(3, (int) ($films[0]['note_max'] ?? 0));
 
-        $hist = new HistoriqueRepository();
-        $this->assertSame(7.0, $hist->getFoyerAverageNote($libraryId));
+        $social = (new SocialRessentiService())->listAroundOeuvre(
+            $oeuvreId,
+            MediaDomain::FILM,
+            $memberId,
+            $foyerId
+        );
+        $scores = array_column($social['foyer'], 'ressenti_score', 'user_id');
+        $this->assertSame(RessentiNote::scoreFromLegacyTen(8), $scores[$adminId] ?? null);
+        $this->assertSame(3, $scores[$memberId] ?? null);
     }
 
     public function testEnsurePersonalFoyerForSoloUser(): void

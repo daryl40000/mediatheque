@@ -53,7 +53,7 @@ if (!$parsedNote['ok']) {
 }
 
 if ($parsedNote['note'] === null) {
-    $redirectError('Choisissez une note entre 1 et 10.');
+    $redirectError('Choisissez un ressenti parmi les cinq proposés.');
 }
 
 try {

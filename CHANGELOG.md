@@ -23,6 +23,38 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+---
+
+## [0.7.6] — 2026-06-16
+
+**Ressentis : remplacement des notes 1–10 et suppression de la moyenne foyer**
+
+### Ajouté
+
+- **Système de ressenti** (5 paliers : J’adore → Je déteste) : `RessentiNote`, badges SVG/PNG, sélecteur sur les fiches et formulaires (film, jeu, BD).
+- **Icônes PNG** : `www/assets/icons/ressenti/` (repli SVG si fichier absent).
+- **Ressentis sociaux** : panneau foyer + amis sur les fiches film, jeu et BD (`SocialRessentiService`, partials `_ressenti_*`).
+- **Migration** `057_ressenti_notes.sql` : conversion des anciennes notes 1–10 vers 1–5.
+- **Statistiques films** : répartition par ressenti (graphique icônes), sections **Coups de cœur** et **Films les moins aimés** (2 colonnes).
+- **Tests** : `RessentiNoteTest`, test coups de cœur dans `CollectionStatsViewingDurationTest`.
+
+### Modifié
+
+- Listes, impressions et profil public : icônes de ressenti au lieu de `X/10`.
+- Import CSV : les notes 1–10 sont converties vers le ressenti correspondant.
+- Fiches film / jeu / BD : libellé « Mon ressenti » retiré en tête de fiche ; tailles d’icônes harmonisées (fiche 60 px, listes 30 px, stats 32 px).
+
+### Corrigé
+
+- **Statistiques films** : exclusion des jeux et autres médias (filtre `media_domain = film` dans `CollectionStats`).
+- **Coups de cœur** : liste vide malgré un compteur correct (paramètre PDO dans `HAVING` SQLite).
+
+### Supprimé
+
+- Note moyenne du foyer sur les listes et fiches.
+
+---
+
 ## [0.7.5] — 2026-06-16
 
 **BD / Magazines : modification série BD, repli couverture tome/numéro 1, maintenance affiches**

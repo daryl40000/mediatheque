@@ -4,8 +4,9 @@
  */
 $s = $stats;
 $currentYear = (int) ($s['current_year'] ?? (int) date('Y'));
-$noteDist = $s['note_distribution'] ?? [];
-$noteMax = max(1, (int) ($s['note_distribution_max'] ?? 1));
+$noteDist = $s['ressenti_distribution'] ?? [];
+$noteMax = max(1, (int) ($s['ressenti_distribution_max'] ?? 1));
+$ressentiKeys = array_reverse(Moncine\RessentiNote::orderedKeys());
 $viewsByYear = $s['views_by_year'] ?? [];
 $yearChartMax = 1;
 foreach ($viewsByYear as $row) {
@@ -140,48 +141,47 @@ $totalFilms = (int) ($s['total_films'] ?? 0);
     <?php endif; ?>
 
     <section class="stats-panel">
-        <h2>Notes</h2>
-        <?php if ((int) ($s['notes_count'] ?? 0) === 0): ?>
+        <h2>Ressentis</h2>
+        <?php if ((int) ($s['ressenti_count'] ?? 0) === 0): ?>
             <p class="hint">
-                Aucune note enregistrée pour l’instant. Notez vos films lors d’une vision
+                Aucun ressenti enregistré pour l’instant. Indiquez votre ressenti lors d’une vision
                 (fiche film ou import avec la colonne <strong>Note</strong>).
             </p>
         <?php else: ?>
             <div class="stats-notes-summary">
                 <div class="stat-inline">
-                    <span class="stat-inline__value"><?= Moncine\View::escape(Moncine\CollectionStats::formatAverage($s['note_moyenne_visions'] ?? null)) ?></span>
-                    <span class="stat-inline__label">Moyenne de toutes les notes</span>
-                    <span class="stat-inline__hint"><?= (int) ($s['notes_count'] ?? 0) ?> note<?= (int) ($s['notes_count'] ?? 0) > 1 ? 's' : '' ?></span>
+                    <span class="stat-inline__value"><?= (int) ($s['coups_de_coeur_count'] ?? 0) ?></span>
+                    <span class="stat-inline__label">Coups de cœur (J’adore)</span>
+                    <span class="stat-inline__hint"><?= (int) ($s['ressenti_count'] ?? 0) ?> ressenti<?= (int) ($s['ressenti_count'] ?? 0) > 1 ? 's' : '' ?> au total</span>
                 </div>
-                <div class="stat-inline">
-                    <span class="stat-inline__value"><?= Moncine\View::escape(Moncine\CollectionStats::formatAverage($s['note_moyenne_films'] ?? null)) ?></span>
-                    <span class="stat-inline__label">Moyenne par film</span>
-                    <span class="stat-inline__hint">meilleure note de chaque fiche</span>
-                </div>
-                <?php if ((int) ($s['visions_sans_note'] ?? 0) > 0): ?>
+                <?php if ((int) ($s['visions_sans_ressenti'] ?? 0) > 0): ?>
                     <p class="hint stat-inline__aside">
-                        <?= (int) ($s['visions_sans_note'] ?? 0) ?> vision<?= (int) ($s['visions_sans_note'] ?? 0) > 1 ? 's' : '' ?>
-                        sans note (date seule).
+                        <?= (int) ($s['visions_sans_ressenti'] ?? 0) ?> vision<?= (int) ($s['visions_sans_ressenti'] ?? 0) > 1 ? 's' : '' ?>
+                        sans ressenti (date seule).
                     </p>
                 <?php endif; ?>
             </div>
 
-            <h3 class="stats-subtitle">Répartition des notes (1 à 10)</h3>
-            <div class="note-chart" role="img"
-                 aria-label="Graphique de répartition des notes de 1 à 10 sur 10">
-                <?php for ($n = 1; $n <= 10; $n++):
-                    $count = (int) ($noteDist[$n] ?? 0);
+            <h3 class="stats-subtitle">Répartition des ressentis</h3>
+            <div class="note-chart ressenti-chart" role="img"
+                 aria-label="Répartition des ressentis (icônes)">
+                <?php foreach ($ressentiKeys as $key):
+                    $score = Moncine\RessentiNote::score($key);
+                    $count = (int) ($noteDist[$score] ?? 0);
                     $pct = $noteMax > 0 ? round(($count / $noteMax) * 100) : 0;
                     ?>
-                    <div class="note-chart__row">
-                        <span class="note-chart__label"><?= $n ?></span>
+                    <div class="note-chart__row ressenti-chart__row <?= Moncine\View::escape(Moncine\RessentiNote::cssClass($key)) ?>">
+                        <span class="note-chart__label ressenti-chart__label"
+                              title="<?= Moncine\View::escape(Moncine\RessentiNote::label($key)) ?>">
+                            <span class="ressenti-chart__icon" aria-hidden="true"><?= Moncine\RessentiNote::iconSvg($key) ?></span>
+                        </span>
                         <span class="note-chart__bar-wrap">
                             <span class="note-chart__bar" style="width: <?= max(2, $pct) ?>%;"
-                                  title="<?= $count ?> note<?= $count > 1 ? 's' : '' ?>"></span>
+                                  title="<?= $count ?> ressenti<?= $count > 1 ? 's' : '' ?>"></span>
                         </span>
                         <span class="note-chart__count"><?= $count ?></span>
                     </div>
-                <?php endfor; ?>
+                <?php endforeach; ?>
             </div>
         <?php endif; ?>
     </section>
@@ -215,24 +215,63 @@ $totalFilms = (int) ($s['total_films'] ?? 0);
     <?php endif; ?>
 
     <?php
-    $topRated = $s['top_rated'] ?? [];
-    if ($topRated !== []):
+    $topRated = $s['coups_de_coeur'] ?? [];
+    $leastLiked = $s['moins_aimes'] ?? [];
+    if ($topRated !== [] || $leastLiked !== []):
         ?>
         <section class="stats-panel">
-            <h2>Films les mieux notés</h2>
-            <ol class="stats-ranked-list">
-                <?php foreach ($topRated as $film): ?>
-                    <li>
-                        <a href="/film.php?id=<?= (int) $film['id'] ?>" class="stats-ranked-list__link">
-                            <?= Moncine\View::escape((string) $film['titre']) ?>
-                        </a>
-                        <?php if (trim((string) ($film['realisateur'] ?? '')) !== ''): ?>
-                            <span class="stats-ranked-list__meta">— <?= Moncine\View::escape((string) $film['realisateur']) ?></span>
-                        <?php endif; ?>
-                        <span class="tag tag--note"><?= (int) ($film['best_note'] ?? 0) ?>/10</span>
-                    </li>
-                <?php endforeach; ?>
-            </ol>
+            <div class="stats-films-columns">
+                <?php if ($topRated !== []): ?>
+                    <div class="stats-films-columns__col">
+                        <h2>Coups de cœur</h2>
+                        <ol class="stats-ranked-list">
+                            <?php foreach ($topRated as $film): ?>
+                                <li class="stats-ranked-list__item">
+                                    <a href="/film.php?id=<?= (int) $film['id'] ?>" class="stats-ranked-list__link">
+                                        <?= Moncine\View::escape((string) $film['titre']) ?>
+                                    </a>
+                                    <?php if (trim((string) ($film['realisateur'] ?? '')) !== ''): ?>
+                                        <span class="stats-ranked-list__meta">— <?= Moncine\View::escape((string) $film['realisateur']) ?></span>
+                                    <?php endif; ?>
+                                    <span class="stats-ranked-list__ressenti">
+                                        <?php
+                                        $score = (int) ($film['best_note'] ?? Moncine\RessentiNote::MAX_SCORE);
+                                        $showLabel = false;
+                                        $size = 'small';
+                                        require MONCINE_ROOT . '/templates/_ressenti_badge.php';
+                                        ?>
+                                    </span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ol>
+                    </div>
+                <?php endif; ?>
+                <?php if ($leastLiked !== []): ?>
+                    <div class="stats-films-columns__col">
+                        <h2>Films les moins aimés</h2>
+                        <ol class="stats-ranked-list">
+                            <?php foreach ($leastLiked as $film): ?>
+                                <li class="stats-ranked-list__item">
+                                    <a href="/film.php?id=<?= (int) $film['id'] ?>" class="stats-ranked-list__link">
+                                        <?= Moncine\View::escape((string) $film['titre']) ?>
+                                    </a>
+                                    <?php if (trim((string) ($film['realisateur'] ?? '')) !== ''): ?>
+                                        <span class="stats-ranked-list__meta">— <?= Moncine\View::escape((string) $film['realisateur']) ?></span>
+                                    <?php endif; ?>
+                                    <span class="stats-ranked-list__ressenti">
+                                        <?php
+                                        $score = (int) ($film['best_note'] ?? 0);
+                                        $showLabel = false;
+                                        $size = 'small';
+                                        require MONCINE_ROOT . '/templates/_ressenti_badge.php';
+                                        ?>
+                                    </span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ol>
+                    </div>
+                <?php endif; ?>
+            </div>
         </section>
     <?php endif; ?>
 

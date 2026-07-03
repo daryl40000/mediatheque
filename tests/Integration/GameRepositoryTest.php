@@ -363,7 +363,7 @@ final class GameRepositoryTest extends MoncineTestCase
 
         (new HistoriqueRepository())->recordViewing($collectionId, '2024-06-01', 9);
         $games = $repo->listInLibrary($userId, $foyerId, LibraryStatut::COLLECTION);
-        $this->assertSame(9, (int) ($games[0]['note_max'] ?? 0));
+        $this->assertSame(5, (int) ($games[0]['note_max'] ?? 0));
 
         $this->assertTrue($repo->deleteById($collectionId, $userId, $foyerId));
         $this->assertSame([], $repo->listInLibrary($userId, $foyerId, LibraryStatut::COLLECTION));

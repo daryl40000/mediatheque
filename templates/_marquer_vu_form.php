@@ -6,16 +6,13 @@
  * @var string $return film|resultat|home
  * @var string $defaultDateIso aaaa-mm-jj pour le champ date
  * @var string $submitLabel
- * @var int|null $defaultNote note 1–10 déjà connue (pré-sélection)
+ * @var int|null $defaultNote ressenti 1–5 déjà connu (pré-sélection)
  * @var bool $compact affichage réduit (page résultat)
  */
 $defaultDateIso = $defaultDateIso ?? Moncine\HistoriqueRepository::todayForInputIso();
 $submitLabel = $submitLabel ?? 'Marquer comme vu';
 $compact = $compact ?? false;
-$defaultNote = isset($defaultNote) ? (int) $defaultNote : null;
-if ($defaultNote !== null && ($defaultNote < 1 || $defaultNote > 10)) {
-    $defaultNote = null;
-}
+$defaultNote = isset($defaultNote) ? Moncine\RessentiNote::normalizeScore((int) $defaultNote) : null;
 $maxDate = Moncine\HistoriqueRepository::todayForInputIso();
 ?>
 <form method="post" action="/marquer-vu.php" class="marquer-vu-form import-form<?= $compact ? ' marquer-vu-form--compact' : '' ?>">
@@ -43,15 +40,14 @@ $maxDate = Moncine\HistoriqueRepository::todayForInputIso();
     <?php endif; ?>
 
     <?php if (!$compact): ?>
-        <label for="note_<?= (int) $filmId ?>">Note sur 10 (optionnel)</label>
-        <select name="note" id="note_<?= (int) $filmId ?>" class="marquer-vu-form__note">
-            <option value="">Sans note</option>
-            <?php for ($n = 10; $n >= 1; $n--):
-                $sel = $defaultNote === $n ? ' selected' : '';
-                ?>
-                <option value="<?= $n ?>"<?= $sel ?>><?= $n ?>/10</option>
-            <?php endfor; ?>
-        </select>
+        <?php
+        $fieldName = 'note';
+        $fieldId = 'note_' . (int) $filmId;
+        $defaultScore = $defaultNote;
+        $required = false;
+        $allowEmpty = true;
+        require MONCINE_ROOT . '/templates/_ressenti_picker.php';
+        ?>
     <?php endif; ?>
 
     <button type="submit" class="btn <?= $compact ? 'btn-primary' : 'btn-secondary' ?>"><?= Moncine\View::escape($submitLabel) ?></button>

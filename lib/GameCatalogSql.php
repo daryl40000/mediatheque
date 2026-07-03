@@ -72,13 +72,14 @@ final class GameCatalogSql
 
     public static function selectGameHistoryExtras(): string
     {
+        $noteWhere = RessentiNote::sqlValidNote('h');
+
         return ','
             . ' (SELECT MAX(h.date_vue) FROM historique h'
             . '  WHERE h.film_id = b.id AND h.user_id = :history_user_id) AS derniere_session,'
             . ' (SELECT MAX(h.note) FROM historique h'
             . '  WHERE h.film_id = b.id AND h.user_id = :history_user_id'
-            . '    AND h.note IS NOT NULL AND h.note >= 1) AS note_max,'
-            . CatalogSchema::foyerAverageNoteSubquery('b.id', ':foyer_id_rating')
+            . '    AND ' . $noteWhere . ') AS note_max'
             . GameCompletionRepository::selectListExtrasSql();
     }
 

@@ -14,9 +14,11 @@
             <p class="alert alert-success">
                 Vision enregistrée<?= !empty($_GET['vu_date'])
                     ? ' le ' . Moncine\View::escape((string) $_GET['vu_date'])
-                    : '' ?><?= !empty($_GET['vu_note'])
-                    ? ' — note : ' . (int) $_GET['vu_note'] . '/10'
-                    : '' ?>.
+                    : '' ?><?php if (!empty($_GET['vu_note'])):
+                    $vuScore = Moncine\RessentiNote::normalizeScore((int) $_GET['vu_note']);
+                    if ($vuScore !== null): ?>
+                    — ressenti : <?= Moncine\View::escape(Moncine\View::ressentiLabel($vuScore)) ?>
+                    <?php endif; endif ?>.
             </p>
         <?php endif; ?>
         <?php if (!empty($_GET['vu_error'])): ?>
@@ -98,6 +100,17 @@
                     <?php endif; ?>
                 </header>
 
+                <?php if (!empty($monRessenti)): ?>
+                    <p class="film-detail__ressenti">
+                        <?php
+                        $score = (int) $monRessenti;
+                        $showLabel = true;
+                        $size = 'default';
+                        require MONCINE_ROOT . '/templates/_ressenti_badge.php';
+                        ?>
+                    </p>
+                <?php endif; ?>
+
                 <dl class="film-facts">
                     <dt>Réalisateur</dt>
                     <dd><?php $name = (string) ($film['realisateur'] ?? ''); require MONCINE_ROOT . '/templates/_personne_link.php'; ?></dd>
@@ -175,26 +188,6 @@
                         ? Moncine\View::escape(Moncine\HistoriqueRepository::formatDateVue((string) $derniereVue))
                         : 'Jamais' ?></dd>
 
-                    <?php if (!empty($noteSur10) || ($noteFoyerMoyenne ?? null) !== null): ?>
-                        <dt>Notes</dt>
-                        <dd>
-                            <?php if (!empty($noteSur10)): ?>
-                                <p class="film-ratings film-ratings--detail">
-                                    <span class="film-ratings__label">Votre note</span>
-                                    <span class="film-note" title="Votre meilleure note sur ce film"><?= (int) $noteSur10 ?>/10</span>
-                                </p>
-                            <?php endif; ?>
-                            <?php if (!empty($noteFoyerMoyenne)): ?>
-                                <p class="film-ratings film-ratings--detail">
-                                    <span class="film-ratings__label">Moyenne du foyer</span>
-                                    <span class="film-note film-note--foyer" title="Note moyenne des membres du foyer">
-                                        <?= Moncine\View::escape(Moncine\HistoriqueRepository::formatAverageNote($noteFoyerMoyenne)) ?>
-                                    </span>
-                                </p>
-                            <?php endif; ?>
-                        </dd>
-                    <?php endif; ?>
-
                     <?php if ((int) ($film['tmdb_id'] ?? 0) > 0): ?>
                         <dt>Identifiant TMDB</dt>
                         <dd>
@@ -221,6 +214,10 @@
                     <p class="film-synopsis"><?= Moncine\View::escape($film['synopsis']) ?></p>
                 <?php endif; ?>
 
+                <?php if (!$isWishlist): ?>
+                    <?php require MONCINE_ROOT . '/templates/_ressenti_social_panel.php'; ?>
+                <?php endif; ?>
+
                 <?php if (!empty($viewings)): ?>
                     <h2>Historique des visions</h2>
                     <p class="hint">Supprimez les dates erronées avec l’icône poubelle à droite.</p>
@@ -234,7 +231,12 @@
                                 <span class="viewings-list__info">
                                     <?= Moncine\View::escape($vDate) ?>
                                     <?php if ($vNote !== null && $vNote !== ''): ?>
-                                        <span class="film-note film-note--small"><?= (int) $vNote ?>/10</span>
+                                        <?php
+                                        $score = (int) $vNote;
+                                        $showLabel = false;
+                                        $size = 'small';
+                                        require MONCINE_ROOT . '/templates/_ressenti_badge.php';
+                                        ?>
                                     <?php endif; ?>
                                 </span>
                                 <?php if ($viewId > 0): ?>
@@ -284,7 +286,7 @@
                     <?php
                     $return = 'film';
                     $submitLabel = $everSeen ? 'Ajouter cette date' : 'Marquer comme vu';
-                    $defaultNote = !empty($noteSur10) ? (int) $noteSur10 : null;
+                    $defaultNote = !empty($monRessenti) ? (int) $monRessenti : null;
                     require MONCINE_ROOT . '/templates/_marquer_vu_form.php';
                     ?>
                 </section>

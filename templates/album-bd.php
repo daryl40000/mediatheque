@@ -4,8 +4,7 @@
 /** @var int $albumId */
 /** @var bool $isWishlist */
 /** @var string $listBackUrl */
-/** @var int|null $noteSur10 */
-/** @var float|null $noteFoyerMoyenne */
+/** @var int|null $monRessenti */
 /** @var list<array<string, mixed>> $readHistory */
 /** @var bool $everRead */
 /** @var array<string, string> $supportChoices */
@@ -100,6 +99,17 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
                     </p>
                 </header>
 
+                <?php if (!$isWishlist && !empty($monRessenti)): ?>
+                    <p class="film-detail__ressenti">
+                        <?php
+                        $score = (int) $monRessenti;
+                        $showLabel = true;
+                        $size = 'default';
+                        require MONCINE_ROOT . '/templates/_ressenti_badge.php';
+                        ?>
+                    </p>
+                <?php endif; ?>
+
                 <dl class="film-facts">
                     <?php if ((string) ($album['scenariste'] ?? '') !== ''): ?>
                         <dt>Scénariste</dt>
@@ -129,25 +139,6 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
                         <dt><?= $isWishlist ? 'Envie ajoutée le' : 'Ajouté le' ?></dt>
                         <dd><?= Moncine\View::escape((string) $album['added_at_label']) ?></dd>
                     <?php endif; ?>
-                    <?php if (!$isWishlist && (!empty($noteSur10) || ($noteFoyerMoyenne ?? null) !== null)): ?>
-                        <dt>Notes</dt>
-                        <dd>
-                            <?php if (!empty($noteSur10)): ?>
-                                <p class="film-ratings film-ratings--detail">
-                                    <span class="film-ratings__label">Votre note</span>
-                                    <span class="film-note" title="Votre note sur ce tome"><?= (int) $noteSur10 ?>/10</span>
-                                </p>
-                            <?php endif; ?>
-                            <?php if (($noteFoyerMoyenne ?? null) !== null): ?>
-                                <p class="film-ratings film-ratings--detail">
-                                    <span class="film-ratings__label">Moyenne du foyer</span>
-                                    <span class="film-note film-note--foyer" title="Note moyenne des membres du foyer">
-                                        <?= Moncine\View::escape(Moncine\HistoriqueRepository::formatAverageNote($noteFoyerMoyenne)) ?>
-                                    </span>
-                                </p>
-                            <?php endif; ?>
-                        </dd>
-                    <?php endif; ?>
                     <?php if ((string) ($album['read_at_label'] ?? '') !== ''): ?>
                         <dt>Dernière lecture</dt>
                         <dd><?= Moncine\View::escape((string) $album['read_at_label']) ?></dd>
@@ -159,6 +150,10 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
                         <h2>Description</h2>
                         <p><?= nl2br(Moncine\View::escape((string) $album['synopsis'])) ?></p>
                     </section>
+                <?php endif; ?>
+
+                <?php if (!$isWishlist): ?>
+                    <?php require MONCINE_ROOT . '/templates/_ressenti_social_panel.php'; ?>
                 <?php endif; ?>
 
                 <?php if ($isWishlist): ?>
@@ -182,7 +177,12 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
                                     <span class="viewings-list__info">
                                         <?= Moncine\View::escape($viewDate) ?>
                                         <?php if (isset($view['note']) && (int) $view['note'] >= 1): ?>
-                                            — <?= (int) $view['note'] ?>/10
+                                            <?php
+                                            $score = (int) $view['note'];
+                                            $showLabel = false;
+                                            $size = 'small';
+                                            require MONCINE_ROOT . '/templates/_ressenti_badge.php';
+                                            ?>
                                         <?php endif; ?>
                                     </span>
                                 </li>
@@ -195,7 +195,7 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
                         <?php
                         $return = 'album';
                         $submitLabel = $everRead ? 'Ajouter cette date' : 'Marquer comme lu';
-                        $defaultNote = !empty($noteSur10) ? (int) $noteSur10 : null;
+                        $defaultNote = !empty($monRessenti) ? (int) $monRessenti : null;
                         require MONCINE_ROOT . '/templates/_marquer_lu_form.php';
                         ?>
                     </section>

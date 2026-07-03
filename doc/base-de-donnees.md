@@ -129,7 +129,7 @@ Contrainte : `UNIQUE (titre, realisateur)` — pour les jeux, `realisateur` rest
 |---------|------|
 | `film_id` | Référence **`bibliotheque.id`** (nom historique Monciné, valable aussi pour les jeux) |
 | `user_id` | Utilisateur ayant noté |
-| `date_vue`, `note` | Date et note |
+| `date_vue`, `note` | Date et **ressenti** (1–5 : J’adore → Je déteste ; migration **057**, **0.7.6**) |
 
 ---
 

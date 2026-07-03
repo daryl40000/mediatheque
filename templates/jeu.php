@@ -6,8 +6,7 @@
 /** @var int $gameId */
 /** @var bool $isWishlist */
 /** @var string $listBackUrl */
-/** @var int|null $noteSur10 */
-/** @var float|null $noteFoyerMoyenne */
+/** @var int|null $monRessenti */
 /** @var string $addedAtLabel */
 /** @var array<string, mixed>|null $baseGame */
 /** @var list<array<string, mixed>> $extensions */
@@ -59,8 +58,8 @@ if ($linuxBadge === '' && $linuxNotSupported) {
         <?php if (!empty($_GET['fin_error'])): ?>
             <p class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['fin_error']) ?></p>
         <?php endif; ?>
-        <?php if (isset($_GET['note']) && (int) $_GET['note'] >= 1): ?>
-            <div class="alert alert-success">Note enregistrée : <?= (int) $_GET['note'] ?>/10.</div>
+        <?php if (isset($_GET['note']) && Moncine\RessentiNote::normalizeScore((int) $_GET['note']) !== null): ?>
+            <div class="alert alert-success">Ressenti enregistré : <?= Moncine\View::escape(Moncine\View::ressentiLabel((int) $_GET['note'])) ?>.</div>
         <?php endif; ?>
         <?php if (!empty($_GET['note_error'])): ?>
             <p class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['note_error']) ?></p>
@@ -126,6 +125,17 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                     </p>
                 </header>
 
+                <?php if (!$isWishlist && !empty($monRessenti)): ?>
+                    <p class="film-detail__ressenti">
+                        <?php
+                        $score = (int) $monRessenti;
+                        $showLabel = true;
+                        $size = 'default';
+                        require MONCINE_ROOT . '/templates/_ressenti_badge.php';
+                        ?>
+                    </p>
+                <?php endif; ?>
+
                 <dl class="film-facts">
                     <?php if ((string) ($game['studio'] ?? '') !== ''): ?>
                         <dt>Studio</dt>
@@ -167,26 +177,12 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                         <dd><?= Moncine\View::escape($addedAtLabel) ?></dd>
                     <?php endif; ?>
 
-                    <?php if (!$isWishlist && (!empty($noteSur10) || ($noteFoyerMoyenne ?? null) !== null)): ?>
-                        <dt>Notes</dt>
-                        <dd>
-                            <?php if (!empty($noteSur10)): ?>
-                                <p class="film-ratings film-ratings--detail">
-                                    <span class="film-ratings__label">Votre note</span>
-                                    <span class="film-note" title="Votre note sur ce jeu"><?= (int) $noteSur10 ?>/10</span>
-                                </p>
-                            <?php endif; ?>
-                            <?php if (($noteFoyerMoyenne ?? null) !== null): ?>
-                                <p class="film-ratings film-ratings--detail">
-                                    <span class="film-ratings__label">Moyenne du foyer</span>
-                                    <span class="film-note film-note--foyer" title="Note moyenne des membres du foyer">
-                                        <?= Moncine\View::escape(Moncine\HistoriqueRepository::formatAverageNote($noteFoyerMoyenne)) ?>
-                                    </span>
-                                </p>
-                            <?php endif; ?>
-                        </dd>
                     <?php endif; ?>
                 </dl>
+
+                <?php if (!$isWishlist): ?>
+                    <?php require MONCINE_ROOT . '/templates/_ressenti_social_panel.php'; ?>
+                <?php endif; ?>
 
                 <?php require MONCINE_ROOT . '/templates/_game_editions_display.php'; ?>
 
@@ -275,9 +271,9 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                         </p>
                     <?php endif; ?>
                     <section class="marquer-vu-panel">
-                        <h2 class="marquer-vu-panel__title">Votre note</h2>
+                        <h2 class="marquer-vu-panel__title">Mon ressenti</h2>
                         <?php
-                        $defaultNote = !empty($noteSur10) ? (int) $noteSur10 : null;
+                        $defaultNote = !empty($monRessenti) ? (int) $monRessenti : null;
                         require MONCINE_ROOT . '/templates/_marquer_joue_form.php';
                         ?>
                     </section>

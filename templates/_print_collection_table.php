@@ -30,7 +30,7 @@
                 ? ($sagaOrdre > 0 ? $sagaLabel . ' #' . $sagaOrdre : $sagaLabel)
                 : '—';
             $notePerso = $film['note_max'] ?? null;
-            $noteLabel = Moncine\HistoriqueRepository::formatNoteSur10(
+            $noteLabel = Moncine\View::ressentiLabel(
                 $notePerso !== null && $notePerso !== '' ? (int) $notePerso : null
             );
             ?>

@@ -450,7 +450,6 @@ final class BdRepository
             'series_id' => $seriesId,
             'domain' => MediaDomain::BD,
             'history_user_id' => $userId,
-            'foyer_id_rating' => $foyerId,
         ], $statutParams);
 
         $where = [
@@ -656,7 +655,6 @@ final class BdRepository
         ];
         $params['bd_domain'] = MediaDomain::BD;
         $params['history_user_id'] = $userId;
-        $params['foyer_id_rating'] = $foyerId;
 
         $searchQuery = trim($searchQuery);
         if ($searchQuery !== '') {
@@ -747,7 +745,6 @@ final class BdRepository
             'foyer_id' => $foyerId,
             'user_id' => $userId,
             'history_user_id' => $userId,
-            'foyer_id_rating' => $foyerId,
         ];
 
         $stmt = $this->db->prepare(
@@ -1376,13 +1373,14 @@ final class BdRepository
 
     private static function selectBdHistoryExtras(): string
     {
+        $noteWhere = RessentiNote::sqlValidNote('h');
+
         return ','
             . ' (SELECT MAX(h.date_vue) FROM historique h'
             . '  WHERE h.film_id = b.id AND h.user_id = :history_user_id) AS derniere_lecture,'
             . ' (SELECT MAX(h.note) FROM historique h'
             . '  WHERE h.film_id = b.id AND h.user_id = :history_user_id'
-            . '    AND h.note IS NOT NULL AND h.note >= 1) AS note_max,'
-            . CatalogSchema::foyerAverageNoteSubquery('b.id', ':foyer_id_rating');
+            . '    AND ' . $noteWhere . ') AS note_max';
     }
 
     private static function selectCatalogRow(): string

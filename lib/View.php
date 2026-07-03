@@ -1318,4 +1318,23 @@ final class View
             ? '/ajouter-tome-bd.php?series_id=' . $seriesId . '&statut=' . rawurlencode($statut)
             : '/ajouter-serie-bd.php';
     }
+
+    /** Rendu HTML du badge ressenti (icône + libellé optionnel). */
+    public static function ressentiBadge(?int $score, bool $showLabel = false, string $size = 'default'): string
+    {
+        $score = RessentiNote::normalizeScore($score);
+        if ($score === null) {
+            return '—';
+        }
+
+        ob_start();
+        require MONCINE_ROOT . '/templates/_ressenti_badge.php';
+
+        return (string) ob_get_clean();
+    }
+
+    public static function ressentiLabel(?int $score): string
+    {
+        return RessentiNote::labelFromScore(RessentiNote::normalizeScore($score));
+    }
 }

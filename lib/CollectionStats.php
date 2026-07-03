@@ -51,26 +51,23 @@ final class CollectionStats
             'percent_seen' => $totalFilms > 0
                 ? round(($filmsVusTotal / $totalFilms) * 100, 1)
                 : 0.0,
-            'note_moyenne_visions' => $noteStats['average_all'],
-            'note_moyenne_films' => $noteStats['average_per_film'],
-            'notes_count' => $noteStats['count'],
-            'visions_sans_note' => $noteStats['viewings_without_note'],
-            'note_distribution' => $noteStats['distribution'],
-            'note_distribution_max' => $noteStats['distribution_max'],
+            'ressenti_count' => $noteStats['count'],
+            'visions_sans_ressenti' => $noteStats['viewings_without_note'],
+            'ressenti_distribution' => $noteStats['distribution'],
+            'ressenti_distribution_max' => $noteStats['distribution_max'],
+            'coups_de_coeur_count' => $noteStats['adore_count'],
             'views_by_year' => $this->viewsByYear(),
             'support_breakdown' => $this->supportBreakdown($totalFilms),
-            'top_rated' => $this->topRatedFilms(8),
+            'coups_de_coeur' => $this->topAdoredFilms(8),
+            'moins_aimes' => $this->leastLikedFilms(8),
             'most_rewatched' => $this->mostRewatchedFilms(6),
         ];
     }
 
+    /** @deprecated Plus de moyenne sur 10 */
     public static function formatAverage(?float $value): string
     {
-        if ($value === null) {
-            return '—';
-        }
-
-        return number_format($value, 1, ',', ' ') . '/10';
+        return '—';
     }
 
     public static function formatPercent(float $value): string
@@ -112,14 +109,15 @@ final class CollectionStats
     private function totalViewingMinutes(): int
     {
         if (CatalogSchema::usesCatalogTables($this->db)) {
+            $params = [$this->currentUserId()];
             $stmt = $this->db->prepare(
                 'SELECT COALESCE(SUM(o.duree_min), 0)
                  FROM historique h
                  INNER JOIN bibliotheque b ON b.id = h.film_id
                  INNER JOIN oeuvres o ON o.id = b.oeuvre_id
-                 WHERE h.user_id = ?'
+                 WHERE h.user_id = ?' . $this->filmDomainSql($params)
             );
-            $stmt->execute([$this->currentUserId()]);
+            $stmt->execute($params);
 
             return (int) $stmt->fetchColumn();
         }
@@ -134,11 +132,13 @@ final class CollectionStats
     private function countDistinctFilmsSeen(): int
     {
         if ($this->usesPerUserHistory()) {
+            $params = [$this->currentUserId()];
             $stmt = $this->db->prepare(
-                'SELECT COUNT(DISTINCT h.film_id) FROM historique h
-                 WHERE h.user_id = ?'
+                'SELECT COUNT(DISTINCT h.film_id) FROM historique h'
+                . $this->catalogFilmHistoryJoinSql()
+                . ' WHERE h.user_id = ?' . $this->filmDomainSql($params)
             );
-            $stmt->execute([$this->currentUserId()]);
+            $stmt->execute($params);
 
             return (int) $stmt->fetchColumn();
         }
@@ -151,11 +151,14 @@ final class CollectionStats
     private function countDistinctFilmsSeenInYear(int $year): int
     {
         if ($this->usesPerUserHistory()) {
+            $params = [$this->currentUserId(), (string) $year];
             $stmt = $this->db->prepare(
-                "SELECT COUNT(DISTINCT h.film_id) FROM historique h
-                 WHERE h.user_id = ? AND strftime('%Y', h.date_vue) = ?"
+                "SELECT COUNT(DISTINCT h.film_id) FROM historique h"
+                . $this->catalogFilmHistoryJoinSql()
+                . " WHERE h.user_id = ? AND strftime('%Y', h.date_vue) = ?"
+                . $this->filmDomainSql($params)
             );
-            $stmt->execute([$this->currentUserId(), (string) $year]);
+            $stmt->execute($params);
 
             return (int) $stmt->fetchColumn();
         }
@@ -172,11 +175,13 @@ final class CollectionStats
     private function countViewings(): int
     {
         if ($this->usesPerUserHistory()) {
+            $params = [$this->currentUserId()];
             $stmt = $this->db->prepare(
-                'SELECT COUNT(*) FROM historique h
-                 WHERE h.user_id = ?'
+                'SELECT COUNT(*) FROM historique h'
+                . $this->catalogFilmHistoryJoinSql()
+                . ' WHERE h.user_id = ?' . $this->filmDomainSql($params)
             );
-            $stmt->execute([$this->currentUserId()]);
+            $stmt->execute($params);
 
             return (int) $stmt->fetchColumn();
         }
@@ -187,12 +192,14 @@ final class CollectionStats
     private function countViewingsInYear(int $year): int
     {
         if ($this->usesPerUserHistory()) {
+            $params = [$this->currentUserId(), (string) $year];
             $stmt = $this->db->prepare(
-                "SELECT COUNT(*) FROM historique h
-                 INNER JOIN bibliotheque b ON b.id = h.film_id
-                 WHERE b.user_id = ? AND strftime('%Y', h.date_vue) = ?"
+                "SELECT COUNT(*) FROM historique h"
+                . $this->catalogFilmHistoryJoinSql()
+                . " WHERE h.user_id = ? AND strftime('%Y', h.date_vue) = ?"
+                . $this->filmDomainSql($params)
             );
-            $stmt->execute([$this->currentUserId(), (string) $year]);
+            $stmt->execute($params);
 
             return (int) $stmt->fetchColumn();
         }
@@ -217,17 +224,18 @@ final class CollectionStats
      */
     private function noteStatistics(): array
     {
-        $distribution = array_fill(1, 10, 0);
+        $distribution = array_fill(1, RessentiNote::MAX_SCORE, 0);
         $max = 0;
-        $noteWhere = 'h.note IS NOT NULL AND h.note >= 1 AND h.note <= 10';
-        $historyJoin = $this->historyJoinSql();
+        $noteWhere = RessentiNote::sqlValidNote('h');
+        $historyJoin = $this->catalogFilmHistoryJoinSql();
         $userWhere = $this->historyUserWhereSql();
         $params = $this->historyUserParams();
+        $filmWhere = $this->filmDomainSql($params);
 
         $stmt = $this->db->prepare(
             "SELECT h.note, COUNT(*) AS cnt FROM historique h
              {$historyJoin}
-             WHERE {$userWhere} AND {$noteWhere}
+             WHERE {$userWhere}{$filmWhere} AND {$noteWhere}
              GROUP BY h.note
              ORDER BY h.note"
         );
@@ -235,43 +243,21 @@ final class CollectionStats
         foreach ($stmt->fetchAll() as $row) {
             $n = (int) $row['note'];
             $c = (int) $row['cnt'];
-            if ($n >= 1 && $n <= 10) {
+            if ($n >= RessentiNote::MIN_SCORE && $n <= RessentiNote::MAX_SCORE) {
                 $distribution[$n] = $c;
                 $max = max($max, $c);
             }
         }
 
-        $stmt = $this->db->prepare(
-            "SELECT AVG(h.note) FROM historique h
-             {$historyJoin}
-             WHERE {$userWhere} AND {$noteWhere}"
-        );
-        $stmt->execute($params);
-        $avgAll = $stmt->fetchColumn();
-        $avgAll = $avgAll !== false && $avgAll !== null ? round((float) $avgAll, 2) : null;
-
-        $stmt = $this->db->prepare(
-            "SELECT AVG(film_best) FROM (
-                SELECT MAX(h.note) AS film_best FROM historique h
-                {$historyJoin}
-                WHERE {$userWhere} AND {$noteWhere}
-                GROUP BY h.film_id
-             )"
-        );
-        $stmt->execute($params);
-        $avgFilm = $stmt->fetchColumn();
-        $avgFilm = $avgFilm !== false && $avgFilm !== null ? round((float) $avgFilm, 2) : null;
-
         $notesCount = array_sum($distribution);
         $visionsTotal = $this->countViewings();
 
         return [
-            'average_all' => $avgAll,
-            'average_per_film' => $avgFilm,
             'count' => $notesCount,
             'viewings_without_note' => max(0, $visionsTotal - $notesCount),
             'distribution' => $distribution,
             'distribution_max' => $max > 0 ? $max : 1,
+            'adore_count' => $distribution[5] ?? 0,
         ];
     }
 
@@ -282,9 +268,10 @@ final class CollectionStats
      */
     private function viewsByYear(): array
     {
-        $historyJoin = $this->historyJoinSql();
+        $historyJoin = $this->catalogFilmHistoryJoinSql();
         $userWhere = $this->historyUserWhereSql();
         $params = $this->historyUserParams();
+        $filmWhere = $this->filmDomainSql($params);
 
         $stmt = $this->db->prepare(
             "SELECT CAST(strftime('%Y', h.date_vue) AS INTEGER) AS y,
@@ -292,7 +279,7 @@ final class CollectionStats
                     COUNT(DISTINCT h.film_id) AS films
              FROM historique h
              {$historyJoin}
-             WHERE {$userWhere}
+             WHERE {$userWhere}{$filmWhere}
              GROUP BY y
              ORDER BY y ASC"
         );
@@ -331,12 +318,14 @@ final class CollectionStats
         $unknown = 0;
 
         if (CatalogSchema::usesCatalogTables($this->db)) {
+            $params = [UserContext::currentFoyerId(), LibraryStatut::COLLECTION];
             $stmt = $this->db->prepare(
-                'SELECT support_physique, COUNT(*) AS cnt FROM bibliotheque
-                 WHERE foyer_id = ? AND statut = ?
-                 GROUP BY support_physique'
+                'SELECT b.support_physique, COUNT(*) AS cnt FROM bibliotheque b
+                 INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+                 WHERE b.foyer_id = ? AND b.statut = ?' . $this->filmDomainSql($params) . '
+                 GROUP BY b.support_physique'
             );
-            $stmt->execute([UserContext::currentFoyerId(), LibraryStatut::COLLECTION]);
+            $stmt->execute($params);
         } else {
             $stmt = $this->db->query(
                 'SELECT support_physique, COUNT(*) AS cnt FROM films GROUP BY support_physique'
@@ -386,29 +375,33 @@ final class CollectionStats
     }
 
     /**
-     * Meilleures notes (meilleure note enregistrée par film).
+     * Coups de cœur (meilleur ressenti « J'adore » par film).
      *
      * @return list<array<string, mixed>>
      */
-    private function topRatedFilms(int $limit): array
+    private function topAdoredFilms(int $limit): array
     {
+        $noteWhere = RessentiNote::sqlValidNote('h');
+        $adoreScore = RessentiNote::MAX_SCORE;
+
         if (CatalogSchema::usesCatalogTables($this->db)) {
+            $params = $this->catalogFilmListParams();
+            $params['limit'] = max(1, $limit);
             $stmt = $this->db->prepare(
                 'SELECT b.id, o.titre, o.realisateur, MAX(h.note) AS best_note
                  FROM bibliotheque b
                  INNER JOIN oeuvres o ON o.id = b.oeuvre_id
                  INNER JOIN historique h ON h.film_id = b.id
-                 WHERE b.foyer_id = ? AND b.statut = ? AND h.user_id = ?
-                   AND h.note IS NOT NULL AND h.note >= 1 AND h.note <= 10
+                 WHERE b.foyer_id = :foyer_id AND b.statut = :collection AND h.user_id = :user_id'
+                . $this->catalogFilmDomainWhereSql()
+                . ' AND ' . $noteWhere . '
                  GROUP BY b.id
-                 ORDER BY best_note DESC, o.titre COLLATE FRENCH_NOCASE ASC
-                 LIMIT ?'
+                 HAVING best_note = ' . $adoreScore . '
+                 ORDER BY o.titre COLLATE FRENCH_NOCASE ASC
+                 LIMIT :limit'
             );
-            $stmt->bindValue(1, UserContext::currentFoyerId(), PDO::PARAM_INT);
-            $stmt->bindValue(2, LibraryStatut::COLLECTION);
-            $stmt->bindValue(3, UserContext::currentUserId(), PDO::PARAM_INT);
-            $stmt->bindValue(4, max(1, $limit), PDO::PARAM_INT);
-            $stmt->execute();
+            $stmt->bindValue(':limit', $params['limit'], PDO::PARAM_INT);
+            $stmt->execute($params);
 
             return $stmt->fetchAll();
         }
@@ -417,9 +410,56 @@ final class CollectionStats
             'SELECT f.id, f.titre, f.realisateur, MAX(h.note) AS best_note
              FROM films f
              INNER JOIN historique h ON h.film_id = f.id
-             WHERE h.note IS NOT NULL AND h.note >= 1 AND h.note <= 10
+             WHERE ' . $noteWhere . '
              GROUP BY f.id
-             ORDER BY best_note DESC, f.titre COLLATE FRENCH_NOCASE ASC
+             HAVING best_note = ?
+             ORDER BY f.titre COLLATE FRENCH_NOCASE ASC
+             LIMIT ?'
+        );
+        $stmt->bindValue(1, $adoreScore, PDO::PARAM_INT);
+        $stmt->bindValue(2, max(1, $limit), PDO::PARAM_INT);
+        $stmt->execute();
+
+        return $stmt->fetchAll();
+    }
+
+    /**
+     * Films les moins aimés (meilleur ressenti le plus bas par film).
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function leastLikedFilms(int $limit): array
+    {
+        $noteWhere = RessentiNote::sqlValidNote('h');
+
+        if (CatalogSchema::usesCatalogTables($this->db)) {
+            $params = $this->catalogFilmListParams();
+            $params['limit'] = max(1, $limit);
+            $stmt = $this->db->prepare(
+                'SELECT b.id, o.titre, o.realisateur, MAX(h.note) AS best_note
+                 FROM bibliotheque b
+                 INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+                 INNER JOIN historique h ON h.film_id = b.id
+                 WHERE b.foyer_id = :foyer_id AND b.statut = :collection AND h.user_id = :user_id'
+                . $this->catalogFilmDomainWhereSql()
+                . ' AND ' . $noteWhere . '
+                 GROUP BY b.id
+                 ORDER BY best_note ASC, o.titre COLLATE FRENCH_NOCASE ASC
+                 LIMIT :limit'
+            );
+            $stmt->bindValue(':limit', $params['limit'], PDO::PARAM_INT);
+            $stmt->execute($params);
+
+            return $stmt->fetchAll();
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT f.id, f.titre, f.realisateur, MAX(h.note) AS best_note
+             FROM films f
+             INNER JOIN historique h ON h.film_id = f.id
+             WHERE ' . $noteWhere . '
+             GROUP BY f.id
+             ORDER BY best_note ASC, f.titre COLLATE FRENCH_NOCASE ASC
              LIMIT ?'
         );
         $stmt->bindValue(1, max(1, $limit), PDO::PARAM_INT);
@@ -436,22 +476,22 @@ final class CollectionStats
     private function mostRewatchedFilms(int $limit): array
     {
         if (CatalogSchema::usesCatalogTables($this->db)) {
+            $params = $this->catalogFilmListParams();
+            $params['limit'] = max(1, $limit);
             $stmt = $this->db->prepare(
                 'SELECT b.id, o.titre, o.realisateur, COUNT(*) AS view_count
                  FROM historique h
                  INNER JOIN bibliotheque b ON b.id = h.film_id
                  INNER JOIN oeuvres o ON o.id = b.oeuvre_id
-                 WHERE b.foyer_id = ? AND b.statut = ? AND h.user_id = ?
+                 WHERE b.foyer_id = :foyer_id AND b.statut = :collection AND h.user_id = :user_id'
+                . $this->catalogFilmDomainWhereSql() . '
                  GROUP BY h.film_id
                  HAVING view_count > 1
                  ORDER BY view_count DESC, o.titre COLLATE FRENCH_NOCASE ASC
-                 LIMIT ?'
+                 LIMIT :limit'
             );
-            $stmt->bindValue(1, UserContext::currentFoyerId(), PDO::PARAM_INT);
-            $stmt->bindValue(2, LibraryStatut::COLLECTION);
-            $stmt->bindValue(3, UserContext::currentUserId(), PDO::PARAM_INT);
-            $stmt->bindValue(4, max(1, $limit), PDO::PARAM_INT);
-            $stmt->execute();
+            $stmt->bindValue(':limit', $params['limit'], PDO::PARAM_INT);
+            $stmt->execute($params);
 
             return $stmt->fetchAll();
         }
@@ -479,6 +519,55 @@ final class CollectionStats
     private function currentUserId(): int
     {
         return UserContext::currentUserId();
+    }
+
+    /** Jointure historique → bibliothèque → œuvre (catalogue uniquement). */
+    private function catalogFilmHistoryJoinSql(): string
+    {
+        if (!$this->usesPerUserHistory()) {
+            return '';
+        }
+
+        return ' INNER JOIN bibliotheque b ON b.id = h.film_id
+                 INNER JOIN oeuvres o ON o.id = b.oeuvre_id';
+    }
+
+    /**
+     * Limite aux films (exclut jeux, BD, etc.).
+     *
+     * @param array<int|string, mixed> $params
+     */
+    private function filmDomainSql(array &$params): string
+    {
+        if (!CatalogSchema::hasMediaDomainColumn()) {
+            return '';
+        }
+
+        $params['stats_film_domain'] = MediaDomain::FILM;
+
+        return ' AND o.media_domain = :stats_film_domain';
+    }
+
+    /** @return array<string, mixed> */
+    private function catalogFilmListParams(): array
+    {
+        $params = [
+            'foyer_id' => UserContext::currentFoyerId(),
+            'collection' => LibraryStatut::COLLECTION,
+            'user_id' => UserContext::currentUserId(),
+        ];
+        if (CatalogSchema::hasMediaDomainColumn()) {
+            $params['film_domain'] = MediaDomain::FILM;
+        }
+
+        return $params;
+    }
+
+    private function catalogFilmDomainWhereSql(): string
+    {
+        return CatalogSchema::hasMediaDomainColumn()
+            ? ' AND o.media_domain = :film_domain'
+            : '';
     }
 
     /** Jointure historique → bibliothèque (multi-comptes) ou chaîne vide (legacy). */

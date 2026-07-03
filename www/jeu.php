@@ -14,7 +14,9 @@ use Moncine\HistoriqueRepository;
 use Moncine\IgdbConfig;
 use Moncine\LibraryStatut;
 use Moncine\MagazineGameLink;
+use Moncine\MediaDomain;
 use Moncine\MediaDomainGuards;
+use Moncine\SocialRessentiService;
 use Moncine\UserContext;
 use Moncine\View;
 
@@ -47,8 +49,17 @@ $isWishlist = ($game['statut'] ?? '') === LibraryStatut::WISHLIST;
 $listBackUrl = $isWishlist ? '/jeux-envies.php' : '/jeux.php';
 
 $historique = new HistoriqueRepository();
-$noteSur10 = $isWishlist ? null : $historique->getNoteSur10($bibId);
-$noteFoyerMoyenne = $isWishlist ? null : $historique->getFoyerAverageNote($bibId);
+$monRessenti = $isWishlist ? null : $historique->getBestRessentiScore($bibId);
+
+$oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
+$socialRessentis = !$isWishlist && $oeuvreId > 0
+    ? (new SocialRessentiService())->listAroundOeuvre(
+        $oeuvreId,
+        MediaDomain::JEU,
+        $userId,
+        $foyerId
+    )
+    : ['foyer' => [], 'friends' => []];
 
 $saved = isset($_GET['saved']);
 $enrichStatus = null;
@@ -141,8 +152,8 @@ View::render('jeu', [
     'gameId' => $bibId,
     'isWishlist' => $isWishlist,
     'listBackUrl' => $listBackUrl,
-    'noteSur10' => $noteSur10,
-    'noteFoyerMoyenne' => $noteFoyerMoyenne,
+    'monRessenti' => $monRessenti,
+    'socialRessentis' => $socialRessentis,
     'gameCompletions' => $gameCompletions,
     'completionCount' => $completionCount,
     'addedAtLabel' => GameRepository::formatAddedAt((string) ($game['created_at'] ?? '')),

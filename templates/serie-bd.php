@@ -220,9 +220,14 @@
                                     </td>
                                     <td><?= (int) ($tome['annee'] ?? 0) > 0 ? (int) $tome['annee'] : '—' ?></td>
                                     <td><?= Moncine\View::escape((string) ($tome['scenariste'] ?? '')) ?: '—' ?></td>
-                                    <td><?= isset($tome['note_max']) && (int) $tome['note_max'] >= 1
-                                        ? (int) $tome['note_max'] . '/10'
-                                        : '—' ?></td>
+                                    <td><?php if (isset($tome['note_max']) && (int) $tome['note_max'] >= 1):
+                                        $score = (int) $tome['note_max'];
+                                        $showLabel = false;
+                                        $size = 'small';
+                                        require MONCINE_ROOT . '/templates/_ressenti_badge.php';
+                                    else:
+                                        echo '—';
+                                    endif; ?></td>
                                     <td><?= (string) ($tome['read_at_label'] ?? '') !== ''
                                         ? Moncine\View::escape((string) $tome['read_at_label'])
                                         : '—' ?></td>

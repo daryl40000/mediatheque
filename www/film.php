@@ -11,7 +11,9 @@ use Moncine\FilmListContext;
 use Moncine\FilmRepository;
 use Moncine\HistoriqueRepository;
 use Moncine\LibraryStatut;
+use Moncine\MediaDomain;
 use Moncine\OeuvreEanRepository;
+use Moncine\SocialRessentiService;
 use Moncine\TmdbConfig;
 use Moncine\WishlistTargetRepository;
 use Moncine\UserContext;
@@ -38,9 +40,18 @@ if ($film === null) {
 $historique = new HistoriqueRepository();
 $lastViewing = $historique->getLastViewing($id);
 $derniereVue = $lastViewing['date_vue'] ?? null;
-$noteSur10 = $historique->getNoteSur10($id);
-$noteFoyerMoyenne = $historique->getFoyerAverageNote($id);
+$monRessenti = $historique->getBestRessentiScore($id);
 $viewings = $historique->findViewingsByFilm($id);
+
+$oeuvreId = (int) ($film['oeuvre_id'] ?? 0);
+$socialRessentis = $oeuvreId > 0
+    ? (new SocialRessentiService())->listAroundOeuvre(
+        $oeuvreId,
+        MediaDomain::FILM,
+        UserContext::currentUserId(),
+        UserContext::currentFoyerId()
+    )
+    : ['foyer' => [], 'friends' => []];
 
 $enrichStatus = null;
 $enrichMessage = '';
@@ -69,7 +80,6 @@ $filmNav = $repo->getFilmNavigation($id, $filmListContext);
 $catalogEanSuggestion = null;
 $wishlistTargets = [];
 $catalogEansForOeuvre = [];
-$oeuvreId = (int) ($film['oeuvre_id'] ?? 0);
 $isWishlistFilm = ($film['statut'] ?? '') === LibraryStatut::WISHLIST;
 
 if (OeuvreEanRepository::tableExists()) {
@@ -95,8 +105,8 @@ View::render('film', [
     'pageTitle' => (string) $film['titre'],
     'film' => $film,
     'derniereVue' => $derniereVue,
-    'noteSur10' => $noteSur10,
-    'noteFoyerMoyenne' => $noteFoyerMoyenne,
+    'monRessenti' => $monRessenti,
+    'socialRessentis' => $socialRessentis,
     'viewings' => $viewings,
     'saved' => isset($_GET['saved']),
     'saveError' => $saveError,

@@ -5017,3 +5017,189 @@ td .game-linux-badge--plain {
         grid-template-columns: 1fr;
     }
 }
+
+/* ——— Ressentis (5 paliers) ——— */
+.ressenti-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    vertical-align: middle;
+}
+
+.ressenti-badge__icon svg,
+.ressenti-badge__icon .ressenti-icon-img {
+    width: 1.25rem;
+    height: 1.25rem;
+    display: block;
+}
+
+/* Fiche détaillée : 60 px */
+.ressenti-badge--default .ressenti-badge__icon svg,
+.ressenti-badge--default .ressenti-badge__icon .ressenti-icon-img,
+.film-detail__ressenti .ressenti-badge__icon svg,
+.film-detail__ressenti .ressenti-badge__icon .ressenti-icon-img {
+    width: 60px;
+    height: 60px;
+}
+
+/* Listes et vignettes : 30 px */
+.ressenti-badge--small .ressenti-badge__icon svg,
+.ressenti-badge--small .ressenti-badge__icon .ressenti-icon-img,
+.film-ratings .ressenti-badge__icon svg,
+.film-ratings .ressenti-badge__icon .ressenti-icon-img {
+    width: 30px;
+    height: 30px;
+}
+
+.ressenti-icon-img {
+    object-fit: contain;
+}
+
+.ressenti-badge--adore { color: #c62828; }
+.ressenti-badge--aime-bien { color: #2e7d32; }
+.ressenti-badge--bof { color: #f9a825; }
+.ressenti-badge--aime-pas-trop { color: #ef6c00; }
+.ressenti-badge--deteste { color: #5d4037; }
+
+.film-detail__ressenti {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 0 0 1rem;
+}
+
+.film-detail__ressenti-label {
+    font-weight: 600;
+    color: var(--text-muted, #666);
+}
+
+.ressenti-picker {
+    border: none;
+    margin: 0 0 1rem;
+    padding: 0;
+}
+
+.ressenti-picker__legend {
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+
+.ressenti-picker__options {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.ressenti-picker__option {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.35rem 0.6rem;
+    border: 1px solid var(--border-color, #ccc);
+    border-radius: 999px;
+    cursor: pointer;
+    font-size: 0.9rem;
+}
+
+.ressenti-picker__option input {
+    position: absolute;
+    opacity: 0;
+    pointer-events: none;
+}
+
+.ressenti-picker__option:has(input:checked) {
+    border-color: currentColor;
+    box-shadow: 0 0 0 1px currentColor;
+}
+
+.ressenti-picker__icon svg,
+.ressenti-picker__icon .ressenti-icon-img {
+    width: 1.1rem;
+    height: 1.1rem;
+    display: block;
+}
+
+.ressenti-picker__option.ressenti--adore { color: #c62828; }
+.ressenti-picker__option.ressenti--aime-bien { color: #2e7d32; }
+.ressenti-picker__option.ressenti--bof { color: #f9a825; }
+.ressenti-picker__option.ressenti--aime-pas-trop { color: #ef6c00; }
+.ressenti-picker__option.ressenti--deteste { color: #5d4037; }
+
+.ressenti-social-panel {
+    margin: 1.5rem 0;
+}
+
+.ressenti-social-panel__subtitle {
+    font-size: 1rem;
+    margin: 1rem 0 0.5rem;
+}
+
+.ressenti-social-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.ressenti-social-list__item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid var(--border-color, #eee);
+}
+
+.ressenti-social-list__item--self .ressenti-social-list__name {
+    font-weight: 600;
+}
+
+.ressenti-chart__label {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0;
+    min-width: 2rem;
+}
+
+.ressenti-chart__icon svg,
+.ressenti-chart__icon .ressenti-icon-img {
+    width: 2rem;
+    height: 2rem;
+}
+
+.stats-films-columns {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem;
+}
+
+.stats-films-columns__col h2 {
+    margin-top: 0;
+}
+
+.stats-ranked-list__item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.5rem;
+}
+
+.stats-ranked-list__ressenti {
+    margin-left: auto;
+}
+
+.stats-panel .stats-ranked-list .ressenti-badge__icon svg,
+.stats-panel .stats-ranked-list .ressenti-badge__icon .ressenti-icon-img {
+    width: 2rem;
+    height: 2rem;
+}
+
+@media (max-width: 768px) {
+    .stats-films-columns {
+        grid-template-columns: 1fr;
+    }
+}
+
+.tag--ressenti {
+    font-size: 0.85rem;
+}
