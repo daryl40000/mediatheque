@@ -5125,13 +5125,74 @@ td .game-linux-badge--plain {
 .ressenti-picker__option.ressenti--aime-pas-trop { color: #ef6c00; }
 .ressenti-picker__option.ressenti--deteste { color: #5d4037; }
 
-.ressenti-social-panel {
-    margin: 1.5rem 0;
+.ressenti-social-popover {
+    position: relative;
+    display: inline-flex;
 }
 
-.ressenti-social-panel__subtitle {
-    font-size: 1rem;
-    margin: 1rem 0 0.5rem;
+.ressenti-social-popover__trigger {
+    list-style: none;
+    cursor: pointer;
+    font-size: 0.82rem;
+    color: var(--muted);
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    padding: 0.2rem 0.65rem;
+    background: var(--surface, #fff);
+    transition: color 0.15s ease, border-color 0.15s ease;
+}
+
+.ressenti-social-popover__trigger::-webkit-details-marker {
+    display: none;
+}
+
+.ressenti-social-popover__trigger::before {
+    content: "▸ ";
+    font-size: 0.7rem;
+}
+
+.ressenti-social-popover[open] .ressenti-social-popover__trigger::before {
+    content: "▾ ";
+}
+
+.ressenti-social-popover__trigger:hover,
+.ressenti-social-popover[open] .ressenti-social-popover__trigger {
+    color: var(--accent);
+    border-color: rgba(232, 185, 35, 0.45);
+}
+
+.ressenti-social-popover__count {
+    font-variant-numeric: tabular-nums;
+}
+
+.ressenti-social-popover__panel {
+    position: absolute;
+    z-index: 20;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    min-width: min(16rem, 88vw);
+    max-width: min(20rem, 92vw);
+    padding: 0.65rem 0.75rem;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    background: var(--surface, #fff);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.ressenti-social-popover__hint {
+    margin: 0 0 0.5rem;
+    font-size: 0.72rem;
+    color: var(--muted);
+    line-height: 1.4;
+}
+
+.ressenti-social-popover__group {
+    margin: 0.5rem 0 0.25rem;
+    font-size: 0.72rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: var(--muted);
 }
 
 .ressenti-social-list {
@@ -5149,8 +5210,8 @@ td .game-linux-badge--plain {
     border-bottom: 1px solid var(--border-color, #eee);
 }
 
-.ressenti-social-list__item--self .ressenti-social-list__name {
-    font-weight: 600;
+.ressenti-social-list__item:last-child {
+    border-bottom: none;
 }
 
 .ressenti-chart__label {

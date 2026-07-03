@@ -1,13 +1,13 @@
 # Médiathèque
 
-**Version : 0.7.6**
+**Version : 0.7.7**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
 
 **Médiathèque** est l’évolution de **[Monciné](CHANGELOG.md)** : une application web pour gérer **plusieurs types de médias** (films, BD/manga, livres, jeux vidéo, magazines) dans une seule interface, avec des **onglets** et une **couleur par média**.
 
-En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. Depuis **0.7.6** : les notes sur 10 sont remplacées par des **ressentis** (5 paliers avec icônes), sans moyenne foyer. L’onglet **Magazines** gère séries et numéros (PDF, recherche FTS, sujets tests/previews) ; depuis **0.6.0** : **import catalogue ABM**, ajout d’une série depuis le catalogue, retrait d’une série de la bibliothèque, dates de parution normalisées. L’onglet **Jeux** est **pleinement utilisable** depuis **0.5.0** (collection, envies, statistiques, pont magazine), **0.5.3** (fiches catalogue dédiées, autocomplétion à l’ajout), **0.5.4** (remakes, liens extensions/remakes en jaquettes, recherche tolérante), **0.5.5** (enrichissement IGDB : jaquette, titres FR/EN, studio, genres, franchise, modes, thèmes), **0.5.6** (sagas jeux, autocomplétion saga, correctif filtre genre multi-tags) et **0.5.7** (vue **Bibliothèque** films/jeux, option « Garder la jaquette » IGDB, recherche par acronymes). Les onglets **BD** et **Livres** affichent encore « Bientôt disponible ».
+En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. Depuis **0.7.6** : les notes sur 10 sont remplacées par des **ressentis** (5 paliers avec icônes), sans moyenne foyer. L’onglet **Jeux** est **pleinement utilisable** depuis **0.5.0** ; **0.7.7** ajoute le magasin démat **Battle.net** et allège le code catalogue (`GameRepository` refactoré). L’onglet **Magazines** gère séries et numéros (PDF, recherche FTS, sujets tests/previews) ; depuis **0.6.0** : **import catalogue ABM**, ajout d’une série depuis le catalogue, retrait d’une série de la bibliothèque, dates de parution normalisées. L’onglet **Jeux** (suite) : **0.5.3** (fiches catalogue dédiées, autocomplétion à l’ajout), **0.5.4** (remakes, liens extensions/remakes en jaquettes, recherche tolérante), **0.5.5** (enrichissement IGDB : jaquette, titres FR/EN, studio, genres, franchise, modes, thèmes), **0.5.6** (sagas jeux, autocomplétion saga, correctif filtre genre multi-tags) et **0.5.7** (vue **Bibliothèque** films/jeux, option « Garder la jaquette » IGDB, recherche par acronymes). Les onglets **BD** et **Livres** affichent encore « Bientôt disponible ».
 
 | Document | Contenu |
 |----------|---------|
@@ -21,6 +21,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. Depuis 
 | [doc/pont-magazine-jeu.md](doc/pont-magazine-jeu.md) | Pont magazine ↔ jeux : lien catalogue, homonymes, admin |
 | [doc/import-gog.md](doc/import-gog.md) | **Spécification** import bibliothèque GOG (à implémenter) |
 | [ROADMAP.md](ROADMAP.md) | Plan détaillé M0 → M7 |
+| [roadmap-amelioration-code.md](roadmap-amelioration-code.md) | Roadmap qualité / refactor code (phases A–F) |
 | [CHANGELOG.md](CHANGELOG.md) | Journal des versions (Médiathèque + historique Monciné) |
 
 ---

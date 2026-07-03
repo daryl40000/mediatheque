@@ -14,6 +14,7 @@ final class GameEditionIcons
     public const STEAM = 'steam';
     public const GOG = 'gog';
     public const EPIC = 'epic';
+    public const BATTLENET = 'battlenet';
 
     /** @return list<string> clés d’icônes à afficher (ordre stable) */
     public static function iconKeys(array $gameRow): array
@@ -71,6 +72,7 @@ final class GameEditionIcons
             GameDigitalStore::STEAM => self::STEAM,
             GameDigitalStore::GOG => self::GOG,
             GameDigitalStore::EPIC => self::EPIC,
+            GameDigitalStore::BATTLENET => self::BATTLENET,
         ];
     }
 
@@ -82,6 +84,7 @@ final class GameEditionIcons
             self::STEAM => 'Steam',
             self::GOG => 'GOG',
             self::EPIC => 'Epic Games Store',
+            self::BATTLENET => 'Battle.net',
             default => $iconKey,
         };
     }
@@ -95,6 +98,7 @@ final class GameEditionIcons
             self::STEAM => 'steam',
             self::GOG => 'gog',
             self::EPIC => 'epic',
+            self::BATTLENET => 'battlenet',
             default => '',
         };
     }

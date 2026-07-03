@@ -100,15 +100,8 @@
                     <?php endif; ?>
                 </header>
 
-                <?php if (!empty($monRessenti)): ?>
-                    <p class="film-detail__ressenti">
-                        <?php
-                        $score = (int) $monRessenti;
-                        $showLabel = true;
-                        $size = 'default';
-                        require MONCINE_ROOT . '/templates/_ressenti_badge.php';
-                        ?>
-                    </p>
+                <?php if (!$isWishlist || !empty($monRessenti)): ?>
+                    <?php require MONCINE_ROOT . '/templates/_ressenti_fiche_row.php'; ?>
                 <?php endif; ?>
 
                 <dl class="film-facts">
@@ -212,10 +205,6 @@
                 <?php if (!empty($film['synopsis'])): ?>
                     <h2>Synopsis</h2>
                     <p class="film-synopsis"><?= Moncine\View::escape($film['synopsis']) ?></p>
-                <?php endif; ?>
-
-                <?php if (!$isWishlist): ?>
-                    <?php require MONCINE_ROOT . '/templates/_ressenti_social_panel.php'; ?>
                 <?php endif; ?>
 
                 <?php if (!empty($viewings)): ?>

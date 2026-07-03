@@ -2,10 +2,10 @@
 /**
  * Une icône support / magasin (utilisé par _game_edition_icons.php).
  *
- * Image personnalisée : www/assets/img/game-editions/{cd_dvd|disquette|steam|gog|epic}.png
+ * Image personnalisée : www/assets/img/game-editions/{cd_dvd|disquette|steam|gog|epic|battlenet}.png
  * Si le fichier n’existe pas, un SVG simplifié est affiché.
  *
- * @var string $iconKey cd_dvd|disquette|steam|gog|epic
+ * @var string $iconKey cd_dvd|disquette|steam|gog|epic|battlenet
  */
 $iconKey = (string) ($iconKey ?? '');
 $class = 'game-edition-icon game-edition-icon--' . preg_replace('/[^a-z0-9_]+/', '', $iconKey);
@@ -63,6 +63,14 @@ $viewBox = $isVertical ? '0 0 24 30' : '0 0 24 24';
     <?php elseif ($iconKey === Moncine\GameEditionIcons::EPIC): ?>
         <rect x="3" y="3" width="18" height="18" rx="4" fill="#2a2a2a"/>
         <path fill="#fff" d="M7.5 16.5 12 7.5l4.5 9z"/>
+    <?php elseif ($iconKey === Moncine\GameEditionIcons::BATTLENET): ?>
+        <circle cx="12" cy="12" r="10" fill="#15171a"/>
+        <path fill="none" stroke="#00aeff" stroke-width="2.2" stroke-linecap="round"
+              d="M12 5.5c2.8 0 5 2.2 5 5s-2.2 5-5 5"/>
+        <path fill="none" stroke="#00aeff" stroke-width="2.2" stroke-linecap="round"
+              d="M12 8.5c1.1 0 2 .9 2 2s-.9 2-2 2"/>
+        <path fill="none" stroke="#00aeff" stroke-width="2.2" stroke-linecap="round"
+              d="M7 12h10"/>
     <?php endif; ?>
 </svg>
 <?php endif; ?>

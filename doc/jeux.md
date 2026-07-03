@@ -28,7 +28,7 @@ Vue d’ensemble de **toutes** les tables (catalogue, bibliothèque, magazines, 
 | `platforms` | Toutes les plateformes du titre (liste CSV : `pc,ps5`) — migration **051** |
 | `is_digital` | 1 = version démat, 0 = physique |
 | `physical_supports` | Supports physiques possédés (CD/DVD, disquette/cartouche…) |
-| `digital_stores` | Magasins démat (Steam, GOG, Epic…) + URLs |
+| `digital_stores` | Magasins démat (Steam, GOG, Epic, Battle.net…) + URLs |
 | `is_extension` | 1 = extension (DLC / add-on) — migration **044** |
 | `base_game_oeuvre_id` | Jeu de base du catalogue (extensions) |
 | `is_remake` | 1 = remake — migration **045** |
@@ -298,7 +298,7 @@ Méthode : `GameRepository::savePoster()` → `PosterStorage::ensureLocalForOeuv
 | Type | Saisie |
 |------|--------|
 | Physique | CD/DVD, Disquette/cartouche (plusieurs possibles) |
-| Démat PC | Steam, GOG, Epic — plusieurs magasins, lien HTTPS optionnel par magasin |
+| Démat PC | Steam, GOG, Epic, Battle.net — plusieurs magasins, lien HTTPS optionnel par magasin |
 | Démat console | Store imposé (PSN, Xbox, eShop) — **sans** lien personnalisé |
 
 Le panneau démat s’adapte aux **plateformes cochées** (PC vs console) via JavaScript (`initGameEditionFields`, `initGamePlatformFields`).

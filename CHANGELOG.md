@@ -25,6 +25,28 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.7] — 2026-07-03
+
+**Jeux : Battle.net, ressentis sociaux discrets, refactor GameRepository (phase B)**
+
+### Ajouté
+
+- **Jeux PC — magasin Battle.net** : choix démat, icône `battlenet.png`, filtre liste.
+- **Ressentis sociaux discrets** : popover « Foyer et amis » à côté du ressenti personnel (films, jeux, BD) via `_ressenti_fiche_row.php`.
+- **Refactor jeux (phase B)** : `GameLibraryQuery`, `GameCatalogUpdater`, `GameCatalogCreator`, `GameLibraryAttach`, `GamePosterService` — `GameRepository` réduit à ~540 lignes.
+- **Tests** : `GameCatalogUpdaterTest`, test Battle.net dans `GameEditionTest`.
+- **Doc** : [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code, phase B pilote jeux).
+
+### Modifié
+
+- Fiches film / jeu / BD : retrait du panneau volumineux « Ressentis autour de cette œuvre ».
+
+### Corrigé
+
+- **Fiche jeu** : erreur de syntaxe PHP (`endif` en trop dans `templates/jeu.php`).
+
+---
+
 ## [0.7.6] — 2026-06-16
 
 **Ressentis : remplacement des notes 1–10 et suppression de la moyenne foyer**

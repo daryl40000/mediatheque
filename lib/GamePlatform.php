@@ -122,7 +122,7 @@ final class GamePlatform
         return GamePlatformRegistry::isConsole($platform);
     }
 
-    /** PC : choix Steam / GOG / Epic avec liens magasin. */
+    /** PC : choix Steam / GOG / Epic / Battle.net avec liens magasin. */
     public static function usesPcDigitalStores(string $platform): bool
     {
         return GamePlatformRegistry::usesPcDigitalStores($platform);

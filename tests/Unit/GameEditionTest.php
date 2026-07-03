@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Moncine\Tests\Unit;
 
 use Moncine\GameDigitalStore;
+use Moncine\GameEditionIcons;
 use Moncine\GamePhysicalSupport;
 use Moncine\GamePlatform;
 use PHPUnit\Framework\TestCase;
@@ -44,6 +45,23 @@ final class GameEditionTest extends TestCase
         $this->assertCount(2, $stores);
         $this->assertSame('steam', $stores[0]['store']);
         $this->assertStringContainsString('steampowered.com', $stores[0]['url']);
+    }
+
+    public function testBattlenetStoreNormalizeAndIcon(): void
+    {
+        $json = GameDigitalStore::serializeList([
+            ['store' => 'battle.net', 'url' => 'https://battle.net/shop/fr/game/example'],
+        ]);
+        $stores = GameDigitalStore::parseStoredList($json);
+        $this->assertCount(1, $stores);
+        $this->assertSame(GameDigitalStore::BATTLENET, $stores[0]['store']);
+        $this->assertSame('Battle.net', $stores[0]['label']);
+
+        $keys = GameEditionIcons::iconKeys(['digital_stores' => $json]);
+        $this->assertSame([GameDigitalStore::BATTLENET], $keys);
+
+        $url = GameEditionIcons::iconImageUrl(GameEditionIcons::BATTLENET);
+        $this->assertStringContainsString('battlenet.', $url);
     }
 
     public function testConsoleDigitalStoreWithoutUrl(): void

@@ -125,15 +125,8 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                     </p>
                 </header>
 
-                <?php if (!$isWishlist && !empty($monRessenti)): ?>
-                    <p class="film-detail__ressenti">
-                        <?php
-                        $score = (int) $monRessenti;
-                        $showLabel = true;
-                        $size = 'default';
-                        require MONCINE_ROOT . '/templates/_ressenti_badge.php';
-                        ?>
-                    </p>
+                <?php if (!$isWishlist || !empty($monRessenti)): ?>
+                    <?php require MONCINE_ROOT . '/templates/_ressenti_fiche_row.php'; ?>
                 <?php endif; ?>
 
                 <dl class="film-facts">
@@ -176,13 +169,7 @@ if ($linuxBadge === '' && $linuxNotSupported) {
                         <dt><?= $isWishlist ? 'Envie ajoutée le' : 'Ajouté le' ?></dt>
                         <dd><?= Moncine\View::escape($addedAtLabel) ?></dd>
                     <?php endif; ?>
-
-                    <?php endif; ?>
                 </dl>
-
-                <?php if (!$isWishlist): ?>
-                    <?php require MONCINE_ROOT . '/templates/_ressenti_social_panel.php'; ?>
-                <?php endif; ?>
 
                 <?php require MONCINE_ROOT . '/templates/_game_editions_display.php'; ?>
 

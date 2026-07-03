@@ -99,15 +99,8 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
                     </p>
                 </header>
 
-                <?php if (!$isWishlist && !empty($monRessenti)): ?>
-                    <p class="film-detail__ressenti">
-                        <?php
-                        $score = (int) $monRessenti;
-                        $showLabel = true;
-                        $size = 'default';
-                        require MONCINE_ROOT . '/templates/_ressenti_badge.php';
-                        ?>
-                    </p>
+                <?php if (!$isWishlist || !empty($monRessenti)): ?>
+                    <?php require MONCINE_ROOT . '/templates/_ressenti_fiche_row.php'; ?>
                 <?php endif; ?>
 
                 <dl class="film-facts">
@@ -150,10 +143,6 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
                         <h2>Description</h2>
                         <p><?= nl2br(Moncine\View::escape((string) $album['synopsis'])) ?></p>
                     </section>
-                <?php endif; ?>
-
-                <?php if (!$isWishlist): ?>
-                    <?php require MONCINE_ROOT . '/templates/_ressenti_social_panel.php'; ?>
                 <?php endif; ?>
 
                 <?php if ($isWishlist): ?>

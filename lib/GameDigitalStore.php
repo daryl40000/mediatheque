@@ -1,6 +1,6 @@
 <?php
 /**
- * Éditions dématérialisées : magasins PC (Steam, GOG, Epic) ou store console.
+ * Éditions dématérialisées : magasins PC (Steam, GOG, Epic, Battle.net) ou store console.
  */
 
 declare(strict_types=1);
@@ -12,6 +12,7 @@ final class GameDigitalStore
     public const STEAM = 'steam';
     public const GOG = 'gog';
     public const EPIC = 'epic';
+    public const BATTLENET = 'battlenet';
     public const PSN = 'psn';
     public const XBOX = 'xbox';
     public const ESHOP = 'eshop';
@@ -23,6 +24,7 @@ final class GameDigitalStore
             self::STEAM => 'Steam',
             self::GOG => 'GOG',
             self::EPIC => 'Epic Games Store',
+            self::BATTLENET => 'Battle.net',
         ];
     }
 
@@ -215,6 +217,7 @@ final class GameDigitalStore
             self::STEAM => self::label(self::STEAM),
             self::GOG => self::label(self::GOG),
             self::EPIC => self::label(self::EPIC),
+            self::BATTLENET => self::label(self::BATTLENET),
             self::PSN => self::label(self::PSN),
             self::XBOX => self::label(self::XBOX),
             self::ESHOP => self::label(self::ESHOP),
@@ -283,6 +286,7 @@ final class GameDigitalStore
             'steam', 'steam store' => self::STEAM,
             'gog', 'gog.com', 'good old games' => self::GOG,
             'epic', 'epic games', 'epic games store' => self::EPIC,
+            'battlenet', 'battle.net', 'battle net' => self::BATTLENET,
             'psn', 'playstation store', 'playstation' => self::PSN,
             'xbox', 'microsoft store', 'xbox store' => self::XBOX,
             'eshop', 'nintendo eshop', 'eshop nintendo' => self::ESHOP,
