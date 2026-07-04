@@ -25,6 +25,32 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.8] — 2026-07-04
+
+**Onglets Musique et Livres (placeholder), refactor BD et magazines (phase B), navigation onglets**
+
+### Ajouté
+
+- **Onglet Musique** (couleur ambre) : pages placeholder `/musique.php` et `/musique-envies.php` (phase M8 — après les livres).
+- **Pages Livres dédiées** : `/livres.php` et `/livres-envies.php` (remplace la redirection vers `/films.php`).
+- **Spécification import musique** : [doc/import-musique.md](doc/import-musique.md) (vinyles, CD, schéma `oeuvre_musique`).
+- **Refactor BD (phase B pilote 2)** : `BdCatalogSql`, `BdTomeOrdre`, `BdCatalogWriter`, `BdLibraryQuery`, `BdCatalogUpdater`, `BdCatalogCreator`, `BdLibraryAttach`, `BdPosterService` — `BdRepository` réduit à ~514 lignes.
+- **Refactor magazines (phase B pilote 3)** : 11 classes extraites (`MagazineLibraryQuery`, `MagazinePdfService`, …) — `MagazineRepository` réduit à ~481 lignes.
+- **Tests** : `BdTomeOrdreTest`, cas navigation Musique/Livres dans `MediaDomainTest`.
+- **Seed catalogue** : `install_seed/moncine-catalogue-2026-07-03.csv`.
+
+### Modifié
+
+- `MediaDomain` : domaine `musique`, thème ambre, chemins collection/envies.
+- `templates/media-domain-soon.php` : liste dynamique des onglets déjà disponibles.
+- `roadmap-amelioration-code.md` : pilotes 2 et 3 phase B cochés.
+
+### Corrigé
+
+- **Navigation onglets** : depuis Musique ou Livres, un clic sur un onglet actif (Jeux, BD, Films…) ouvre la bonne collection au lieu de rester sur la page « bientôt » (`MediaDomainGuards::isPlaceholderCollectionPath`).
+
+---
+
 ## [0.7.7] — 2026-07-03
 
 **Jeux : Battle.net, ressentis sociaux discrets, refactor GameRepository (phase B)**

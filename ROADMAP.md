@@ -1,27 +1,28 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.7.0** (2026-06-16)  
-**Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md)
+**Version actuelle : 0.7.8** (2026-07-04)  
+**Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
 
 ## Vision
 
-Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et magazines, avec le **même parcours** (catalogue → collection → envies → notes) et un **changement de contexte global** via des **onglets colorés**.
+Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyles et CD)**, jeux vidéo et magazines, avec le **même parcours** (catalogue → collection → envies → notes) et un **changement de contexte global** via des **onglets colorés**.
 
 **Principe :** un champ `media_domain` sur le catalogue (`oeuvres`) filtre données et écrans ; les spécificités de chaque média s’ajoutent par phases sans réécrire toute l’app.
 
 ---
 
-## Où en est-on ? (synthèse 0.6.5)
+## Où en est-on ? (synthèse 0.7.8)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
-| **Films** | ✅ Production | 0.4.4+ → **0.6.3** | Complet (TMDB, autocomplétion, fiche `/oeuvre.php`, **vue Bibliothèque**) |
-| **Jeux** | ✅ Utilisable | 0.5.0 → **0.6.5** | Complet (extensions, remakes, IGDB, sagas, pont magazine, **prêts physiques**, **multi-plateformes**, formulaires bibliothèque) |
-| **Magazines** | ✅ **Complet (M5)** | 0.2.x → **0.6.1** | Import ABM, ajout série/numéro catalogue, retrait série, profil public, export JSON |
-| **BD / Manga** | ⏸️ Repoussé | — | — |
-| **Livres** | ⏸️ Repoussé | — | — |
+| **Films** | ✅ Production | 0.4.4+ → **0.7.6** | Complet (TMDB, sagas, quiz, partage, **ressentis**) |
+| **Jeux** | ✅ Utilisable | 0.5.0 → **0.7.7** | Complet (IGDB, sagas, prêts, multi-plateformes, Battle.net, propositions catalogue) |
+| **Magazines** | ✅ Complet (M5) | 0.2.x → **0.7.4** | Import ABM, PDF, pont jeu, maintenance doublons |
+| **BD / Manga** | 🔄 **En cours (M2)** | **0.7.2** → **0.7.8** | Collection, envies, partage, profil public, impression ; import CSV à faire |
+| **Livres** | ⏳ Placeholder (M3) | **0.7.8** | Onglet + page « bientôt » (`/livres.php`) |
+| **Musique** | ⏳ Placeholder (M8) | **0.7.8** | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles et CD physiques |
 
 ### Phases (suivi)
 
@@ -29,17 +30,52 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 |-------|--------|----------------|-------|
 | **M0** Fondations multi-médias | ✅ Livré | 0.1.0 | — |
 | **M1** Stabilisation films | ✅ Livré | 0.4.4 | Maintenance seulement |
-| **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.5.7** | Polish non bloquant (voir M4) |
+| **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.7.7** | Import GOG (voir M4) |
 | **M5** Magazines | ✅ **Livré** | **0.6.1** | Maintenance ; polish ponctuel |
 | **Pont** Magazines ↔ Jeux | ✅ Livré | 0.6.3 | — |
-| **M2** BD / Manga | ⏸️ Repoussé | 0.6.x+ (indicatif) | Après M5 stabilisée |
-| **M3** Livres | ⏸️ Repoussé | 0.7.x+ (indicatif) | Après M2 ou en parallèle |
-| **M6** Transversal | ⏳ À faire | 0.9.0 | Après 3 domaines alignés |
+| **M2** BD / Manga | 🔄 **En cours** | **0.7.2**–**0.7.6** | Import CSV ; clôture M2 |
+| **M3** Livres | ⏳ À faire | 0.8.x (indicatif) | Après M2 stabilisée |
+| **M8** Musique (vinyles, CD) | ⏳ À faire | 0.8.x+ (indicatif) | **Après M3** |
+| **M6** Transversal | ⏳ À faire | 0.9.0 | Après domaines alignés |
 | **M7** Identité & polish | ⏳ À faire | 1.0.0 | Fin |
 
 ---
 
 ## Prochaines étapes (par priorité)
+
+### 🔜 **0.8.0** — clôture M2 BD (import CSV)
+
+- Import catalogue BD depuis CSV ; stabilisation M2 avant M3 Livres.
+
+### ✅ **0.7.8** — Musique/Livres placeholder, refactor BD et magazines (2026-07-04)
+
+- Onglet **Musique** (ambre) : `/musique.php`, `/musique-envies.php` — page « bientôt » (phase M8 après les livres).
+- Pages **Livres** dédiées : `/livres.php`, `/livres-envies.php`.
+- **Phase B qualité code** : découpage `BdRepository` (~514 lignes) et `MagazineRepository` (~481 lignes).
+- **Doc** : [doc/import-musique.md](doc/import-musique.md).
+- **Fix** : navigation depuis onglets placeholder vers Jeux/BD/Films… (`MediaDomainGuards`).
+
+### ✅ **0.7.7** — Battle.net, ressentis sociaux discrets, refactor jeux (2026-07-03)
+
+- Magasin démat **Battle.net** ; popover ressentis foyer/amis sur les fiches.
+- Refactor `GameRepository` (phase B qualité code) : ~540 lignes.
+
+### ✅ **0.7.6** — ressentis (remplace notes 1–10) (2026-06-16)
+
+- 5 paliers de ressenti (films, jeux, BD) ; migration `057_ressenti_notes.sql`.
+- Statistiques films : coups de cœur / moins aimés ; suppression note moyenne foyer.
+
+### ✅ **0.7.5** — BD : modifier série, repli couverture tome 1 (2026-06-16)
+
+- `/modifier-serie-bd.php` ; `SeriesPoster` (repli tome 1 / numéro 1 magazine).
+
+### ✅ **0.7.4** — magazines HS/doublons, BD tome 0, refactor films/jeux (2026-06-16)
+
+- Maintenance doublons magazines ; tome 0 et hors-série BD ; `FilmBulkActionService`.
+
+### ✅ **0.7.2**–**0.7.3** — BD : partage, profil public, impression, couvertures URL (2026-06-16)
+
+- Parité magazines/jeux : `/partage-bd.php`, profil public, `/imprimer-serie-bd.php`, couverture par URL.
 
 ### ✅ **0.7.0** — partage visiteur : recherche jeux et colonnes historique (2026-06-16)
 
@@ -135,34 +171,41 @@ Une **seule application** pour gérer films, BD/manga, livres, jeux vidéo et ma
 5. ~~**Recherche globale**~~ — titre catalogue jeu pour sujets reliés
 6. ~~Documenter les cas ambigus~~ — `doc/pont-magazine-jeu.md`
 
-### Priorité 2 — Polish **M4** (non bloquant)
+### Priorité 2 — Clôturer **M2 BD** puis **M3 Livres**
 
-7. Plateformes configurables en admin (au lieu de la liste fixe `GamePlatform`).
-8. Flag « non prêtable » pour exemplaires dématérialisés.
+7. **M2** — import CSV BD (`doc/import-bd.md`) ; polish restant (découpage `BdRepository`).
+8. **M3 Livres** — schéma `oeuvre_livre`, ISBN, collection papier.
 
-### Priorité 4 — **M6** Transversal (films + jeux + magazines alignés)
+### Priorité 3 — Polish **M4** (non bloquant)
 
-9. Statistiques par domaine (libellés « vu » / « joué » / « lu »).
-10. Partage visiteur avec paramètre `media_domain`.
-11. Import / export CSV par domaine.
-12. Prêts : règles par type de média (physique uniquement ; pas de prêt PDF/démat).
+9. **Import bibliothèque GOG** — voir [doc/import-gog.md](doc/import-gog.md) (catalogue existant uniquement).
 
-### Priorité 5 — Nouveaux onglets **M2 / M3**
+### Priorité 4 — **M8 Musique** (après M3 Livres)
 
-13. **M2 BD/Manga** — schéma `oeuvre_bd`, formulaires, collection.
-14. **M3 Livres** — schéma `oeuvre_livre`, ISBN.
+10. Bibliothèque **physique** : vinyles et CD (pas de streaming).
+11. Schéma `oeuvre_musique` : artiste, album, année, label, supports (vinyle 33/45, CD…).
+12. Même parcours que les autres médias : catalogue → collection → envies → ressentis → prêts physiques.
+
+### Priorité 5 — **M6** Transversal (domaines alignés)
+
+13. Statistiques par domaine (libellés « vu » / « joué » / « lu » / « écouté »).
+14. Partage visiteur avec paramètre `media_domain` unifié.
+15. Import / export CSV par domaine.
+16. Prêts : règles par type de média (physique uniquement ; pas de prêt PDF/démat).
 
 ### Priorité 6 — **M7 → 1.0.0**
 
-15. Documentation par média, déploiement, polish identité (namespace `Moncine\` conservé jusqu’alors).
+17. Documentation par média, déploiement, polish identité (namespace `Moncine\` conservé jusqu’alors).
 
 ```mermaid
 flowchart LR
-  A[0.6.1 M5 ✅] --> B[Pont rétroactif]
-  B --> C[Polish M4]
-  C --> D[M6 transversal]
-  D --> E[M2 BD / M3 Livres]
-  E --> F[M7 v1.0.0]
+  A[M5 Magazines ✅] --> B[Pont rétroactif ✅]
+  B --> C[M2 BD en cours 🔄]
+  C --> D[M3 Livres]
+  D --> E[M8 Musique]
+  E --> F[Polish M4 GOG]
+  F --> G[M6 transversal]
+  G --> H[M7 v1.0.0]
 ```
 
 ---
@@ -170,17 +213,17 @@ flowchart LR
 ## Architecture cible
 
 ```text
-┌─────────────────────────────────────────────────────────────┐
-│  Onglets : Films │ BD │ Livres │ Jeux │ Magazines           │
-│  (session + thème CSS --media-accent)                       │
-└──────────────────────────┬──────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────┐
+│  Onglets : Films │ BD │ Livres │ Musique │ Jeux │ Magazines          │
+│  (session + thème CSS --media-accent)                                │
+└──────────────────────────┬───────────────────────────────────────────┘
                            │
      ┌─────────────────────┼─────────────────────┐
      ▼                     ▼                     ▼
   Catalogue            Ma collection          Mes envies
   (oeuvres)            (bibliotheque)       (wishlist)
      │                     │                     │
-     └──────── media_domain = film | bd | … ────┘
+     └──────── media_domain = film | bd | livre | musique | jeu | magazine
                            │
      Foyers, comptes, amis, prêts, notifications… (commun)
 ```
@@ -191,14 +234,14 @@ Comptes, foyers, envies personnelles et de groupe, catalogue partagé, soumissio
 
 ### Spécifique par média
 
-| Élément | Films | BD/Manga | Livres | Jeux | Magazines |
-|---------|-------|----------|--------|------|-----------|
-| Enrichissement | TMDB / OMDB | Manuel (+ API plus tard) | ISBN / Open Library | Manuel (IGDB plus tard) | — |
-| Métadonnées clés | Réalisateur, acteurs | Série, tome, auteurs | Auteur, ISBN | Plateforme, éditeur | N°, parution |
-| Support exemplaire | DVD, Blu-ray… | Album, relié… | Broché, poche… | Boîte, démat… | **PDF** |
-| Outil dédié | Quiz « Ce soir » | — | — | — | Lecteur + recherche PDF |
-| Lien inter-domaines | — | — | — | Tests magazine → fiche jeu | Sujets → catalogue jeu |
-| Sagas | Sagas films | Séries BD | Collections | Franchises + extensions | Titre de revue |
+| Élément | Films | BD/Manga | Livres | Musique | Jeux | Magazines |
+|---------|-------|----------|--------|---------|------|-----------|
+| Enrichissement | TMDB / OMDB | Manuel (+ API plus tard) | ISBN / Open Library | Manuel (+ Discogs plus tard) | IGDB | — |
+| Métadonnées clés | Réalisateur, acteurs | Série, tome, auteurs | Auteur, ISBN | Artiste, album, label | Plateforme, éditeur | N°, parution |
+| Support exemplaire | DVD, Blu-ray… | Album, relié… | Broché, poche… | Vinyle, CD… | Boîte, démat… | **PDF** |
+| Outil dédié | Quiz « Ce soir » | — | — | — | — | Lecteur + recherche PDF |
+| Lien inter-domaines | — | — | — | — | Tests magazine → fiche jeu | Sujets → catalogue jeu |
+| Sagas | Sagas films | Séries BD | Collections | Discographie / artiste | Franchises + extensions | Titre de revue |
 
 ### Palette couleurs (M0)
 
@@ -207,6 +250,7 @@ Comptes, foyers, envies personnelles et de groupe, catalogue partagé, soumissio
 | Films | `#adb5bd` (gris) |
 | BD / Manga | `#f06292` (rose) |
 | Livres | `#64b5f6` (bleu) |
+| Musique | `#ffca28` (ambre) |
 | Jeux | `#9575cd` (violet) |
 | Magazines | `#4db6ac` (vert d’eau) |
 
@@ -262,11 +306,11 @@ Détail complet : archives QA dans l’historique git avant cette réorganisatio
 
 ### Polish restant (non bloquant)
 
-| Tâche | Cible |
-|-------|-------|
-| **Import bibliothèque GOG** (catalogue existant uniquement, confirmation utilisateur, tag GOG) | 0.6.x — voir [doc/import-gog.md](doc/import-gog.md) |
-| Plateformes configurables (admin) | 0.5.x |
-| Flag « non prêtable » si démat | 0.5.x |
+| Tâche | Cible | Statut |
+|-------|-------|--------|
+| **Import bibliothèque GOG** (catalogue existant uniquement) | 0.7.x — voir [doc/import-gog.md](doc/import-gog.md) | ⏳ |
+| Plateformes configurables (admin) | 0.6.5 | ✅ |
+| Flag « non prêtable » si démat | migration 049 | ✅ |
 
 ---
 
@@ -314,42 +358,76 @@ Relier optionnellement un sujet magazine à une fiche jeu catalogue (`magazine_s
 
 ---
 
-## M2 — BD / Manga ⏸️ Repoussé
+## M2 — BD / Manga 🔄 En cours
 
-**Version visée (indicatif) :** 0.6.x+
+**Documentation :** [doc/bd.md](doc/bd.md)  
+**Version visée (clôture) :** 0.8.0 (indicatif)
+
+### Livré (0.7.2 → 0.7.6)
+
+| Tâche | Version |
+|-------|---------|
+| Schéma `oeuvre_bd`, séries, tomes, collection, envies | 0.7.x |
+| Profil public, partage visiteur, liste imprimable | **0.7.2** |
+| Couverture par URL, possession à l’ajout | **0.7.3** |
+| Tome 0, hors-série, modifier série | **0.7.4**–**0.7.5** |
+| Ressentis (comme films/jeux) | **0.7.6** |
+
+### Reste à faire
 
 | Tâche | Détail |
 |-------|--------|
-| Schéma | Table `oeuvre_bd` : série, tome, scénariste, dessinateur, éditeur |
-| Formulaires | Ajout / édition ; masquer champs film/TMDB |
-| Collection | `media_domain = bd` |
-| Import | `doc/import-bd.md` |
+| Import CSV | `doc/import-bd.md` |
+| Polish code | Découpage `BdRepository` (phase B qualité code) |
 
-**Critère de sortie :** onglet BD utilisable sans API externe.
+**Critère de sortie :** onglet BD utilisable sans API externe — **quasi atteint** ; import CSV pour clôturer.
 
 ---
 
-## M3 — Livres ⏸️ Repoussé
+## M3 — Livres ⏳ À faire
 
-**Version visée (indicatif) :** 0.7.x+
+**Version visée (indicatif) :** 0.8.x
 
 | Tâche | Détail |
 |-------|--------|
-| Schéma | `oeuvre_livre` : auteur(s), ISBN, pages, éditeur |
+| Schéma | Table `oeuvre_livre` : auteur(s), ISBN, pages, éditeur |
 | Stockage | `MediaStorage::SUBDIR_BOOKS` |
 | Import | `doc/import-livres.md` |
+| Onglet | Placeholder `/livres.php` (déjà en place, **0.7.8**) |
 
 **Critère de sortie :** livres papier en collection.
 
 ---
 
+## M8 — Musique (vinyles, CD) ⏳ À faire — après M3
+
+**Version visée (indicatif) :** 0.8.x+ (après livres)
+
+Gestion d’une **bibliothèque physique** : disques vinyle (33 tours, 45 tours, maxi…) et **CD**, sans lecture ni streaming intégré.
+
+| Tâche | Détail |
+|-------|--------|
+| Onglet placeholder | `/musique.php` — **livré en 0.7.8** (couleur ambre, page « bientôt ») |
+| Schéma | Table `oeuvre_musique` : artiste, album, année, label, genre ; lien éventuel discographie |
+| Supports exemplaire | Vinyle, CD, cassette (optionnel) ; pas de fichier numérique |
+| Collection | `media_domain = musique` — même parcours que films/BD |
+| Catalogue | Saisie manuelle ; enrichissement Discogs / MusicBrainz **plus tard** |
+| Fonctions | Collection, envies, ressentis, prêts **physiques**, partage visiteur, listes imprimables |
+| Import | [doc/import-musique.md](doc/import-musique.md) |
+
+**Critère de sortie :** vinyles et CD en collection avec prêts physiques, sans API obligatoire.
+
+**Hors périmètre v1 :** streaming (Spotify, etc.), fichiers MP3/FLAC, gestion des playlists.
+
+---
+
 ## M6 — Fonctions transverses ⏳
 
-**Version visée :** 0.9.0 — après films, jeux et magazines alignés.
+**Version visée :** 0.9.0 — après films, jeux, magazines, BD, livres et musique alignés.
 
 | Module | Adaptation |
 |--------|------------|
-| Statistiques | Filtre domaine ; libellés selon média |
+| Statistiques | Filtre domaine ; libellés selon média (vu / joué / lu / écouté) |
 | Prêts | Physique uniquement ; pas de prêt PDF/démat |
 | Partage | Paramètre domaine dans le lien |
 | Import / export | Schéma CSV par domaine |
@@ -391,17 +469,17 @@ Relier optionnellement un sujet magazine à une fiche jeu catalogue (`magazine_s
 ```mermaid
 flowchart TB
   M0[M0 ✅ 0.1.0] --> M1[M1 ✅ Films]
-  M1 --> M4[M4 ✅ Jeux 0.5.4]
-  M1 --> M5[M5 🔄 Magazines]
+  M1 --> M4[M4 ✅ Jeux 0.7.7]
+  M1 --> M5[M5 ✅ Magazines]
   M4 --> XPont[Pont ↔ jeu ✅]
   M5 --> XPont
-  XPont --> M6[M6 Transversal]
+  M1 --> M2[M2 🔄 BD]
+  M2 --> M3[M3 Livres]
+  M3 --> M8[M8 Musique]
+  M8 --> M6[M6 Transversal]
   M4 --> M6
   M5 --> M6
-  M1 --> M2[M2 BD repoussé]
-  M1 --> M3[M3 Livres repoussé]
   M2 --> M6
-  M3 --> M6
   M6 --> M7[M7 v1.0.0]
 ```
 
@@ -419,16 +497,16 @@ flowchart TB
 
 ---
 
-## Estimation (indicative, mise à jour 0.5.4)
+## Estimation (indicative, mise à jour 0.7.8)
 
 | Phase | Effort restant | Version |
 |-------|----------------|---------|
-| M0, M1, M4 (cœur) + consolidation **v0.5.4** | ✅ fait | 0.1.0 → **0.5.4** |
-| M5 fin + parité catalogue | ~2 semaines | **0.6.0** (priorité actuelle) |
-| Pont rétroactif | ~1 semaine | 0.6.0 |
-| Polish M4 | quelques jours | 0.5.x |
+| M0, M1, M4, M5, Pont | ✅ fait | 0.1.0 → **0.7.8** |
+| M2 clôture (import CSV BD) | ~1 semaine | **0.8.0** |
+| M3 Livres | ~2 semaines | 0.8.x |
+| M8 Musique | ~2 semaines | 0.8.x+ |
+| Polish M4 (GOG) | quelques jours | 0.7.x |
 | M6 | 2–3 semaines | 0.9.0 |
-| M2 + M3 | 3–4 semaines | 0.6.x–0.8.x |
 | M7 | 1 semaine | 1.0.0 |
 
 ---
@@ -441,11 +519,12 @@ flowchart TB
 | Collection films | `lib/FilmRepository.php`, `lib/CatalogFilmRepository.php` |
 | Jeux (M4) | `lib/GameRepository.php`, `lib/GameListFilter.php`, `lib/GameCollectionStats.php`, `doc/jeux.md` |
 | Fiches catalogue jeux | `www/oeuvre-jeu.php`, `templates/oeuvre-jeu.php` |
-| Magazines (M5) | `lib/MagazineRepository.php`, `doc/magazines.md` |
+| BD (M2) | `lib/BdRepository.php`, `lib/BdLibraryQuery.php`, … |
+| Magazines (M5) | `lib/MagazineRepository.php`, `lib/MagazineLibraryQuery.php`, `doc/magazines.md` |
 | Fiches catalogue magazines | `www/oeuvre-magazine.php`, `templates/oeuvre-magazine.php` |
 | Pont magazine ↔ jeu | `lib/MagazineGameLink.php`, `lib/MagazineSubjectRepository.php` |
 | Catalogue admin | `lib/CatalogAdmin.php`, `lib/View.php` (`catalogOeuvreDetailUrl`) |
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.7.0** — 2026-06-16 (partage visiteur : filtres jeux, colonnes notes/vues, recherche unifiée).*
+*Dernière mise à jour : **0.7.8** — 2026-07-04 (Musique/Livres placeholder, refactor BD et magazines phase B, fix navigation onglets).*

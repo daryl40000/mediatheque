@@ -9,6 +9,14 @@ namespace Moncine;
 
 final class MediaDomainGuards
 {
+    /** Pages « bientôt disponible » (domaines pas encore implémentés). */
+    private const PLACEHOLDER_COLLECTION_PATHS = [
+        '/livres.php',
+        '/livres-envies.php',
+        '/musique.php',
+        '/musique-envies.php',
+    ];
+
     /** Pages accessibles uniquement en onglet Films (quiz, sagas…). */
     private const FILM_ONLY_PATHS = [
         '/quiz.php',
@@ -160,6 +168,11 @@ final class MediaDomainGuards
         return in_array(self::normalizePath($path), self::BD_COLLECTION_PATHS, true);
     }
 
+    public static function isPlaceholderCollectionPath(string $path): bool
+    {
+        return in_array(self::normalizePath($path), self::PLACEHOLDER_COLLECTION_PATHS, true);
+    }
+
     private static function normalizePath(string $path): string
     {
         $path = parse_url($path, PHP_URL_PATH) ?: $path;
@@ -186,6 +199,10 @@ final class MediaDomainGuards
             self::isFilmOnlyPath($pathOnly)
             || !MediaDomain::isCollectionImplemented($targetDomain)
         ) {
+            return MediaDomain::collectionPath($targetDomain);
+        }
+
+        if (self::isPlaceholderCollectionPath($pathOnly)) {
             return MediaDomain::collectionPath($targetDomain);
         }
 

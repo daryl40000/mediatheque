@@ -1,13 +1,13 @@
 # Médiathèque
 
-**Version : 0.7.7**
+**Version : 0.7.8**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
 
-**Médiathèque** est l’évolution de **[Monciné](CHANGELOG.md)** : une application web pour gérer **plusieurs types de médias** (films, BD/manga, livres, jeux vidéo, magazines) dans une seule interface, avec des **onglets** et une **couleur par média**.
+**Médiathèque** est l’évolution de **[Monciné](CHANGELOG.md)** : une application web pour gérer **plusieurs types de médias** (films, BD/manga, livres, musique, jeux vidéo, magazines) dans une seule interface, avec des **onglets** et une **couleur par média**.
 
-En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. Depuis **0.7.6** : les notes sur 10 sont remplacées par des **ressentis** (5 paliers avec icônes), sans moyenne foyer. L’onglet **Jeux** est **pleinement utilisable** depuis **0.5.0** ; **0.7.7** ajoute le magasin démat **Battle.net** et allège le code catalogue (`GameRepository` refactoré). L’onglet **Magazines** gère séries et numéros (PDF, recherche FTS, sujets tests/previews) ; depuis **0.6.0** : **import catalogue ABM**, ajout d’une série depuis le catalogue, retrait d’une série de la bibliothèque, dates de parution normalisées. L’onglet **Jeux** (suite) : **0.5.3** (fiches catalogue dédiées, autocomplétion à l’ajout), **0.5.4** (remakes, liens extensions/remakes en jaquettes, recherche tolérante), **0.5.5** (enrichissement IGDB : jaquette, titres FR/EN, studio, genres, franchise, modes, thèmes), **0.5.6** (sagas jeux, autocomplétion saga, correctif filtre genre multi-tags) et **0.5.7** (vue **Bibliothèque** films/jeux, option « Garder la jaquette » IGDB, recherche par acronymes). Les onglets **BD** et **Livres** affichent encore « Bientôt disponible ».
+En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. Depuis **0.7.6** : les notes sur 10 sont remplacées par des **ressentis** (5 paliers avec icônes), sans moyenne foyer. L’onglet **Jeux** est **pleinement utilisable** depuis **0.5.0** ; **0.7.7** ajoute le magasin démat **Battle.net** et allège le code catalogue (`GameRepository` refactoré). **0.7.8** ajoute les onglets placeholder **Livres** et **Musique** (vinyles/CD), refactorise `BdRepository` et `MagazineRepository` (phase B qualité code), et corrige la navigation entre onglets. L’onglet **Magazines** gère séries et numéros (PDF, recherche FTS, sujets tests/previews) ; depuis **0.6.0** : **import catalogue ABM**, ajout d’une série depuis le catalogue, retrait d’une série de la bibliothèque, dates de parution normalisées. L’onglet **BD** est **en cours** (collection, envies, partage) ; **Livres** et **Musique** affichent « Bientôt disponible ».
 
 | Document | Contenu |
 |----------|---------|
@@ -19,6 +19,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. Depuis 
 | [doc/jeux.md](doc/jeux.md) | Jeux vidéo : collection, pont magazine, Linux, recherche/filtres |
 | [doc/partage-visiteur.md](doc/partage-visiteur.md) | Liens lecture seule : recherche, filtres, colonnes notes (**0.7.0**) |
 | [doc/pont-magazine-jeu.md](doc/pont-magazine-jeu.md) | Pont magazine ↔ jeux : lien catalogue, homonymes, admin |
+| [doc/import-musique.md](doc/import-musique.md) | **Spécification** import musique (vinyles, CD — phase M8) |
 | [doc/import-gog.md](doc/import-gog.md) | **Spécification** import bibliothèque GOG (à implémenter) |
 | [ROADMAP.md](ROADMAP.md) | Plan détaillé M0 → M7 |
 | [roadmap-amelioration-code.md](roadmap-amelioration-code.md) | Roadmap qualité / refactor code (phases A–F) |
@@ -30,11 +31,13 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. Depuis 
 
 | Domaine | Statut | Points clés |
 |---------|--------|-------------|
-| **Multi-médias** | ✅ | Onglets Films / BD / Livres / Jeux / Magazines + thème couleur par domaine |
+| **Multi-médias** | ✅ | Onglets Films / BD / Livres / **Musique** / Jeux / Magazines + thème couleur par domaine |
 | **Films** | ✅ Production | Collection, envies, TMDB/OMDB, quiz « Ce soir », prêts, sagas, **vue Bibliothèque** (**0.5.7**), listes imprimables (**0.4.4+**) |
 | **Jeux vidéo** | ✅ Utilisable | Collection, envies, notes, stats, **extensions DLC**, **remakes**, **enrichissement IGDB**, **sagas jeux**, **vue Bibliothèque**, recherche **acronymes**, fichiers attachés, Linux tri-état, **pont magazine ↔ jeux** (**0.6.3**), fiche `/oeuvre-jeu.php`, autocomplétion à l’ajout, **recherche tolérante** (**0.5.7**, [doc/jeux.md](doc/jeux.md)) |
 | **Magazines** | ✅ Complet (M5) | Séries, numéros, PDF, FTS, import/export catalogue ABM, autocomplétion série/numéro, profil public ([doc/magazines.md](doc/magazines.md)) |
-| **BD / Livres** | ⏸️ Bientôt | Onglets présents, contenu à venir (M2 / M3) |
+| **BD / Manga** | 🔄 En cours (M2) | Collection, envies, partage, profil public, impression ; import CSV à venir |
+| **Livres** | ⏸️ Placeholder | Onglet + page « bientôt » (`/livres.php`) — **0.7.8** |
+| **Musique** | ⏸️ Placeholder | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles/CD — **0.7.8** |
 | **Transversal** | Partiel | Catalogue partagé multi-domaines, foyers, amis, partage visiteur, profil public (films + magazines + **jeux**) |
 
 **Commun à tous les onglets actifs :** prêts entre amis (physique), import/export, comptes et foyers, codes EAN catalogue, soumissions au catalogue, notifications.
@@ -65,6 +68,8 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.8** | Onglets Livres et Musique (placeholder), refactor `BdRepository` / `MagazineRepository` (phase B), fix navigation onglets, [doc/import-musique.md](doc/import-musique.md) |
+| **0.7.7** | Battle.net, ressentis sociaux discrets, refactor `GameRepository` |
 | **0.7.1** | Correctif tri « Fini le » sur Mes jeux (erreur 500 SQL) |
 | **0.7.0** | Partage visiteur : filtres jeux (plateforme, support, magasin), colonnes Note/Fini le (jeux) et Note/Dernière vue (films) ; barre recherche Mes jeux sur une ligne ; correctif filtre Steam/Epic |
 | **0.6.9** | Jeux terminés (date, stats, accueil), filtres recherche plateforme/magasin, icône disquette, fix jaquette |
@@ -98,8 +103,9 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 | `lib/MediaDomain.php` / `lib/MediaContext.php` | Onglets et filtre `media_domain` |
 | `lib/Auth.php` | Connexion, pages publiques |
 | `lib/FilmRepository.php` | Collection films (façade catalogue) |
+| `lib/BdRepository.php` | Collection BD + catalogue (façade ; logique dans `BdLibraryQuery`, …) |
 | `lib/GameRepository.php` | Collection jeux + catalogue partagé jeux |
-| `lib/MagazineRepository.php` | Numéros magazines + catalogue |
+| `lib/MagazineRepository.php` | Numéros magazines + catalogue (façade ; logique dans `MagazineLibraryQuery`, …) |
 | `lib/CatalogSchema.php` | Jointures œuvres + bibliothèque + filtre domaine |
 | `www/*.php` | Une page = un contrôleur léger |
 | `templates/layout.php` | Menu, onglets média, thème |

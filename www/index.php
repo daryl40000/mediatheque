@@ -23,6 +23,11 @@ use Moncine\View;
 $mediaDomain = MediaContext::current();
 $userId = Auth::currentUserId();
 
+if (!MediaDomain::isCollectionImplemented($mediaDomain)) {
+    header('Location: ' . MediaDomain::collectionPath($mediaDomain));
+    exit;
+}
+
 if (MediaDomain::isMagazine($mediaDomain)) {
     $repo = new MagazineRepository();
     $foyerId = UserContext::currentFoyerId();

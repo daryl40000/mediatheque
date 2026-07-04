@@ -81,7 +81,7 @@ Ne pas documenter ni lire en priorité des variables `MEDIATHEQUE_*` tant que M7
 ### 3.1 Domaine média : `media_domain`
 
 **Colonne SQL :** `oeuvres.media_domain`  
-**Valeurs :** `film` | `bd` | `livre` | `jeu` | `magazine`  
+**Valeurs :** `film` | `bd` | `livre` | `musique` | `jeu` | `magazine`  
 **Classe :** `MediaDomain`  
 **Session :** `MediaContext::current()`
 

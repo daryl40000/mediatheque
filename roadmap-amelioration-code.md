@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-06-16 (phase B pilote jeux : juin 2026)  
+**Dernière mise à jour :** 2026-07-04 (version **0.7.8** — phase B pilotes 2–3 BD et magazines livrés)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif
@@ -34,10 +34,10 @@ Fichiers les plus volumineux à surveiller :
 
 | Fichier | Lignes (approx.) | Priorité découpage |
 |---------|------------------|-------------------|
-| `lib/MagazineRepository.php` | ~2 210 | Haute |
+| `lib/MagazineRepository.php` | **481** (était ~2 354) | Fait (pilote 3) |
 | `lib/CatalogFilmRepository.php` | ~2 170 | Haute |
-| `lib/BdRepository.php` | ~1 550 | Haute (module récent) |
-| `lib/GameRepository.php` | ~1 490 | Haute |
+| `lib/BdRepository.php` | **514** | Fait (pilote 2) |
+| `lib/GameRepository.php` | **539** | Fait (pilote 1) |
 | `lib/View.php` | ~1 300 | Moyenne (URLs par domaine) |
 | `lib/FilmRepositoryLegacy.php` | ~1 290 | Dette — fusion ou suppression |
 | `lib/UserPublicProfileService.php` | ~1 170 | Moyenne |
@@ -176,10 +176,10 @@ Préférer :
 
 ### Ordre de découpage suggéré
 
-1. **`GameRepository.php`** (~1 490 lignes) — pilote, plus petit que magazines
-2. **`BdRepository.php`** (~1 550 lignes) — module récent, patterns frais (`BdRowMapper`, filtres possession)
-3. **`MagazineRepository.php`** (~2 210 lignes)
-4. **`CatalogFilmRepository.php`** (~2 170 lignes)
+1. **`GameRepository.php`** — **fait** (**539** lignes)
+2. **`BdRepository.php`** — **fait** (**514** lignes)
+3. **`MagazineRepository.php`** — **fait** (**481** lignes ; extractions SQL, query, catalogue, bibliothèque, PDF)
+4. **`CatalogFilmRepository.php`** (~2 170 lignes) — prochain pilote suggéré
 
 ### Exemple d'extractions pour un repository
 
@@ -200,7 +200,11 @@ Préférer :
 - [x] Repository pilote < **800 lignes** (objectif intermédiaire) — `GameRepository` : **539** lignes (était ~1487, puis ~1130)
 - [x] Extractions pilote jeux : `GameFormPayload`, `GameCatalogSql`, `GameCatalogWriter`, `GameLibraryFields`
 - [x] Extractions pilote jeux (suite) : `GameLibraryQuery`, `GameCatalogUpdater`, `GameCatalogCreator`, `GameLibraryAttach`, `GamePosterService`
-- [ ] Aucune régression sur les tests d'intégration du domaine (13/17 OK en isolation ; 4 échecs préexistants dans les tests)
+- [x] Repository pilote 2 < **800 lignes** — `BdRepository` : **514** lignes (était ~1566)
+- [x] Extractions pilote BD : `BdCatalogSql`, `BdCatalogWriter`, `BdTomeOrdre`, `BdLibraryQuery`, `BdCatalogUpdater`, `BdCatalogCreator`, `BdLibraryAttach`, `BdPosterService`
+- [x] Repository pilote 3 < **800 lignes** — `MagazineRepository` : **481** lignes (était ~2 354)
+- [x] Extractions pilote magazines : `MagazineCatalogSql`, `MagazineSearchSql`, `MagazineNumeroOrdre`, `MagazineLibraryQuery`, `MagazineCatalogValidator`, `MagazineCatalogWriter`, `MagazineCatalogCreator`, `MagazineCatalogUpdater`, `MagazineLibraryAttach`, `MagazineLibraryMutations`, `MagazinePdfService`
+- [ ] Aucune régression sur les tests d'intégration du domaine (échecs préexistants en suite complète BD/magazines ; isolés OK)
 - [ ] Une page liste + une page fiche testées manuellement
 
 ### Bénéfice attendu
@@ -435,7 +439,7 @@ Chaînage `required()`, `email()`, `minLength()`, `orThrow()` — voir implémen
 
 - Migration globale `int|string` → exceptions (Phase E complète)
 - Validator partout (Phase F)
-- Découpage de `MagazineRepository` (Phase B — le plus gros morceau)
+- Découpage de `CatalogFilmRepository` (Phase B — prochain gros morceau)
 
 ---
 
@@ -443,7 +447,8 @@ Chaînage `required()`, `email()`, `minLength()`, `orThrow()` — voir implémen
 
 - [x] **Phase A** — `FilmBulkActionService` + `films.php` allégé
 - [x] **Phase B** — Pilote 1 : `GameRepository` (**539** lignes ; extractions `GameLibraryQuery`, `GameCatalogUpdater`, `GameCatalogCreator`, `GameLibraryAttach`, `GamePosterService`)
-- [ ] **Phase B** — Pilote 2 : deuxième gros repository
+- [x] **Phase B** — Pilote 2 : `BdRepository` (**514** lignes ; extractions `BdCatalogSql`, `BdLibraryQuery`, `BdCatalogWriter`, `BdTomeOrdre`, `BdCatalogUpdater`, `BdCatalogCreator`, `BdLibraryAttach`, `BdPosterService`)
+- [x] **Phase B** — Pilote 3 : `MagazineRepository` (**481** lignes ; extractions `MagazineCatalogSql`, `MagazineSearchSql`, `MagazineNumeroOrdre`, `MagazineLibraryQuery`, `MagazineCatalogValidator`, `MagazineCatalogWriter`, `MagazineCatalogCreator`, `MagazineCatalogUpdater`, `MagazineLibraryAttach`, `MagazineLibraryMutations`, `MagazinePdfService`)
 - [ ] **Phase C** — `SqlNamedParamsTrait` + 2 repositories migrés
 - [ ] **Phase D** — Baseline couverture documentée ; 120+ fichiers de tests
 - [ ] **Phase E** — Pilote exceptions (1 repository + pages)

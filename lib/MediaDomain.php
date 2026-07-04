@@ -12,6 +12,7 @@ final class MediaDomain
     public const FILM = 'film';
     public const BD = 'bd';
     public const LIVRE = 'livre';
+    public const MUSIQUE = 'musique';
     public const JEU = 'jeu';
     public const MAGAZINE = 'magazine';
 
@@ -22,6 +23,7 @@ final class MediaDomain
             self::FILM => 'Films',
             self::BD => 'BD / Manga',
             self::LIVRE => 'Livres',
+            self::MUSIQUE => 'Musique',
             self::JEU => 'Jeux',
             self::MAGAZINE => 'Magazines',
         ];
@@ -45,6 +47,11 @@ final class MediaDomain
             'livres' => self::LIVRE,
             'book' => self::LIVRE,
             'books' => self::LIVRE,
+            'musique' => self::MUSIQUE,
+            'music' => self::MUSIQUE,
+            'vinyle' => self::MUSIQUE,
+            'vinyl' => self::MUSIQUE,
+            'cd' => self::MUSIQUE,
             'jeu' => self::JEU,
             'jeux' => self::JEU,
             'game' => self::JEU,
@@ -87,6 +94,11 @@ final class MediaDomain
         return self::normalize($domain) === self::BD;
     }
 
+    public static function isMusique(string $domain): bool
+    {
+        return self::normalize($domain) === self::MUSIQUE;
+    }
+
     /** Domaines dont la collection est utilisable. */
     public static function isCollectionImplemented(string $domain): bool
     {
@@ -105,6 +117,8 @@ final class MediaDomain
             self::MAGAZINE => '/magazines.php',
             self::JEU => '/jeux.php',
             self::BD => '/bd.php',
+            self::LIVRE => '/livres.php',
+            self::MUSIQUE => '/musique.php',
             default => '/films.php',
         };
     }
@@ -116,6 +130,8 @@ final class MediaDomain
             self::MAGAZINE => '/magazines-envies.php',
             self::JEU => '/jeux-envies.php',
             self::BD => '/bd-envies.php',
+            self::LIVRE => '/livres-envies.php',
+            self::MUSIQUE => '/musique-envies.php',
             default => '/souhaits.php',
         };
     }
@@ -174,6 +190,15 @@ final class MediaDomain
                 'header_tint' => '#121a24',
                 'body_tint' => '#0a0e14',
             ],
+            // Ambre — musique (vinyles, CD)
+            self::MUSIQUE => [
+                'accent' => '#ffca28',
+                'accent_hover' => '#ffd54f',
+                'accent_muted' => '#3d3520',
+                'bar_bg' => '#1a1810',
+                'header_tint' => '#221f14',
+                'body_tint' => '#12100a',
+            ],
             // Violet — jeux vidéo
             self::JEU => [
                 'accent' => '#9575cd',
@@ -222,6 +247,12 @@ final class MediaDomain
                 'wishlist' => 'Mes envies livres',
                 'stats' => 'Statistiques livres',
                 'footer' => 'Bibliothèque livres',
+            ],
+            self::MUSIQUE => [
+                'collection' => 'Ma musique',
+                'wishlist' => 'Mes envies musique',
+                'stats' => 'Statistiques musique',
+                'footer' => 'Bibliothèque musique',
             ],
             self::JEU => [
                 'collection' => 'Mes jeux',

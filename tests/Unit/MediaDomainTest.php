@@ -23,6 +23,42 @@ final class MediaDomainTest extends TestCase
         $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::JEU));
         $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::BD));
         $this->assertFalse(MediaDomain::isCollectionImplemented(MediaDomain::LIVRE));
+        $this->assertFalse(MediaDomain::isCollectionImplemented(MediaDomain::MUSIQUE));
+    }
+
+    public function testPlaceholderCollectionPaths(): void
+    {
+        $this->assertSame('/livres.php', MediaDomain::collectionPath(MediaDomain::LIVRE));
+        $this->assertSame('/musique.php', MediaDomain::collectionPath(MediaDomain::MUSIQUE));
+        $this->assertSame('/livres-envies.php', MediaDomain::wishlistPath(MediaDomain::LIVRE));
+        $this->assertSame('/musique-envies.php', MediaDomain::wishlistPath(MediaDomain::MUSIQUE));
+    }
+
+    public function testTabSwitchToMusiqueUsesPlaceholderPage(): void
+    {
+        $this->assertSame(
+            '/musique.php',
+            MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::MUSIQUE, '/jeux.php')
+        );
+    }
+
+    public function testTabSwitchFromPlaceholderToImplementedCollection(): void
+    {
+        $this->assertTrue(MediaDomainGuards::isPlaceholderCollectionPath('/musique.php'));
+        $this->assertTrue(MediaDomainGuards::isPlaceholderCollectionPath('/livres-envies.php'));
+
+        $this->assertSame(
+            '/jeux.php',
+            MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::JEU, '/musique.php')
+        );
+        $this->assertSame(
+            '/bd.php',
+            MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::BD, '/livres.php')
+        );
+        $this->assertSame(
+            '/films.php',
+            MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::FILM, '/musique-envies.php')
+        );
     }
 
     public function testGameCollectionPaths(): void
