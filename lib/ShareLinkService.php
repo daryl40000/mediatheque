@@ -211,7 +211,8 @@ final class ShareLinkService
         if ($kindFilter !== ContentKindFilter::ALL) {
             $params['kind'] = $kindFilter;
         }
-        if ($viewParam = CollectionViewMode::queryValue($viewMode)) {
+        $viewParam = CollectionViewMode::queryValue($viewMode);
+        if ($viewParam !== null) {
             $params['view'] = $viewParam;
         }
 

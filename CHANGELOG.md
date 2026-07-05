@@ -25,6 +25,21 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.81] — 2026-07-05
+
+**Qualité code : CSS, autocomplétions JS, lisibilité PHP**
+
+### Modifié
+
+- **`app.js`** : moteur partagé `attachCatalogAutocomplete` pour les autocomplétions catalogue (films, jeux, magazines) — ~180 lignes en moins.
+- **`style.css`** : fusion des sélecteurs dupliqués (`.site-header`, `.btn-sm`, table films triable).
+
+### Corrigé
+
+- **`View.php`**, **`ShareLinkService.php`** : affectation dans une condition remplacée par une forme plus lisible (`CollectionViewMode::queryValue`).
+
+---
+
 ## [0.7.8] — 2026-07-04
 
 **Onglets Musique et Livres (placeholder), refactor BD et magazines (phase B), navigation onglets**

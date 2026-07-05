@@ -726,7 +726,8 @@ final class View
         if ($franchiseName !== '') {
             $params['franchise'] = $franchiseName;
         }
-        if ($viewParam = CollectionViewMode::queryValue($viewMode)) {
+        $viewParam = CollectionViewMode::queryValue($viewMode);
+        if ($viewParam !== null) {
             $params['view'] = $viewParam;
         }
 

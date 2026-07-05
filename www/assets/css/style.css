@@ -110,11 +110,7 @@ body {
     text-align: center;
 }
 
-/* En-tête et pied : teinte du domaine actif */
-.site-header {
-    transition: background 0.35s ease, border-color 0.35s ease;
-}
-
+/* En-tête et pied : teinte du domaine actif — styles de base .site-header plus bas */
 body[data-media-domain] .site-header {
     background: linear-gradient(180deg, var(--media-header-tint) 0%, var(--surface) 72%);
     border-bottom: 2px solid color-mix(in srgb, var(--media-accent) 55%, var(--border));
@@ -293,11 +289,6 @@ a.support-link:hover,
     text-decoration: underline;
 }
 
-.films-table--sortable th.sorted a {
-    color: var(--link-hover);
-    font-weight: 600;
-}
-
 .container {
     max-width: 720px;
     margin: 0 auto;
@@ -307,6 +298,7 @@ a.support-link:hover,
 .site-header {
     border-bottom: 1px solid var(--border);
     background: var(--surface);
+    transition: background 0.35s ease, border-color 0.35s ease;
 }
 
 .site-header .container {
@@ -1682,7 +1674,7 @@ textarea {
 
 .site-nav__submenu a {
     margin: 0;
-    padding: 0.5rem 0.5rem;
+    padding: 0.5rem;
     font-size: 0.95rem;
 }
 
@@ -3365,11 +3357,6 @@ body.media-domain--bd.page-wide .container--wide {
 .film-ean__code {
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
-}
-
-.btn-sm {
-    padding: 0.35rem 0.75rem;
-    font-size: 0.9rem;
 }
 
 /* Propositions catalogue (phase 5) */

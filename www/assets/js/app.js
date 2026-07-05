@@ -320,21 +320,90 @@ function setFilmCatalogLinkedState(form, linked) {
 }
 
 /**
- * Autocomplétion du titre à l’ajout : catalogue partagé (titre — réalisateur).
+ * Requête JSON standard des autocomplétions catalogue (?q=…).
+ *
+ * @param {string} searchUrl
+ * @param {string} query
+ * @returns {Promise<object[]>}
  */
-function initCatalogTitleAutocomplete() {
-    const root = document.getElementById('catalog-title-autocomplete');
-    if (!root) {
-        return;
+async function fetchCatalogAutocompleteResults(searchUrl, query) {
+    const separator = searchUrl.includes('?') ? '&' : '?';
+    const url = searchUrl + separator + 'q=' + encodeURIComponent(query);
+    const response = await fetch(url, {
+        headers: { Accept: 'application/json' },
+        credentials: 'same-origin',
+    });
+    if (!response.ok) {
+        return [];
+    }
+    const data = await response.json();
+    return Array.isArray(data.results) ? data.results : [];
+}
+
+/**
+ * Crée une ligne <li> pour une suggestion d’autocomplétion catalogue.
+ */
+function createCatalogAutocompleteOption({
+    item,
+    index,
+    optionIdPrefix,
+    label,
+    badgeText = null,
+    extraClass = '',
+    onSelect,
+}) {
+    const li = document.createElement('li');
+    li.className = 'catalog-title-autocomplete__option'
+        + (extraClass ? ' ' + extraClass : '');
+    li.setAttribute('role', 'option');
+    li.id = optionIdPrefix + '-' + index;
+    li.dataset.index = String(index);
+
+    const main = document.createElement('span');
+    main.className = 'catalog-title-autocomplete__option-label';
+    main.textContent = label;
+    li.appendChild(main);
+
+    if (badgeText) {
+        const badge = document.createElement('span');
+        badge.className = 'catalog-title-autocomplete__badge';
+        badge.textContent = badgeText;
+        li.appendChild(badge);
     }
 
-    const input = root.querySelector('.catalog-title-autocomplete__input');
-    const list = document.getElementById('catalog-title-suggestions');
-    const oeuvreIdInput = document.getElementById('add_oeuvre_id');
-    const searchUrl = root.getAttribute('data-search-url') || '/rechercher-oeuvres.php';
+    li.addEventListener('mousedown', (event) => {
+        event.preventDefault();
+        onSelect(item);
+    });
 
-    if (!input || !list) {
-        return;
+    return li;
+}
+
+/**
+ * Moteur partagé : debounce, fetch, liste, clavier, fermeture.
+ *
+ * @returns {{ closeList: () => void }}
+ */
+function attachCatalogAutocomplete(config) {
+    const {
+        root,
+        input,
+        list,
+        searchUrl,
+        optionSelector = '.catalog-title-autocomplete__option',
+        optionIdPrefix = 'catalog-autocomplete-option',
+        minChars = 2,
+        debounceMs = 280,
+        onInputClear = () => {},
+        onSelect,
+        buildOption,
+        dismissOn = 'click-outside',
+        blurCloseDelayMs = 150,
+        keyboardRequiresVisibleList = true,
+    } = config;
+
+    if (!input || !list || typeof onSelect !== 'function' || typeof buildOption !== 'function') {
+        return { closeList: () => {} };
     }
 
     let debounceTimer = null;
@@ -352,6 +421,123 @@ function initCatalogTitleAutocomplete() {
         lastResults = [];
         setExpanded(false);
     };
+
+    const renderResults = (results) => {
+        lastResults = results;
+        list.innerHTML = '';
+
+        if (results.length === 0) {
+            closeList();
+            return;
+        }
+
+        results.forEach((item, index) => {
+            list.appendChild(buildOption(item, index, onSelect));
+        });
+
+        list.hidden = false;
+        setExpanded(true);
+        activeIndex = -1;
+    };
+
+    const scheduleSearch = () => {
+        if (debounceTimer !== null) {
+            clearTimeout(debounceTimer);
+        }
+        debounceTimer = setTimeout(async () => {
+            debounceTimer = null;
+            const query = input.value.trim();
+            if (query.length < minChars) {
+                closeList();
+                return;
+            }
+            try {
+                const results = await fetchCatalogAutocompleteResults(searchUrl, query);
+                renderResults(results);
+            } catch {
+                closeList();
+            }
+        }, debounceMs);
+    };
+
+    input.addEventListener('input', () => {
+        onInputClear();
+        scheduleSearch();
+    });
+
+    input.addEventListener('keydown', (event) => {
+        const options = list.querySelectorAll(optionSelector);
+        if (keyboardRequiresVisibleList && (list.hidden || lastResults.length === 0)) {
+            return;
+        }
+        if (options.length === 0) {
+            return;
+        }
+
+        if (event.key === 'ArrowDown') {
+            event.preventDefault();
+            activeIndex = Math.min(activeIndex + 1, lastResults.length - 1);
+        } else if (event.key === 'ArrowUp') {
+            event.preventDefault();
+            activeIndex = Math.max(activeIndex - 1, 0);
+        } else if (event.key === 'Enter' && activeIndex >= 0 && lastResults[activeIndex]) {
+            event.preventDefault();
+            onSelect(lastResults[activeIndex]);
+            return;
+        } else if (event.key === 'Escape') {
+            closeList();
+            return;
+        } else {
+            return;
+        }
+
+        options.forEach((el, i) => {
+            const selected = i === activeIndex;
+            el.classList.toggle('is-active', selected);
+            el.setAttribute('aria-selected', selected ? 'true' : 'false');
+        });
+        if (activeIndex >= 0) {
+            const activeEl = document.getElementById(optionIdPrefix + '-' + activeIndex);
+            activeEl?.scrollIntoView({ block: 'nearest' });
+        }
+    });
+
+    if (dismissOn === 'click-outside' || dismissOn === 'both') {
+        document.addEventListener('click', (event) => {
+            if (!root.contains(event.target)) {
+                closeList();
+            }
+        });
+    }
+
+    if (dismissOn === 'blur' || dismissOn === 'both') {
+        input.addEventListener('blur', () => {
+            setTimeout(closeList, blurCloseDelayMs);
+        });
+    }
+
+    return { closeList };
+}
+
+/**
+ * Autocomplétion du titre à l’ajout : catalogue partagé (titre — réalisateur).
+ */
+function initCatalogTitleAutocomplete() {
+    const root = document.getElementById('catalog-title-autocomplete');
+    if (!root) {
+        return;
+    }
+
+    const input = root.querySelector('.catalog-title-autocomplete__input');
+    const list = document.getElementById('catalog-title-suggestions');
+    const oeuvreIdInput = document.getElementById('add_oeuvre_id');
+    const searchUrl = root.getAttribute('data-search-url') || '/rechercher-oeuvres.php';
+
+    if (!input || !list) {
+        return;
+    }
+
+    let closeList = () => {};
 
     const clearCatalogLink = () => {
         if (oeuvreIdInput) {
@@ -400,124 +586,25 @@ function initCatalogTitleAutocomplete() {
         closeList();
     };
 
-    const renderResults = (results) => {
-        lastResults = results;
-        list.innerHTML = '';
-
-        if (results.length === 0) {
-            closeList();
-            return;
-        }
-
-        results.forEach((item, index) => {
-            const li = document.createElement('li');
-            li.className = 'catalog-title-autocomplete__option';
-            li.setAttribute('role', 'option');
-            li.id = 'catalog-title-option-' + index;
-            li.dataset.index = String(index);
-
-            const main = document.createElement('span');
-            main.className = 'catalog-title-autocomplete__option-label';
-            main.textContent = item.label ?? item.titre ?? '';
-
-            li.appendChild(main);
-
-            if (item.in_library && item.library_statut_label) {
-                const badge = document.createElement('span');
-                badge.className = 'catalog-title-autocomplete__badge';
-                badge.textContent = 'Déjà dans : ' + item.library_statut_label;
-                li.appendChild(badge);
-            }
-
-            li.addEventListener('mousedown', (event) => {
-                event.preventDefault();
-                applySelection(item);
-            });
-
-            list.appendChild(li);
-        });
-
-        list.hidden = false;
-        setExpanded(true);
-        activeIndex = -1;
-    };
-
-    const fetchSuggestions = async (query) => {
-        const url = searchUrl + '?q=' + encodeURIComponent(query);
-        const response = await fetch(url, {
-            headers: { Accept: 'application/json' },
-            credentials: 'same-origin',
-        });
-        if (!response.ok) {
-            return [];
-        }
-        const data = await response.json();
-        return Array.isArray(data.results) ? data.results : [];
-    };
-
-    const scheduleSearch = () => {
-        if (debounceTimer !== null) {
-            clearTimeout(debounceTimer);
-        }
-        debounceTimer = setTimeout(async () => {
-            debounceTimer = null;
-            const query = input.value.trim();
-            if (query.length < 2) {
-                closeList();
-                return;
-            }
-            try {
-                const results = await fetchSuggestions(query);
-                renderResults(results);
-            } catch {
-                closeList();
-            }
-        }, 280);
-    };
-
-    input.addEventListener('input', () => {
-        clearCatalogLink();
-        scheduleSearch();
-    });
-
-    input.addEventListener('keydown', (event) => {
-        if (list.hidden || lastResults.length === 0) {
-            return;
-        }
-
-        if (event.key === 'ArrowDown') {
-            event.preventDefault();
-            activeIndex = Math.min(activeIndex + 1, lastResults.length - 1);
-        } else if (event.key === 'ArrowUp') {
-            event.preventDefault();
-            activeIndex = Math.max(activeIndex - 1, 0);
-        } else if (event.key === 'Enter' && activeIndex >= 0) {
-            event.preventDefault();
-            applySelection(lastResults[activeIndex]);
-            return;
-        } else if (event.key === 'Escape') {
-            closeList();
-            return;
-        } else {
-            return;
-        }
-
-        list.querySelectorAll('.catalog-title-autocomplete__option').forEach((el, i) => {
-            const selected = i === activeIndex;
-            el.classList.toggle('is-active', selected);
-            el.setAttribute('aria-selected', selected ? 'true' : 'false');
-        });
-        if (activeIndex >= 0) {
-            const activeEl = document.getElementById('catalog-title-option-' + activeIndex);
-            activeEl?.scrollIntoView({ block: 'nearest' });
-        }
-    });
-
-    document.addEventListener('click', (event) => {
-        if (!root.contains(event.target)) {
-            closeList();
-        }
-    });
+    ({ closeList } = attachCatalogAutocomplete({
+        root,
+        input,
+        list,
+        searchUrl,
+        optionIdPrefix: 'catalog-title-option',
+        onInputClear: clearCatalogLink,
+        onSelect: applySelection,
+        buildOption: (item, index, onSelect) => createCatalogAutocompleteOption({
+            item,
+            index,
+            optionIdPrefix: 'catalog-title-option',
+            label: item.label ?? item.titre ?? '',
+            badgeText: item.in_library && item.library_statut_label
+                ? 'Déjà dans : ' + item.library_statut_label
+                : null,
+            onSelect,
+        }),
+    }));
 
     const form = document.querySelector('.film-edit-form');
     if (form && oeuvreIdInput && String(oeuvreIdInput.value || '').trim() !== '') {
@@ -596,22 +683,8 @@ function initGameCatalogAutocompleteRoot(root) {
         return;
     }
 
-    let debounceTimer = null;
-    let activeIndex = -1;
-    let lastResults = [];
     const optionIdPrefix = 'game-catalog-option-' + (root.id || Math.random().toString(36).slice(2, 8));
-
-    const setExpanded = (open) => {
-        input.setAttribute('aria-expanded', open ? 'true' : 'false');
-    };
-
-    const closeList = () => {
-        list.hidden = true;
-        list.innerHTML = '';
-        activeIndex = -1;
-        lastResults = [];
-        setExpanded(false);
-    };
+    let closeList = () => {};
 
     const clearCatalogLink = () => {
         if (oeuvreIdInput) {
@@ -682,124 +755,24 @@ function initGameCatalogAutocompleteRoot(root) {
         syncGameTypeFieldsetForCatalogLink();
     };
 
-    const renderResults = (results) => {
-        lastResults = results;
-        list.innerHTML = '';
-
-        if (results.length === 0) {
-            closeList();
-            return;
-        }
-
-        results.forEach((item, index) => {
-            const li = document.createElement('li');
-            li.className = 'catalog-title-autocomplete__option catalog-title-autocomplete__option--game';
-            li.setAttribute('role', 'option');
-            li.id = optionIdPrefix + '-' + index;
-            li.dataset.index = String(index);
-
-            const main = document.createElement('span');
-            main.className = 'catalog-title-autocomplete__option-label';
-            main.textContent = item.display_label ?? item.titre ?? '';
-
-            li.appendChild(main);
-
-            if (item.in_library) {
-                const badge = document.createElement('span');
-                badge.className = 'catalog-title-autocomplete__badge';
-                badge.textContent = 'Déjà dans votre bibliothèque';
-                li.appendChild(badge);
-            }
-
-            li.addEventListener('mousedown', (event) => {
-                event.preventDefault();
-                applySelection(item);
-            });
-
-            list.appendChild(li);
-        });
-
-        list.hidden = false;
-        setExpanded(true);
-        activeIndex = -1;
-    };
-
-    const fetchSuggestions = async (query) => {
-        const url = searchUrl + '?q=' + encodeURIComponent(query);
-        const response = await fetch(url, {
-            headers: { Accept: 'application/json' },
-            credentials: 'same-origin',
-        });
-        if (!response.ok) {
-            return [];
-        }
-        const data = await response.json();
-        return Array.isArray(data.results) ? data.results : [];
-    };
-
-    const scheduleSearch = () => {
-        if (debounceTimer !== null) {
-            clearTimeout(debounceTimer);
-        }
-        debounceTimer = setTimeout(async () => {
-            debounceTimer = null;
-            const query = input.value.trim();
-            if (query.length < 2) {
-                closeList();
-                return;
-            }
-            try {
-                const results = await fetchSuggestions(query);
-                renderResults(results);
-            } catch {
-                closeList();
-            }
-        }, 280);
-    };
-
-    input.addEventListener('input', () => {
-        clearCatalogLink();
-        scheduleSearch();
-    });
-
-    input.addEventListener('keydown', (event) => {
-        if (list.hidden || lastResults.length === 0) {
-            return;
-        }
-
-        if (event.key === 'ArrowDown') {
-            event.preventDefault();
-            activeIndex = Math.min(activeIndex + 1, lastResults.length - 1);
-        } else if (event.key === 'ArrowUp') {
-            event.preventDefault();
-            activeIndex = Math.max(activeIndex - 1, 0);
-        } else if (event.key === 'Enter' && activeIndex >= 0) {
-            event.preventDefault();
-            applySelection(lastResults[activeIndex]);
-            return;
-        } else if (event.key === 'Escape') {
-            closeList();
-            return;
-        } else {
-            return;
-        }
-
-        list.querySelectorAll('.catalog-title-autocomplete__option').forEach((el, i) => {
-            const selected = i === activeIndex;
-            el.classList.toggle('is-active', selected);
-            el.setAttribute('aria-selected', selected ? 'true' : 'false');
-        });
-        if (activeIndex >= 0) {
-            const activeEl = document.getElementById(optionIdPrefix + '-' + activeIndex);
-            activeEl?.scrollIntoView({ block: 'nearest' });
-        }
-    });
-
-    document.addEventListener('click', (event) => {
-        if (!root.contains(event.target)) {
-            closeList();
-        }
-    });
+    ({ closeList } = attachCatalogAutocomplete({
+        root,
+        input,
+        list,
+        searchUrl,
+        optionIdPrefix,
+        onInputClear: clearCatalogLink,
+        onSelect: applySelection,
+        buildOption: (item, index, onSelect) => createCatalogAutocompleteOption({
+            item,
+            index,
+            optionIdPrefix,
+            extraClass: 'catalog-title-autocomplete__option--game',
+            label: item.display_label ?? item.titre ?? '',
+            badgeText: item.in_library ? 'Déjà dans votre bibliothèque' : null,
+            onSelect,
+        }),
+    }));
 
     syncGameTypeFieldsetForCatalogLink();
     const form = root.closest('form');
@@ -1679,21 +1652,7 @@ function initMagazineSeriesCatalogAutocomplete() {
             return;
         }
 
-        let debounceTimer = null;
-        let activeIndex = -1;
-        let lastResults = [];
-
-        const setExpanded = (open) => {
-            input.setAttribute('aria-expanded', open ? 'true' : 'false');
-        };
-
-        const closeList = () => {
-            list.hidden = true;
-            list.innerHTML = '';
-            activeIndex = -1;
-            lastResults = [];
-            setExpanded(false);
-        };
+        let closeList = () => {};
 
         const clearSelection = () => {
             seriesIdInput.value = '';
@@ -1729,90 +1688,27 @@ function initMagazineSeriesCatalogAutocomplete() {
             }
         };
 
-        const renderResults = (results) => {
-            list.innerHTML = '';
-            lastResults = results;
-            activeIndex = -1;
-
-            if (!results.length) {
-                closeList();
-                return;
-            }
-
-            results.forEach((item, index) => {
-                const li = document.createElement('li');
-                li.className = 'catalog-title-autocomplete__option';
-                li.setAttribute('role', 'option');
-                li.id = 'mag-series-opt-' + index;
-
-                const main = document.createElement('span');
-                main.className = 'catalog-title-autocomplete__option-label';
-                main.textContent = item.display_label || item.titre || '';
-                li.appendChild(main);
-
-                if (item.in_collection) {
-                    const badge = document.createElement('span');
-                    badge.className = 'catalog-title-autocomplete__badge';
-                    badge.textContent = 'Déjà suivie';
-                    li.appendChild(badge);
-                }
-
-                li.addEventListener('mousedown', (event) => {
-                    event.preventDefault();
-                    applySelection(item);
-                });
-
-                list.appendChild(li);
-            });
-
-            list.hidden = false;
-            setExpanded(true);
-        };
-
-        const fetchResults = (query) => {
-            const url = searchUrl + (searchUrl.includes('?') ? '&' : '?') + 'q=' + encodeURIComponent(query);
-            fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
-                .then((response) => (response.ok ? response.json() : { results: [] }))
-                .then((data) => renderResults(Array.isArray(data.results) ? data.results : []))
-                .catch(() => closeList());
-        };
-
-        input.addEventListener('input', () => {
-            clearSelection();
-            const query = input.value.trim();
-            if (query.length < 1) {
-                closeList();
-                return;
-            }
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => fetchResults(query), 220);
-        });
-
-        input.addEventListener('keydown', (event) => {
-            const options = list.querySelectorAll('.catalog-title-autocomplete__option');
-            if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                if (options.length) {
-                    activeIndex = Math.min(activeIndex + 1, options.length - 1);
-                    options.forEach((el, i) => el.classList.toggle('is-active', i === activeIndex));
-                }
-            } else if (event.key === 'ArrowUp') {
-                event.preventDefault();
-                if (options.length) {
-                    activeIndex = Math.max(activeIndex - 1, 0);
-                    options.forEach((el, i) => el.classList.toggle('is-active', i === activeIndex));
-                }
-            } else if (event.key === 'Enter' && activeIndex >= 0 && lastResults[activeIndex]) {
-                event.preventDefault();
-                applySelection(lastResults[activeIndex]);
-            } else if (event.key === 'Escape') {
-                closeList();
-            }
-        });
-
-        input.addEventListener('blur', () => {
-            setTimeout(closeList, 150);
-        });
+        ({ closeList } = attachCatalogAutocomplete({
+            root,
+            input,
+            list,
+            searchUrl,
+            optionIdPrefix: 'mag-series-opt',
+            minChars: 1,
+            debounceMs: 220,
+            dismissOn: 'blur',
+            keyboardRequiresVisibleList: false,
+            onInputClear: clearSelection,
+            onSelect: applySelection,
+            buildOption: (item, index, onSelect) => createCatalogAutocompleteOption({
+                item,
+                index,
+                optionIdPrefix: 'mag-series-opt',
+                label: item.display_label || item.titre || '',
+                badgeText: item.in_collection ? 'Déjà suivie' : null,
+                onSelect,
+            }),
+        }));
     });
 }
 
@@ -1835,21 +1731,7 @@ function initMagazineIssueCatalogAutocomplete() {
             return;
         }
 
-        let debounceTimer = null;
-        let activeIndex = -1;
-        let lastResults = [];
-
-        const setExpanded = (open) => {
-            input.setAttribute('aria-expanded', open ? 'true' : 'false');
-        };
-
-        const closeList = () => {
-            list.hidden = true;
-            list.innerHTML = '';
-            activeIndex = -1;
-            lastResults = [];
-            setExpanded(false);
-        };
+        let closeList = () => {};
 
         const clearSelection = () => {
             oeuvreIdInput.value = '';
@@ -1887,89 +1769,26 @@ function initMagazineIssueCatalogAutocomplete() {
             }
         };
 
-        const renderResults = (results) => {
-            list.innerHTML = '';
-            lastResults = results;
-            activeIndex = -1;
-
-            if (!results.length) {
-                closeList();
-                return;
-            }
-
-            results.forEach((item, index) => {
-                const li = document.createElement('li');
-                li.className = 'catalog-title-autocomplete__option';
-                li.setAttribute('role', 'option');
-
-                const main = document.createElement('span');
-                main.className = 'catalog-title-autocomplete__option-label';
-                main.textContent = item.display_label || item.numero || '';
-                li.appendChild(main);
-
-                if (item.in_library) {
-                    const badge = document.createElement('span');
-                    badge.className = 'catalog-title-autocomplete__badge';
-                    badge.textContent = 'Déjà ajouté';
-                    li.appendChild(badge);
-                }
-
-                li.addEventListener('mousedown', (event) => {
-                    event.preventDefault();
-                    applySelection(item);
-                });
-
-                list.appendChild(li);
-            });
-
-            list.hidden = false;
-            setExpanded(true);
-        };
-
-        const fetchResults = (query) => {
-            const sep = searchUrl.includes('?') ? '&' : '?';
-            const url = searchUrl + sep + 'q=' + encodeURIComponent(query);
-            fetch(url, { credentials: 'same-origin', headers: { Accept: 'application/json' } })
-                .then((response) => (response.ok ? response.json() : { results: [] }))
-                .then((data) => renderResults(Array.isArray(data.results) ? data.results : []))
-                .catch(() => closeList());
-        };
-
-        input.addEventListener('input', () => {
-            clearSelection();
-            const query = input.value.trim();
-            if (query.length < 1) {
-                closeList();
-                return;
-            }
-            clearTimeout(debounceTimer);
-            debounceTimer = setTimeout(() => fetchResults(query), 220);
-        });
-
-        input.addEventListener('keydown', (event) => {
-            const options = list.querySelectorAll('.catalog-title-autocomplete__option');
-            if (event.key === 'ArrowDown') {
-                event.preventDefault();
-                if (options.length) {
-                    activeIndex = Math.min(activeIndex + 1, options.length - 1);
-                    options.forEach((el, i) => el.classList.toggle('is-active', i === activeIndex));
-                }
-            } else if (event.key === 'ArrowUp') {
-                event.preventDefault();
-                if (options.length) {
-                    activeIndex = Math.max(activeIndex - 1, 0);
-                    options.forEach((el, i) => el.classList.toggle('is-active', i === activeIndex));
-                }
-            } else if (event.key === 'Enter' && activeIndex >= 0 && lastResults[activeIndex]) {
-                event.preventDefault();
-                applySelection(lastResults[activeIndex]);
-            } else if (event.key === 'Escape') {
-                closeList();
-            }
-        });
-
-        input.addEventListener('blur', () => {
-            setTimeout(closeList, 150);
-        });
+        ({ closeList } = attachCatalogAutocomplete({
+            root,
+            input,
+            list,
+            searchUrl,
+            optionIdPrefix: 'mag-issue-opt',
+            minChars: 1,
+            debounceMs: 220,
+            dismissOn: 'blur',
+            keyboardRequiresVisibleList: false,
+            onInputClear: clearSelection,
+            onSelect: applySelection,
+            buildOption: (item, index, onSelect) => createCatalogAutocompleteOption({
+                item,
+                index,
+                optionIdPrefix: 'mag-issue-opt',
+                label: item.display_label || item.numero || '',
+                badgeText: item.in_library ? 'Déjà ajouté' : null,
+                onSelect,
+            }),
+        }));
     });
 }
