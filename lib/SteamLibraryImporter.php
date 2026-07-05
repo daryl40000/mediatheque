@@ -166,7 +166,7 @@ final class SteamLibraryImporter
                 ? ($igdbId > 0
                     ? 'Créer fiche catalogue (IGDB) + ajouter'
                     : 'Créer fiche minimale + ajouter')
-                : 'Proposer au catalogue (validation admin)',
+                : 'Proposition catalogue — ajout en attente',
         };
 
         return [
@@ -185,6 +185,102 @@ final class SteamLibraryImporter
             'action_label' => $actionLabel,
             'img_icon_url' => (string) ($game['img_icon_url'] ?? ''),
         ];
+    }
+
+    /**
+     * Répartit une sélection utilisateur : catalogue → import direct, inconnu → proposition.
+     *
+     * @param list<int> $selectedAppIds
+     * @return array{import: list<int>, propose: list<int>}
+     */
+    public function splitSelectionForUser(int $userId, array $selectedAppIds): array
+    {
+        $preview = $this->loadPreviewFromSession($userId);
+        if ($preview === null) {
+            return ['import' => [], 'propose' => []];
+        }
+
+        $selected = [];
+        foreach ($selectedAppIds as $appid) {
+            $appid = (int) $appid;
+            if ($appid > 0) {
+                $selected[$appid] = true;
+            }
+        }
+
+        $import = [];
+        $propose = [];
+        foreach ($preview as $row) {
+            $appid = (int) ($row['appid'] ?? 0);
+            if ($appid <= 0 || !isset($selected[$appid])) {
+                continue;
+            }
+
+            if ((int) ($row['oeuvre_id'] ?? 0) > 0) {
+                $import[] = $appid;
+            } else {
+                $propose[] = $appid;
+            }
+        }
+
+        return ['import' => $import, 'propose' => $propose];
+    }
+
+    /**
+     * Après validation admin d’une proposition issue d’un import Steam : ajout bibliothèque + stats.
+     *
+     * @param array{appid: int, playtime_forever: int, rtime_last_played: int, img_icon_url?: string} $steamImport
+     * @return int|null ID bibliothèque créé ou mis à jour
+     */
+    public function fulfillApprovedSubmission(int $submitterUserId, int $oeuvreId, array $steamImport): ?int
+    {
+        if ($oeuvreId <= 0 || $submitterUserId <= 0 || !self::isAvailable()) {
+            return null;
+        }
+
+        $appid = (int) ($steamImport['appid'] ?? 0);
+        if ($appid <= 0) {
+            return null;
+        }
+
+        $foyerRepo = new FoyerRepository();
+        $foyerId = $foyerRepo->currentFoyerIdForUser($submitterUserId);
+        if ($foyerId <= 0 && FoyerRepository::tableExists($this->db)) {
+            $foyerId = $foyerRepo->ensurePersonalFoyerForUser($submitterUserId);
+        }
+        if ($foyerId <= 0) {
+            return null;
+        }
+
+        $playtime = (int) ($steamImport['playtime_forever'] ?? 0);
+        $lastPlayed = (int) ($steamImport['rtime_last_played'] ?? 0);
+        $storeUrl = SteamWebApiClient::storeUrl($appid, '');
+        $libraryDetails = $this->steamLibraryDetails($storeUrl);
+
+        $this->games->mergeDigitalStoreForOeuvre($oeuvreId, GameDigitalStore::STEAM, $storeUrl);
+        $this->games->setSteamAppIdIfEmpty($oeuvreId, $appid);
+
+        $bibId = (int) ($this->games->findLibraryBibIdForCatalogOeuvre($oeuvreId, $submitterUserId, $foyerId) ?? 0);
+        if ($bibId <= 0) {
+            $result = $this->games->addFromCatalogOeuvre(
+                $oeuvreId,
+                LibraryStatut::COLLECTION,
+                $submitterUserId,
+                $foyerId,
+                $libraryDetails
+            );
+            if (!is_int($result)) {
+                return null;
+            }
+            $bibId = $result;
+        } else {
+            $this->games->applyLibraryEditionDetails($bibId, $oeuvreId, $libraryDetails);
+        }
+
+        $this->games->setSteamAppId($oeuvreId, $appid);
+        $this->steamStats->upsert($bibId, $appid, $playtime, $lastPlayed);
+
+        return $bibId;
     }
 
     /**
@@ -310,6 +406,10 @@ final class SteamLibraryImporter
             'platform' => GamePlatform::PC,
             'platforms' => GamePlatform::PC,
             'platform_list' => [GamePlatform::PC],
+            'is_digital' => true,
+            'digital_stores' => GameDigitalStore::serializeList([
+                ['store' => GameDigitalStore::STEAM, 'url' => $storeUrl],
+            ]),
         ];
         if ($iconUrl !== '') {
             $payload['poster_url'] = $iconUrl;
@@ -317,6 +417,13 @@ final class SteamLibraryImporter
         if ($igdbId > 0) {
             $payload['igdb_id'] = $igdbId;
         }
+
+        $payload = CatalogSubmissionPayload::withSteamImportMeta($payload, [
+            'appid' => $appid,
+            'playtime_forever' => (int) ($row['playtime_forever'] ?? 0),
+            'rtime_last_played' => (int) ($row['rtime_last_played'] ?? 0),
+            'img_icon_url' => (string) ($row['img_icon_url'] ?? ''),
+        ]);
 
         $note = sprintf('Import Steam — AppID %d — %s', $appid, $storeUrl);
         $result = (new CatalogSubmission())->submit($userId, $payload, $note);

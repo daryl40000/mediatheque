@@ -149,7 +149,8 @@ final class NotificationService
         int $submissionId,
         int $oeuvreId,
         string $titre,
-        string $reviewNote = ''
+        string $reviewNote = '',
+        ?int $libraryBibId = null
     ): void {
         if (!self::isAvailable() || $userId <= 0) {
             return;
@@ -172,13 +173,19 @@ final class NotificationService
 
         $link = $oeuvreId > 0
             ? (MediaDomain::isGame($mediaDomain)
-                ? View::addGameChoiceUrl($oeuvreId)
+                ? ($libraryBibId !== null && $libraryBibId > 0
+                    ? View::gameUrl($libraryBibId)
+                    : View::addGameChoiceUrl($oeuvreId))
                 : View::addFilmChoiceUrl($oeuvreId))
             : '/mes-soumissions.php';
         $title = 'Proposition acceptée — ' . $titre;
         if (MediaDomain::isGame($mediaDomain)) {
             $body = '« ' . $titre . ' » est dans le catalogue jeux.';
-            $body .= ' Cliquez pour l’ajouter à Mes jeux (collection) ou à Mes envies jeux.';
+            if ($libraryBibId !== null && $libraryBibId > 0) {
+                $body .= ' Il a été ajouté automatiquement à Mes jeux (import Steam).';
+            } else {
+                $body .= ' Cliquez pour l’ajouter à Mes jeux (collection) ou à Mes envies jeux.';
+            }
         } else {
             $body = '« ' . $titre . ' » est dans le catalogue Moncine.';
             $body .= ' Cliquez pour l’ajouter à Mes films (collection) ou à Mes envies.';

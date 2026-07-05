@@ -196,11 +196,29 @@ final class CatalogSubmission
             return 'La proposition a été créée au catalogue mais son statut n’a pas pu être mis à jour.';
         }
 
+        $libraryBibId = null;
+        if ($isGame) {
+            try {
+                $approvedPayload = CatalogSubmissionPayload::decode((string) ($row['payload_json'] ?? ''));
+            } catch (\JsonException) {
+                $approvedPayload = $manualEditData;
+            }
+            $steamImport = CatalogSubmissionPayload::steamImportMeta($approvedPayload);
+            if ($steamImport !== null) {
+                $libraryBibId = (new SteamLibraryImporter())->fulfillApprovedSubmission(
+                    (int) ($row['user_id'] ?? 0),
+                    $oeuvreId,
+                    $steamImport
+                );
+            }
+        }
+
         $this->notifySubmitterReviewResult(
             $row,
             CatalogSubmissionRepository::STATUS_APPROVED,
             $oeuvreId,
-            $reviewNote
+            $reviewNote,
+            $libraryBibId
         );
 
         return $oeuvreId;
@@ -238,7 +256,8 @@ final class CatalogSubmission
         array $submissionRow,
         string $status,
         int $oeuvreId,
-        string $reviewNote
+        string $reviewNote,
+        ?int $libraryBibId = null
     ): void {
         $userId = (int) ($submissionRow['user_id'] ?? 0);
         $submissionId = (int) ($submissionRow['id'] ?? 0);
@@ -261,7 +280,8 @@ final class CatalogSubmission
                 $submissionId,
                 $oeuvreId,
                 $titre,
-                $reviewNote
+                $reviewNote,
+                $libraryBibId
             );
 
             return;

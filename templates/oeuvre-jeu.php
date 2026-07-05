@@ -1,6 +1,6 @@
 <?php
 /**
- * Fiche catalogue — jeu vidéo.
+ * Fiche catalogue — jeu vidéo (affichage aligné sur la fiche bibliothèque + outils admin).
  *
  * @var array<string, mixed>|null $game
  * @var array<string, mixed>|null $library
@@ -9,10 +9,14 @@
  * @var string $catalogueBackUrl
  * @var array<string, mixed>|null $baseGame
  * @var list<array<string, mixed>> $catalogExtensions
+ * @var list<array<string, mixed>> $gameCompletions
+ * @var int $completionCount
  */
 $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
+$gameCompletions = $gameCompletions ?? [];
+$completionCount = (int) ($completionCount ?? 0);
 ?>
-<section class="oeuvre-catalog-page oeuvre-catalog-page--game">
+<section class="oeuvre-catalog-page oeuvre-catalog-page--game game-detail-page">
     <?php if ($game === null): ?>
         <h1>Jeu introuvable</h1>
         <p>Cette fiche n’existe pas ou a été supprimée du catalogue.</p>
@@ -24,8 +28,6 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
         $libraryStatut = $inLibrary ? (string) ($libraryEntry['statut'] ?? '') : '';
         $posterSrc = Moncine\View::posterSrc($game['poster_url'] ?? null);
         $genreList = $game['genre_list'] ?? Moncine\GameGenre::parseList((string) ($game['genre'] ?? ''));
-        $physicalLabels = $game['physical_support_labels']
-            ?? Moncine\GamePhysicalSupport::displayLabels((string) ($game['physical_supports'] ?? ''));
         ?>
         <p class="breadcrumb">
             <a href="<?= Moncine\View::escape($catalogueBackUrl) ?>">Catalogue</a>
@@ -48,82 +50,65 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
             </div>
         <?php endif; ?>
 
-        <article class="film-detail<?= $posterSrc !== '' ? ' film-detail--with-poster' : '' ?>">
-            <?php if ($posterSrc !== ''): ?>
-                <img class="film-poster film-poster--large" src="<?= $posterSrc ?>"
-                     alt="Jaquette de <?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? '')) ?>">
-            <?php endif; ?>
+        <?php if (!empty($saved)): ?>
+            <div class="alert alert-success">Modifications enregistrées.</div>
+        <?php endif; ?>
+        <?php if (!empty($posterUploaded)): ?>
+            <div class="alert alert-success">Jaquette enregistrée.</div>
+        <?php endif; ?>
 
-            <div class="film-detail__body">
-                <header class="film-detail__heading">
-                    <h1 class="game-detail__title-row">
-                        <span><?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? '')) ?></span>
-                        <?php if (!empty($game['is_extension'])): ?>
-                            <span class="magazine-tag">Extension</span>
-                        <?php endif; ?>
-                        <?php if (!empty($game['is_remake'])): ?>
-                            <span class="magazine-tag">Remake</span>
-                        <?php endif; ?>
-                        <?php if ((int) ($game['annee'] ?? 0) > 0): ?>
-                            <span class="film-year">(<?= (int) $game['annee'] ?>)</span>
-                        <?php endif; ?>
-                    </h1>
-                    <p class="lead">
-                        <?php
-                        $meta = [];
-                        if ((string) ($game['platform_short'] ?? '') !== '') {
-                            $meta[] = (string) $game['platform_short'];
-                        }
-                        if (!empty($game['has_digital_edition'])) {
-                            $meta[] = 'Démat';
-                        } elseif ($physicalLabels !== []) {
-                            $meta[] = 'Physique';
-                        }
-                        echo Moncine\View::escape($meta !== [] ? implode(' · ', $meta) : 'Jeu vidéo');
+        <article class="film-detail game-detail<?= $posterSrc !== '' ? ' film-detail--with-poster' : '' ?>">
+            <?php require MONCINE_ROOT . '/templates/_game_detail_sidebar.php'; ?>
+
+            <div class="film-detail__body game-detail__body">
+                <header class="film-detail__heading game-detail__heading">
+                    <div class="game-detail__title-bar">
+                        <h1 class="game-detail__title-row">
+                            <span><?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? '')) ?></span>
+                            <?php if (!empty($game['is_extension'])): ?>
+                                <span class="magazine-tag">Extension</span>
+                            <?php endif; ?>
+                            <?php if (!empty($game['is_remake'])): ?>
+                                <span class="magazine-tag">Remake</span>
+                            <?php endif; ?>
+                            <?php
+                            $linuxBadge = (string) ($game['linux_badge'] ?? '');
+                            if ($linuxBadge !== ''):
+                                $size = 'md';
+                                $plain = true;
+                                require MONCINE_ROOT . '/templates/_game_linux_badge_if_set.php';
+                            endif;
+                            ?>
+                            <?php if ((int) ($game['annee'] ?? 0) > 0): ?>
+                                <span class="film-year">(<?= (int) $game['annee'] ?>)</span>
+                            <?php endif; ?>
+                        </h1>
+                    </div>
+                    <?php
+                    $franchiseName = trim((string) ($game['franchise'] ?? ''));
+                    if ($franchiseName !== ''):
                         ?>
-                    </p>
+                        <p class="game-detail__saga">
+                            <span class="game-detail__saga-label">Saga</span>
+                            <?php require MONCINE_ROOT . '/templates/_game_franchise_link.php'; ?>
+                        </p>
+                    <?php endif; ?>
                 </header>
 
-                <dl class="film-facts">
-                    <?php if ((string) ($game['studio'] ?? '') !== ''): ?>
-                        <dt>Studio</dt>
-                        <dd><?= Moncine\View::escape((string) $game['studio']) ?></dd>
-                    <?php endif; ?>
-
-                    <?php if ((string) ($game['editeur'] ?? '') !== ''): ?>
-                        <dt>Éditeur</dt>
-                        <dd><?= Moncine\View::escape((string) $game['editeur']) ?></dd>
-                    <?php endif; ?>
-
-                    <?php
-                    $catalogPlatformKeys = $game['platform_list']
-                        ?? Moncine\GamePlatformList::catalogKeysFromRow(is_array($game) ? $game : []);
-                    ?>
-                    <?php if ($catalogPlatformKeys !== []): ?>
-                        <dt>Plateforme<?= count($catalogPlatformKeys) > 1 ? 's' : '' ?></dt>
-                        <dd class="game-genre-tags">
-                            <?php foreach ($catalogPlatformKeys as $platformKey): ?>
-                                <span class="magazine-tag magazine-tag--game-platform"><?= Moncine\View::escape(Moncine\GamePlatform::shortLabel((string) $platformKey)) ?></span>
-                            <?php endforeach; ?>
-                        </dd>
-                    <?php endif; ?>
-
-                    <?php if ($genreList !== []): ?>
-                        <dt>Genres</dt>
-                        <dd class="game-genre-tags">
-                            <?php foreach ($genreList as $genreTag): ?>
-                                <span class="magazine-tag magazine-tag--game-genre"><?= Moncine\View::escape((string) $genreTag) ?></span>
-                            <?php endforeach; ?>
-                        </dd>
-                    <?php endif; ?>
-
-                    <?php require MONCINE_ROOT . '/templates/_game_igdb_metadata_display.php'; ?>
+                <section class="game-detail__facts" aria-labelledby="catalog-game-facts-heading">
+                    <h2 id="catalog-game-facts-heading" class="game-detail__section-title">Détails</h2>
+                    <?php require MONCINE_ROOT . '/templates/_game_detail_facts_columns.php'; ?>
 
                     <?php if ((string) ($game['edition_summary'] ?? '') !== ''): ?>
-                        <dt>Éditions catalogue</dt>
-                        <dd><?= Moncine\View::escape((string) $game['edition_summary']) ?></dd>
+                        <h3 class="stats-subtitle">Éditions catalogue</h3>
+                        <p class="game-detail__synopsis"><?= Moncine\View::escape((string) $game['edition_summary']) ?></p>
                     <?php endif; ?>
-                </dl>
+
+                    <?php if (trim((string) ($game['synopsis'] ?? '')) !== ''): ?>
+                        <h3 class="stats-subtitle">Description</h3>
+                        <p class="game-detail__synopsis"><?= nl2br(Moncine\View::escape((string) $game['synopsis'])) ?></p>
+                    <?php endif; ?>
+                </section>
 
                 <?php
                 $gameRelatedSections = Moncine\GameRelatedSections::build(
@@ -140,18 +125,17 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
                         (int) ($catalogPage ?? 1),
                     ),
                 );
-                require MONCINE_ROOT . '/templates/_game_related_posters.php';
-                ?>
-
-                <?php if (!empty($game['synopsis'])): ?>
-                    <h2>Description</h2>
-                    <p class="film-synopsis"><?= Moncine\View::escape((string) $game['synopsis']) ?></p>
+                if ($gameRelatedSections !== []):
+                    ?>
+                    <section class="game-detail__related" aria-label="Jeux liés">
+                        <?php require MONCINE_ROOT . '/templates/_game_related_posters.php'; ?>
+                    </section>
                 <?php endif; ?>
 
                 <?php $catalogMagazineSubjects = $catalogMagazineSubjects ?? []; ?>
                 <?php if ($catalogMagazineSubjects !== []): ?>
-                    <section aria-labelledby="catalog-game-magazine-heading">
-                        <h2 id="catalog-game-magazine-heading">Sujets magazine reliés</h2>
+                    <section class="game-detail__magazines" aria-labelledby="catalog-game-magazine-heading">
+                        <h2 id="catalog-game-magazine-heading" class="game-detail__section-title">Sujets magazine reliés</h2>
                         <p class="hint">
                             Sujets test / preview / interview du catalogue magazines pointant vers cette fiche jeu
                             (tous numéros du catalogue, pas seulement votre bibliothèque).
@@ -179,39 +163,40 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::JEU);
                     </section>
                 <?php endif; ?>
 
-                <?php if (!empty($saved)): ?>
-                    <p class="alert alert-success">Modifications enregistrées.</p>
-                <?php endif; ?>
-                <?php if (!empty($posterUploaded)): ?>
-                    <p class="alert alert-success">Jaquette enregistrée.</p>
-                <?php endif; ?>
+                <section class="oeuvre-catalog-page__admin-tools" aria-labelledby="catalog-game-admin-heading">
+                    <h2 id="catalog-game-admin-heading" class="game-detail__section-title">Administration catalogue</h2>
 
-                <?php
-                require MONCINE_ROOT . '/templates/_oeuvre_jeu_edit_form.php';
-                ?>
+                    <?php require MONCINE_ROOT . '/templates/_oeuvre_jeu_edit_form.php'; ?>
 
-                <?php
-                $enrichTarget = 'oeuvre';
-                $entityId = $oeuvreId;
-                $hasIgdbCredentials = Moncine\IgdbConfig::hasCredentials() && Moncine\GameRepository::hasIgdbColumns();
-                $currentIgdbId = (int) ($game['igdb_id'] ?? 0);
-                $currentPosterUrl = (string) ($game['poster_url'] ?? '');
-                require MONCINE_ROOT . '/templates/_enrich_game_panel.php';
-                ?>
+                    <?php
+                    $enrichTarget = 'oeuvre';
+                    $entityId = $oeuvreId;
+                    $hasIgdbCredentials = Moncine\IgdbConfig::hasCredentials() && Moncine\GameRepository::hasIgdbColumns();
+                    $currentIgdbId = (int) ($game['igdb_id'] ?? 0);
+                    $currentPosterUrl = (string) ($game['poster_url'] ?? '');
+                    require MONCINE_ROOT . '/templates/_enrich_game_panel.php';
+                    ?>
 
-                <?php
-                $posterUploadError = $posterUploadError ?? '';
-                $posterUploadOpen = $posterUploadOpen ?? false;
-                require MONCINE_ROOT . '/templates/_oeuvre_poster_upload_form.php';
-                ?>
+                    <?php
+                    $posterUploadError = $posterUploadError ?? '';
+                    $posterUploadOpen = $posterUploadOpen ?? false;
+                    require MONCINE_ROOT . '/templates/_oeuvre_poster_upload_form.php';
+                    ?>
 
-                <?php
-                $mediaDomain = Moncine\MediaDomain::JEU;
-                $collectionLabel = $navLabels['collection'];
-                $wishlistLabel = $navLabels['wishlist'];
-                $openLibraryLabel = 'Ouvrir ma fiche jeu';
-                require MONCINE_ROOT . '/templates/_oeuvre_catalog_library_section.php';
-                ?>
+                    <?php
+                    $mediaDomain = Moncine\MediaDomain::JEU;
+                    $collectionLabel = $navLabels['collection'];
+                    $wishlistLabel = $navLabels['wishlist'];
+                    $openLibraryLabel = 'Ouvrir ma fiche jeu';
+                    require MONCINE_ROOT . '/templates/_oeuvre_catalog_library_section.php';
+                    ?>
+
+                    <?php
+                    $currentOeuvreId = $oeuvreId;
+                    $currentOeuvreTitle = (string) ($game['display_titre'] ?? $game['titre'] ?? '');
+                    require MONCINE_ROOT . '/templates/_catalog_oeuvre_merge_panel.php';
+                    ?>
+                </section>
 
                 <?php if (isset($catalogListContext, $oeuvreNav)): ?>
                     <?php require MONCINE_ROOT . '/templates/_catalog_oeuvre_nav.php'; ?>

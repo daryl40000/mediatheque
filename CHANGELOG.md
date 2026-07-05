@@ -25,6 +25,64 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.10] — 2026-07-05
+
+**Fusion catalogue, import Steam utilisateur, fiche catalogue jeu**
+
+### Ajouté
+
+- **Fusion manuelle de fiches catalogue** : panneau admin sur les fiches film, jeu et magazine (autocomplétion, choix de la fiche conservée) — `CatalogMaintenance::mergeOeuvres`.
+- **Import Steam (utilisateurs)** : liste unique à cocher ; jeux au catalogue ajoutés directement, absents proposés au catalogue et ajoutés en attente dans Mes jeux.
+- **Import Steam (admins)** : section « Relier au catalogue » réservée aux administrateurs.
+- **Validation proposition catalogue** : ajout automatique à la bibliothèque du demandeur et import des stats Steam (`SteamLibraryImporter::fulfillApprovedSubmission`).
+
+### Modifié
+
+- **Fiche catalogue jeu** : même mise en page que la fiche bibliothèque (sidebar, détails en 2 colonnes, saga sous le titre, outils admin regroupés).
+- **Statistiques jeux** : retrait du sous-texte « X jeux avec temps enregistré » sous le temps Steam cumulé (le total couvre toute la collection).
+
+### Corrigé
+
+- **Page sagas jeux** : erreur 500 (`GameFranchiseRepository::findByFranchise` — jointure Steam corrigée).
+- **Fusion catalogue** : recherche des fiches sans filtre d’onglet actif ; refus si les deux fiches ne sont pas du même type de média.
+
+### Technique
+
+- Endpoints `fusionner-oeuvre-catalogue.php`, `rechercher-oeuvres-catalogue.php` ; partial `_catalog_oeuvre_merge_panel.php`.
+- Seed catalogue `install_seed/moncine-catalogue-2026-07-05.csv`.
+
+---
+
+---
+
+## [0.7.10] — 2026-07-05
+
+**Fusion catalogue, import Steam utilisateur, fiche catalogue jeu**
+
+### Ajouté
+
+- **Fusion manuelle de fiches catalogue** : panneau admin sur les fiches film, jeu et magazine (autocomplétion, choix de la fiche conservée) — `CatalogMaintenance::mergeOeuvres`.
+- **Import Steam (utilisateurs)** : liste unique à cocher ; jeux au catalogue ajoutés directement, absents proposés au catalogue et ajoutés en attente dans Mes jeux.
+- **Import Steam (admins)** : section « Relier au catalogue » réservée aux administrateurs.
+- **Validation proposition catalogue** : ajout automatique à la bibliothèque du demandeur et import des stats Steam (`SteamLibraryImporter::fulfillApprovedSubmission`).
+
+### Modifié
+
+- **Fiche catalogue jeu** : même mise en page que la fiche bibliothèque (sidebar, détails en 2 colonnes, saga sous le titre, outils admin regroupés).
+- **Statistiques jeux** : retrait du sous-texte « X jeux avec temps enregistré » sous le temps Steam cumulé (le total couvre toute la collection).
+
+### Corrigé
+
+- **Page sagas jeux** : erreur 500 (`GameFranchiseRepository::findByFranchise` — jointure Steam corrigée).
+- **Fusion catalogue** : recherche des fiches sans filtre d’onglet actif ; refus si les deux fiches ne sont pas du même type de média.
+
+### Technique
+
+- Endpoints `fusionner-oeuvre-catalogue.php`, `rechercher-oeuvres-catalogue.php` ; partial `_catalog_oeuvre_merge_panel.php`.
+- Seed catalogue `install_seed/moncine-catalogue-2026-07-05.csv`.
+
+---
+
 ## [0.7.9] — 2026-07-05
 
 **Import Steam, refonte fiche jeu, statistiques temps de jeu**

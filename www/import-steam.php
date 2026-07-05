@@ -61,6 +61,7 @@ View::render('import-steam', [
     'pageTitle' => 'Import Steam — aperçu',
     'importRows' => $importRows,
     'proposalRows' => $proposalRows,
+    'allRows' => array_merge($importRows, $proposalRows),
     'summary' => $summary,
     'canCreateCatalogEntries' => SteamLibraryImporter::canCreateCatalogEntries(),
     'mapMessage' => isset($_GET['steam_mapped']) ? 'Lien Steam enregistré — le jeu apparaît maintenant dans « Ajouter à ma bibliothèque ».' : '',

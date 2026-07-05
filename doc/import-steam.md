@@ -35,11 +35,9 @@ Synchroniser la bibliothèque Steam d’un utilisateur connecté vers **Mes jeux
 2. Utilisateur : renseigne son SteamID64 sur `/parametres.php`
 3. Utilisateur : **Préparer l’import Steam** → aperçu `/import-steam.php`
 4. Validation :
-   - **Jeux au catalogue** : ajout ou mise à jour dans la collection (+ temps de jeu Steam)
-   - **Jeux absents mais peut-être au catalogue** : section **Relier au catalogue** (autocomplétion, mémorisé pour les imports suivants)
-   - **Jeux vraiment absents** :
-     - *Administrateur* : création fiche catalogue + ajout
-     - *Utilisateur simple* : proposition au catalogue (validation admin)
+   - **Administrateur** : sections « Relier au catalogue », « Ajouter à ma bibliothèque » et « Créer au catalogue »
+   - **Utilisateur** : une seule liste à cocher — jeux au catalogue ajoutés tout de suite ; jeux absents → proposition automatique + ajout Mes jeux **en attente** jusqu’à validation admin
+5. Lors de l’**acceptation** d’une proposition issue d’un import Steam : ajout automatique à la bibliothèque du demandeur (magasin Steam + temps de jeu)
 
 ## Règles métier
 

@@ -152,10 +152,11 @@ final class GameFranchiseRepository
             'history_user_id' => $userId,
         ];
 
-        $sql = 'SELECT ' . self::selectGameRowWithOrder() . self::selectGameHistoryExtras()
+        $sql = 'SELECT ' . GameCatalogSql::selectGameRow() . GameCatalogSql::selectGameHistoryExtras()
             . ' FROM bibliotheque b'
             . ' INNER JOIN oeuvres o ON o.id = b.oeuvre_id'
             . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . GameSteamStatsRepository::listJoinSql()
             . ' WHERE b.foyer_id = :foyer_id'
             . '   AND b.statut = :statut'
             . '   AND o.media_domain = :game_domain'
@@ -286,34 +287,5 @@ final class GameFranchiseRepository
         }
 
         return $ids;
-    }
-
-    private static function selectGameRowWithOrder(): string
-    {
-        return 'b.id, b.user_id, b.foyer_id, b.oeuvre_id, b.statut, b.support_physique, b.created_at, b.saga_ordre,'
-            . ' o.titre, o.titre_original, o.annee, o.poster_url, o.synopsis,'
-            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital'
-            . (GameSchema::hasEditionColumns() ? ', oj.physical_supports, oj.digital_stores' : '')
-            . GameRelations::selectColumns()
-            . (GameSchema::hasIgdbColumns() ? ', oj.igdb_id, oj.igdb_enriched_at' : '')
-            . (GameSchema::hasIgdbMetadataColumns()
-                ? ', oj.franchise, oj.game_mode, oj.theme, oj.alternative_names'
-                : '')
-            . (GameSchema::hasTestedOnLinuxColumn()
-                ? ', b.tested_on_linux' . (GameSchema::hasLinuxNotSupportedColumn() ? ', b.linux_not_supported' : '')
-                : '');
-    }
-
-    private static function selectGameHistoryExtras(): string
-    {
-        $noteWhere = RessentiNote::sqlValidNote('h');
-
-        return ','
-            . ' (SELECT MAX(h.date_vue) FROM historique h'
-            . '  WHERE h.film_id = b.id AND h.user_id = :history_user_id) AS derniere_session,'
-            . ' (SELECT MAX(h.note) FROM historique h'
-            . '  WHERE h.film_id = b.id AND h.user_id = :history_user_id'
-            . '    AND ' . $noteWhere . ') AS note_max'
-            . GameCompletionRepository::selectListExtrasSql();
     }
 }

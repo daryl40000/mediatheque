@@ -99,6 +99,11 @@ if ($action === 'prepare_steam_import') {
 if ($action === 'save_steam_mapping') {
     Csrf::rejectUnlessValid($_POST, '/import-steam.php');
 
+    if (!CatalogAdmin::canAccess()) {
+        header('Location: /import-steam.php?steam_map_error=1&steam_map_msg=' . rawurlencode('Action réservée aux administrateurs.'));
+        exit;
+    }
+
     $userId = UserContext::currentUserId();
     $foyerId = UserContext::currentFoyerId();
     $appid = (int) ($_POST['steam_appid'] ?? 0);
@@ -122,18 +127,26 @@ if ($action === 'apply_steam_import') {
 
     $userId = UserContext::currentUserId();
     $foyerId = UserContext::currentFoyerId();
-    $importAppIds = isset($_POST['import_appids']) && is_array($_POST['import_appids'])
-        ? array_map('intval', $_POST['import_appids'])
-        : [];
-    $proposeAppIds = isset($_POST['propose_appids']) && is_array($_POST['propose_appids'])
-        ? array_map('intval', $_POST['propose_appids'])
-        : [];
-
     $importer = new SteamLibraryImporter();
-    // Administrateurs : les jeux absents du catalogue passent par la création directe.
-    if (SteamLibraryImporter::canCreateCatalogEntries() && $proposeAppIds !== []) {
-        $importAppIds = array_values(array_unique(array_merge($importAppIds, $proposeAppIds)));
-        $proposeAppIds = [];
+
+    if (SteamLibraryImporter::canCreateCatalogEntries()) {
+        $importAppIds = isset($_POST['import_appids']) && is_array($_POST['import_appids'])
+            ? array_map('intval', $_POST['import_appids'])
+            : [];
+        $proposeAppIds = isset($_POST['propose_appids']) && is_array($_POST['propose_appids'])
+            ? array_map('intval', $_POST['propose_appids'])
+            : [];
+        if ($proposeAppIds !== []) {
+            $importAppIds = array_values(array_unique(array_merge($importAppIds, $proposeAppIds)));
+            $proposeAppIds = [];
+        }
+    } else {
+        $selectedAppIds = isset($_POST['selected_appids']) && is_array($_POST['selected_appids'])
+            ? array_map('intval', $_POST['selected_appids'])
+            : [];
+        $split = $importer->splitSelectionForUser($userId, $selectedAppIds);
+        $importAppIds = $split['import'];
+        $proposeAppIds = $split['propose'];
     }
 
     $result = $importer->applySelected($userId, $foyerId, $importAppIds, $proposeAppIds);

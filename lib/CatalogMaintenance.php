@@ -414,10 +414,16 @@ final class CatalogMaintenance
             return 'Choisissez deux fiches différentes.';
         }
 
-        $keep = $this->oeuvres->findById($keepId);
-        $remove = $this->oeuvres->findById($removeId);
+        $keep = $this->oeuvres->findByIdForAdmin($keepId);
+        $remove = $this->oeuvres->findByIdForAdmin($removeId);
         if ($keep === null || $remove === null) {
             return 'Une des fiches est introuvable.';
+        }
+
+        $keepDomain = MediaDomain::normalize((string) ($keep['media_domain'] ?? MediaDomain::FILM));
+        $removeDomain = MediaDomain::normalize((string) ($remove['media_domain'] ?? MediaDomain::FILM));
+        if ($keepDomain !== $removeDomain) {
+            return 'Les deux fiches doivent être du même type de média.';
         }
 
         $this->db->beginTransaction();

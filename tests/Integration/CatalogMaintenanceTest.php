@@ -51,6 +51,20 @@ final class CatalogMaintenanceTest extends MoncineTestCase
         $this->assertSame(8, (int) ($history[0]['note'] ?? 0));
     }
 
+    public function testMergeOeuvresRejectsDifferentMediaDomains(): void
+    {
+        $adminId = $this->loginAsAdmin();
+        $keepId = $this->seedCatalogOeuvre('Film seul', 'Réalisateur');
+        $removeId = $this->seedCatalogOeuvre('Jeu seul', '');
+        Database::getInstance()->prepare('UPDATE oeuvres SET media_domain = ? WHERE id = ?')
+            ->execute([MediaDomain::JEU, $removeId]);
+
+        $result = (new CatalogMaintenance())->mergeOeuvres($keepId, $removeId, $adminId);
+        $this->assertIsString($result);
+        $this->assertStringContainsString('même type', $result);
+        $this->assertNotNull((new OeuvreRepository())->findByIdForAdmin($removeId));
+    }
+
     public function testFindOrphanPosterFilesIgnoresReferencedPosters(): void
     {
         $this->loginAsAdmin();

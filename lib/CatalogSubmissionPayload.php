@@ -102,12 +102,22 @@ final class CatalogSubmissionPayload
             return [];
         }
 
-        return self::fromManualEditData($data);
+        $out = self::fromManualEditData($data);
+        $steam = self::steamImportMeta($data);
+        if ($steam !== null) {
+            $out['steam_import'] = $steam;
+        }
+
+        return $out;
     }
 
     public static function encode(array $payload): string
     {
         $clean = self::fromManualEditData($payload);
+        $steam = self::steamImportMeta($payload);
+        if ($steam !== null) {
+            $clean['steam_import'] = $steam;
+        }
 
         return json_encode($clean, JSON_UNESCAPED_UNICODE | JSON_THROW_ON_ERROR);
     }
@@ -167,6 +177,53 @@ final class CatalogSubmissionPayload
         unset($film['duree_min'], $film['tmdb_types_locked']);
 
         return $film;
+    }
+
+    /**
+     * Métadonnées import Steam conservées dans une proposition (ajout bibliothèque différé).
+     *
+     * @param array<string, mixed> $stored
+     * @return array{appid: int, playtime_forever: int, rtime_last_played: int, img_icon_url: string}|null
+     */
+    public static function steamImportMeta(array $stored): ?array
+    {
+        $raw = $stored['steam_import'] ?? null;
+        if (!is_array($raw)) {
+            return null;
+        }
+
+        $appid = (int) ($raw['appid'] ?? 0);
+        if ($appid <= 0) {
+            return null;
+        }
+
+        return [
+            'appid' => $appid,
+            'playtime_forever' => max(0, (int) ($raw['playtime_forever'] ?? 0)),
+            'rtime_last_played' => max(0, (int) ($raw['rtime_last_played'] ?? 0)),
+            'img_icon_url' => trim((string) ($raw['img_icon_url'] ?? '')),
+        ];
+    }
+
+    /**
+     * @param array<string, mixed> $manualEditData
+     * @return array<string, mixed>
+     */
+    public static function withSteamImportMeta(array $manualEditData, array $steamImport): array
+    {
+        $appid = (int) ($steamImport['appid'] ?? 0);
+        if ($appid <= 0) {
+            return $manualEditData;
+        }
+
+        $manualEditData['steam_import'] = [
+            'appid' => $appid,
+            'playtime_forever' => max(0, (int) ($steamImport['playtime_forever'] ?? 0)),
+            'rtime_last_played' => max(0, (int) ($steamImport['rtime_last_played'] ?? 0)),
+            'img_icon_url' => trim((string) ($steamImport['img_icon_url'] ?? '')),
+        ];
+
+        return $manualEditData;
     }
 
     public static function domainLabel(array $stored): string

@@ -38,6 +38,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initGameShelfHoverPreviews();
     initShareLinkCopy();
     initSteamImportMapping();
+    initCatalogOeuvreMerge();
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('vu') === '1') {
@@ -1855,5 +1856,152 @@ function initSteamImportMapping() {
                 }
             }
         });
+    });
+}
+
+/** Fiche catalogue : fusion manuelle avec autocomplétion. */
+function initCatalogOeuvreMerge() {
+    document.querySelectorAll('[data-catalog-oeuvre-merge]').forEach((root) => {
+        const form = root.querySelector('[data-catalog-oeuvre-merge-form]');
+        const input = root.querySelector('[data-catalog-merge-search]');
+        const list = root.querySelector('[data-catalog-merge-list]');
+        const keepIdInput = root.querySelector('[data-catalog-merge-keep-id]');
+        const removeIdInput = root.querySelector('[data-catalog-merge-remove-id]');
+        const otherIdInput = root.querySelector('[data-catalog-merge-other-id]');
+        const hint = root.querySelector('[data-catalog-merge-hint]');
+        const directionRadios = root.querySelectorAll('[data-catalog-merge-direction]');
+        const submitBtn = root.querySelector('[data-catalog-merge-submit]');
+        const currentOeuvreId = parseInt(root.getAttribute('data-current-oeuvre-id') || '0', 10);
+        const searchUrl = root.getAttribute('data-catalog-search-url') || '/rechercher-oeuvres.php';
+
+        if (!form || !input || !list || !keepIdInput || !removeIdInput || !otherIdInput || currentOeuvreId <= 0) {
+            return;
+        }
+
+        const resolveOeuvreId = (item) => {
+            const raw = item?.oeuvre_id ?? item?.id ?? 0;
+            const parsed = parseInt(String(raw), 10);
+            return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
+        };
+
+        const resolveLabel = (item) => item?.display_label || item?.label || item?.titre || '';
+
+        const syncMergeIds = () => {
+            const otherId = parseInt(String(otherIdInput.value || ''), 10);
+            const keepOther = root.querySelector('[data-catalog-merge-direction][value="keep_other"]')?.checked === true;
+
+            if (!Number.isFinite(otherId) || otherId <= 0) {
+                keepIdInput.value = keepOther ? '' : String(currentOeuvreId);
+                removeIdInput.value = keepOther ? String(currentOeuvreId) : '';
+                return;
+            }
+
+            if (keepOther) {
+                keepIdInput.value = String(otherId);
+                removeIdInput.value = String(currentOeuvreId);
+            } else {
+                keepIdInput.value = String(currentOeuvreId);
+                removeIdInput.value = String(otherId);
+            }
+        };
+
+        const clearSelection = () => {
+            otherIdInput.value = '';
+            if (hint) {
+                hint.textContent = '';
+                hint.hidden = true;
+            }
+            syncMergeIds();
+        };
+
+        attachCatalogAutocomplete({
+            root,
+            input,
+            list,
+            searchUrl,
+            optionIdPrefix: 'catalog-merge-opt',
+            minChars: 2,
+            onInputClear: clearSelection,
+            onSelect: (item) => {
+                const oeuvreId = resolveOeuvreId(item);
+                if (oeuvreId <= 0 || oeuvreId === currentOeuvreId) {
+                    clearSelection();
+                    input.value = '';
+                    if (hint) {
+                        hint.textContent = oeuvreId === currentOeuvreId
+                            ? 'Choisissez une fiche différente de celle-ci.'
+                            : 'Sélection invalide.';
+                        hint.hidden = false;
+                    }
+                    return;
+                }
+
+                input.value = item.titre || resolveLabel(item);
+                otherIdInput.value = String(oeuvreId);
+                syncMergeIds();
+                if (hint) {
+                    hint.textContent = resolveLabel(item);
+                    hint.hidden = (hint.textContent || '').trim() === '';
+                }
+            },
+            buildOption: (item, index, onSelect) => {
+                const oeuvreId = resolveOeuvreId(item);
+                if (oeuvreId === currentOeuvreId) {
+                    return document.createDocumentFragment();
+                }
+
+                return createCatalogAutocompleteOption({
+                    item,
+                    index,
+                    optionIdPrefix: 'catalog-merge-opt',
+                    label: resolveLabel(item),
+                    onSelect,
+                });
+            },
+        });
+
+        directionRadios.forEach((radio) => {
+            radio.addEventListener('change', syncMergeIds);
+        });
+
+        form.addEventListener('submit', (event) => {
+            syncMergeIds();
+            const otherId = parseInt(String(otherIdInput.value || ''), 10);
+            if (!Number.isFinite(otherId) || otherId <= 0) {
+                event.preventDefault();
+                input.focus();
+                if (hint) {
+                    hint.textContent = 'Choisissez une fiche dans la liste de suggestions.';
+                    hint.hidden = false;
+                }
+                return;
+            }
+
+            if (otherId === currentOeuvreId) {
+                event.preventDefault();
+                if (hint) {
+                    hint.textContent = 'Choisissez une fiche différente de celle-ci.';
+                    hint.hidden = false;
+                }
+                return;
+            }
+
+            const keepOther = root.querySelector('[data-catalog-merge-direction][value="keep_other"]')?.checked === true;
+            const confirmText = keepOther
+                ? 'Fusionner cette fiche dans l’autre ? Cette fiche sera supprimée du catalogue.'
+                : 'Fusionner l’autre fiche dans celle-ci ? L’autre fiche sera supprimée du catalogue.';
+
+            if (!window.confirm(confirmText)) {
+                event.preventDefault();
+            }
+        });
+
+        if (submitBtn) {
+            submitBtn.addEventListener('click', () => {
+                syncMergeIds();
+            });
+        }
+
+        syncMergeIds();
     });
 }

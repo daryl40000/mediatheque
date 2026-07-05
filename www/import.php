@@ -174,7 +174,7 @@ if (isset($_GET['steam_import_done'])) {
         $skipped
     );
     if ($proposed > 0) {
-        $steamImportMessage .= ' ' . $proposed . ' proposition(s) envoyée(s) aux administrateurs.';
+        $steamImportMessage .= ' ' . $proposed . ' proposition(s) envoyée(s) — ajout à Mes jeux en attente de validation catalogue.';
     }
     if (!empty($_SESSION['steam_import_last_errors'])) {
         $errors = array_merge($errors, $_SESSION['steam_import_last_errors']);

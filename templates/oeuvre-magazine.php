@@ -116,6 +116,12 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::MAGAZINE);
                 require MONCINE_ROOT . '/templates/_oeuvre_catalog_library_section.php';
                 ?>
 
+                <?php
+                $currentOeuvreId = $oeuvreId;
+                $currentOeuvreTitle = (string) ($issue['titre'] ?? '');
+                require MONCINE_ROOT . '/templates/_catalog_oeuvre_merge_panel.php';
+                ?>
+
                 <?php if (isset($catalogListContext, $oeuvreNav)): ?>
                     <?php require MONCINE_ROOT . '/templates/_catalog_oeuvre_nav.php'; ?>
                 <?php endif; ?>

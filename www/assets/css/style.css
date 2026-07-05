@@ -1744,6 +1744,22 @@ textarea {
     margin-bottom: 0.5rem;
 }
 
+.catalog-oeuvre-merge-form__direction {
+    margin: 0 0 1rem;
+    padding: 0;
+    border: 0;
+}
+
+.catalog-oeuvre-merge-form__choice {
+    display: block;
+    margin-bottom: 0.65rem;
+    line-height: 1.45;
+}
+
+.catalog-oeuvre-merge-form__selected {
+    margin-top: 0.35rem;
+}
+
 .catalog-admin-list h2 {
     font-size: 1.2rem;
     margin: 0 0 1rem;

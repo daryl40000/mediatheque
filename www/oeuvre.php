@@ -82,6 +82,18 @@ if (isset($_GET['poster_uploaded']) && (string) $_GET['poster_uploaded'] === '1'
 $oeuvreNav = $admin->getOeuvreNavigation($oeuvreId, $catalogSearch, $catalogSort, $catalogDir);
 $oeuvreEans = (new OeuvreEanRepository())->listForOeuvre($oeuvreId);
 
+$mergeMessage = '';
+$mergeError = '';
+if (isset($_GET['merge_ok']) && (string) $_GET['merge_ok'] === '1') {
+    $removedId = (int) ($_GET['merge_removed'] ?? 0);
+    $mergeMessage = $removedId > 0
+        ? 'Fusion réussie : la fiche n°' . $removedId . ' a été intégrée dans celle-ci.'
+        : 'Fusion réussie.';
+}
+if (isset($_GET['merge_error'])) {
+    $mergeError = trim((string) $_GET['merge_error']);
+}
+
 View::render('oeuvre', [
     'pageTitle' => (string) ($oeuvre['titre'] ?? 'Œuvre catalogue'),
     'catalogListContext' => $catalogListContext,
@@ -110,4 +122,6 @@ View::render('oeuvre', [
     'currentTmdbMediaType' => (string) ($oeuvre['tmdb_media_type'] ?? ''),
     'currentTmdbTvKind' => (string) ($oeuvre['tmdb_tv_kind'] ?? ''),
     'updated' => isset($_GET['updated']) && (string) $_GET['updated'] === '1',
+    'mergeMessage' => $mergeMessage,
+    'mergeError' => $mergeError,
 ]);

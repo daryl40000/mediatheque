@@ -126,10 +126,6 @@ $physicalListUrl = Moncine\View::gamesCollectionUrl(filter: Moncine\GameListFilt
                         </span>
                     </span>
                 </p>
-                <p class="stat-card__hint">
-                    <?= (int) ($s['steam_playtime_games_count'] ?? 0) ?> jeu<?= (int) ($s['steam_playtime_games_count'] ?? 0) > 1 ? 'x' : '' ?>
-                    avec temps enregistré
-                </p>
             </article>
         <?php endif; ?>
     </div>

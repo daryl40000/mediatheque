@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\CatalogAdmin;
 use Moncine\CatalogListContext;
 use Moncine\GamePlatform;
+use Moncine\GameCompletionRepository;
 use Moncine\GameFranchiseRepository;
 use Moncine\GameRepository;
 use Moncine\MagazineGameLink;
@@ -153,6 +154,39 @@ $catalogMagazineSubjects = MagazineGameLink::isAvailable()
     ? (new MagazineGameLink())->listCatalogSubjectCoverageForGame($oeuvreId)
     : [];
 
+$mergeMessage = '';
+$mergeError = '';
+if (isset($_GET['merge_ok']) && (string) $_GET['merge_ok'] === '1') {
+    $removedId = (int) ($_GET['merge_removed'] ?? 0);
+    $mergeMessage = $removedId > 0
+        ? 'Fusion réussie : la fiche n°' . $removedId . ' a été intégrée dans celle-ci.'
+        : 'Fusion réussie.';
+}
+if (isset($_GET['merge_error'])) {
+    $mergeError = trim((string) $_GET['merge_error']);
+}
+
+$gameCompletions = [];
+$completionCount = 0;
+if ($libraryBibId !== null && $libraryBibId > 0) {
+    $userId = UserContext::currentUserId();
+    $foyerId = UserContext::currentFoyerId();
+    $libraryGame = $repo->findByBibId($libraryBibId, $userId, $foyerId);
+    if ($libraryGame !== null) {
+        foreach (['steam_playtime_minutes', 'steam_playtime_label', 'steam_never_played', 'steam_last_played_unix', 'tested_on_linux', 'linux_not_supported', 'linux_badge'] as $key) {
+            if (array_key_exists($key, $libraryGame)) {
+                $game[$key] = $libraryGame[$key];
+            }
+        }
+        $game['edition_icon_keys'] = $libraryGame['edition_icon_keys'] ?? $game['edition_icon_keys'] ?? [];
+    }
+    if (GameCompletionRepository::isAvailable()) {
+        $completionRepo = new GameCompletionRepository();
+        $gameCompletions = $completionRepo->listForGame($libraryBibId, $userId);
+        $completionCount = count($gameCompletions);
+    }
+}
+
 View::render('oeuvre-jeu', [
     'pageTitle' => (string) ($game['display_titre'] ?? $game['titre'] ?? 'Jeu catalogue'),
     'catalogListContext' => $catalogListContext,
@@ -185,4 +219,8 @@ View::render('oeuvre-jeu', [
         ? (new GameFranchiseRepository())->listKnownSagas()
         : [],
     'catalogMagazineSubjects' => $catalogMagazineSubjects,
+    'gameCompletions' => $gameCompletions,
+    'completionCount' => $completionCount,
+    'mergeMessage' => $mergeMessage,
+    'mergeError' => $mergeError,
 ]);

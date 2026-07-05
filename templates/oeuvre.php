@@ -184,6 +184,13 @@
                     <?php endif; ?>
                 </section>
 
+                <?php
+                $currentOeuvreId = $oeuvreId;
+                $currentOeuvreTitle = (string) ($oeuvre['titre'] ?? '');
+                $mediaDomain = Moncine\MediaDomain::FILM;
+                require MONCINE_ROOT . '/templates/_catalog_oeuvre_merge_panel.php';
+                ?>
+
                 <?php if (isset($catalogListContext, $oeuvreNav)): ?>
                     <?php require MONCINE_ROOT . '/templates/_catalog_oeuvre_nav.php'; ?>
                 <?php endif; ?>

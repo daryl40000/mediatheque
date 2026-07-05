@@ -99,6 +99,18 @@ $dateLabel = PublicationType::formatParutionDate(
     (string) ($issue['date_parution'] ?? '')
 );
 
+$mergeMessage = '';
+$mergeError = '';
+if (isset($_GET['merge_ok']) && (string) $_GET['merge_ok'] === '1') {
+    $removedId = (int) ($_GET['merge_removed'] ?? 0);
+    $mergeMessage = $removedId > 0
+        ? 'Fusion réussie : la fiche n°' . $removedId . ' a été intégrée dans celle-ci.'
+        : 'Fusion réussie.';
+}
+if (isset($_GET['merge_error'])) {
+    $mergeError = trim((string) $_GET['merge_error']);
+}
+
 View::render('oeuvre-magazine', [
     'pageTitle' => (string) ($issue['titre'] ?? 'Numéro catalogue'),
     'catalogListContext' => $catalogListContext,
@@ -120,4 +132,6 @@ View::render('oeuvre-magazine', [
     'posterUploaded' => isset($_GET['poster_uploaded']) && (string) $_GET['poster_uploaded'] === '1',
     'editOpen' => $editOpen,
     'posterUploadOpen' => $posterUploadOpen,
+    'mergeMessage' => $mergeMessage,
+    'mergeError' => $mergeError,
 ]);
