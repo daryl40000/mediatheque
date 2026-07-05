@@ -1,6 +1,9 @@
 # Dépendances PHP
 /vendor/
 
+#reflexion
+IDEES.md
+
 # Données locales (base, clés API, sessions, fichiers volumineux)
 /data/moncine.db
 /data/moncine.db-journal
