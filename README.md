@@ -1,5 +1,7 @@
 # Médiathèque
 
+[![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
+
 **Version : 0.7.81**
 
 **Auteur :** Stéphane MATER  
