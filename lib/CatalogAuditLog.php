@@ -20,6 +20,7 @@ final class CatalogAuditLog
     public const ACTION_MAGAZINE_SUBJECT_MERGE = 'merge_magazine_subjects';
     public const ACTION_MAGAZINE_SUBJECT_PURGE = 'purge_orphan_magazine_subjects';
     public const ACTION_MAGAZINE_GAME_LINK = 'magazine_game_link';
+    public const ACTION_DISMISS_DUPLICATE = 'dismiss_duplicate_group';
 
     private PDO $db;
 
@@ -90,6 +91,7 @@ final class CatalogAuditLog
             self::ACTION_MAGAZINE_SUBJECT_MERGE => 'Fusion sujets magazine',
             self::ACTION_MAGAZINE_SUBJECT_PURGE => 'Purge sujets orphelins',
             self::ACTION_MAGAZINE_GAME_LINK => 'Lien sujet magazine ↔ jeu',
+            self::ACTION_DISMISS_DUPLICATE => 'Doublon légitime (conservé)',
             default => $action,
         };
     }

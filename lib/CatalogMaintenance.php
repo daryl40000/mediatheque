@@ -11,6 +11,10 @@ use PDO;
 
 final class CatalogMaintenance
 {
+    public const DUPLICATE_GROUP_TITLE = 'title';
+    public const DUPLICATE_GROUP_TMDB = 'tmdb';
+    public const DUPLICATE_GROUP_MAGAZINE = 'magazine';
+
     private PDO $db;
 
     private OeuvreRepository $oeuvres;
@@ -74,9 +78,11 @@ final class CatalogMaintenance
             $groups[$key][] = $row;
         }
 
+        $dismissed = $this->loadDismissedGroupKeys(self::DUPLICATE_GROUP_TITLE);
+
         $out = [];
         foreach ($groups as $key => $items) {
-            if (count($items) < 2) {
+            if (count($items) < 2 || isset($dismissed[$key])) {
                 continue;
             }
             $ids = array_values(array_map(static fn (array $r): int => (int) ($r['id'] ?? 0), $items));
@@ -132,6 +138,8 @@ final class CatalogMaintenance
         $stmt->execute([MediaDomain::MAGAZINE]);
         $rows = $stmt->fetchAll() ?: [];
 
+        $dismissed = $this->loadDismissedGroupKeys(self::DUPLICATE_GROUP_MAGAZINE);
+
         $out = [];
         foreach ($rows as $row) {
             $ids = array_values(array_filter(array_map(
@@ -141,8 +149,16 @@ final class CatalogMaintenance
             if (count($ids) < 2) {
                 continue;
             }
+            $seriesId = (int) ($row['series_id'] ?? 0);
+            $numeroKey = (string) ($row['numero_key'] ?? '');
+            $estHorsSerie = (int) ($row['est_hors_serie'] ?? 0) === 1;
+            $key = $this->magazineDuplicateGroupKey($seriesId, $numeroKey, $estHorsSerie);
+            if (isset($dismissed[$key])) {
+                continue;
+            }
             $out[] = [
-                'series_id' => (int) ($row['series_id'] ?? 0),
+                'key' => $key,
+                'series_id' => $seriesId,
                 'series_titre' => (string) ($row['series_titre'] ?? ''),
                 'numero' => (string) ($row['numero_label'] ?? ''),
                 'est_hors_serie' => (int) ($row['est_hors_serie'] ?? 0) === 1,
@@ -169,6 +185,8 @@ final class CatalogMaintenance
              ORDER BY c DESC, tmdb_id ASC'
         )->fetchAll() ?: [];
 
+        $dismissed = $this->loadDismissedGroupKeys(self::DUPLICATE_GROUP_TMDB);
+
         $out = [];
         foreach ($rows as $row) {
             $ids = array_values(array_filter(array_map(
@@ -178,8 +196,14 @@ final class CatalogMaintenance
             if ($ids === []) {
                 continue;
             }
+            $tmdbId = (int) ($row['tmdb_id'] ?? 0);
+            $key = $this->tmdbDuplicateGroupKey($tmdbId);
+            if (isset($dismissed[$key])) {
+                continue;
+            }
             $out[] = [
-                'tmdb_id' => (int) ($row['tmdb_id'] ?? 0),
+                'key' => $key,
+                'tmdb_id' => $tmdbId,
                 'ids' => $ids,
                 'count' => (int) ($row['c'] ?? count($ids)),
                 'oeuvres' => $this->oeuvreSummariesForIds($ids),
@@ -332,6 +356,51 @@ final class CatalogMaintenance
     }
 
     /**
+     * Marque un groupe de doublons comme légitime : les fiches restent séparées.
+     *
+     * @return true|string
+     */
+    public function dismissDuplicateGroup(string $groupType, string $groupKey, int $adminUserId): bool|string
+    {
+        $groupType = trim($groupType);
+        $groupKey = trim($groupKey);
+        if (!in_array($groupType, [
+            self::DUPLICATE_GROUP_TITLE,
+            self::DUPLICATE_GROUP_TMDB,
+            self::DUPLICATE_GROUP_MAGAZINE,
+        ], true)) {
+            return 'Type de doublon invalide.';
+        }
+        if ($groupKey === '') {
+            return 'Groupe de doublons invalide.';
+        }
+        if (!$this->duplicateDismissalTableExists()) {
+            return 'Fonction indisponible (migration en cours).';
+        }
+
+        $this->db->prepare(
+            'INSERT INTO catalog_duplicate_dismissal (group_type, group_key, dismissed_by_user_id, dismissed_at)
+             VALUES (?, ?, ?, datetime(\'now\'))
+             ON CONFLICT(group_type, group_key) DO UPDATE SET
+                dismissed_by_user_id = excluded.dismissed_by_user_id,
+                dismissed_at = datetime(\'now\')'
+        )->execute([
+            $groupType,
+            $groupKey,
+            max(0, $adminUserId),
+        ]);
+
+        $this->audit->log(
+            $adminUserId,
+            CatalogAuditLog::ACTION_DISMISS_DUPLICATE,
+            null,
+            'Groupe ' . $groupType . ' : ' . $groupKey
+        );
+
+        return true;
+    }
+
+    /**
      * Fusionne removeId dans keepId (bibliothèques et historique conservés).
      *
      * @return true|string
@@ -355,6 +424,10 @@ final class CatalogMaintenance
         try {
             $this->mergeOeuvreMetadata($keep, $remove);
             $this->reassignBibliothequeEntries($keepId, $removeId);
+            if (GameSteamAppIdMapRepository::isAvailable()) {
+                (new GameSteamAppIdMapRepository())->reassignOnOeuvreMerge($keepId, $removeId);
+            }
+            $this->transferSteamAppIdOnMerge($keepId, $removeId);
             (new PosterStorage())->deleteLocalForOeuvre($removeId);
             if (!$this->oeuvres->deleteById($removeId)) {
                 throw new \RuntimeException('Impossible de supprimer la fiche fusionnée.');
@@ -447,6 +520,34 @@ final class CatalogMaintenance
         if ($keepPoster === '' && $removePoster !== '') {
             $this->relocatePosterFile($removeId, $keepId, $removePoster);
         }
+    }
+
+    private function transferSteamAppIdOnMerge(int $keepId, int $removeId): void
+    {
+        if (!GameSchema::hasSteamAppIdColumn() || $keepId <= 0 || $removeId <= 0) {
+            return;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT oeuvre_id, steam_appid FROM oeuvre_jeu WHERE oeuvre_id IN (?, ?)'
+        );
+        $stmt->execute([$keepId, $removeId]);
+        $byOeuvre = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $byOeuvre[(int) ($row['oeuvre_id'] ?? 0)] = (int) ($row['steam_appid'] ?? 0);
+        }
+
+        $removeAppid = (int) ($byOeuvre[$removeId] ?? 0);
+        $keepAppid = (int) ($byOeuvre[$keepId] ?? 0);
+        if ($removeAppid <= 0 || $keepAppid > 0) {
+            return;
+        }
+
+        $this->db->prepare('UPDATE oeuvre_jeu SET steam_appid = ? WHERE oeuvre_id = ?')
+            ->execute([$removeAppid, $keepId]);
     }
 
     private function relocatePosterFile(int $fromId, int $toId, string $posterUrl): void
@@ -554,5 +655,57 @@ final class CatalogMaintenance
         return mb_strtolower(trim($titre), 'UTF-8')
             . '|'
             . mb_strtolower(trim($realisateur), 'UTF-8');
+    }
+
+    private function tmdbDuplicateGroupKey(int $tmdbId): string
+    {
+        return 'tmdb:' . max(0, $tmdbId);
+    }
+
+    private function magazineDuplicateGroupKey(int $seriesId, string $numeroKey, bool $estHorsSerie): string
+    {
+        return $seriesId
+            . '|'
+            . mb_strtolower(trim($numeroKey), 'UTF-8')
+            . '|'
+            . ($estHorsSerie ? '1' : '0');
+    }
+
+    public static function duplicateDismissalTableExists(): bool
+    {
+        $db = Database::getInstance();
+        $stmt = $db->query(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'catalog_duplicate_dismissal' LIMIT 1"
+        );
+
+        return (bool) $stmt->fetchColumn();
+    }
+
+    /**
+     * @return array<string, true>
+     */
+    private function loadDismissedGroupKeys(string $groupType): array
+    {
+        if (!$this->duplicateDismissalTableExists()) {
+            return [];
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT group_key FROM catalog_duplicate_dismissal WHERE group_type = ?'
+        );
+        $stmt->execute([$groupType]);
+
+        $keys = [];
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $key = trim((string) ($row['group_key'] ?? ''));
+            if ($key !== '') {
+                $keys[$key] = true;
+            }
+        }
+
+        return $keys;
     }
 }

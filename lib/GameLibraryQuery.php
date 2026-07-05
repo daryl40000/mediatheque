@@ -68,6 +68,7 @@ final class GameLibraryQuery
             . ' FROM bibliotheque b'
             . ' INNER JOIN oeuvres o ON o.id = b.oeuvre_id'
             . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . GameSteamStatsRepository::listJoinSql()
             . ' WHERE ' . implode(' AND ', $where);
         if ($finishedAtSort) {
             $sql .= ' ORDER BY derniere_completion IS NULL ASC, derniere_completion ' . $direction;
@@ -98,13 +99,15 @@ final class GameLibraryQuery
             'wishlist' => LibraryStatut::WISHLIST,
             'foyer_id' => $foyerId,
             'user_id' => $userId,
+            'history_user_id' => $userId,
         ];
 
         $stmt = $this->db->prepare(
-            'SELECT ' . GameCatalogSql::selectGameRow()
+            'SELECT ' . GameCatalogSql::selectGameRow() . GameCatalogSql::selectGameHistoryExtras()
             . ' FROM bibliotheque b'
             . ' INNER JOIN oeuvres o ON o.id = b.oeuvre_id'
             . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . GameSteamStatsRepository::listJoinSql()
             . ' WHERE b.id = :bib_id'
             . ' AND o.media_domain = :game_domain'
             . ' AND ('
@@ -160,6 +163,46 @@ final class GameLibraryQuery
             . ' LIMIT 1'
         );
         $stmt->execute([$oeuvreId, MediaDomain::JEU]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row !== false ? GameRowMapper::hydrateCatalogRow($row) : null;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function findCatalogBySteamAppId(int $appid): ?array
+    {
+        if (!GameRepository::isAvailable() || $appid <= 0 || !GameSchema::hasSteamAppIdColumn()) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT ' . GameCatalogSql::selectCatalogRow()
+            . ' FROM oeuvres o'
+            . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . ' WHERE o.media_domain = ? AND oj.steam_appid = ?'
+            . ' LIMIT 1'
+        );
+        $stmt->execute([MediaDomain::JEU, $appid]);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row !== false ? GameRowMapper::hydrateCatalogRow($row) : null;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function findCatalogByIgdbId(int $igdbId): ?array
+    {
+        if (!GameRepository::isAvailable() || $igdbId <= 0 || !GameRepository::hasIgdbColumns()) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT ' . GameCatalogSql::selectCatalogRow()
+            . ' FROM oeuvres o'
+            . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . ' WHERE o.media_domain = ? AND oj.igdb_id = ?'
+            . ' LIMIT 1'
+        );
+        $stmt->execute([MediaDomain::JEU, $igdbId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
         return $row !== false ? GameRowMapper::hydrateCatalogRow($row) : null;

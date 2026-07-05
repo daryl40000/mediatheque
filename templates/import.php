@@ -341,6 +341,107 @@
 </section>
 
 <section class="export-panel">
+    <h2>Import bibliothèque Steam</h2>
+    <p class="lead">
+        Récupère vos jeux Steam (GetOwnedGames), les associe à IGDB quand c’est possible,
+        puis les ajoute à <strong>Mes jeux</strong> avec le temps de jeu Steam.
+    </p>
+
+    <?php if (empty($steamModuleReady)): ?>
+        <p class="hint">Migration Steam non appliquée — relancez la mise à jour de la base de données.</p>
+    <?php else: ?>
+
+    <?php if (!empty($steamMessage)): ?>
+        <div class="alert alert-success"><?= Moncine\View::escape($steamMessage) ?></div>
+    <?php endif; ?>
+    <?php if (!empty($steamImportMessage)): ?>
+        <div class="alert alert-success"><?= Moncine\View::escape($steamImportMessage) ?></div>
+    <?php endif; ?>
+
+    <p class="hint">
+        1. L’administrateur enregistre une <strong>clé API Steam Web</strong> ci-dessous.<br>
+        2. Chaque utilisateur renseigne son <strong>SteamID64</strong> dans
+        <a href="/parametres.php">Paramètres du compte</a>.<br>
+        3. Cliquez sur <strong>Préparer l’import</strong> pour voir l’aperçu avant validation.
+    </p>
+
+    <?php if (!$hasSteamApiKey): ?>
+        <?php if (!empty($canManageCatalog)): ?>
+        <form method="post" action="/import-steam-actions.php" class="import-form">
+            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+            <input type="hidden" name="action" value="save_steam_api_key">
+            <label for="steam_api_key">Clé API Steam Web</label>
+            <input type="password" name="steam_api_key" id="steam_api_key" required autocomplete="off">
+            <p class="hint">
+                Obtenez une clé sur
+                <a href="https://steamcommunity.com/dev/apikey" target="_blank" rel="noopener">steamcommunity.com/dev/apikey</a>.
+            </p>
+            <button type="submit" class="btn btn-secondary">Enregistrer la clé Steam</button>
+        </form>
+        <?php else: ?>
+        <p class="hint">Clé API Steam manquante — demandez à l’administrateur de la configurer.</p>
+        <?php endif; ?>
+    <?php else: ?>
+        <?php if (!empty($steamKeyFromEnvironment)): ?>
+            <p class="hint">Clé active via <code>MONCINE_STEAM_API_KEY</code>.</p>
+        <?php else: ?>
+            <p class="hint">✓ Clé API Steam enregistrée sur le serveur.</p>
+        <?php endif; ?>
+
+        <?php if (!empty($hasUserSteamId)): ?>
+            <p class="hint">✓ SteamID64 renseigné dans <a href="/parametres.php">Paramètres du compte</a>.</p>
+        <?php else: ?>
+            <p class="alert alert-warning">
+                SteamID64 manquant — renseignez-le dans
+                <a href="/parametres.php">Paramètres du compte</a> avant de tester ou d’importer.
+            </p>
+        <?php endif; ?>
+
+        <form method="post" action="/import-steam-actions.php" class="import-form inline-form">
+            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+            <input type="hidden" name="action" value="test_steam_api">
+            <button type="submit" class="btn btn-secondary btn-sm"<?= empty($hasUserSteamId) ? ' disabled' : '' ?>>
+                Tester la connexion Steam
+            </button>
+        </form>
+
+        <form method="post" action="/import-steam-actions.php" class="import-form">
+            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+            <input type="hidden" name="action" value="prepare_steam_import">
+            <button type="submit" class="btn btn-accent"<?= empty($canPrepareSteamImport) ? ' disabled' : '' ?>>
+                Préparer l’import Steam
+            </button>
+        </form>
+
+        <?php if (!empty($canManageCatalog)): ?>
+        <details class="catalog-admin-panel">
+            <summary class="catalog-admin-panel__summary">Gérer la clé API Steam</summary>
+            <div class="catalog-admin-panel__body">
+                <?php if (empty($steamKeyFromEnvironment)): ?>
+                <form method="post" action="/import-steam-actions.php" class="import-form">
+                    <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                    <input type="hidden" name="action" value="save_steam_api_key">
+                    <label for="steam_api_key_replace">Nouvelle clé API</label>
+                    <input type="password" name="steam_api_key" id="steam_api_key_replace" required autocomplete="off">
+                    <button type="submit" class="btn btn-secondary btn-sm">Remplacer la clé</button>
+                </form>
+                <form method="post" action="/import-steam-actions.php" class="inline-form tmdb-key-clear-form"
+                      onsubmit="return confirm('Supprimer la clé Steam enregistrée ?');">
+                    <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                    <input type="hidden" name="action" value="clear_steam_api_key">
+                    <button type="submit" class="btn btn-secondary btn-sm">Supprimer</button>
+                </form>
+                <?php else: ?>
+                <p class="hint">Clé fournie par la variable d’environnement — non modifiable depuis cette page.</p>
+                <?php endif; ?>
+            </div>
+        </details>
+        <?php endif; ?>
+    <?php endif; ?>
+    <?php endif; ?>
+</section>
+
+<section class="export-panel">
     <h2>Affiches locales</h2>
     <p class="lead">
         Les affiches sont stockées par <strong>ID catalogue</strong> dans le dossier

@@ -10,6 +10,7 @@
  * @var bool $isSearchable
  * @var bool $canDeleteAccount
  * @var bool $isSoloGroupMember
+ * @var bool $steamModuleReady
  */
 $minLen = Moncine\UtilisateurRepository::MIN_PASSWORD_LENGTH;
 $maxLen = Moncine\UtilisateurRepository::MAX_PASSWORD_LENGTH;
@@ -64,6 +65,18 @@ $maxLen = Moncine\UtilisateurRepository::MAX_PASSWORD_LENGTH;
                     Apparaître dans la recherche d’utilisateurs (par pseudo et ville)
                 </label>
                 <p class="hint">Si vous décochez cette case, les autres ne pourront pas vous trouver via la recherche.</p>
+
+                <?php if (!empty($steamModuleReady)): ?>
+                <label for="account_steam_id">SteamID64</label>
+                <input type="text" name="steam_id" id="account_steam_id" inputmode="numeric" pattern="[0-9]*"
+                       autocomplete="off" placeholder="Ex. 76561198000000000"
+                       value="<?= Moncine\View::escape((string) ($user['steam_id'] ?? '')) ?>">
+                <p class="hint">
+                    Votre identifiant Steam public (17 chiffres) pour importer votre bibliothèque.
+                    Trouvable sur <a href="https://steamid.io/" target="_blank" rel="noopener">steamid.io</a>
+                    ou dans l’URL de votre profil Steam.
+                </p>
+                <?php endif; ?>
 
                 <label for="account_email">E-mail</label>
                 <input type="email" name="email" id="account_email" required autocomplete="email"

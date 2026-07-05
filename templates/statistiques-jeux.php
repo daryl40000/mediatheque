@@ -14,6 +14,9 @@ $genreMax = max(1, (int) ($genreBreakdown['max'] ?? 1));
 $decadeBreakdown = $s['decade_breakdown'] ?? ['items' => [], 'max' => 1];
 $decadeItems = $decadeBreakdown['items'] ?? [];
 $decadeMax = max(1, (int) ($decadeBreakdown['max'] ?? 1));
+$topPlayedGames = $s['top_played_games'] ?? [];
+$steamPlaytimeMinutesTotal = (int) ($s['steam_playtime_minutes_total'] ?? 0);
+$steamStatsAvailable = Moncine\GameSteamStatsRepository::isAvailable();
 
 $collectionListUrl = Moncine\View::gamesCollectionUrl(filter: Moncine\GameListFilter::excludingExtensions());
 $extensionsListUrl = Moncine\View::gamesCollectionUrl(filter: Moncine\GameListFilter::forExtensionsOnly());
@@ -108,6 +111,27 @@ $physicalListUrl = Moncine\View::gamesCollectionUrl(filter: Moncine\GameListFilt
                 <p class="stat-card__hint">Tests, previews ou interviews liés à vos jeux</p>
             </article>
         <?php endif; ?>
+        <?php if ($steamStatsAvailable && $steamPlaytimeMinutesTotal > 0): ?>
+            <article class="stat-card">
+                <p class="stat-card__value stat-card__value--duration">
+                    <?= Moncine\View::escape((string) ($s['steam_playtime_duration_label'] ?? '0h 00min')) ?>
+                </p>
+                <p class="stat-card__label stat-card__label--with-info">
+                    Temps de jeu Steam cumulé
+                    <span class="info-tooltip" tabindex="0" aria-label="Comment est calculé le temps de jeu Steam cumulé">
+                        <span class="info-tooltip__icon" aria-hidden="true">i</span>
+                        <span class="info-tooltip__popup" role="tooltip">
+                            Somme des temps Steam synchronisés pour tous les jeux de votre collection.
+                            Affichage jours, heures, minutes (ex. 2h 30min ou 3j 5h 30min).
+                        </span>
+                    </span>
+                </p>
+                <p class="stat-card__hint">
+                    <?= (int) ($s['steam_playtime_games_count'] ?? 0) ?> jeu<?= (int) ($s['steam_playtime_games_count'] ?? 0) > 1 ? 'x' : '' ?>
+                    avec temps enregistré
+                </p>
+            </article>
+        <?php endif; ?>
     </div>
 
     <?php if ($totalInLibrary === 0): ?>
@@ -116,6 +140,23 @@ $physicalListUrl = Moncine\View::gamesCollectionUrl(filter: Moncine\GameListFilt
             <a href="/ajouter-jeu.php">Ajoutez votre premier jeu</a> pour voir des statistiques.
         </p>
     <?php else: ?>
+        <?php if ($topPlayedGames !== []): ?>
+            <section class="stats-panel">
+                <h2>Jeux les plus joués (Steam)</h2>
+                <p class="hint">Top 10 selon le temps de jeu synchronisé depuis Steam.</p>
+                <ol class="stats-ranked-list">
+                    <?php foreach ($topPlayedGames as $game): ?>
+                        <li class="stats-ranked-list__item">
+                            <a href="<?= Moncine\View::escape((string) ($game['url'] ?? '')) ?>" class="stats-ranked-list__link">
+                                <?= Moncine\View::escape((string) ($game['titre'] ?? '')) ?>
+                            </a>
+                            <span class="tag"><?= Moncine\View::escape((string) ($game['playtime_label'] ?? '')) ?></span>
+                        </li>
+                    <?php endforeach; ?>
+                </ol>
+            </section>
+        <?php endif; ?>
+
         <?php if ($platformItems !== []): ?>
             <section class="stats-panel">
                 <h2>Répartition par plateforme</h2>

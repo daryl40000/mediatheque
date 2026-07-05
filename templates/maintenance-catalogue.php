@@ -68,7 +68,10 @@
 
     <section class="catalog-maintenance-panel">
         <h2>Doublons (titre + réalisateur)</h2>
-        <p class="hint">Regroupement insensible à la casse et aux espaces en trop. Ouvrez chaque fiche pour comparer avant de fusionner.</p>
+        <p class="hint">
+            Regroupement insensible à la casse et aux espaces en trop. Ouvrez chaque fiche pour comparer avant de fusionner.
+            Si les entrées sont légitimes (années différentes, remake, édition…), utilisez <strong>Conserver toutes les fiches</strong>.
+        </p>
         <?php if ($duplicateTitleGroups === []): ?>
             <p class="alert alert-info">Aucun doublon détecté sur le titre et le réalisateur.</p>
         <?php else: ?>
@@ -118,6 +121,12 @@
                             Fusionner
                         </button>
                     </form>
+                    <?php
+                    $dismissGroupType = Moncine\CatalogMaintenance::DUPLICATE_GROUP_TITLE;
+                    $dismissGroupKey = (string) ($group['key'] ?? '');
+                    $dismissFormSuffix = 'title_' . $dismissGroupKey;
+                    require MONCINE_ROOT . '/templates/_catalog_maintenance_dismiss_duplicate.php';
+                    ?>
                 </article>
             <?php endforeach; ?>
         <?php endif; ?>
@@ -125,7 +134,10 @@
 
     <section class="catalog-maintenance-panel">
         <h2>Doublons TMDB</h2>
-        <p class="hint">Plusieurs fiches catalogue partagent le même identifiant TMDB. Comparez les fiches avant fusion.</p>
+        <p class="hint">
+            Plusieurs fiches catalogue partagent le même identifiant TMDB. Comparez les fiches avant fusion.
+            Si les deux fiches doivent rester distinctes, cliquez sur <strong>Conserver toutes les fiches</strong>.
+        </p>
         <?php if ($duplicateTmdbGroups === []): ?>
             <p class="alert alert-info">Aucun doublon TMDB.</p>
         <?php else: ?>
@@ -170,6 +182,12 @@
                             Fusionner
                         </button>
                     </form>
+                    <?php
+                    $dismissGroupType = Moncine\CatalogMaintenance::DUPLICATE_GROUP_TMDB;
+                    $dismissGroupKey = (string) ($group['key'] ?? ('tmdb:' . (int) ($group['tmdb_id'] ?? 0)));
+                    $dismissFormSuffix = 'tmdb_' . (int) ($group['tmdb_id'] ?? 0);
+                    require MONCINE_ROOT . '/templates/_catalog_maintenance_dismiss_duplicate.php';
+                    ?>
                 </article>
             <?php endforeach; ?>
         <?php endif; ?>
@@ -232,6 +250,12 @@
                             Fusionner
                         </button>
                     </form>
+                    <?php
+                    $dismissGroupType = Moncine\CatalogMaintenance::DUPLICATE_GROUP_MAGAZINE;
+                    $dismissGroupKey = (string) ($group['key'] ?? '');
+                    $dismissFormSuffix = 'mag_' . $dismissGroupKey;
+                    require MONCINE_ROOT . '/templates/_catalog_maintenance_dismiss_duplicate.php';
+                    ?>
                 </article>
             <?php endforeach; ?>
         <?php endif; ?>

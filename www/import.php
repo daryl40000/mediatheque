@@ -19,8 +19,11 @@ use Moncine\ImportCsv;
 use Moncine\ImportOds;
 use Moncine\ImportPostersZip;
 use Moncine\PosterIdRemap;
+use Moncine\SteamConfig;
+use Moncine\SteamLibraryImporter;
 use Moncine\TmdbConfig;
 use Moncine\UploadLimits;
+use Moncine\UserContext;
 use Moncine\View;
 
 $message = '';
@@ -31,6 +34,8 @@ $tmdbMessage = '';
 $enrichMessage = '';
 $igdbMessage = '';
 $igdbEnrichMessage = '';
+$steamMessage = '';
+$steamImportMessage = '';
 
 if (isset($_GET['export_error'])) {
     $exportErr = (string) $_GET['export_error'];
@@ -132,6 +137,49 @@ if (isset($_GET['igdb_enrich_done'])) {
         $igdbEnrichMessage .= ' Il reste ' . $remaining . ' jeu(x) à traiter — relancez le bouton.';
     } else {
         $igdbEnrichMessage .= ' Enrichissement terminé pour tous vos jeux.';
+    }
+}
+
+if (isset($_GET['steam_key_saved'])) {
+    $steamMessage = 'Clé API Steam enregistrée.';
+}
+if (isset($_GET['steam_key_error'])) {
+    $errors[] = 'Impossible d’enregistrer la clé Steam (vérifiez les droits sur le dossier data/).';
+}
+if (isset($_GET['steam_key_cleared'])) {
+    $steamMessage = 'Clé Steam supprimée du serveur.';
+}
+if (isset($_GET['steam_key_clear_env'])) {
+    $errors[] = 'La clé Steam est définie par MONCINE_STEAM_API_KEY : modifiez-la dans la configuration du serveur.';
+}
+if (isset($_GET['steam_key_clear_error'])) {
+    $errors[] = 'Impossible de supprimer la clé Steam.';
+}
+if (isset($_GET['steam_test'])) {
+    $msg = (string) ($_GET['steam_test_msg'] ?? '');
+    $steamMessage = ($_GET['steam_test'] === 'ok' ? '✓ ' : '✗ ') . $msg;
+}
+if (isset($_GET['steam_prepare_error'])) {
+    $errors[] = (string) ($_GET['steam_prepare_msg'] ?? 'Préparation Steam impossible.');
+}
+if (isset($_GET['steam_import_done'])) {
+    $added = (int) ($_GET['steam_added'] ?? 0);
+    $updated = (int) ($_GET['steam_updated'] ?? 0);
+    $proposed = (int) ($_GET['steam_proposed'] ?? 0);
+    $skipped = (int) ($_GET['steam_skipped'] ?? 0);
+    $steamImportMessage = sprintf(
+        'Import Steam : %d ajouté(s), %d mis à jour, %d ignoré(s).',
+        $added,
+        $updated,
+        $skipped
+    );
+    if ($proposed > 0) {
+        $steamImportMessage .= ' ' . $proposed . ' proposition(s) envoyée(s) aux administrateurs.';
+    }
+    if (!empty($_SESSION['steam_import_last_errors'])) {
+        $errors = array_merge($errors, $_SESSION['steam_import_last_errors']);
+        unset($_SESSION['steam_import_last_errors']);
+        $steamImportMessage .= ' Détail des erreurs ci-dessous.';
     }
 }
 
@@ -269,6 +317,15 @@ $igdbEnrichPending = GameRepository::isAvailable() ? (new GameEnricher())->count
 $hasIgdbCredentials = IgdbConfig::hasCredentials();
 $igdbCredentialsFromEnvironment = IgdbConfig::getCredentialsSource() === IgdbConfig::SOURCE_ENVIRONMENT;
 $igdbModuleReady = GameRepository::hasIgdbColumns();
+$steamModuleReady = SteamLibraryImporter::isAvailable();
+$hasSteamApiKey = SteamConfig::hasApiKey();
+$steamKeyFromEnvironment = SteamConfig::getKeySource() === SteamConfig::SOURCE_ENVIRONMENT;
+$steamImporter = new SteamLibraryImporter();
+$userSteamId = $steamModuleReady
+    ? $steamImporter->getUserSteamId(UserContext::currentUserId())
+    : '';
+$hasUserSteamId = SteamConfig::isValidSteamId($userSteamId);
+$canPrepareSteamImport = SteamLibraryImporter::canImport() && $hasUserSteamId;
 
 View::render('import', [
     'pageTitle' => 'Importer',
@@ -292,6 +349,13 @@ View::render('import', [
     'hasIgdbCredentials' => $hasIgdbCredentials,
     'igdbCredentialsFromEnvironment' => $igdbCredentialsFromEnvironment,
     'igdbModuleReady' => $igdbModuleReady,
+    'steamMessage' => $steamMessage,
+    'steamImportMessage' => $steamImportMessage,
+    'steamModuleReady' => $steamModuleReady,
+    'hasSteamApiKey' => $hasSteamApiKey,
+    'steamKeyFromEnvironment' => $steamKeyFromEnvironment,
+    'canPrepareSteamImport' => $canPrepareSteamImport,
+    'hasUserSteamId' => $hasUserSteamId,
     'phpPostMaxSize' => UploadLimits::postMaxSizeLabel(),
     'phpUploadMaxSize' => UploadLimits::uploadMaxFilesizeLabel(),
     'importEngineBuild' => MONCINE_IMPORT_ENGINE_BUILD,

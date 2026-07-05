@@ -34,7 +34,8 @@ final class GameCompletionRepository
             . ' (SELECT MAX(gc.completed_at) FROM game_completion gc'
             . '  WHERE gc.bibliotheque_id = b.id AND gc.user_id = :history_user_id) AS derniere_completion,'
             . ' (SELECT COUNT(*) FROM game_completion gc'
-            . '  WHERE gc.bibliotheque_id = b.id AND gc.user_id = :history_user_id) AS completion_count';
+            . '  WHERE gc.bibliotheque_id = b.id AND gc.user_id = :history_user_id) AS completion_count'
+            . GameSteamStatsRepository::selectListExtrasSql();
     }
 
     public function recordCompletion(int $bibId, int $userId, string $completedAt): int

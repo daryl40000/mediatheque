@@ -9,6 +9,8 @@ use Moncine\GameListFilter;
 use Moncine\GamePhysicalSupport;
 use Moncine\GamePlatform;
 use Moncine\GameRepository;
+use Moncine\GameSchema;
+use Moncine\GameSteamStatsRepository;
 use Moncine\HistoriqueRepository;
 use Moncine\LibraryStatut;
 use Moncine\MagazineGameLink;
@@ -326,12 +328,19 @@ final class GameRepositoryTest extends MoncineTestCase
 
     public function testSortableColumnsIncludeSupport(): void
     {
-        $this->assertSame(
-            ['titre', 'annee', 'genre', 'studio', 'support', 'note', 'finished_at'],
-            GameRepository::sortableColumns()
-        );
+        $columns = GameRepository::sortableColumns();
+        $this->assertContains('support', $columns);
+        $this->assertContains('platform', $columns);
         $this->assertTrue(GameRepository::isValidSortColumn('genre'));
-        $this->assertFalse(GameRepository::isValidSortColumn('platform'));
+        $this->assertTrue(GameRepository::isValidSortColumn('platform'));
+        if (GameSchema::hasIgdbMetadataColumns()) {
+            $this->assertContains('franchise', $columns);
+            $this->assertTrue(GameRepository::isValidSortColumn('franchise'));
+        }
+        if (GameSteamStatsRepository::isAvailable()) {
+            $this->assertContains('steam_playtime', $columns);
+            $this->assertTrue(GameRepository::isValidSortColumn('steam_playtime'));
+        }
     }
 
     public function testPromoteWishlistToCollectionAndDelete(): void

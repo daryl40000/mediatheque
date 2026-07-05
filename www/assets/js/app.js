@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initGameRelationFields();
     initGameShelfHoverPreviews();
     initShareLinkCopy();
+    initSteamImportMapping();
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('vu') === '1') {
@@ -1790,5 +1791,69 @@ function initMagazineIssueCatalogAutocomplete() {
                 onSelect,
             }),
         }));
+    });
+}
+
+/** Import Steam : autocomplétion pour lier un AppID à une fiche catalogue. */
+function initSteamImportMapping() {
+    const page = document.querySelector('[data-steam-import-page]');
+    if (!page) {
+        return;
+    }
+
+    const searchUrl = page.getAttribute('data-catalog-search-url') || '/rechercher-jeux-catalogue.php';
+
+    page.querySelectorAll('[data-steam-map-root]').forEach((root) => {
+        const form = root.querySelector('.steam-map-form');
+        const input = root.querySelector('[data-steam-map-search]');
+        const list = root.querySelector('[data-steam-map-list]');
+        const oeuvreIdInput = root.querySelector('[data-steam-map-oeuvre-id]');
+        const hint = root.querySelector('[data-steam-map-hint]');
+
+        if (!form || !input || !list || !oeuvreIdInput) {
+            return;
+        }
+
+        attachCatalogAutocomplete({
+            root,
+            input,
+            list,
+            searchUrl,
+            optionIdPrefix: 'steam-map-opt',
+            minChars: 2,
+            onInputClear: () => {
+                oeuvreIdInput.value = '';
+                if (hint) {
+                    hint.textContent = '';
+                    hint.hidden = true;
+                }
+            },
+            onSelect: (item) => {
+                input.value = item.titre || item.display_label || '';
+                oeuvreIdInput.value = String(item.oeuvre_id || '');
+                if (hint) {
+                    hint.textContent = item.display_label || item.titre || '';
+                    hint.hidden = (hint.textContent || '').trim() === '';
+                }
+            },
+            buildOption: (item, index, onSelect) => createCatalogAutocompleteOption({
+                item,
+                index,
+                optionIdPrefix: 'steam-map-opt',
+                label: item.display_label || item.titre || '',
+                onSelect,
+            }),
+        });
+
+        form.addEventListener('submit', (event) => {
+            if (!String(oeuvreIdInput.value || '').trim()) {
+                event.preventDefault();
+                input.focus();
+                if (hint) {
+                    hint.textContent = 'Choisissez un jeu dans la liste de suggestions.';
+                    hint.hidden = false;
+                }
+            }
+        });
     });
 }

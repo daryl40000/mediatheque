@@ -37,9 +37,16 @@ $spineHeightPx = Moncine\View::gameShelfSpineHeightPx();
         <span class="collection-grid-sort__label">Trier par</span>
         <?php $shelfSortLink('Titre', 'titre'); ?>
         <?php $shelfSortLink('Année', 'annee'); ?>
+        <?php if (Moncine\GameFranchiseRepository::isAvailable()): ?>
+        <?php $shelfSortLink('Saga', 'franchise'); ?>
+        <?php endif; ?>
+        <?php $shelfSortLink('Plateforme', 'platform'); ?>
         <?php $shelfSortLink('Note', 'note'); ?>
         <?php $shelfSortLink('Studio', 'studio'); ?>
         <?php $shelfSortLink('Fini le', 'finished_at'); ?>
+        <?php if (Moncine\GameSteamStatsRepository::isAvailable()): ?>
+        <?php $shelfSortLink('Temps Steam', 'steam_playtime'); ?>
+        <?php endif; ?>
     </nav>
 </div>
 

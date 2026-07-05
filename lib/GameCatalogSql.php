@@ -14,16 +14,26 @@ final class GameCatalogSql
         'titre' => 'o.titre COLLATE FRENCH_NOCASE',
         'annee' => 'o.annee',
         'platform' => 'oj.platform COLLATE NOCASE',
+        'franchise' => 'oj.franchise COLLATE FRENCH_NOCASE',
         'studio' => 'oj.studio COLLATE FRENCH_NOCASE',
         'genre' => 'oj.genre COLLATE FRENCH_NOCASE',
         'note' => 'note_max',
         'finished_at' => 'derniere_completion',
+        'steam_playtime' => 'COALESCE(gss.playtime_minutes, 0)',
     ];
 
     /** @return list<string> */
     public static function sortableColumns(): array
     {
-        return ['titre', 'annee', 'genre', 'studio', 'support', 'note', 'finished_at'];
+        $columns = ['titre', 'annee', 'platform', 'genre', 'studio', 'support', 'note', 'finished_at'];
+        if (GameSchema::hasIgdbMetadataColumns()) {
+            array_splice($columns, 3, 0, ['franchise']);
+        }
+        if (GameSteamStatsRepository::isAvailable()) {
+            $columns[] = 'steam_playtime';
+        }
+
+        return $columns;
     }
 
     public static function isValidSortColumn(string $sortBy): bool
@@ -42,6 +52,14 @@ final class GameCatalogSql
         }
 
         if ($sortBy === 'finished_at' && !GameCompletionRepository::isAvailable()) {
+            return self::SORT_COLUMNS['titre'];
+        }
+
+        if ($sortBy === 'franchise' && !GameSchema::hasIgdbMetadataColumns()) {
+            return self::SORT_COLUMNS['titre'];
+        }
+
+        if ($sortBy === 'steam_playtime' && !GameSteamStatsRepository::isAvailable()) {
             return self::SORT_COLUMNS['titre'];
         }
 

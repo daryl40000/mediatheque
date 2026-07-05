@@ -25,6 +25,31 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.9] — 2026-07-05
+
+**Import Steam, refonte fiche jeu, statistiques temps de jeu**
+
+### Ajouté
+
+- **Import bibliothèque Steam** : page `/import-steam.php` (aperçu puis validation), liaison AppID ↔ catalogue avec mémorisation manuelle (`game_steam_appid_map`), temps de jeu importés (`game_steam_stats`) — voir [doc/import-steam.md](doc/import-steam.md).
+- **Profil** : champ SteamID64 (utilisé par l’import ; retrait du SteamID de test sur `/import.php`).
+- **Mes jeux** : tri par plateforme, saga et temps Steam ; affichage du temps de jeu Steam en liste/grille/étagère.
+- **Statistiques jeux** : temps Steam cumulé et top 10 des jeux les plus joués.
+- **Maintenance catalogue** : bouton « Conserver toutes les fiches » pour masquer un groupe de doublons légitimes (titres, TMDB, magazines).
+- **Fiche jeu** : colonne latérale (jaquette, terminé, éditions, temps Steam), détails en 2 colonnes, saga sous le titre, ressenti (icône à droite du titre + crayon discret).
+
+### Modifié
+
+- **Fiche jeu** : retrait des acronymes IGDB et de la date « Ajouté le » dans les détails.
+- **IGDB** : résolution Steam via `external_games` ; enrichissement magasins démat (`GameDigitalStore::mergeStore`).
+
+### Technique
+
+- Migrations `058_steam_import.sql`, `059_steam_appid_map.sql`, `060_catalog_duplicate_dismissal.sql`.
+- Bibliothèques `SteamWebApiClient`, `SteamLibraryImporter`, `SteamGameResolver`, tests unitaires et d’intégration associés.
+
+---
+
 ## [0.7.81] — 2026-07-05
 
 **Qualité code : CSS, autocomplétions JS, lisibilité PHP**

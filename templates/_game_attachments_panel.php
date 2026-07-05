@@ -52,7 +52,9 @@ $attachments = $attachments ?? [];
         <p class="hint">Aucun fichier pour l’instant.</p>
     <?php endif; ?>
 
-    <form method="post" action="/enregistrer-fichier-jeu.php" enctype="multipart/form-data" class="game-attachments-form">
+    <details class="game-attachments-add">
+        <summary class="btn btn-secondary btn-sm game-attachments-add__trigger">Ajouter un fichier</summary>
+        <form method="post" action="/enregistrer-fichier-jeu.php" enctype="multipart/form-data" class="game-attachments-form">
         <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
         <input type="hidden" name="game_id" value="<?= $gameId ?>">
 
@@ -68,6 +70,7 @@ $attachments = $attachments ?? [];
             post <?= Moncine\View::escape(Moncine\UploadLimits::postMaxSizeLabel()) ?>.
         </p>
 
-        <button type="submit" class="btn btn-secondary btn-sm">Ajouter le fichier</button>
-    </form>
+        <button type="submit" class="btn btn-secondary btn-sm">Enregistrer le fichier</button>
+        </form>
+    </details>
 </section>

@@ -26,6 +26,16 @@ final class UtilisateurRepository
         $this->db = Database::getInstance();
     }
 
+    private function publicSelectColumns(): string
+    {
+        $columns = self::PUBLIC_COLUMNS;
+        if (GameSchema::hasUserSteamIdColumn()) {
+            $columns .= ', steam_id';
+        }
+
+        return $columns;
+    }
+
     public function countWithPassword(): int
     {
         return (int) $this->db->query(
@@ -39,7 +49,7 @@ final class UtilisateurRepository
             return null;
         }
         $stmt = $this->db->prepare(
-            'SELECT ' . self::PUBLIC_COLUMNS . ' FROM utilisateurs WHERE id = ? LIMIT 1'
+            'SELECT ' . $this->publicSelectColumns() . ' FROM utilisateurs WHERE id = ? LIMIT 1'
         );
         $stmt->execute([$id]);
         $row = $stmt->fetch();
@@ -54,7 +64,7 @@ final class UtilisateurRepository
             return null;
         }
         $stmt = $this->db->prepare(
-            'SELECT ' . self::PUBLIC_COLUMNS . ' FROM utilisateurs WHERE LOWER(TRIM(email)) = ? LIMIT 1'
+            'SELECT ' . $this->publicSelectColumns() . ' FROM utilisateurs WHERE LOWER(TRIM(email)) = ? LIMIT 1'
         );
         $stmt->execute([$email]);
         $row = $stmt->fetch();
@@ -707,7 +717,8 @@ final class UtilisateurRepository
         string $pseudo = '',
         string $ville = '',
         bool $searchable = true,
-        string $currentPassword = ''
+        string $currentPassword = '',
+        ?string $steamId = null
     ): bool|string {
         $user = $this->findById($id);
         if ($user === null) {
@@ -730,7 +741,7 @@ final class UtilisateurRepository
             );
         }
 
-        return $this->updateProfileWithoutEmail($id, $nom, $prenom, $pseudo, $ville, $searchable);
+        return $this->updateProfileWithoutEmail($id, $nom, $prenom, $pseudo, $ville, $searchable, $steamId);
     }
 
     /**
@@ -742,7 +753,8 @@ final class UtilisateurRepository
         string $prenom,
         string $pseudo = '',
         string $ville = '',
-        bool $searchable = true
+        bool $searchable = true,
+        ?string $steamId = null
     ): bool|string {
         $nom = trim($nom);
         $prenom = trim($prenom);
@@ -758,10 +770,24 @@ final class UtilisateurRepository
             return $identity;
         }
 
+        $sets = 'nom = ?, prenom = ?, pseudo = ?, ville = ?, searchable = ?';
+        $params = [$nom, $prenom, $pseudo, $ville, $searchable ? 1 : 0];
+
+        if (GameSchema::hasUserSteamIdColumn() && $steamId !== null) {
+            $steamId = SteamConfig::sanitizeSteamId($steamId);
+            if ($steamId !== '' && !SteamConfig::isValidSteamId($steamId)) {
+                return 'SteamID64 invalide (15 à 20 chiffres).';
+            }
+            $sets .= ', steam_id = ?';
+            $params[] = $steamId;
+        }
+
+        $params[] = $id;
+
         $stmt = $this->db->prepare(
-            'UPDATE utilisateurs SET nom = ?, prenom = ?, pseudo = ?, ville = ?, searchable = ? WHERE id = ?'
+            'UPDATE utilisateurs SET ' . $sets . ' WHERE id = ?'
         );
-        $stmt->execute([$nom, $prenom, $pseudo, $ville, $searchable ? 1 : 0, $id]);
+        $stmt->execute($params);
 
         return $stmt->rowCount() > 0 ? true : 'Compte introuvable.';
     }

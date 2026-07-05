@@ -27,11 +27,13 @@ final class PrintListHelper
         'titre' => 'Titre',
         'annee' => 'Année',
         'platform' => 'Plateforme',
+        'franchise' => 'Saga',
         'studio' => 'Studio',
         'genre' => 'Genres',
         'support' => 'Support',
         'note' => 'Notes',
         'finished_at' => 'Fini le',
+        'steam_playtime' => 'Temps Steam',
     ];
 
     public static function sortLabel(string $sortBy): string

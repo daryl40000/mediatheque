@@ -114,6 +114,26 @@ final class GameSchema
             && self::hasColumn('oeuvre_jeu', 'alternative_names');
     }
 
+    public static function hasSteamAppIdColumn(): bool
+    {
+        return self::hasColumn('oeuvre_jeu', 'steam_appid');
+    }
+
+    public static function steamStatsTableExists(): bool
+    {
+        return self::tableExists('game_steam_stats');
+    }
+
+    public static function steamAppIdMapTableExists(): bool
+    {
+        return self::tableExists('game_steam_appid_map');
+    }
+
+    public static function hasUserSteamIdColumn(): bool
+    {
+        return self::hasColumn('utilisateurs', 'steam_id');
+    }
+
     /** @internal Tests PHPUnit */
     public static function resetColumnCacheForTests(): void
     {

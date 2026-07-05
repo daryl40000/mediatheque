@@ -15,6 +15,7 @@ use Moncine\MediaDomain;
 use Moncine\OeuvreRepository;
 use Moncine\PosterStorage;
 use Moncine\PublicationType;
+use Moncine\SchemaMigrator;
 use Moncine\SeriesRepository;
 use Moncine\Tests\Support\MoncineTestCase;
 
@@ -165,5 +166,49 @@ final class CatalogMaintenanceTest extends MoncineTestCase
         $this->assertContains($oeuvreId1, $match['ids']);
         $this->assertContains($oeuvreId2, $match['ids']);
         $this->assertNotEmpty($match['oeuvres'] ?? []);
+    }
+
+    public function testDismissDuplicateGroupHidesTitleDuplicates(): void
+    {
+        $adminId = $this->loginAsAdmin();
+        (new SchemaMigrator(Database::getInstance()))->runPendingMigrations();
+
+        $suffix = uniqid('legit_dup_', true);
+        $titre = 'Legit duplicate ' . $suffix;
+        $realisateur = 'Director Legit';
+        $oeuvres = new OeuvreRepository();
+        $oeuvres->insert([
+            'titre' => $titre,
+            'realisateur' => $realisateur,
+            'annee' => 1978,
+        ]);
+        $oeuvres->insert([
+            'titre' => $titre . ' ',
+            'realisateur' => $realisateur,
+            'annee' => 2018,
+        ]);
+
+        $maintenance = new CatalogMaintenance();
+        $groups = $maintenance->findDuplicateGroupsByTitle();
+        $groupKey = '';
+        foreach ($groups as $group) {
+            if ((string) ($group['titre'] ?? '') === $titre) {
+                $groupKey = (string) ($group['key'] ?? '');
+                break;
+            }
+        }
+        $this->assertNotSame('', $groupKey);
+
+        $result = $maintenance->dismissDuplicateGroup(
+            CatalogMaintenance::DUPLICATE_GROUP_TITLE,
+            $groupKey,
+            $adminId
+        );
+        $this->assertTrue($result === true);
+
+        $groupsAfter = $maintenance->findDuplicateGroupsByTitle();
+        foreach ($groupsAfter as $group) {
+            $this->assertNotSame($groupKey, (string) ($group['key'] ?? ''));
+        }
     }
 }

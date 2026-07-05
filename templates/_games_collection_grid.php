@@ -33,9 +33,16 @@ $gridSortLink = static function (string $label, string $column) use ($sortBy, $s
         <span class="collection-grid-sort__label">Trier par</span>
         <?php $gridSortLink('Titre', 'titre'); ?>
         <?php $gridSortLink('Année', 'annee'); ?>
+        <?php if (Moncine\GameFranchiseRepository::isAvailable()): ?>
+        <?php $gridSortLink('Saga', 'franchise'); ?>
+        <?php endif; ?>
+        <?php $gridSortLink('Plateforme', 'platform'); ?>
         <?php $gridSortLink('Note', 'note'); ?>
         <?php $gridSortLink('Studio', 'studio'); ?>
         <?php $gridSortLink('Fini le', 'finished_at'); ?>
+        <?php if (Moncine\GameSteamStatsRepository::isAvailable()): ?>
+        <?php $gridSortLink('Temps Steam', 'steam_playtime'); ?>
+        <?php endif; ?>
     </nav>
 </div>
 

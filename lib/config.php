@@ -64,7 +64,7 @@ define('MONCINE_APP_NAME', 'Médiathèque');
 
 // Version applicative (semver du fork Médiathèque)
 // Identifiants techniques MONCINE_* / namespace Moncine\ : voir doc/conventions-techniques.md
-define('MONCINE_PACKAGE_VERSION', '0.7.81');
+define('MONCINE_PACKAGE_VERSION', '0.7.9');
 
 // Derrière un reverse proxy de confiance (YunoHost / Nginx) : 1 pour utiliser X-Real-IP / X-Forwarded-For.
 $trustProxy = getenv('MONCINE_TRUST_PROXY');
@@ -85,6 +85,9 @@ define('MONCINE_TMDB_KEY_FILE', MONCINE_DATA . '/tmdb_api_key.txt');
 
 // Identifiants IGDB (Twitch Developer) : MONCINE_IGDB_CLIENT_ID / MONCINE_IGDB_CLIENT_SECRET ou data/igdb_credentials.json
 define('MONCINE_IGDB_CREDENTIALS_FILE', MONCINE_DATA . '/igdb_credentials.json');
+
+// Clé API Steam (GetOwnedGames) : MONCINE_STEAM_API_KEY ou data/steam_api_key.txt
+define('MONCINE_STEAM_API_KEY_FILE', MONCINE_DATA . '/steam_api_key.txt');
 
 // Films traités par clic sur « Enrichir » (évite les timeouts PHP)
 define('MONCINE_ENRICH_BATCH_SIZE', 8);

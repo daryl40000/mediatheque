@@ -18,10 +18,12 @@ final class ShareLinkGameRepository
         'titre' => 'o.titre COLLATE FRENCH_NOCASE',
         'annee' => 'o.annee',
         'platform' => 'oj.platform COLLATE NOCASE',
+        'franchise' => 'oj.franchise COLLATE FRENCH_NOCASE',
         'studio' => 'oj.studio COLLATE FRENCH_NOCASE',
         'genre' => 'oj.genre COLLATE FRENCH_NOCASE',
         'note' => 'note_max',
         'finished_at' => 'derniere_completion',
+        'steam_playtime' => 'COALESCE(gss.playtime_minutes, 0)',
     ];
 
     public function __construct()
@@ -70,6 +72,7 @@ final class ShareLinkGameRepository
             . ' FROM bibliotheque b'
             . ' INNER JOIN oeuvres o ON o.id = b.oeuvre_id'
             . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . GameSteamStatsRepository::listJoinSql()
             . ' WHERE ' . implode(' AND ', $whereParts);
         if ($finishedAtSort) {
             $sql .= ' ORDER BY derniere_completion IS NULL ASC, derniere_completion ' . $direction;
@@ -322,6 +325,14 @@ final class ShareLinkGameRepository
         }
 
         if ($sortBy === 'finished_at' && !GameCompletionRepository::isAvailable()) {
+            return self::SORT_COLUMNS['titre'];
+        }
+
+        if ($sortBy === 'franchise' && !GameSchema::hasIgdbMetadataColumns()) {
+            return self::SORT_COLUMNS['titre'];
+        }
+
+        if ($sortBy === 'steam_playtime' && !GameSteamStatsRepository::isAvailable()) {
             return self::SORT_COLUMNS['titre'];
         }
 

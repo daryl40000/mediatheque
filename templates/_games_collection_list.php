@@ -25,15 +25,18 @@ if (!$showBulkSelect && isset($existingFranchises)) {
                 <th class="col-poster" scope="col">Jaquette</th>
                 <?php $sortHeader('Titre', 'titre'); ?>
                 <?php if ($showBulkSelect): ?>
-                    <th scope="col">Saga</th>
+                    <?php $sortHeader('Saga', 'franchise'); ?>
                 <?php endif; ?>
-                <th scope="col">Plateforme</th>
+                <?php $sortHeader('Plateforme', 'platform'); ?>
                 <?php $sortHeader('Année', 'annee'); ?>
                 <?php $sortHeader('Studio', 'studio'); ?>
                 <?php $sortHeader('Genres', 'genre'); ?>
                 <?php $sortHeader('Support', 'support'); ?>
                 <?php $sortHeader('Note', 'note'); ?>
                 <?php $sortHeader('Fini le', 'finished_at'); ?>
+                <?php if (Moncine\GameSteamStatsRepository::isAvailable()): ?>
+                <?php $sortHeader('Temps Steam', 'steam_playtime'); ?>
+                <?php endif; ?>
             </tr>
         </thead>
         <tbody>
@@ -100,6 +103,11 @@ if (!$showBulkSelect && isset($existingFranchises)) {
                     <td><?= (string) ($game['finished_at_label'] ?? '') !== ''
                         ? Moncine\View::escape((string) $game['finished_at_label'])
                         : '—' ?></td>
+                    <?php if (Moncine\GameSteamStatsRepository::isAvailable()): ?>
+                    <td class="<?= !empty($game['steam_never_played']) ? 'text-muted' : '' ?>">
+                        <?= Moncine\View::escape((string) ($game['steam_playtime_label'] ?? '—')) ?>
+                    </td>
+                    <?php endif; ?>
                 </tr>
             <?php endforeach; ?>
         </tbody>

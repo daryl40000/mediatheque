@@ -47,6 +47,12 @@ final class GameCollectionStats
         $completionsTotal = GameCompletionRepository::isAvailable()
             ? (new GameCompletionRepository())->countTotalCompletions($userId, $foyerId)
             : 0;
+        $steamPlaytimeMinutesTotal = GameSteamStatsRepository::isAvailable()
+            ? $this->totalSteamPlaytimeMinutes($userId, $foyerId)
+            : 0;
+        $topPlayedGames = GameSteamStatsRepository::isAvailable()
+            ? $this->topPlayedGames($userId, $foyerId, 10)
+            : [];
 
         return [
             'collection_count' => $collectionCount,
@@ -62,6 +68,10 @@ final class GameCollectionStats
             'finished_percent' => $collectionCount > 0
                 ? round(($finishedCount / $collectionCount) * 100, 1)
                 : 0.0,
+            'steam_playtime_minutes_total' => $steamPlaytimeMinutesTotal,
+            'steam_playtime_duration_label' => CollectionStats::formatViewingDuration($steamPlaytimeMinutesTotal),
+            'steam_playtime_games_count' => count($topPlayedGames),
+            'top_played_games' => $topPlayedGames,
             'platform_breakdown' => $platformBreakdown,
             'genre_breakdown' => $genreBreakdown,
             'decade_breakdown' => $decadeBreakdown,
@@ -88,6 +98,10 @@ final class GameCollectionStats
             'finished_count' => 0,
             'completions_total' => 0,
             'finished_percent' => 0.0,
+            'steam_playtime_minutes_total' => 0,
+            'steam_playtime_duration_label' => CollectionStats::formatViewingDuration(0),
+            'steam_playtime_games_count' => 0,
+            'top_played_games' => [],
         ];
     }
 
@@ -403,6 +417,89 @@ final class GameCollectionStats
         ]);
 
         return (int) $stmt->fetchColumn();
+    }
+
+    private function totalSteamPlaytimeMinutes(int $userId, int $foyerId): int
+    {
+        if (!GameSteamStatsRepository::isAvailable()) {
+            return 0;
+        }
+
+        $params = [
+            'game_domain' => MediaDomain::JEU,
+            'collection' => LibraryStatut::COLLECTION,
+            'foyer_id' => $foyerId,
+        ];
+
+        $stmt = $this->db->prepare(
+            'SELECT COALESCE(SUM(gss.playtime_minutes), 0)
+             FROM bibliotheque b
+             INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+             INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id
+             INNER JOIN game_steam_stats gss ON gss.bibliotheque_id = b.id
+             WHERE o.media_domain = :game_domain
+               AND b.statut = :collection
+               AND b.foyer_id = :foyer_id'
+        );
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * @return list<array{bib_id: int, titre: string, playtime_minutes: int, playtime_label: string, url: string}>
+     */
+    private function topPlayedGames(int $userId, int $foyerId, int $limit): array
+    {
+        if (!GameSteamStatsRepository::isAvailable() || $limit <= 0) {
+            return [];
+        }
+
+        $limit = max(1, min($limit, 25));
+        $params = [
+            'game_domain' => MediaDomain::JEU,
+            'collection' => LibraryStatut::COLLECTION,
+            'foyer_id' => $foyerId,
+        ];
+
+        $stmt = $this->db->prepare(
+            'SELECT b.id AS bib_id, o.titre, o.titre_original, gss.playtime_minutes
+             FROM bibliotheque b
+             INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+             INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id
+             INNER JOIN game_steam_stats gss ON gss.bibliotheque_id = b.id
+             WHERE o.media_domain = :game_domain
+               AND b.statut = :collection
+               AND b.foyer_id = :foyer_id
+               AND gss.playtime_minutes > 0
+             ORDER BY gss.playtime_minutes DESC, o.titre COLLATE FRENCH_NOCASE ASC
+             LIMIT ' . $limit
+        );
+        $stmt->execute($params);
+
+        $items = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $bibId = (int) ($row['bib_id'] ?? 0);
+            if ($bibId <= 0) {
+                continue;
+            }
+
+            $minutes = (int) ($row['playtime_minutes'] ?? 0);
+            if ($minutes <= 0) {
+                continue;
+            }
+
+            $titre = GameRowMapper::displayTitle($row);
+            $items[] = [
+                'bib_id' => $bibId,
+                'titre' => $titre,
+                'playtime_minutes' => $minutes,
+                'playtime_label' => GameRowMapper::formatSteamPlaytime($minutes),
+                'url' => View::gameUrl($bibId),
+            ];
+        }
+
+        return $items;
     }
 
     private function extensionExcludeSql(): string

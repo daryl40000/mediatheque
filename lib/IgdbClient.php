@@ -30,6 +30,10 @@ final class IgdbClient
     /** @var array{token: string, expires_at: int}|null */
     private static ?array $tokenCache = null;
 
+    private static ?int $steamExternalGameSourceId = null;
+
+    private static bool $steamExternalGameSourceLookupDone = false;
+
     /** @param array{client_id?: string, client_secret?: string}|null $credentials */
     public function __construct(
         private readonly ?array $credentials = null
@@ -87,6 +91,155 @@ final class IgdbClient
         }
 
         return $this->normalizeGameRow($rows[0]);
+    }
+
+    /**
+     * Résout des AppID Steam vers des identifiants IGDB (external_games, category Steam = 1).
+     *
+     * @param list<int> $steamAppIds
+     * @return array<int, int> appid => igdb game id
+     */
+    public function mapSteamAppIdsToIgdbIds(array $steamAppIds): array
+    {
+        $steamAppIds = array_values(array_unique(array_filter(
+            array_map(static fn (mixed $id): int => (int) $id, $steamAppIds),
+            static fn (int $id): bool => $id > 0
+        )));
+        if ($steamAppIds === []) {
+            return [];
+        }
+
+        $map = [];
+        foreach (array_chunk($steamAppIds, 100) as $chunkIndex => $chunk) {
+            if ($chunkIndex > 0) {
+                usleep(250_000);
+            }
+
+            foreach ($this->queryExternalGamesForSteamAppIds($chunk) as $appid => $igdbId) {
+                $map[$appid] = $igdbId;
+            }
+        }
+
+        return $map;
+    }
+
+    /**
+     * @param list<int> $steamAppIds
+     * @return array<int, int>
+     */
+    private function queryExternalGamesForSteamAppIds(array $steamAppIds): array
+    {
+        if ($steamAppIds === []) {
+            return [];
+        }
+
+        $quotedUids = implode(',', array_map(
+            static fn (int $id): string => '"' . $id . '"',
+            $steamAppIds
+        ));
+        $uidFilter = 'uid = (' . $quotedUids . ')';
+        $filters = [];
+        $sourceId = $this->resolveSteamExternalGameSourceId();
+        if ($sourceId !== null) {
+            $filters[] = 'external_game_source = ' . $sourceId . ' & ' . $uidFilter;
+        }
+        $filters[] = 'category = 1 & ' . $uidFilter;
+
+        foreach ($filters as $where) {
+            $body = 'fields game, uid; where ' . $where . '; limit 500;';
+            $rows = $this->queryEndpoint('external_games', $body);
+            if ($rows === null || $rows === []) {
+                continue;
+            }
+
+            $parsed = $this->parseExternalGameUidMap($rows);
+            if ($parsed !== []) {
+                return $parsed;
+            }
+        }
+
+        return [];
+    }
+
+    private function resolveSteamExternalGameSourceId(): ?int
+    {
+        if (self::$steamExternalGameSourceLookupDone) {
+            return self::$steamExternalGameSourceId !== null && self::$steamExternalGameSourceId > 0
+                ? self::$steamExternalGameSourceId
+                : null;
+        }
+
+        self::$steamExternalGameSourceLookupDone = true;
+        self::$steamExternalGameSourceId = 0;
+
+        $rows = $this->queryEndpoint('external_game_sources', 'fields id, name; where name = "steam"; limit 1;');
+        if (is_array($rows) && $rows !== []) {
+            $id = (int) ($rows[0]['id'] ?? 0);
+            if ($id > 0) {
+                self::$steamExternalGameSourceId = $id;
+
+                return $id;
+            }
+        }
+
+        $rows = $this->queryEndpoint('external_game_sources', 'fields id, name; limit 50;');
+        if (!is_array($rows)) {
+            return null;
+        }
+
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            if (strtolower(trim((string) ($row['name'] ?? ''))) !== 'steam') {
+                continue;
+            }
+            $id = (int) ($row['id'] ?? 0);
+            if ($id > 0) {
+                self::$steamExternalGameSourceId = $id;
+
+                return $id;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * @param list<array<string, mixed>> $rows
+     * @return array<int, int>
+     */
+    private function parseExternalGameUidMap(array $rows): array
+    {
+        $map = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+
+            $uidRaw = trim((string) ($row['uid'] ?? ''));
+            if ($uidRaw === '' || !preg_match('/^\d+$/', $uidRaw)) {
+                continue;
+            }
+
+            $appid = (int) $uidRaw;
+            $gameRef = $row['game'] ?? 0;
+            $igdbId = is_array($gameRef)
+                ? (int) ($gameRef['id'] ?? 0)
+                : (int) $gameRef;
+            if ($appid > 0 && $igdbId > 0) {
+                $map[$appid] = $igdbId;
+            }
+        }
+
+        return $map;
+    }
+
+    /** @internal Tests PHPUnit */
+    public static function resetSteamExternalGameSourceCacheForTests(): void
+    {
+        self::$steamExternalGameSourceId = null;
+        self::$steamExternalGameSourceLookupDone = false;
     }
 
     public function testConnection(): array

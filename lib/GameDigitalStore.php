@@ -92,6 +92,50 @@ final class GameDigitalStore
         return $items;
     }
 
+    /**
+     * Ajoute ou met à jour un magasin dans le JSON existant (fusion cross-store).
+     */
+    public static function mergeStore(string $existingJson, string $store, string $url = ''): string
+    {
+        $store = self::normalizeStoreKey($store);
+        if ($store === '') {
+            return trim($existingJson);
+        }
+
+        $url = SecureUrl::sanitizePosterUrl(trim($url));
+        $items = self::parseStoredList($existingJson);
+        foreach ($items as $index => $entry) {
+            if (($entry['store'] ?? '') !== $store) {
+                continue;
+            }
+            if ($url !== '' && ($entry['url'] ?? '') === '') {
+                $items[$index]['url'] = $url;
+            }
+
+            return self::serializeList(array_map(
+                static fn (array $item): array => [
+                    'store' => (string) ($item['store'] ?? ''),
+                    'url' => (string) ($item['url'] ?? ''),
+                ],
+                $items
+            ));
+        }
+
+        $items[] = [
+            'store' => $store,
+            'url' => $url,
+            'label' => self::label($store),
+        ];
+
+        return self::serializeList(array_map(
+            static fn (array $item): array => [
+                'store' => (string) ($item['store'] ?? ''),
+                'url' => (string) ($item['url'] ?? ''),
+            ],
+            $items
+        ));
+    }
+
     /** @param list<array{store: string, url?: string}> $entries */
     public static function serializeList(array $entries): string
     {

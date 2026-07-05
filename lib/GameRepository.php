@@ -332,6 +332,63 @@ final class GameRepository
         return $this->libraryQuery()->findCatalogByOeuvreId($oeuvreId);
     }
 
+    public function findCatalogBySteamAppId(int $appid): ?array
+    {
+        return $this->libraryQuery()->findCatalogBySteamAppId($appid);
+    }
+
+    public function findCatalogByIgdbId(int $igdbId): ?array
+    {
+        return $this->libraryQuery()->findCatalogByIgdbId($igdbId);
+    }
+
+    public function setSteamAppId(int $oeuvreId, int $appid): void
+    {
+        if (!GameSchema::hasSteamAppIdColumn() || $oeuvreId <= 0 || $appid <= 0) {
+            return;
+        }
+
+        $this->db->prepare('UPDATE oeuvre_jeu SET steam_appid = ? WHERE oeuvre_id = ?')
+            ->execute([$appid, $oeuvreId]);
+    }
+
+    public function setSteamAppIdIfEmpty(int $oeuvreId, int $appid): void
+    {
+        if (!GameSchema::hasSteamAppIdColumn() || $oeuvreId <= 0 || $appid <= 0) {
+            return;
+        }
+
+        $this->db->prepare(
+            'UPDATE oeuvre_jeu SET steam_appid = ? WHERE oeuvre_id = ? AND COALESCE(steam_appid, 0) = 0'
+        )->execute([$appid, $oeuvreId]);
+    }
+
+    public function mergeDigitalStoreForOeuvre(int $oeuvreId, string $store, string $url = ''): void
+    {
+        if (!GameSchema::hasEditionColumns() || $oeuvreId <= 0) {
+            return;
+        }
+
+        $game = $this->findCatalogByOeuvreId($oeuvreId);
+        if ($game === null) {
+            return;
+        }
+
+        $merged = GameDigitalStore::mergeStore((string) ($game['digital_stores'] ?? ''), $store, $url);
+        $isDigital = GameDigitalStore::hasDigitalEdition($merged, !empty($game['is_digital']));
+        $this->db->prepare(
+            'UPDATE oeuvre_jeu SET digital_stores = ?, is_digital = ? WHERE oeuvre_id = ?'
+        )->execute([$merged, $isDigital ? 1 : 0, $oeuvreId]);
+    }
+
+    /**
+     * @param array<string, mixed> $libraryDetails
+     */
+    public function applyLibraryEditionDetails(int $bibId, int $oeuvreId, array $libraryDetails): void
+    {
+        $this->libraryAttach()->applyDetailsAfterCatalogAttach($bibId, $oeuvreId, $libraryDetails);
+    }
+
     public function findLibraryBibIdForCatalogOeuvre(int $oeuvreId, int $userId, int $foyerId): ?int
     {
         return $this->libraryQuery()->findLibraryBibIdForCatalogOeuvre($oeuvreId, $userId, $foyerId);

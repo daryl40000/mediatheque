@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-07-05 (version **0.7.81** — moteur autocomplétion JS partagé)  
+**Dernière mise à jour :** 2026-07-05 (version **0.7.9** — import Steam, refonte fiche jeu)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif

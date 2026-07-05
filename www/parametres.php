@@ -42,7 +42,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             (string) ($_POST['pseudo'] ?? ''),
             (string) ($_POST['ville'] ?? ''),
             $searchable,
-            (string) ($_POST['profile_password'] ?? '')
+            (string) ($_POST['profile_password'] ?? ''),
+            (string) ($_POST['steam_id'] ?? '')
         );
         if ($result === true) {
             $success = 'Profil mis à jour.';
@@ -107,4 +108,5 @@ View::render('parametres', [
     'isSearchable' => UserProfile::isSearchable($user),
     'canDeleteAccount' => $canDeleteAccount,
     'isSoloGroupMember' => $isSoloGroupMember,
+    'steamModuleReady' => \Moncine\GameSchema::hasUserSteamIdColumn(),
 ]);

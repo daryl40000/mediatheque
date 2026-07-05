@@ -99,6 +99,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         } else {
             $error = (string) $result;
         }
+    } elseif ($action === 'dismiss_duplicate_group') {
+        $groupType = (string) ($_POST['group_type'] ?? '');
+        $groupKey = (string) ($_POST['group_key'] ?? '');
+        $result = $maintenance->dismissDuplicateGroup($groupType, $groupKey, $adminUserId);
+        if ($result === true) {
+            $message = 'Groupe marqué comme légitime — les fiches restent séparées au catalogue.';
+        } else {
+            $error = (string) $result;
+        }
     } elseif ($action === 'purge_orphan_posters') {
         $result = $maintenance->purgeOrphanPosters($adminUserId);
         $message = $result['deleted'] . ' affiche(s) orpheline(s) supprimée(s).';
