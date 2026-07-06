@@ -12,13 +12,14 @@ use Moncine\CatalogListContext;
 use Moncine\GamePlatform;
 use Moncine\GameCompletionRepository;
 use Moncine\GameFranchiseRepository;
+use Moncine\GameRelatedSections;
 use Moncine\GameRepository;
 use Moncine\MagazineGameLink;
 use Moncine\MediaDomain;
 use Moncine\UserContext;
 use Moncine\View;
 
-CatalogAdmin::denyUnlessAccess();
+CatalogAdmin::denyUnlessCatalogAvailable();
 
 $oeuvreId = (int) ($_GET['id'] ?? 0);
 $catalogListContext = CatalogListContext::fromQuery($_GET);
@@ -82,15 +83,39 @@ if (GameRepository::hasExtensionColumns()) {
         if ($baseGame !== null) {
             $userId = UserContext::currentUserId();
             $foyerId = UserContext::currentFoyerId();
-            $baseBibId = $repo->findLibraryBibIdForCatalogOeuvre((int) $baseGame['oeuvre_id'], $userId, $foyerId);
-            $baseGame['library_bib_id'] = $baseBibId ?? 0;
-            $baseGame['library_url'] = $baseBibId !== null && $baseBibId > 0
-                ? View::gameUrl($baseBibId)
-                : View::oeuvreJeuUrl((int) $baseGame['oeuvre_id'], $catalogSearch, $catalogSort, $catalogDir, $catalogPage);
+            $baseOeuvreId = (int) $baseGame['oeuvre_id'];
+            $baseGame = array_merge(
+                $baseGame,
+                GameRelatedSections::libraryStateForRelatedOeuvre(
+                    $repo,
+                    $baseOeuvreId,
+                    $userId,
+                    $foyerId,
+                    View::oeuvreJeuUrl($baseOeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
+                ),
+            );
         }
         $game['base_game_label'] = trim((string) ($baseGame['titre'] ?? ''));
     } elseif ((int) ($game['oeuvre_id'] ?? 0) > 0) {
         $catalogExtensions = $repo->listCatalogExtensionsForBaseGame((int) $game['oeuvre_id']);
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        foreach ($catalogExtensions as $index => $row) {
+            $childOeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+            if ($childOeuvreId <= 0) {
+                continue;
+            }
+            $catalogExtensions[$index] = array_merge(
+                $catalogExtensions[$index],
+                GameRelatedSections::libraryStateForRelatedOeuvre(
+                    $repo,
+                    $childOeuvreId,
+                    $userId,
+                    $foyerId,
+                    View::oeuvreJeuUrl($childOeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
+                ),
+            );
+        }
     }
 }
 
@@ -100,15 +125,64 @@ if (GameRepository::hasRemakeColumns()) {
         if ($originalGame !== null) {
             $userId = UserContext::currentUserId();
             $foyerId = UserContext::currentFoyerId();
-            $originalBibId = $repo->findLibraryBibIdForCatalogOeuvre((int) $originalGame['oeuvre_id'], $userId, $foyerId);
-            $originalGame['library_bib_id'] = $originalBibId ?? 0;
-            $originalGame['library_url'] = $originalBibId !== null && $originalBibId > 0
-                ? View::gameUrl($originalBibId)
-                : View::oeuvreJeuUrl((int) $originalGame['oeuvre_id'], $catalogSearch, $catalogSort, $catalogDir, $catalogPage);
+            $originalOeuvreId = (int) $originalGame['oeuvre_id'];
+            $originalGame = array_merge(
+                $originalGame,
+                GameRelatedSections::libraryStateForRelatedOeuvre(
+                    $repo,
+                    $originalOeuvreId,
+                    $userId,
+                    $foyerId,
+                    View::oeuvreJeuUrl($originalOeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
+                ),
+            );
         }
         $game['original_game_label'] = trim((string) ($originalGame['titre'] ?? ''));
     } elseif ((int) ($game['oeuvre_id'] ?? 0) > 0) {
         $catalogRemakes = $repo->listCatalogRemakesForOriginalGame((int) $game['oeuvre_id']);
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        foreach ($catalogRemakes as $index => $row) {
+            $childOeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+            if ($childOeuvreId <= 0) {
+                continue;
+            }
+            $catalogRemakes[$index] = array_merge(
+                $catalogRemakes[$index],
+                GameRelatedSections::libraryStateForRelatedOeuvre(
+                    $repo,
+                    $childOeuvreId,
+                    $userId,
+                    $foyerId,
+                    View::oeuvreJeuUrl($childOeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
+                ),
+            );
+        }
+    }
+}
+
+$franchiseGames = [];
+$franchiseName = GameRelatedSections::resolveFranchiseName($game, $baseGame, $originalGame);
+if ($franchiseName !== '' && GameFranchiseRepository::isAvailable() && $oeuvreId > 0) {
+    $franchiseRepo = new GameFranchiseRepository();
+    $franchiseGames = $franchiseRepo->listCatalogByFranchise($franchiseName, $oeuvreId);
+    $userId = UserContext::currentUserId();
+    $foyerId = UserContext::currentFoyerId();
+    foreach ($franchiseGames as $index => $row) {
+        $sagaOeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+        if ($sagaOeuvreId <= 0) {
+            continue;
+        }
+        $franchiseGames[$index] = array_merge(
+            $franchiseGames[$index],
+            GameRelatedSections::libraryStateForRelatedOeuvre(
+                $repo,
+                $sagaOeuvreId,
+                $userId,
+                $foyerId,
+                View::oeuvreJeuUrl($sagaOeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
+            ),
+        );
     }
 }
 
@@ -139,7 +213,9 @@ if (isset($_GET['poster_uploaded']) && (string) $_GET['poster_uploaded'] === '1'
     }
 }
 
-$oeuvreNav = $admin->getOeuvreNavigation($oeuvreId, $catalogSearch, $catalogSort, $catalogDir);
+$oeuvreNav = CatalogAdmin::canAccess()
+    ? $admin->getOeuvreNavigation($oeuvreId, $catalogSearch, $catalogSort, $catalogDir)
+    : null;
 $library = $detail['library'];
 $libraryBibId = null;
 if ($library !== null) {
@@ -196,6 +272,7 @@ View::render('oeuvre-jeu', [
     'catalogExtensions' => $catalogExtensions,
     'originalGame' => $originalGame,
     'catalogRemakes' => $catalogRemakes,
+    'franchiseGames' => $franchiseGames,
     'library' => $library,
     'libraryBibId' => $libraryBibId,
     'libraryCount' => (int) $detail['library_count'],

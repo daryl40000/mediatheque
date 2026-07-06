@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-07-06 (version **0.7.11** — fiche jeu actions en bulles, temps manuel)  
+**Dernière mise à jour :** 2026-07-06 (version **0.7.12** — profil → catalogue, fiches harmonisées)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif

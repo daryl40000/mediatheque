@@ -2,7 +2,7 @@
 
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 
-**Version : 0.7.11**
+**Version : 0.7.12**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -70,6 +70,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.12** | Profil ami → fiches catalogue, cœur envies sous jaquette, fiches film/BD/magazine harmonisées, saga extensions jeux |
 | **0.7.11** | Fiche jeu : actions en bulles, temps manuel Battle.net, stats temps total / Steam |
 | **0.7.10** | Fusion fiches catalogue, import Steam utilisateur, fiche catalogue jeu, correctifs saga |
 | **0.7.9** | Import Steam, refonte fiche jeu, stats temps de jeu, maintenance doublons légitimes |
@@ -274,12 +275,13 @@ Visible par les **amis** et les **membres du même groupe** :
 
 | Onglet profil | Contenu |
 |---------------|---------|
-| **Films** | Statistiques, 5 derniers vus/ajouts, listes collection / envies / visions, demandes de prêt |
-| **Magazines** | Statistiques séries et numéros, listes collection / envies, numéros par série (lecture seule) |
-| **Jeux** | Statistiques, 5 derniers jeux notés, grilles collection / envies (**0.5.3**) |
-| **BD, Livres** | Message « bientôt disponible » sur le profil |
+| **Films** | Statistiques, 5 derniers vus/ajouts, listes collection / envies / visions, demandes de prêt — **clic sur une vignette** → fiche catalogue avec bouton envies (**0.7.12**) |
+| **Magazines** | Statistiques séries et numéros, listes collection / envies, numéros par série (lecture seule) — **clic** → fiche catalogue (**0.7.12**) |
+| **Jeux** | Statistiques, 5 derniers jeux notés, grilles collection / envies — **clic** → fiche catalogue (**0.7.12**) |
+| **BD** | Séries et tomes en lecture seule — **clic** → fiche catalogue (**0.7.12**) |
+| **Livres** | Message « bientôt disponible » sur le profil |
 
-Sur l’onglet **Magazines** du profil : cliquez une **série** → liste des numéros (`/utilisateur-serie-magazine.php`) → fiche numéro avec sommaire (`/utilisateur-numero-magazine.php`). Les **PDF ne sont pas partagés** (couvertures et texte uniquement).
+Sur l’onglet **Magazines** du profil : cliquez une **série** → liste des numéros (`/utilisateur-serie-magazine.php`). Depuis **0.7.12**, un clic sur un **numéro** ouvre la fiche catalogue (sommaire, couverture) avec possibilité d’ajouter à **vos** envies — les PDF de l’ami ne sont pas partagés.
 
 Paramètre d’URL : `?id=…&domain=film|magazine|jeu` (Films par défaut si omis).
 

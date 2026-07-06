@@ -30,21 +30,28 @@ $completionCount = (int) ($completionCount ?? 0);
         $genreList = $game['genre_list'] ?? Moncine\GameGenre::parseList((string) ($game['genre'] ?? ''));
         ?>
         <p class="breadcrumb">
-            <a href="<?= Moncine\View::escape($catalogueBackUrl) ?>">Catalogue</a>
+            <?php
+            $profileUserId = (int) ($_GET['profile_user'] ?? 0);
+            $pageBackUrl = Moncine\View::catalogOeuvrePageBackUrl($catalogueBackUrl, $profileUserId, Moncine\MediaDomain::JEU);
+            $backLabel = $profileUserId > 0 ? 'Profil' : (Moncine\CatalogAdmin::canAccess() ? 'Catalogue' : 'Mes jeux');
+            ?>
+            <a href="<?= Moncine\View::escape($pageBackUrl) ?>"><?= Moncine\View::escape($backLabel) ?></a>
             <span aria-hidden="true"> › </span>
             <span><?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? '')) ?></span>
         </p>
 
-        <?php require MONCINE_ROOT . '/templates/_upload_limits_warning.php'; ?>
+        <?php if (Moncine\CatalogAdmin::canAccess()): ?>
+            <?php require MONCINE_ROOT . '/templates/_upload_limits_warning.php'; ?>
 
-        <p class="hint oeuvre-catalog-page__badge">
-            Fiche catalogue jeu vidéo (ID <?= $oeuvreId ?>)
-            <?php if ($libraryCount > 0): ?>
-                — <?= $libraryCount ?> entrée<?= $libraryCount > 1 ? 's' : '' ?> bibliothèque
-            <?php endif; ?>
-        </p>
+            <p class="hint oeuvre-catalog-page__badge">
+                Fiche catalogue jeu vidéo (ID <?= $oeuvreId ?>)
+                <?php if ($libraryCount > 0): ?>
+                    — <?= $libraryCount ?> entrée<?= $libraryCount > 1 ? 's' : '' ?> bibliothèque
+                <?php endif; ?>
+            </p>
+        <?php endif; ?>
 
-        <?php if (isset($catalogListContext, $oeuvreNav)): ?>
+        <?php if (isset($catalogListContext, $oeuvreNav) && $oeuvreNav !== null): ?>
             <div id="catalog-oeuvre-nav" class="catalog-oeuvre-nav-anchor">
                 <?php require MONCINE_ROOT . '/templates/_catalog_oeuvre_nav.php'; ?>
             </div>
@@ -58,7 +65,12 @@ $completionCount = (int) ($completionCount ?? 0);
         <?php endif; ?>
 
         <article class="film-detail game-detail<?= $posterSrc !== '' ? ' film-detail--with-poster' : '' ?>">
-            <?php require MONCINE_ROOT . '/templates/_game_detail_sidebar.php'; ?>
+            <?php
+            // Fiche catalogue : si l’œuvre n’est pas dans la bibliothèque, on remplace les actions rapides
+            // par « ajouter aux envies » / « ajouter à la bibliothèque ».
+            $isInLibrary = $inLibrary;
+            require MONCINE_ROOT . '/templates/_game_detail_sidebar.php';
+            ?>
 
             <div class="film-detail__body game-detail__body">
                 <header class="film-detail__heading game-detail__heading">
@@ -85,7 +97,11 @@ $completionCount = (int) ($completionCount ?? 0);
                         </h1>
                     </div>
                     <?php
-                    $franchiseName = trim((string) ($game['franchise'] ?? ''));
+                    $franchiseName = Moncine\GameRelatedSections::resolveFranchiseName(
+                        $game,
+                        $baseGame ?? null,
+                        $originalGame ?? null,
+                    );
                     if ($franchiseName !== ''):
                         ?>
                         <p class="game-detail__saga">
@@ -117,13 +133,16 @@ $completionCount = (int) ($completionCount ?? 0);
                     $originalGame ?? null,
                     $catalogExtensions ?? [],
                     $catalogRemakes ?? [],
-                    static fn (array $row): string => Moncine\View::oeuvreJeuUrl(
+                    static fn (array $row): string => trim((string) ($row['library_url'] ?? '')) !== ''
+                        ? (string) $row['library_url']
+                        : Moncine\View::oeuvreJeuUrl(
                         (int) ($row['oeuvre_id'] ?? 0),
                         $catalogSearch ?? '',
                         $catalogSort ?? 'titre',
                         $catalogDir ?? 'asc',
                         (int) ($catalogPage ?? 1),
                     ),
+                    $franchiseGames ?? [],
                 );
                 if ($gameRelatedSections !== []):
                     ?>
@@ -133,7 +152,7 @@ $completionCount = (int) ($completionCount ?? 0);
                 <?php endif; ?>
 
                 <?php $catalogMagazineSubjects = $catalogMagazineSubjects ?? []; ?>
-                <?php if ($catalogMagazineSubjects !== []): ?>
+                <?php if (Moncine\CatalogAdmin::canAccess() && $catalogMagazineSubjects !== []): ?>
                     <section class="game-detail__magazines" aria-labelledby="catalog-game-magazine-heading">
                         <h2 id="catalog-game-magazine-heading" class="game-detail__section-title">Sujets magazine reliés</h2>
                         <p class="hint">
@@ -163,6 +182,7 @@ $completionCount = (int) ($completionCount ?? 0);
                     </section>
                 <?php endif; ?>
 
+                <?php if (Moncine\CatalogAdmin::canAccess()): ?>
                 <section class="oeuvre-catalog-page__admin-tools" aria-labelledby="catalog-game-admin-heading">
                     <h2 id="catalog-game-admin-heading" class="game-detail__section-title">Administration catalogue</h2>
 
@@ -184,28 +204,21 @@ $completionCount = (int) ($completionCount ?? 0);
                     ?>
 
                     <?php
-                    $mediaDomain = Moncine\MediaDomain::JEU;
-                    $collectionLabel = $navLabels['collection'];
-                    $wishlistLabel = $navLabels['wishlist'];
-                    $openLibraryLabel = 'Ouvrir ma fiche jeu';
-                    require MONCINE_ROOT . '/templates/_oeuvre_catalog_library_section.php';
-                    ?>
-
-                    <?php
                     $currentOeuvreId = $oeuvreId;
                     $currentOeuvreTitle = (string) ($game['display_titre'] ?? $game['titre'] ?? '');
                     require MONCINE_ROOT . '/templates/_catalog_oeuvre_merge_panel.php';
                     ?>
                 </section>
+                <?php endif; ?>
 
-                <?php if (isset($catalogListContext, $oeuvreNav)): ?>
+                <?php if (isset($catalogListContext, $oeuvreNav) && $oeuvreNav !== null): ?>
                     <?php require MONCINE_ROOT . '/templates/_catalog_oeuvre_nav.php'; ?>
                 <?php endif; ?>
             </div>
         </article>
 
         <p class="collection-page__footer-links">
-            <a href="<?= Moncine\View::escape($catalogueBackUrl) ?>">← Retour au catalogue</a>
+            <a href="<?= Moncine\View::escape($pageBackUrl) ?>">← Retour</a>
         </p>
     <?php endif; ?>
 </section>

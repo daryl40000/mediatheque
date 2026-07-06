@@ -11,49 +11,59 @@
  */
 $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::MAGAZINE);
 ?>
-<section class="oeuvre-catalog-page oeuvre-catalog-page--magazine">
+<section class="oeuvre-catalog-page oeuvre-catalog-page--magazine game-detail-page">
     <?php if ($issue === null): ?>
         <h1>Numéro introuvable</h1>
         <p>Cette fiche n’existe pas ou a été supprimée du catalogue.</p>
-        <a href="<?= Moncine\View::escape($catalogueBackUrl) ?>" class="btn btn-primary">Retour au catalogue</a>
+        <?php
+        $profileUserId = (int) ($_GET['profile_user'] ?? 0);
+        $pageBackUrl = Moncine\View::catalogOeuvrePageBackUrl($catalogueBackUrl, $profileUserId, Moncine\MediaDomain::MAGAZINE);
+        ?>
+        <a href="<?= Moncine\View::escape($pageBackUrl) ?>" class="btn btn-primary">Retour</a>
     <?php else:
         $oeuvreId = (int) ($issue['oeuvre_id'] ?? $oeuvreId ?? 0);
         $libraryEntry = $library;
         $inLibrary = $libraryEntry !== null && ($libraryBibId ?? 0) > 0;
-        $libraryStatut = $inLibrary ? (string) ($libraryEntry['statut'] ?? '') : '';
-        $cover = Moncine\View::posterSrc(trim((string) ($issue['poster_url'] ?? '')) ?: null);
-        if ($cover === '') {
-            $cover = Moncine\View::posterSrc(trim((string) ($issue['series_poster_url'] ?? '')) ?: null);
+        $posterSrc = Moncine\View::posterSrc(trim((string) ($issue['poster_url'] ?? '')) ?: null);
+        if ($posterSrc === '') {
+            $posterSrc = Moncine\View::posterSrc(trim((string) ($issue['series_poster_url'] ?? '')) ?: null);
         }
+        $profileUserId = (int) ($_GET['profile_user'] ?? 0);
+        $pageBackUrl = Moncine\View::catalogOeuvrePageBackUrl($catalogueBackUrl, $profileUserId, Moncine\MediaDomain::MAGAZINE);
+        $backLabel = $profileUserId > 0 ? 'Profil' : (Moncine\CatalogAdmin::canAccess() ? 'Catalogue' : 'Mes magazines');
         ?>
         <p class="breadcrumb">
-            <a href="<?= Moncine\View::escape($catalogueBackUrl) ?>">Catalogue</a>
+            <a href="<?= Moncine\View::escape($pageBackUrl) ?>"><?= Moncine\View::escape($backLabel) ?></a>
             <span aria-hidden="true"> › </span>
             <span><?= Moncine\View::escape((string) ($issue['series_titre'] ?? '')) ?> — n°<?= Moncine\View::escape((string) ($issue['numero'] ?? '')) ?></span>
         </p>
 
-        <?php require MONCINE_ROOT . '/templates/_upload_limits_warning.php'; ?>
+        <?php if (Moncine\CatalogAdmin::canAccess()): ?>
+            <?php require MONCINE_ROOT . '/templates/_upload_limits_warning.php'; ?>
 
-        <p class="hint oeuvre-catalog-page__badge">
-            Fiche catalogue magazine (ID <?= $oeuvreId ?>)
-            <?php if ($libraryCount > 0): ?>
-                — <?= $libraryCount ?> entrée<?= $libraryCount > 1 ? 's' : '' ?> bibliothèque
-            <?php endif; ?>
-        </p>
+            <p class="hint oeuvre-catalog-page__badge">
+                Fiche catalogue magazine (ID <?= $oeuvreId ?>)
+                <?php if ($libraryCount > 0): ?>
+                    — <?= $libraryCount ?> entrée<?= $libraryCount > 1 ? 's' : '' ?> bibliothèque
+                <?php endif; ?>
+            </p>
+        <?php endif; ?>
 
-        <?php if (isset($catalogListContext, $oeuvreNav)): ?>
+        <?php if (isset($catalogListContext, $oeuvreNav) && $oeuvreNav !== null): ?>
             <div id="catalog-oeuvre-nav" class="catalog-oeuvre-nav-anchor">
                 <?php require MONCINE_ROOT . '/templates/_catalog_oeuvre_nav.php'; ?>
             </div>
         <?php endif; ?>
 
-        <article class="film-detail magazine-issue-layout<?= $cover !== '' ? ' film-detail--with-poster' : '' ?>">
-            <?php if ($cover !== ''): ?>
-                <img class="film-poster film-poster--large magazine-cover" src="<?= $cover ?>"
-                     alt="Couverture de <?= Moncine\View::escape((string) ($issue['series_titre'] ?? '')) ?>">
-            <?php endif; ?>
+        <article class="film-detail game-detail magazine-issue-layout<?= $posterSrc !== '' ? ' film-detail--with-poster' : '' ?>">
+            <?php
+            $mediaDomain = Moncine\MediaDomain::MAGAZINE;
+            $posterAlt = 'Couverture de ' . (string) ($issue['series_titre'] ?? '');
+            $openLibraryLabel = 'Ouvrir ma fiche numéro';
+            require MONCINE_ROOT . '/templates/_catalog_oeuvre_poster_sidebar.php';
+            ?>
 
-            <div class="film-detail__body magazine-issue-layout__main">
+            <div class="film-detail__body game-detail__body magazine-issue-layout__main">
                 <header class="film-detail__heading">
                     <h1><?= Moncine\View::escape((string) ($issue['series_titre'] ?? '')) ?></h1>
                     <p class="lead">
@@ -100,36 +110,30 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::MAGAZINE);
                     <p class="alert alert-warning"><?= Moncine\View::escape((string) $saveError) ?></p>
                 <?php endif; ?>
 
-                <?php require MONCINE_ROOT . '/templates/_oeuvre_magazine_edit_form.php'; ?>
+                <?php if (Moncine\CatalogAdmin::canAccess()): ?>
+                    <?php require MONCINE_ROOT . '/templates/_oeuvre_magazine_edit_form.php'; ?>
 
-                <?php
-                $posterUploadError = $posterUploadError ?? '';
-                $posterUploadOpen = $posterUploadOpen ?? false;
-                require MONCINE_ROOT . '/templates/_oeuvre_poster_upload_form.php';
-                ?>
+                    <?php
+                    $posterUploadError = $posterUploadError ?? '';
+                    $posterUploadOpen = $posterUploadOpen ?? false;
+                    require MONCINE_ROOT . '/templates/_oeuvre_poster_upload_form.php';
+                    ?>
 
-                <?php
-                $mediaDomain = Moncine\MediaDomain::MAGAZINE;
-                $collectionLabel = $navLabels['collection'];
-                $wishlistLabel = $navLabels['wishlist'];
-                $openLibraryLabel = 'Ouvrir ma fiche numéro';
-                require MONCINE_ROOT . '/templates/_oeuvre_catalog_library_section.php';
-                ?>
+                    <?php
+                    $currentOeuvreId = $oeuvreId;
+                    $currentOeuvreTitle = (string) ($issue['titre'] ?? '');
+                    require MONCINE_ROOT . '/templates/_catalog_oeuvre_merge_panel.php';
+                    ?>
 
-                <?php
-                $currentOeuvreId = $oeuvreId;
-                $currentOeuvreTitle = (string) ($issue['titre'] ?? '');
-                require MONCINE_ROOT . '/templates/_catalog_oeuvre_merge_panel.php';
-                ?>
-
-                <?php if (isset($catalogListContext, $oeuvreNav)): ?>
-                    <?php require MONCINE_ROOT . '/templates/_catalog_oeuvre_nav.php'; ?>
+                    <?php if (isset($catalogListContext, $oeuvreNav) && $oeuvreNav !== null): ?>
+                        <?php require MONCINE_ROOT . '/templates/_catalog_oeuvre_nav.php'; ?>
+                    <?php endif; ?>
                 <?php endif; ?>
             </div>
         </article>
 
         <p class="collection-page__footer-links">
-            <a href="<?= Moncine\View::escape($catalogueBackUrl) ?>">← Retour au catalogue</a>
+            <a href="<?= Moncine\View::escape($pageBackUrl) ?>">← Retour</a>
         </p>
     <?php endif; ?>
 </section>

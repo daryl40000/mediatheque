@@ -62,12 +62,30 @@ final class GameLibraryAttach
             return;
         }
 
-        $physicalSupports = (string) ($details['physical_supports'] ?? '');
-        $digitalStores = (string) ($details['digital_stores'] ?? '');
-        $isDigital = !empty($details['is_digital'])
-            || GameDigitalStore::hasDigitalEdition($digitalStores, false);
+        $physicalSupports = array_key_exists('physical_supports', $details)
+            ? (string) ($details['physical_supports'] ?? '')
+            : (string) ($game['physical_supports'] ?? '');
 
-        if ($physicalSupports === '' && $digitalStores === '' && !$isDigital) {
+        $digitalStores = (string) ($game['digital_stores'] ?? '');
+        if (array_key_exists('digital_stores', $details) && trim((string) ($details['digital_stores'] ?? '')) !== '') {
+            foreach (GameDigitalStore::parseStoredList((string) $details['digital_stores']) as $entry) {
+                $digitalStores = GameDigitalStore::mergeStore(
+                    $digitalStores,
+                    (string) ($entry['store'] ?? ''),
+                    (string) ($entry['url'] ?? '')
+                );
+            }
+        }
+
+        $isDigital = array_key_exists('is_digital', $details)
+            ? (!empty($details['is_digital']) || GameDigitalStore::hasDigitalEdition($digitalStores, false))
+            : (!empty($game['is_digital']) || GameDigitalStore::hasDigitalEdition($digitalStores, false));
+
+        if (
+            $physicalSupports === (string) ($game['physical_supports'] ?? '')
+            && $digitalStores === (string) ($game['digital_stores'] ?? '')
+            && $isDigital === !empty($game['is_digital'])
+        ) {
             return;
         }
 

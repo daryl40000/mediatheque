@@ -14,7 +14,10 @@ $isWishlist = ($statut ?? '') === Moncine\LibraryStatut::WISHLIST;
     <?php foreach ($issues as $row): ?>
         <?php
         $bibId = (int) ($row['bib_id'] ?? 0);
-        $issueUrl = Moncine\View::userProfileMagazineIssueUrl($targetUserId, $bibId);
+        $oeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+        $issueUrl = $oeuvreId > 0
+            ? Moncine\View::catalogOeuvreDetailUrlFromProfile($oeuvreId, Moncine\MediaDomain::MAGAZINE, $targetUserId)
+            : Moncine\View::userProfileMagazineIssueUrl($targetUserId, $bibId);
         $cover = Moncine\View::posterSrc(trim((string) ($row['poster_url'] ?? '')) ?: null);
         $dateLabel = Moncine\PublicationType::formatParutionDate(
             (string) ($row['date_parution'] ?? ''),

@@ -108,7 +108,7 @@ final class GameDigitalStore
             if (($entry['store'] ?? '') !== $store) {
                 continue;
             }
-            if ($url !== '' && ($entry['url'] ?? '') === '') {
+            if ($url !== '') {
                 $items[$index]['url'] = $url;
             }
 

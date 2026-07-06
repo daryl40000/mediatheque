@@ -6,13 +6,11 @@
  * @var string $return film|resultat|home
  * @var string $defaultDateIso aaaa-mm-jj pour le champ date
  * @var string $submitLabel
- * @var int|null $defaultNote ressenti 1–5 déjà connu (pré-sélection)
  * @var bool $compact affichage réduit (page résultat)
  */
 $defaultDateIso = $defaultDateIso ?? Moncine\HistoriqueRepository::todayForInputIso();
 $submitLabel = $submitLabel ?? 'Marquer comme vu';
 $compact = $compact ?? false;
-$defaultNote = isset($defaultNote) ? Moncine\RessentiNote::normalizeScore((int) $defaultNote) : null;
 $maxDate = Moncine\HistoriqueRepository::todayForInputIso();
 ?>
 <form method="post" action="/marquer-vu.php" class="marquer-vu-form import-form<?= $compact ? ' marquer-vu-form--compact' : '' ?>">
@@ -37,17 +35,6 @@ $maxDate = Moncine\HistoriqueRepository::todayForInputIso();
     </div>
     <?php if (!$compact): ?>
         <p class="hint">Utilisez le calendrier : aujourd’hui par défaut, ou une date passée si vous aviez oublié de noter.</p>
-    <?php endif; ?>
-
-    <?php if (!$compact): ?>
-        <?php
-        $fieldName = 'note';
-        $fieldId = 'note_' . (int) $filmId;
-        $defaultScore = $defaultNote;
-        $required = false;
-        $allowEmpty = true;
-        require MONCINE_ROOT . '/templates/_ressenti_picker.php';
-        ?>
     <?php endif; ?>
 
     <button type="submit" class="btn <?= $compact ? 'btn-primary' : 'btn-secondary' ?>"><?= Moncine\View::escape($submitLabel) ?></button>

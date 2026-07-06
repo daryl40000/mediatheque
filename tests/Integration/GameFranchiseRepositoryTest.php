@@ -67,6 +67,11 @@ final class GameFranchiseRepositoryTest extends MoncineTestCase
         $this->assertCount(2, $games);
         $this->assertSame('Witcher 2 Franchise Test', $games[0]['titre']);
         $this->assertSame('Witcher 3 Franchise Test', $games[1]['titre']);
+
+        $oeuvreId1 = (int) ($games[0]['oeuvre_id'] ?? 0);
+        $catalogGames = $franchiseRepo->listCatalogByFranchise('The Witcher', $oeuvreId1);
+        $this->assertCount(1, $catalogGames);
+        $this->assertSame('Witcher 3 Franchise Test', $catalogGames[0]['titre']);
     }
 
     public function testRenameFranchiseInCollection(): void

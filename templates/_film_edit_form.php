@@ -11,11 +11,14 @@
 $editOpen = $editOpen ?? false;
 $saveError = $saveError ?? '';
 $canManageCatalog = $canManageCatalog ?? false;
+$embedInPopover = $embedInPopover ?? false;
 $moncineKind = (string) ($film['moncine_kind'] ?? Moncine\MoncineContentKind::FILM);
 $oeuvreId = (int) ($film['oeuvre_id'] ?? 0);
-?>
+if (!$embedInPopover):
+    ?>
 <details class="film-edit-panel"<?= $editOpen ? ' open' : '' ?>>
     <summary class="film-edit-panel__summary">Modifier mon exemplaire</summary>
+<?php endif; ?>
 
     <p class="hint">
         Ces champs concernent <strong>votre</strong> DVD, Blu-ray ou autre support
@@ -121,4 +124,6 @@ $oeuvreId = (int) ($film['oeuvre_id'] ?? 0);
 
         <button type="submit" class="btn btn-primary">Enregistrer mon exemplaire</button>
     </form>
+<?php if (!$embedInPopover): ?>
 </details>
+<?php endif; ?>

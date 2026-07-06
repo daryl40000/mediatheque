@@ -172,6 +172,46 @@ final class GameFranchiseRepository
     }
 
     /**
+     * Tous les jeux catalogue d’une saga (tri : année, puis titre), hors jeu exclu.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function listCatalogByFranchise(string $franchise, int $excludeOeuvreId = 0): array
+    {
+        $franchise = trim($franchise);
+        if (!self::isAvailable() || $franchise === '') {
+            return [];
+        }
+
+        $params = [
+            'domain' => MediaDomain::JEU,
+            'franchise' => $franchise,
+        ];
+        $sql = 'SELECT ' . GameCatalogSql::selectCatalogRow()
+            . ' FROM oeuvres o'
+            . ' INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . ' WHERE o.media_domain = :domain'
+            . '   AND oj.franchise = :franchise';
+        if ($excludeOeuvreId > 0) {
+            $sql .= ' AND o.id != :exclude_id';
+            $params['exclude_id'] = $excludeOeuvreId;
+        }
+        $sql .= ' ORDER BY'
+            . '   CASE WHEN o.annee > 0 THEN o.annee ELSE 9999 END ASC,'
+            . '   o.titre COLLATE FRENCH_NOCASE ASC';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $out[] = GameRowMapper::hydrateCatalogRow($row);
+        }
+
+        return $out;
+    }
+
+    /**
      * Associe des jeux à une saga (oeuvre_jeu.franchise).
      *
      * @param list<int> $bibIds

@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\DetailLibraryState;
 use Moncine\FilmListContext;
 use Moncine\FilmRepository;
 use Moncine\HistoriqueRepository;
@@ -69,7 +70,18 @@ if (isset($_GET['enrich'])) {
 }
 
 $saveError = (string) ($_GET['save_error'] ?? '');
-$editOpen = isset($_GET['edit']) || $saveError !== '';
+$allowedPopovers = ['note', 'edit', 'vu'];
+$popoverOpen = '';
+if (!empty($_GET['note_error'])) {
+    $popoverOpen = 'note';
+} elseif (!empty($_GET['vu_error'])) {
+    $popoverOpen = 'vu';
+} elseif (isset($_GET['popover']) && in_array((string) $_GET['popover'], $allowedPopovers, true)) {
+    $popoverOpen = (string) $_GET['popover'];
+} elseif (isset($_GET['edit']) || $saveError !== '') {
+    $popoverOpen = 'edit';
+}
+$editOpen = $popoverOpen === 'edit';
 
 $defaultList = ($film['statut'] ?? '') === LibraryStatut::WISHLIST
     ? FilmListContext::WISHLIST
@@ -101,6 +113,31 @@ if ($isWishlistFilm && WishlistTargetRepository::tableExists()) {
     $wishlistTargets = (new WishlistTargetRepository())->listForBibliothequeId($id);
 }
 
+$userId = UserContext::currentUserId();
+$foyerId = UserContext::currentFoyerId();
+$canManageCatalog = UserContext::canManageCatalog();
+$sagaFilms = [];
+$sagaName = trim((string) ($film['saga'] ?? ''));
+if ($sagaName !== '' && $repo->usesCatalogModel() && $oeuvreId > 0) {
+    $sagaFilms = $repo->listCatalogBySaga($sagaName, $oeuvreId);
+    foreach ($sagaFilms as $index => $row) {
+        $childOeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+        if ($childOeuvreId <= 0) {
+            continue;
+        }
+        $sagaFilms[$index] = array_merge(
+            $sagaFilms[$index],
+            DetailLibraryState::forOeuvre(
+                $childOeuvreId,
+                $userId,
+                $foyerId,
+                static fn (int $bibId): string => '/film.php?id=' . $bibId,
+                $canManageCatalog ? View::oeuvreUrl($childOeuvreId) : null,
+            ),
+        );
+    }
+}
+
 View::render('film', [
     'pageTitle' => (string) $film['titre'],
     'film' => $film,
@@ -120,8 +157,11 @@ View::render('film', [
     'currentTmdbMediaType' => (string) ($film['tmdb_media_type'] ?? ''),
     'currentTmdbTvKind' => (string) ($film['tmdb_tv_kind'] ?? ''),
     'filmId' => $id,
+    'isWishlist' => $isWishlistFilm,
+    'popoverOpen' => $popoverOpen,
+    'sagaFilms' => $sagaFilms,
     'sagaSuggestions' => $repo->distinctSagas(),
-    'canManageCatalog' => UserContext::canManageCatalog(),
+    'canManageCatalog' => $canManageCatalog,
     'showTmdbEnrich' => UserContext::canManageCatalog(),
     'filmListContext' => $filmListContext,
     'filmNav' => $filmNav,

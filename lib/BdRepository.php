@@ -336,6 +336,12 @@ final class BdRepository
         return $this->libraryQuery()->findCatalogByOeuvreId($oeuvreId);
     }
 
+    /** @return list<array<string, mixed>> */
+    public function listCatalogTomesForSeries(int $seriesId): array
+    {
+        return $this->libraryQuery()->listCatalogTomesForSeries($seriesId);
+    }
+
     public function findLibraryBibIdForCatalogOeuvre(int $oeuvreId, int $userId, int $foyerId): ?int
     {
         return $this->libraryQuery()->findLibraryBibIdForCatalogOeuvre($oeuvreId, $userId, $foyerId);
@@ -499,6 +505,11 @@ final class BdRepository
         }
 
         return (new BibliothequeRepository())->promoteToCollection($bibId, $userId, $foyerId);
+    }
+
+    public function addAlbumToWishlist(int $bibId, int $userId, int $foyerId): bool|string
+    {
+        return $this->libraryAttach()->addAlbumToWishlist($bibId, $userId, $foyerId);
     }
 
     public function deleteById(int $bibId, int $userId, int $foyerId): bool

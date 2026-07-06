@@ -1,16 +1,14 @@
 <?php
 /**
- * Enregistrer une lecture (date + ressenti optionnel).
+ * Enregistrer une lecture (date uniquement).
  *
  * @var int $albumId
  * @var string $return album|home
  * @var string $defaultDateIso
  * @var string $submitLabel
- * @var int|null $defaultNote ressenti 1–5
  */
 $defaultDateIso = $defaultDateIso ?? Moncine\HistoriqueRepository::todayForInputIso();
 $submitLabel = $submitLabel ?? 'Marquer comme lu';
-$defaultNote = isset($defaultNote) ? Moncine\RessentiNote::normalizeScore((int) $defaultNote) : null;
 $maxDate = Moncine\HistoriqueRepository::todayForInputIso();
 ?>
 <form method="post" action="/marquer-bd-lu.php" class="marquer-vu-form import-form">
@@ -31,15 +29,6 @@ $maxDate = Moncine\HistoriqueRepository::todayForInputIso();
         </button>
     </div>
     <p class="hint">Aujourd’hui par défaut, ou une date passée si vous aviez oublié de noter.</p>
-
-    <?php
-    $fieldName = 'note';
-    $fieldId = 'note_bd_' . (int) $albumId;
-    $defaultScore = $defaultNote;
-    $required = false;
-    $allowEmpty = true;
-    require MONCINE_ROOT . '/templates/_ressenti_picker.php';
-    ?>
 
     <button type="submit" class="btn btn-secondary"><?= Moncine\View::escape($submitLabel) ?></button>
 </form>

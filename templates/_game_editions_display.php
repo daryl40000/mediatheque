@@ -63,7 +63,20 @@ $digitalIconKey = static function (string $storeKey): string {
                     <li class="game-editions-display__item">
                         <?php if ($iconKey !== ''): ?>
                             <span class="game-editions-display__icon">
-                                <?php require MONCINE_ROOT . '/templates/_game_edition_icon.php'; ?>
+                                <?php
+                                $iconLinkUrl = $storeUrl !== ''
+                                    ? $storeUrl
+                                    : Moncine\GameEditionIcons::linkUrlForKey($iconKey, $game);
+                                if ($iconLinkUrl !== ''): ?>
+                                    <a class="game-edition-icons__link"
+                                       href="<?= Moncine\View::escape($iconLinkUrl) ?>"
+                                       target="_blank" rel="noopener noreferrer"
+                                       aria-label="<?= Moncine\View::escape($storeLabel . ' — ouvrir la page du magasin') ?>">
+                                        <?php require MONCINE_ROOT . '/templates/_game_edition_icon.php'; ?>
+                                    </a>
+                                <?php else: ?>
+                                    <?php require MONCINE_ROOT . '/templates/_game_edition_icon.php'; ?>
+                                <?php endif; ?>
                             </span>
                         <?php endif; ?>
                         <span class="game-editions-display__label">

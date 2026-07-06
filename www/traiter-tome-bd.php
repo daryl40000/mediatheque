@@ -23,12 +23,23 @@ MediaDomainGuards::ensureBdContext();
 $bibId = (int) ($_POST['album_id'] ?? 0);
 $seriesId = (int) ($_POST['series_id'] ?? 0);
 $returnUrl = $bibId > 0 ? View::bdUrl($bibId) : View::bdSeriesUrl($seriesId);
+$action = (string) ($_POST['action'] ?? 'save');
 
 Csrf::rejectUnlessValid($_POST, $returnUrl);
 
 $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
 $repo = new BdRepository();
+
+if ($action === 'wishlist') {
+    $result = $repo->addAlbumToWishlist($bibId, $userId, $foyerId);
+    if ($result !== true) {
+        header('Location: ' . $returnUrl . '&wishlist_error=' . rawurlencode((string) $result));
+        exit;
+    }
+    header('Location: ' . $returnUrl . '&wishlist=1');
+    exit;
+}
 
 $result = $repo->updateTome($bibId, [
     'titre' => (string) ($_POST['titre'] ?? ''),

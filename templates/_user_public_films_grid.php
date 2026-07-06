@@ -46,6 +46,10 @@ $sortLink = static function (string $label, string $column) use ($targetUserId, 
             $annee = (int) ($film['annee'] ?? 0);
             $bibliothequeId = (int) ($film['id'] ?? 0);
             $ownerUserId = (int) ($film['user_id'] ?? 0);
+            $oeuvreId = (int) ($film['oeuvre_id'] ?? 0);
+            $catalogUrl = $oeuvreId > 0
+                ? Moncine\View::catalogOeuvreDetailUrlFromProfile($oeuvreId, Moncine\MediaDomain::FILM, $targetUserId)
+                : '';
 
             // Conserve exactement l'URL actuelle
             $returnTo = '/utilisateur.php?' . http_build_query([
@@ -61,7 +65,11 @@ $sortLink = static function (string $label, string $column) use ($targetUserId, 
             ?>
             <li class="collection-grid__item" role="listitem">
                 <article class="collection-grid__card">
-                    <div class="collection-grid__link social-profile-grid__card">
+                    <?php if ($catalogUrl !== ''): ?>
+                        <a href="<?= Moncine\View::escape($catalogUrl) ?>" class="collection-grid__link social-profile-grid__card">
+                    <?php else: ?>
+                        <div class="collection-grid__link social-profile-grid__card">
+                    <?php endif; ?>
                         <?php if ($posterSrc !== ''): ?>
                             <div class="collection-grid__poster-wrap">
                                 <img class="collection-grid__poster" src="<?= $posterSrc ?>"
@@ -79,7 +87,11 @@ $sortLink = static function (string $label, string $column) use ($targetUserId, 
                                 <span class="collection-grid__year"><?= $annee ?></span>
                             <?php endif; ?>
                         </div>
-                    </div>
+                    <?php if ($catalogUrl !== ''): ?>
+                        </a>
+                    <?php else: ?>
+                        </div>
+                    <?php endif; ?>
                     <?php
                     require MONCINE_ROOT . '/templates/_user_public_loan_panel.php';
                     ?>

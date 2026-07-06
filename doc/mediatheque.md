@@ -38,6 +38,8 @@ Un clic change **toute l’interface** : couleur, libellés du menu (« Mes film
 
 Depuis **0.3.2**, la page **`/utilisateur.php`** propose des onglets **Films** et **Magazines** (plus message « bientôt » pour les autres domaines). Les magazines d’un ami sont consultables en lecture seule : séries → numéros → fiche (sans accès aux PDF). Voir [CHANGELOG.md](../CHANGELOG.md) (section 0.3.2).
 
+Depuis **0.7.12** : un clic sur une vignette (film, jeu, BD, magazine) depuis le **profil d’un ami** ouvre la **fiche catalogue** partagée (`/oeuvre*.php`), avec bouton **cœur** pour l’ajouter à **vos** envies. Le lien retour renvoie au profil (`?profile_user=`). L’édition du catalogue reste réservée aux administrateurs.
+
 Depuis **0.4.0**, les magazines disposent de **sujets** (tests, previews…) liés aux numéros, de **tags de série** (badges PC, PS5…) et d’une **recherche par sujet** — voir [magazines.md](magazines.md) §11.
 
 Depuis **0.4.1** : **recherche FTS** (texte intégral SQLite) dans les numéros et le catalogue de sujets ; **recherche globale** sur **Mes magazines** (séries + sujets + sommaires + extraits PDF) ; **autocomplétion** à la saisie d’un sujet sur la fiche numéro ; fusion des libellés proches (« After Life » / « Afterlife »).
@@ -129,7 +131,7 @@ Voir `.gitignore` :
 
 Points essentiels :
 
-- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.7.11**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.7.12**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
 
 ## Foyers et collection partagée (0.6.5)
 

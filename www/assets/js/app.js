@@ -2046,15 +2046,64 @@ function initGameLibraryEditForms() {
     });
 }
 
-/** Fiche jeu : actions rapides sous le temps de jeu (bulles au clic). */
+/** Fiches média : actions rapides sous la jaquette (bulles au clic). */
 function initGameDetailQuickActions() {
-    const root = document.querySelector('[data-game-detail-actions]');
-    if (!root) {
+    const roots = document.querySelectorAll('[data-detail-actions]');
+    if (roots.length === 0) {
         return;
     }
 
+    const closeAllRoots = () => {
+        roots.forEach((root) => {
+            root.querySelectorAll('[data-detail-popover]').forEach((popover) => {
+                popover.hidden = true;
+                popover.style.left = '';
+                popover.style.top = '';
+                popover.style.visibility = '';
+            });
+            root.querySelectorAll('[data-detail-action-anchor]').forEach((anchor) => {
+                anchor.classList.remove('is-open');
+                const btn = anchor.querySelector('[data-detail-action]');
+                if (btn) {
+                    btn.setAttribute('aria-expanded', 'false');
+                }
+            });
+        });
+    };
+
+    roots.forEach((root) => {
+        initDetailQuickActionsRoot(root, closeAllRoots);
+    });
+
+    document.addEventListener('click', (event) => {
+        let shouldClose = false;
+        roots.forEach((root) => {
+            if (!root.contains(event.target)) {
+                const openPopoverEl = root.querySelector('[data-detail-popover]:not([hidden])');
+                if (openPopoverEl && !openPopoverEl.contains(event.target)) {
+                    shouldClose = true;
+                }
+            }
+        });
+        if (shouldClose) {
+            closeAllRoots();
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeAllRoots();
+        }
+    });
+}
+
+function initDetailQuickActionsRoot(root, closeAllRoots) {
+    const actionButtonSelector = '[data-detail-action]';
+    const anchorSelector = (action) => `[data-detail-action-anchor="${action}"]`;
+    const popoverSelector = (action) => `[data-detail-popover="${action}"]`;
+
     const positionPopover = (anchor, popover) => {
-        const button = anchor.querySelector('[data-game-action]');
+        const button = anchor.querySelector(actionButtonSelector);
         const panel = popover.querySelector('.game-action-popover__panel');
         if (!button || !panel) {
             return;
@@ -2086,15 +2135,19 @@ function initGameDetailQuickActions() {
     };
 
     const closeAll = () => {
-        root.querySelectorAll('[data-game-popover]').forEach((popover) => {
+        if (typeof closeAllRoots === 'function') {
+            closeAllRoots();
+            return;
+        }
+        root.querySelectorAll('[data-detail-popover]').forEach((popover) => {
             popover.hidden = true;
             popover.style.left = '';
             popover.style.top = '';
             popover.style.visibility = '';
         });
-        root.querySelectorAll('[data-game-action-anchor]').forEach((anchor) => {
+        root.querySelectorAll('[data-detail-action-anchor]').forEach((anchor) => {
             anchor.classList.remove('is-open');
-            const btn = anchor.querySelector('[data-game-action]');
+            const btn = anchor.querySelector(actionButtonSelector);
             if (btn) {
                 btn.setAttribute('aria-expanded', 'false');
             }
@@ -2102,14 +2155,14 @@ function initGameDetailQuickActions() {
     };
 
     const openPopover = (action) => {
-        const anchor = root.querySelector(`[data-game-action-anchor="${action}"]`);
-        const popover = anchor?.querySelector('[data-game-popover]');
+        const anchor = root.querySelector(anchorSelector(action));
+        const popover = anchor?.querySelector(popoverSelector(action));
         if (!anchor || !popover) {
             return;
         }
         closeAll();
         anchor.classList.add('is-open');
-        const btn = anchor.querySelector('[data-game-action]');
+        const btn = anchor.querySelector(actionButtonSelector);
         if (btn) {
             btn.setAttribute('aria-expanded', 'true');
         }
@@ -2122,12 +2175,12 @@ function initGameDetailQuickActions() {
         }
     };
 
-    root.querySelectorAll('[data-game-action]').forEach((btn) => {
+    root.querySelectorAll(actionButtonSelector).forEach((btn) => {
         btn.addEventListener('click', (event) => {
             event.stopPropagation();
-            const action = btn.getAttribute('data-game-action') || '';
-            const anchor = btn.closest('[data-game-action-anchor]');
-            const popover = anchor?.querySelector('[data-game-popover]');
+            const action = btn.getAttribute('data-detail-action') || '';
+            const anchor = btn.closest('[data-detail-action-anchor]');
+            const popover = anchor?.querySelector(`[data-detail-popover="${action}"]`);
             if (popover && !popover.hidden) {
                 closeAll();
                 return;
@@ -2136,24 +2189,9 @@ function initGameDetailQuickActions() {
         });
     });
 
-    document.addEventListener('click', (event) => {
-        if (!root.contains(event.target)) {
-            const openPopoverEl = root.querySelector('[data-game-popover]:not([hidden])');
-            if (openPopoverEl && !openPopoverEl.contains(event.target)) {
-                closeAll();
-            }
-        }
-    });
-
-    document.addEventListener('keydown', (event) => {
-        if (event.key === 'Escape') {
-            closeAll();
-        }
-    });
-
     window.addEventListener('resize', () => {
-        const openAnchor = root.querySelector('[data-game-action-anchor].is-open');
-        const openPopoverEl = openAnchor?.querySelector('[data-game-popover]');
+        const openAnchor = root.querySelector('[data-detail-action-anchor].is-open');
+        const openPopoverEl = openAnchor?.querySelector('[data-detail-popover]:not([hidden])');
         if (openAnchor && openPopoverEl && !openPopoverEl.hidden) {
             positionPopover(openAnchor, openPopoverEl);
         }

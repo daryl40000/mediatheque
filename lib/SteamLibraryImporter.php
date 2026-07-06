@@ -172,6 +172,7 @@ final class SteamLibraryImporter
         return [
             'appid' => $appid,
             'name' => $name,
+            'store_url' => SteamWebApiClient::storeUrl($appid, $name),
             'playtime_forever' => $playtime,
             'playtime_label' => GameRowMapper::formatSteamPlaytime($playtime),
             'rtime_last_played' => (int) ($game['rtime_last_played'] ?? 0),

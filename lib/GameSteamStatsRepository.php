@@ -29,7 +29,7 @@ final class GameSteamStatsRepository
             return '';
         }
 
-        return ', gss.playtime_minutes AS steam_playtime_minutes, gss.last_played_unix AS steam_last_played_unix';
+        return ', gss.playtime_minutes AS steam_playtime_minutes, gss.last_played_unix AS steam_last_played_unix, gss.steam_appid AS library_steam_appid';
     }
 
     public static function listJoinSql(): string

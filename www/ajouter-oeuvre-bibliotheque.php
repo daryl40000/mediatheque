@@ -1,12 +1,13 @@
 <?php
 /**
- * Ajoute une œuvre du catalogue à la bibliothèque (films, jeux ou magazines).
+ * Ajoute une œuvre du catalogue à la bibliothèque (films, jeux, magazines, BD).
  */
 
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\BdRepository;
 use Moncine\Csrf;
 use Moncine\FilmRepository;
 use Moncine\GameRepository;
@@ -19,13 +20,14 @@ use Moncine\UserContext;
 use Moncine\View;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /catalogue.php');
+    header('Location: /films.php');
     exit;
 }
 
 $oeuvreId = max(0, (int) ($_POST['oeuvre_id'] ?? 0));
 $statut = LibraryStatut::normalize((string) ($_POST['statut'] ?? LibraryStatut::COLLECTION));
 $catalogListContext = CatalogListContext::fromQuery($_POST);
+$profileUserId = max(0, (int) ($_POST['profile_user'] ?? 0));
 
 $oeuvre = $oeuvreId > 0 ? (new OeuvreRepository())->findById($oeuvreId) : null;
 $domain = $oeuvre !== null
@@ -47,8 +49,25 @@ $backUrl = match ($domain) {
         $catalogListContext->sortDir(),
         $catalogListContext->page()
     ),
-    default => View::addFilmChoiceUrl($oeuvreId),
+    MediaDomain::BD => View::oeuvreBdUrl(
+        $oeuvreId,
+        $catalogListContext->search(),
+        $catalogListContext->sortBy(),
+        $catalogListContext->sortDir(),
+        $catalogListContext->page()
+    ),
+    default => View::oeuvreUrl(
+        $oeuvreId,
+        $catalogListContext->search(),
+        $catalogListContext->sortBy(),
+        $catalogListContext->sortDir(),
+        $catalogListContext->page()
+    ),
 };
+
+if ($profileUserId > 0) {
+    $backUrl .= (str_contains($backUrl, '?') ? '&' : '?') . 'profile_user=' . $profileUserId;
+}
 
 Csrf::rejectUnlessValid($_POST, $backUrl);
 
@@ -63,6 +82,7 @@ $foyerId = UserContext::currentFoyerId();
 $bibId = match ($domain) {
     MediaDomain::JEU => (new GameRepository())->addFromCatalogOeuvre($oeuvreId, $statut, $userId, $foyerId),
     MediaDomain::MAGAZINE => (new MagazineRepository())->addFromCatalogOeuvre($oeuvreId, $statut, $userId, $foyerId),
+    MediaDomain::BD => (new BdRepository())->addFromCatalogOeuvre($oeuvreId, $statut, $userId, $foyerId),
     default => (new FilmRepository())->addFromCatalogOeuvre($oeuvreId, $statut),
 };
 
@@ -75,6 +95,7 @@ if (!is_int($bibId)) {
 $redirectUrl = match ($domain) {
     MediaDomain::JEU => View::gameUrl($bibId) . '&promoted=1&from_statut=' . rawurlencode($statut),
     MediaDomain::MAGAZINE => View::magazineIssueUrl($bibId) . '&added=1&from_statut=' . rawurlencode($statut),
+    MediaDomain::BD => View::bdUrl($bibId) . '&promoted=1&from_statut=' . rawurlencode($statut),
     default => '/film.php?id=' . $bibId . '&added=1&from_statut=' . rawurlencode($statut),
 };
 

@@ -20,7 +20,7 @@ final class FilmListContextTest extends TestCase
         $this->assertStringContainsString('dir=desc', $url);
         $this->assertStringContainsString('q=matrix', $url);
         $this->assertStringContainsString('kind=film', $url);
-        $this->assertStringContainsString('#film-list-nav', $url);
+        $this->assertStringNotContainsString('#film-list-nav', $url);
     }
 
     public function testWishlistBackUrl(): void

@@ -4,50 +4,61 @@
  *
  * @var array<string, mixed>|null $oeuvre
  * @var array<string, mixed>|null $library
+ * @var int|null $libraryBibId
  * @var int $libraryCount
  * @var string $catalogueBackUrl
  */
 ?>
-<section class="oeuvre-catalog-page">
+<section class="oeuvre-catalog-page game-detail-page">
     <?php if ($oeuvre === null): ?>
         <h1>Œuvre introuvable</h1>
         <p>Cette fiche n’existe pas ou a été supprimée du catalogue.</p>
-        <a href="<?= Moncine\View::escape($catalogueBackUrl) ?>" class="btn btn-primary">Retour au catalogue</a>
+        <?php
+        $profileUserId = (int) ($_GET['profile_user'] ?? 0);
+        $pageBackUrl = Moncine\View::catalogOeuvrePageBackUrl($catalogueBackUrl, $profileUserId, Moncine\MediaDomain::FILM);
+        ?>
+        <a href="<?= Moncine\View::escape($pageBackUrl) ?>" class="btn btn-primary">Retour</a>
     <?php else:
         $oeuvreId = (int) ($oeuvre['id'] ?? 0);
         $libraryEntry = $library;
-        $inLibrary = $libraryEntry !== null;
-        $libraryStatut = $inLibrary ? (string) ($libraryEntry['statut'] ?? '') : '';
+        $inLibrary = $libraryEntry !== null && ($libraryBibId ?? 0) > 0;
+        $posterSrc = Moncine\View::posterSrc($oeuvre['poster_url'] ?? null);
+        $profileUserId = (int) ($_GET['profile_user'] ?? 0);
+        $pageBackUrl = Moncine\View::catalogOeuvrePageBackUrl($catalogueBackUrl, $profileUserId, Moncine\MediaDomain::FILM);
+        $backLabel = $profileUserId > 0 ? 'Profil' : (Moncine\CatalogAdmin::canAccess() ? 'Catalogue' : 'Mes films');
         ?>
         <p class="breadcrumb">
-            <a href="<?= Moncine\View::escape($catalogueBackUrl) ?>">Catalogue</a>
+            <a href="<?= Moncine\View::escape($pageBackUrl) ?>"><?= Moncine\View::escape($backLabel) ?></a>
             <span aria-hidden="true"> › </span>
             <span><?= Moncine\View::escape((string) ($oeuvre['titre'] ?? '')) ?></span>
         </p>
 
-        <?php require MONCINE_ROOT . '/templates/_upload_limits_warning.php'; ?>
+        <?php if (Moncine\CatalogAdmin::canAccess()): ?>
+            <?php require MONCINE_ROOT . '/templates/_upload_limits_warning.php'; ?>
 
-        <p class="hint oeuvre-catalog-page__badge">
-            Fiche catalogue partagée (ID <?= $oeuvreId ?>)
-            <?php if ($libraryCount > 0): ?>
-                — <?= $libraryCount ?> entrée<?= $libraryCount > 1 ? 's' : '' ?> bibliothèque
-            <?php endif; ?>
-        </p>
+            <p class="hint oeuvre-catalog-page__badge">
+                Fiche catalogue partagée (ID <?= $oeuvreId ?>)
+                <?php if ($libraryCount > 0): ?>
+                    — <?= $libraryCount ?> entrée<?= $libraryCount > 1 ? 's' : '' ?> bibliothèque
+                <?php endif; ?>
+            </p>
+        <?php endif; ?>
 
-        <?php if (isset($catalogListContext, $oeuvreNav)): ?>
+        <?php if (isset($catalogListContext, $oeuvreNav) && $oeuvreNav !== null): ?>
             <div id="catalog-oeuvre-nav" class="catalog-oeuvre-nav-anchor">
                 <?php require MONCINE_ROOT . '/templates/_catalog_oeuvre_nav.php'; ?>
             </div>
         <?php endif; ?>
 
-        <?php $posterSrc = Moncine\View::posterSrc($oeuvre['poster_url'] ?? null); ?>
-        <article class="film-detail<?= $posterSrc !== '' ? ' film-detail--with-poster' : '' ?>">
-            <?php if ($posterSrc !== ''): ?>
-                <img class="film-poster film-poster--large" src="<?= $posterSrc ?>"
-                     alt="Affiche de <?= Moncine\View::escape((string) ($oeuvre['titre'] ?? '')) ?>">
-            <?php endif; ?>
+        <article class="film-detail game-detail<?= $posterSrc !== '' ? ' film-detail--with-poster' : '' ?>">
+            <?php
+            $mediaDomain = Moncine\MediaDomain::FILM;
+            $posterAlt = 'Affiche de ' . (string) ($oeuvre['titre'] ?? '');
+            $openLibraryLabel = 'Ouvrir ma fiche film';
+            require MONCINE_ROOT . '/templates/_catalog_oeuvre_poster_sidebar.php';
+            ?>
 
-            <div class="film-detail__body">
+            <div class="film-detail__body game-detail__body">
                 <header class="film-detail__heading">
                     <h1>
                         <?= Moncine\View::escape((string) ($oeuvre['titre'] ?? '')) ?>
@@ -135,70 +146,47 @@
                     <p class="alert alert-success">Affiche enregistrée.</p>
                 <?php endif; ?>
 
-                <?php
-                $editOpen = $editOpen ?? false;
-                $saveError = $saveError ?? '';
-                $catalogSearch = $catalogSearch ?? '';
-                $catalogSort = $catalogSort ?? 'titre';
-                $catalogDir = $catalogDir ?? 'asc';
-                $catalogPage = (int) ($catalogPage ?? 1);
-                require MONCINE_ROOT . '/templates/_oeuvre_edit_form.php';
-                ?>
+                <?php if (Moncine\CatalogAdmin::canAccess()): ?>
+                    <?php
+                    $editOpen = $editOpen ?? false;
+                    $saveError = $saveError ?? '';
+                    $catalogSearch = $catalogSearch ?? '';
+                    $catalogSort = $catalogSort ?? 'titre';
+                    $catalogDir = $catalogDir ?? 'asc';
+                    $catalogPage = (int) ($catalogPage ?? 1);
+                    require MONCINE_ROOT . '/templates/_oeuvre_edit_form.php';
+                    ?>
 
-                <?php
-                $posterUploadError = $posterUploadError ?? '';
-                $posterUploadOpen = $posterUploadOpen ?? false;
-                require MONCINE_ROOT . '/templates/_oeuvre_poster_upload_form.php';
-                ?>
+                    <?php
+                    $posterUploadError = $posterUploadError ?? '';
+                    $posterUploadOpen = $posterUploadOpen ?? false;
+                    require MONCINE_ROOT . '/templates/_oeuvre_poster_upload_form.php';
+                    ?>
 
-                <?php
-                $enrichTarget = 'oeuvre';
-                $entityId = $oeuvreId;
-                require MONCINE_ROOT . '/templates/_enrich_entity_panel.php';
-                ?>
+                    <?php
+                    $enrichTarget = 'oeuvre';
+                    $entityId = $oeuvreId;
+                    require MONCINE_ROOT . '/templates/_enrich_entity_panel.php';
+                    ?>
 
-                <?php
-                require MONCINE_ROOT . '/templates/_oeuvre_eans.php';
-                ?>
+                    <?php require MONCINE_ROOT . '/templates/_oeuvre_eans.php'; ?>
 
-                <section class="oeuvre-catalog-page__library">
-                    <h2>Votre bibliothèque</h2>
-                    <?php if ($inLibrary): ?>
-                        <p class="hint">
-                            Cette œuvre est dans
-                            <strong><?= Moncine\View::escape(Moncine\LibraryStatut::label($libraryStatut)) ?></strong>.
-                        </p>
-                        <p>
-                            <a href="/film.php?id=<?= (int) ($libraryEntry['id'] ?? 0) ?>" class="btn btn-primary">
-                                Ouvrir ma fiche film
-                            </a>
-                        </p>
-                    <?php else: ?>
-                        <p class="hint">Cette œuvre n’est pas encore dans vos films ni dans vos envies.</p>
-                        <p class="oeuvre-catalog-page__actions">
-                            <a href="<?= Moncine\View::escape(Moncine\View::addFilmUrl(Moncine\LibraryStatut::COLLECTION, $oeuvreId)) ?>"
-                               class="btn btn-secondary">Ajouter à mes films</a>
-                            <a href="<?= Moncine\View::escape(Moncine\View::addFilmUrl(Moncine\LibraryStatut::WISHLIST, $oeuvreId)) ?>"
-                               class="btn btn-secondary">Ajouter à mes envies</a>
-                        </p>
+                    <?php
+                    $currentOeuvreId = $oeuvreId;
+                    $currentOeuvreTitle = (string) ($oeuvre['titre'] ?? '');
+                    $mediaDomain = Moncine\MediaDomain::FILM;
+                    require MONCINE_ROOT . '/templates/_catalog_oeuvre_merge_panel.php';
+                    ?>
+
+                    <?php if (isset($catalogListContext, $oeuvreNav) && $oeuvreNav !== null): ?>
+                        <?php require MONCINE_ROOT . '/templates/_catalog_oeuvre_nav.php'; ?>
                     <?php endif; ?>
-                </section>
-
-                <?php
-                $currentOeuvreId = $oeuvreId;
-                $currentOeuvreTitle = (string) ($oeuvre['titre'] ?? '');
-                $mediaDomain = Moncine\MediaDomain::FILM;
-                require MONCINE_ROOT . '/templates/_catalog_oeuvre_merge_panel.php';
-                ?>
-
-                <?php if (isset($catalogListContext, $oeuvreNav)): ?>
-                    <?php require MONCINE_ROOT . '/templates/_catalog_oeuvre_nav.php'; ?>
                 <?php endif; ?>
             </div>
         </article>
 
         <p class="collection-page__footer-links">
-            <a href="<?= Moncine\View::escape($catalogueBackUrl) ?>">← Retour au catalogue</a>
+            <a href="<?= Moncine\View::escape($pageBackUrl) ?>">← Retour</a>
         </p>
     <?php endif; ?>
 </section>

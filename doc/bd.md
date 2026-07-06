@@ -25,10 +25,9 @@ La page **Mes BD** (`/bd.php`) affiche vos **séries**. Cliquez sur une série p
 | `/modifier-serie-bd.php?series_id=` | Modifier titre, type, éditeur, notes, couverture |
 | `/ajouter-tome-bd.php?series_id=` | Nouveau tome |
 | `/album-bd.php?id=` | Fiche d’un tome |
+| `/oeuvre-bd.php?id=` | Fiche **catalogue** d’un tome (consultable par tout utilisateur connecté depuis **0.7.12**) |
 | `/bd-envies.php` | Séries en envies |
-| `/utilisateur.php?domain=bd` | Profil public (amis) — séries et tomes |
-| `/utilisateur-serie-bd.php` | Tomes d’une série sur un profil ami |
-| `/utilisateur-album-bd.php` | Fiche tome sur un profil ami |
+| `/utilisateur.php?domain=bd` | Profil public (amis) — séries et tomes ; **clic sur un tome** → fiche catalogue (**0.7.12**) |
 | `/partage-bd.php?t=` | Liste partagée (visiteur sans compte) |
 | `/partage-serie-bd.php` | Tomes d’une série partagée |
 | `/partage-album-bd.php` | Fiche tome partagée |

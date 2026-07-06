@@ -7,14 +7,16 @@
 /** @var int|null $monRessenti */
 /** @var list<array<string, mixed>> $readHistory */
 /** @var bool $everRead */
-/** @var array<string, string> $supportChoices */
-/** @var string $editError */
+/** @var string $popoverOpen */
 
 $albumId = (int) ($albumId ?? 0);
 $isWishlist = $isWishlist ?? false;
 $listBackUrl = $listBackUrl ?? '/bd.php';
+$readHistory = $readHistory ?? [];
+$everRead = (bool) ($everRead ?? false);
+$popoverOpen = (string) ($popoverOpen ?? '');
 ?>
-<section class="collection-page">
+<section class="collection-page game-detail-page">
     <?php if ($album === null): ?>
         <h1>Album introuvable</h1>
         <p class="hint">Cet album n’existe pas ou n’est pas accessible dans votre bibliothèque.</p>
@@ -35,6 +37,7 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
         $tomeLabel = trim((string) ($album['tome_label'] ?? ''));
         $numeroLabel = Moncine\BdRowMapper::tomeNumeroLabel($tomeNumero, $tomeLabel);
         $isPossessed = !empty($album['is_possessed']);
+        $readAtLabel = (string) ($album['read_at_label'] ?? '');
         ?>
 
         <p><a href="<?= Moncine\View::escape($listBackUrl) ?>" class="btn btn-secondary btn-sm">← Retour à la série</a></p>
@@ -55,8 +58,20 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
         <?php if (!empty($_GET['lu_error'])): ?>
             <p class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['lu_error']) ?></p>
         <?php endif; ?>
+        <?php if (isset($_GET['note']) && Moncine\RessentiNote::normalizeScore((int) $_GET['note']) !== null): ?>
+            <div class="alert alert-success">Ressenti enregistré : <?= Moncine\View::escape(Moncine\View::ressentiLabel((int) $_GET['note'])) ?>.</div>
+        <?php endif; ?>
+        <?php if (!empty($_GET['note_error'])): ?>
+            <p class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['note_error']) ?></p>
+        <?php endif; ?>
         <?php if (!empty($_GET['delete_error'])): ?>
             <p class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['delete_error']) ?></p>
+        <?php endif; ?>
+        <?php if (!empty($_GET['wishlist_error'])): ?>
+            <p class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['wishlist_error']) ?></p>
+        <?php endif; ?>
+        <?php if (isset($_GET['wishlist']) && (string) $_GET['wishlist'] === '1'): ?>
+            <div class="alert alert-success">Tome ajouté à vos envies.</div>
         <?php endif; ?>
         <?php if (($editError ?? '') !== ''): ?>
             <p class="alert alert-warning"><?= Moncine\View::escape($editError) ?></p>
@@ -66,21 +81,26 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
             <p class="hint film-wishlist-badge">Ce tome est dans vos envies (pas encore dans votre collection).</p>
         <?php endif; ?>
 
-        <article class="film-detail film-detail--with-poster">
-            <?php if ($posterSrc !== ''): ?>
-                <img class="film-poster film-poster--large film-poster--bd" src="<?= $posterSrc ?>"
-                     alt="Couverture de <?= Moncine\View::escape($h1Title) ?>">
-            <?php else: ?>
-                <span class="film-poster film-poster--large film-poster--bd film-poster--empty" aria-hidden="true"></span>
-            <?php endif; ?>
+        <article class="film-detail game-detail film-detail--with-poster">
+            <?php require MONCINE_ROOT . '/templates/_bd_detail_sidebar.php'; ?>
 
-            <div class="film-detail__body">
-                <header class="film-detail__heading">
-                    <h1><?= Moncine\View::escape($h1Title) ?></h1>
-                    <p class="lead">
+            <div class="film-detail__body game-detail__body">
+                <header class="film-detail__heading game-detail__heading">
+                    <h1 class="game-detail__title-row">
+                        <span><?= Moncine\View::escape($h1Title) ?></span>
+                        <?php if ((int) ($album['annee'] ?? 0) > 0): ?>
+                            <span class="film-year">(<?= (int) $album['annee'] ?>)</span>
+                        <?php endif; ?>
+                        <?php if (!$isWishlist || !empty($monRessenti)): ?>
+                            <?php require MONCINE_ROOT . '/templates/_game_detail_ressenti_title.php'; ?>
+                        <?php endif; ?>
+                    </h1>
+                    <p class="game-detail__saga">
                         <?php if ($seriesUrl !== '' && $seriesTitre !== ''): ?>
-                            <a href="<?= Moncine\View::escape($seriesUrl) ?>"><?= Moncine\View::escape($seriesTitre) ?></a>
+                            <span class="game-detail__saga-label">Série</span>
+                            <a href="<?= Moncine\View::escape($seriesUrl) ?>" class="saga-link"><?= Moncine\View::escape($seriesTitre) ?></a>
                         <?php elseif ($seriesTitre !== ''): ?>
+                            <span class="game-detail__saga-label">Série</span>
                             <?= Moncine\View::escape($seriesTitre) ?>
                         <?php endif; ?>
                         <?php if ($numeroLabel !== ''): ?>
@@ -93,56 +113,23 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
                         <?php if ((string) ($album['kind_label'] ?? '') !== ''): ?>
                             · <?= Moncine\View::escape((string) $album['kind_label']) ?>
                         <?php endif; ?>
-                        <?php if ((int) ($album['annee'] ?? 0) > 0): ?>
-                            · <?= (int) $album['annee'] ?>
-                        <?php endif; ?>
                     </p>
                 </header>
 
-                <?php if (!$isWishlist || !empty($monRessenti)): ?>
-                    <?php require MONCINE_ROOT . '/templates/_ressenti_fiche_row.php'; ?>
+                <section class="game-detail__facts" aria-labelledby="bd-facts-heading">
+                    <h2 id="bd-facts-heading" class="game-detail__section-title">Détails</h2>
+                    <?php require MONCINE_ROOT . '/templates/_bd_detail_facts_columns.php'; ?>
+                </section>
+
+                <?php if (trim((string) ($album['synopsis'] ?? '')) !== ''): ?>
+                    <section class="game-detail__synopsis-section" aria-labelledby="bd-synopsis-heading">
+                        <h2 id="bd-synopsis-heading" class="game-detail__section-title">Résumé</h2>
+                        <p class="game-detail__synopsis"><?= nl2br(Moncine\View::escape((string) $album['synopsis'])) ?></p>
+                    </section>
                 <?php endif; ?>
 
-                <dl class="film-facts">
-                    <?php if ((string) ($album['scenariste'] ?? '') !== ''): ?>
-                        <dt>Scénariste</dt>
-                        <dd><?= Moncine\View::escape((string) $album['scenariste']) ?></dd>
-                    <?php endif; ?>
-                    <?php if ((string) ($album['dessinateur'] ?? '') !== ''): ?>
-                        <dt>Dessinateur</dt>
-                        <dd><?= Moncine\View::escape((string) $album['dessinateur']) ?></dd>
-                    <?php endif; ?>
-                    <?php if ((string) ($album['editeur'] ?? '') !== ''): ?>
-                        <dt>Éditeur</dt>
-                        <dd><?= Moncine\View::escape((string) $album['editeur']) ?></dd>
-                    <?php endif; ?>
-                    <?php if ((string) ($album['genre'] ?? '') !== ''): ?>
-                        <dt>Genre</dt>
-                        <dd><span class="magazine-tag magazine-tag--game-genre"><?= Moncine\View::escape((string) $album['genre']) ?></span></dd>
-                    <?php endif; ?>
-                    <dt>Exemplaire</dt>
-                    <dd>
-                        <?php if ($isPossessed): ?>
-                            <?= Moncine\View::escape((string) ($album['support_label'] ?? '')) ?>
-                        <?php else: ?>
-                            <span class="magazine-tag magazine-tag--none">Non possédé</span>
-                        <?php endif; ?>
-                    </dd>
-                    <?php if ((string) ($album['added_at_label'] ?? '') !== ''): ?>
-                        <dt><?= $isWishlist ? 'Envie ajoutée le' : 'Ajouté le' ?></dt>
-                        <dd><?= Moncine\View::escape((string) $album['added_at_label']) ?></dd>
-                    <?php endif; ?>
-                    <?php if ((string) ($album['read_at_label'] ?? '') !== ''): ?>
-                        <dt>Dernière lecture</dt>
-                        <dd><?= Moncine\View::escape((string) $album['read_at_label']) ?></dd>
-                    <?php endif; ?>
-                </dl>
-
-                <?php if ((string) ($album['synopsis'] ?? '') !== ''): ?>
-                    <section>
-                        <h2>Description</h2>
-                        <p><?= nl2br(Moncine\View::escape((string) $album['synopsis'])) ?></p>
-                    </section>
+                <?php if (!empty($bdSeriesNeighbors)): ?>
+                    <?php require MONCINE_ROOT . '/templates/_bd_series_context_strip.php'; ?>
                 <?php endif; ?>
 
                 <?php if ($isWishlist): ?>
@@ -155,64 +142,7 @@ $listBackUrl = $listBackUrl ?? '/bd.php';
                             <button type="submit" class="btn btn-primary">J’ai acheté cet album</button>
                         </form>
                     </section>
-                <?php else: ?>
-                    <?php if ($readHistory !== []): ?>
-                        <h2>Historique de lecture</h2>
-                        <ul class="viewings-list">
-                            <?php foreach ($readHistory as $view):
-                                $viewDate = Moncine\HistoriqueRepository::formatDateVue((string) ($view['date_vue'] ?? ''));
-                                ?>
-                                <li class="viewings-list__item">
-                                    <span class="viewings-list__info">
-                                        <?= Moncine\View::escape($viewDate) ?>
-                                        <?php if (isset($view['note']) && (int) $view['note'] >= 1): ?>
-                                            <?php
-                                            $score = (int) $view['note'];
-                                            $showLabel = false;
-                                            $size = 'small';
-                                            require MONCINE_ROOT . '/templates/_ressenti_badge.php';
-                                            ?>
-                                        <?php endif; ?>
-                                    </span>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php endif; ?>
-
-                    <section class="marquer-vu-panel">
-                        <h2 class="marquer-vu-panel__title">Enregistrer une lecture</h2>
-                        <?php
-                        $return = 'album';
-                        $submitLabel = $everRead ? 'Ajouter cette date' : 'Marquer comme lu';
-                        $defaultNote = !empty($monRessenti) ? (int) $monRessenti : null;
-                        require MONCINE_ROOT . '/templates/_marquer_lu_form.php';
-                        ?>
-                    </section>
                 <?php endif; ?>
-
-                <details class="film-edit-panel" id="modifier-tome"<?= ($saved || ($editError ?? '') !== '') ? ' open' : '' ?>>
-                    <summary class="film-edit-panel__summary">Modifier ce tome</summary>
-                    <form method="post" action="/traiter-tome-bd.php" enctype="multipart/form-data" class="import-form film-edit-form">
-                        <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
-                        <input type="hidden" name="album_id" value="<?= $albumId ?>">
-                        <?php
-                        $series = [
-                            'id' => $seriesId,
-                            'titre' => $seriesTitre,
-                        ];
-                        $showPossessionHint = false;
-                        require MONCINE_ROOT . '/templates/_bd_form_fields.php';
-                        ?>
-
-                        <?php
-                        $coverInputId = 'edit_bd_cover';
-                        $posterUrlInputId = 'edit_bd_poster_url';
-                        require MONCINE_ROOT . '/templates/_bd_cover_fields.php';
-                        ?>
-
-                        <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
-                    </form>
-                </details>
 
                 <div class="result-actions result-actions--with-delete">
                     <a href="<?= Moncine\View::escape($listBackUrl) ?>" class="btn btn-ghost">Retour à la série</a>

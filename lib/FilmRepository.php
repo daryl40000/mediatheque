@@ -256,6 +256,18 @@ final class FilmRepository
         return $this->engine->findBySaga($saga);
     }
 
+    /**
+     * @return list<array{oeuvre_id: int, titre: string, annee: int, poster_url: string|null, saga_ordre: int}>
+     */
+    public function listCatalogBySaga(string $saga, int $excludeOeuvreId = 0): array
+    {
+        if ($this->engine instanceof CatalogFilmRepository) {
+            return $this->engine->listCatalogBySaga($saga, $excludeOeuvreId);
+        }
+
+        return [];
+    }
+
     /** @param list<int> $filmIds */
     public function assignFilmsToSaga(array $filmIds, string $saga, int $startOrder = 1): int
     {

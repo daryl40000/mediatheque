@@ -87,10 +87,11 @@ final class GameCatalogSql
         $ownedPlatforms = GameSchema::hasOwnedPlatformsColumn() ? ', b.owned_platforms' : '';
         $manualPlaytime = GameSchema::hasManualPlaytimeColumn() ? ', b.manual_playtime_minutes' : '';
         $platformsCol = GameSchema::hasPlatformsColumn() ? ', oj.platforms' : '';
+        $steamAppid = GameSchema::hasSteamAppIdColumn() ? ', oj.steam_appid' : '';
 
         return 'b.id, b.user_id, b.foyer_id, b.oeuvre_id, b.statut, b.support_physique, b.created_at, b.saga_ordre,'
             . ' o.titre, o.titre_original, o.annee, o.poster_url, o.synopsis,'
-            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $platformsCol . $edition . $extension . $igdb . $igdbMeta . $linux . $nonPretable . $ownedPlatforms . $manualPlaytime;
+            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $platformsCol . $edition . $extension . $igdb . $igdbMeta . $linux . $nonPretable . $ownedPlatforms . $manualPlaytime . $steamAppid;
     }
 
     public static function selectGameHistoryExtras(): string

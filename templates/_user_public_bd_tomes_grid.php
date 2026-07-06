@@ -12,7 +12,16 @@ $tomeUrlForBibId = $tomeUrlForBibId ?? static fn (int $bibId): string => Moncine
 <div class="magazine-issues-grid">
     <?php foreach ($tomes as $tome):
         $bibId = (int) ($tome['id'] ?? 0);
-        $tomeUrl = $bibId > 0 ? $tomeUrlForBibId($bibId) : '#';
+        $oeuvreId = (int) ($tome['oeuvre_id'] ?? 0);
+        if ($oeuvreId > 0 && isset($targetUserId) && (int) $targetUserId > 0) {
+            $tomeUrl = Moncine\View::catalogOeuvreDetailUrlFromProfile(
+                $oeuvreId,
+                Moncine\MediaDomain::BD,
+                (int) $targetUserId
+            );
+        } else {
+            $tomeUrl = $bibId > 0 ? $tomeUrlForBibId($bibId) : '#';
+        }
         $cover = Moncine\View::posterSrc(trim((string) ($tome['poster_url'] ?? '')) ?: null);
         $tomeNumero = (int) ($tome['tome_numero'] ?? 0);
         $tomeLabel = trim((string) ($tome['tome_label'] ?? ''));

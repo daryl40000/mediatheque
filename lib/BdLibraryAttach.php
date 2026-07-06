@@ -140,4 +140,52 @@ final class BdLibraryAttach
 
         return $attached;
     }
+
+    public function addAlbumToWishlist(int $bibId, int $userId, int $foyerId): bool|string
+    {
+        $album = $this->libraryQuery->findByBibId($bibId, $userId, $foyerId);
+        if ($album === null) {
+            return 'Album introuvable.';
+        }
+
+        if (($album['statut'] ?? '') !== LibraryStatut::COLLECTION) {
+            return 'Action réservée aux tomes de votre collection.';
+        }
+
+        if (BdPossession::isPossessed($album)) {
+            return 'Ce tome est déjà possédé.';
+        }
+
+        $oeuvreId = (int) ($album['oeuvre_id'] ?? 0);
+        $seriesId = (int) ($album['series_id'] ?? 0);
+        if ($oeuvreId <= 0) {
+            return 'Tome invalide.';
+        }
+
+        $bibRepo = new BibliothequeRepository();
+        $existingWishlist = $bibRepo->findByOeuvreId($oeuvreId, $userId, $foyerId, LibraryStatut::WISHLIST);
+        if ($existingWishlist !== null) {
+            return true;
+        }
+
+        try {
+            $bibRepo->insert($userId, $foyerId, $oeuvreId, [
+                'statut' => LibraryStatut::WISHLIST,
+                'support_physique' => '',
+            ]);
+        } catch (\Throwable $e) {
+            error_log('BdLibraryAttach::addAlbumToWishlist: ' . $e->getMessage());
+
+            return 'Impossible d’ajouter aux envies.';
+        }
+
+        if ($seriesId > 0) {
+            $register = $this->registerSeriesInLibrary($seriesId, LibraryStatut::WISHLIST, $userId, $foyerId);
+            if ($register !== true) {
+                return (string) $register;
+            }
+        }
+
+        return true;
+    }
 }

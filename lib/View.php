@@ -78,14 +78,16 @@ final class View
             'bd',
             'bd-envies',
             'serie-bd',
-            'album-bd',
             'statistiques-bd',
             'jeux',
             'jeux-envies',
             'sagas-jeux',
-            'jeu',
             'ajouter-jeu',
             'modifier-jeu',
+            'jeu',
+            'film',
+            'album-bd',
+            'magazine-numero',
         ], true);
     }
 
@@ -515,6 +517,42 @@ final class View
             MediaDomain::MAGAZINE => self::oeuvreMagazineUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
             MediaDomain::BD => self::oeuvreBdUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
             default => self::oeuvreUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
+        };
+    }
+
+    /** Fiche catalogue depuis un profil public (retour profil via profile_user). */
+    public static function catalogOeuvreDetailUrlFromProfile(
+        int $oeuvreId,
+        string $mediaDomain,
+        int $profileUserId,
+    ): string {
+        $url = self::catalogOeuvreDetailUrl($oeuvreId, $mediaDomain);
+        if ($profileUserId <= 0) {
+            return $url;
+        }
+
+        return $url . (str_contains($url, '?') ? '&' : '?') . 'profile_user=' . $profileUserId;
+    }
+
+    /** Lien « retour » sur une fiche catalogue (profil ami ou liste admin). */
+    public static function catalogOeuvrePageBackUrl(
+        string $catalogueBackUrl,
+        int $profileUserId,
+        string $profileDomain = MediaDomain::FILM,
+    ): string {
+        if ($profileUserId > 0) {
+            return self::userProfileUrl($profileUserId, $profileDomain);
+        }
+
+        if (CatalogAdmin::canAccess()) {
+            return $catalogueBackUrl;
+        }
+
+        return match (MediaDomain::normalize($profileDomain)) {
+            MediaDomain::JEU => '/jeux.php',
+            MediaDomain::BD => '/bd.php',
+            MediaDomain::MAGAZINE => '/magazines.php',
+            default => '/films.php',
         };
     }
 

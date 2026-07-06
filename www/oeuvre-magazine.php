@@ -15,7 +15,7 @@ use Moncine\PublicationType;
 use Moncine\UserContext;
 use Moncine\View;
 
-CatalogAdmin::denyUnlessAccess();
+CatalogAdmin::denyUnlessCatalogAvailable();
 
 $oeuvreId = (int) ($_GET['id'] ?? 0);
 $catalogListContext = CatalogListContext::fromQuery($_GET);
@@ -83,7 +83,9 @@ if (isset($_GET['poster_uploaded']) && (string) $_GET['poster_uploaded'] === '1'
     }
 }
 
-$oeuvreNav = $admin->getOeuvreNavigation($oeuvreId, $catalogSearch, $catalogSort, $catalogDir);
+$oeuvreNav = CatalogAdmin::canAccess()
+    ? $admin->getOeuvreNavigation($oeuvreId, $catalogSearch, $catalogSort, $catalogDir)
+    : null;
 $library = $detail['library'];
 $libraryBibId = null;
 if ($library !== null) {

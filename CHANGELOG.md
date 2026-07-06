@@ -9,6 +9,38 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.12] — 2026-07-06
+
+**Profil ami → fiches catalogue, actions envies sous la jaquette, fiches détaillées harmonisées**
+
+### Ajouté
+
+- **Profil public** : clic sur un film, jeu, BD ou magazine (bandeaux, grilles, films vus) ouvre la **fiche catalogue** de l’œuvre — pas la fiche bibliothèque de l’ami.
+- **Fiches catalogue consultables** : tout utilisateur connecté peut voir `/oeuvre.php`, `/oeuvre-jeu.php`, `/oeuvre-bd.php`, `/oeuvre-magazine.php` ; l’édition catalogue reste réservée aux admins.
+- **Actions sous la jaquette (catalogue)** : bouton **cœur** (envies) et **+** (collection) sur les fiches catalogue lorsque l’œuvre n’est pas encore dans votre bibliothèque — partials `_catalog_oeuvre_poster_sidebar.php` / `_catalog_oeuvre_sidebar_actions.php`.
+- **Fiches détaillées harmonisées** : films, BD et magazines alignés sur le modèle jeu — sidebar jaquette, actions en bulles (`_film_detail_sidebar`, `_bd_detail_sidebar`, `_magazine_detail_sidebar`).
+- **BD — bandeau série** : sur la fiche tome, affichage des tomes voisins (4 avant / 4 après) avec grisage selon possession (`BdSeriesContext`, `DetailLibraryState`).
+- **BD — envies** : bouton cœur sur les tomes non possédés (`_bd_wishlist_action.php`, `BdLibraryAttach::addAlbumToWishlist`).
+- **Jeux — saga extensions/remakes** : sections **Jeu de base** / **Jeu d’origine** + bandeau saga sur les fiches extension (`GameRelatedSections`).
+
+### Modifié
+
+- **Retour depuis une fiche catalogue** : lien « Profil » si l’on vient du profil d’un ami (`?profile_user=`, `View::catalogOeuvreDetailUrlFromProfile`).
+- **Fiche catalogue BD** : mise en page complète (jaquette, résumé, métadonnées) au lieu de la vue minimale admin.
+- **Films / BD** : détails sur deux colonnes ; ressenti affiché à côté de l’année dans le titre.
+- **Magazines** : libellé **Preview** (plus « Preview / avant-première ») ; retrait d’un numéro via icône poubelle.
+- **Formulaires Lu / Vu** : sans ressenti intégré (ressenti via bulle dédiée sur la fiche film).
+- **`ajouter-oeuvre-bibliotheque.php`** : prise en charge des **BD** ; retour vers la fiche catalogue film (plus `addFilmChoiceUrl`).
+
+### Technique
+
+- `CatalogAdmin::denyUnlessCatalogAvailable()` — consultation catalogue vs `denyUnlessAccess()` (admin).
+- `View::catalogOeuvreDetailUrlFromProfile()`, `catalogOeuvrePageBackUrl()`.
+- JS générique `initDetailQuickActions()` pour les bulles d’actions fiches détaillées.
+- Tests : `GameRelatedSectionsTest`, `GameEditionIconsLinkTest`.
+
+---
+
 ## [0.7.11] — 2026-07-06
 
 **Fiche jeu : actions en bulles, temps manuel, stats temps total / Steam**

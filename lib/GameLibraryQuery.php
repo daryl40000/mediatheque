@@ -222,6 +222,38 @@ final class GameLibraryQuery
         return $this->findCatalogByOeuvreId($oeuvreId) !== null ? (int) ($library['id'] ?? 0) : null;
     }
 
+    public function findCollectionBibIdForCatalogOeuvre(int $oeuvreId, int $userId, int $foyerId): ?int
+    {
+        if ($oeuvreId <= 0 || $this->findCatalogByOeuvreId($oeuvreId) === null) {
+            return null;
+        }
+
+        $library = (new BibliothequeRepository())->findByOeuvreId(
+            $oeuvreId,
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+        );
+
+        return $library !== null ? (int) ($library['id'] ?? 0) : null;
+    }
+
+    public function findWishlistBibIdForCatalogOeuvre(int $oeuvreId, int $userId, int $foyerId): ?int
+    {
+        if ($oeuvreId <= 0 || $this->findCatalogByOeuvreId($oeuvreId) === null) {
+            return null;
+        }
+
+        $library = (new BibliothequeRepository())->findByOeuvreId(
+            $oeuvreId,
+            $userId,
+            $foyerId,
+            LibraryStatut::WISHLIST,
+        );
+
+        return $library !== null ? (int) ($library['id'] ?? 0) : null;
+    }
+
     /**
      * @return list<array<string, mixed>>
      */

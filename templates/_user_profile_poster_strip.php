@@ -4,15 +4,13 @@
  *
  * @var list<array<string, mixed>> $films
  * @var string $emptyHint
- * @var bool $linkToFilm Lien vers la fiche film (/film.php)
- * @var bool $linkToGame Lien vers la fiche jeu (/jeu.php)
- * @var bool $linkToBd Lien vers la fiche album (/album-bd.php)
+ * @var string $mediaDomain
+ * @var int $targetUserId
  */
 $films = $films ?? [];
 $emptyHint = $emptyHint ?? 'Aucun film à afficher.';
-$linkToFilm = !empty($linkToFilm);
-$linkToGame = !empty($linkToGame);
-$linkToBd = !empty($linkToBd);
+$mediaDomain = Moncine\MediaDomain::normalize($mediaDomain ?? Moncine\MediaDomain::FILM);
+$targetUserId = (int) ($targetUserId ?? 0);
 ?>
 <?php if ($films === []): ?>
     <p class="hint"><?= Moncine\View::escape($emptyHint) ?></p>
@@ -22,20 +20,12 @@ $linkToBd = !empty($linkToBd);
             $posterSrc = Moncine\View::posterSrc($film['poster_url'] ?? null);
             $titre = (string) ($film['titre'] ?? '');
             $annee = (int) ($film['annee'] ?? 0);
+            $oeuvreId = (int) ($film['oeuvre_id'] ?? 0);
+            $filmHref = $oeuvreId > 0
+                ? Moncine\View::catalogOeuvreDetailUrlFromProfile($oeuvreId, $mediaDomain, $targetUserId)
+                : '';
             ?>
             <li class="social-poster-strip__item" role="listitem">
-                <?php
-                $filmId = (int) ($film['id'] ?? 0);
-                if ($linkToGame && $filmId > 0) {
-                    $filmHref = Moncine\View::gameUrl($filmId);
-                } elseif ($linkToBd && $filmId > 0) {
-                    $filmHref = Moncine\View::bdUrl($filmId);
-                } elseif ($linkToFilm && $filmId > 0) {
-                    $filmHref = '/film.php?id=' . $filmId;
-                } else {
-                    $filmHref = '';
-                }
-                ?>
                 <?php if ($filmHref !== ''): ?>
                     <a href="<?= Moncine\View::escape($filmHref) ?>" class="social-poster-strip__link">
                 <?php endif; ?>

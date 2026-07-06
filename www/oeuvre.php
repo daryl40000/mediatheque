@@ -14,7 +14,7 @@ use Moncine\OeuvreEanRepository;
 use Moncine\TmdbConfig;
 use Moncine\View;
 
-CatalogAdmin::denyUnlessAccess();
+CatalogAdmin::denyUnlessCatalogAvailable();
 
 $oeuvreId = (int) ($_GET['id'] ?? 0);
 $admin = new CatalogAdmin();
@@ -79,8 +79,13 @@ if (isset($_GET['poster_uploaded']) && (string) $_GET['poster_uploaded'] === '1'
     }
 }
 
-$oeuvreNav = $admin->getOeuvreNavigation($oeuvreId, $catalogSearch, $catalogSort, $catalogDir);
+$oeuvreNav = CatalogAdmin::canAccess()
+    ? $admin->getOeuvreNavigation($oeuvreId, $catalogSearch, $catalogSort, $catalogDir)
+    : null;
 $oeuvreEans = (new OeuvreEanRepository())->listForOeuvre($oeuvreId);
+
+$library = $detail['library'];
+$libraryBibId = $library !== null ? (int) ($library['id'] ?? 0) : null;
 
 $mergeMessage = '';
 $mergeError = '';
@@ -101,6 +106,7 @@ View::render('oeuvre', [
     'oeuvre' => $oeuvre,
     'oeuvreEans' => $oeuvreEans,
     'library' => $detail['library'],
+    'libraryBibId' => $libraryBibId,
     'libraryCount' => (int) $detail['library_count'],
     'catalogueBackUrl' => $catalogueBackUrl,
     'catalogSearch' => $catalogSearch,

@@ -743,6 +743,51 @@ final class CatalogFilmRepository
     }
 
     /**
+     * Tous les films catalogue d’une saga (tri saga_ordre, titre), hors œuvre exclue.
+     *
+     * @return list<array{oeuvre_id: int, titre: string, annee: int, poster_url: string|null, saga_ordre: int}>
+     */
+    public function listCatalogBySaga(string $saga, int $excludeOeuvreId = 0): array
+    {
+        $saga = trim($saga);
+        if ($saga === '' || !CatalogSchema::hasOeuvreSagaColumns()) {
+            return [];
+        }
+
+        $params = [
+            'saga' => $saga,
+            'domain' => MediaDomain::FILM,
+        ];
+        $sql = 'SELECT o.id AS oeuvre_id, o.titre, o.annee, o.poster_url, o.saga_ordre
+                FROM oeuvres o
+                WHERE o.media_domain = :domain
+                  AND o.saga = :saga';
+        if ($excludeOeuvreId > 0) {
+            $sql .= ' AND o.id != :exclude_id';
+            $params['exclude_id'] = $excludeOeuvreId;
+        }
+        $sql .= ' ORDER BY
+                    CASE WHEN o.saga_ordre > 0 THEN o.saga_ordre ELSE 999999 END ASC,
+                    o.titre COLLATE FRENCH_NOCASE ASC';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
+            $out[] = [
+                'oeuvre_id' => (int) ($row['oeuvre_id'] ?? 0),
+                'titre' => (string) ($row['titre'] ?? ''),
+                'annee' => (int) ($row['annee'] ?? 0),
+                'poster_url' => $row['poster_url'] ?? null,
+                'saga_ordre' => (int) ($row['saga_ordre'] ?? 0),
+            ];
+        }
+
+        return $out;
+    }
+
+    /**
      * @param list<int> $filmIds
      */
     public function assignFilmsToSaga(array $filmIds, string $saga, int $startOrder = 1): int

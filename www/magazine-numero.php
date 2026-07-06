@@ -40,6 +40,13 @@ if ($issue === null) {
 
 $saved = isset($_GET['saved']);
 $error = (string) ($_GET['error'] ?? '');
+$allowedPopovers = ['edit', 'pdf'];
+$popoverOpen = '';
+if ($error !== '') {
+    $popoverOpen = isset($_GET['pdf']) ? 'pdf' : 'edit';
+} elseif (isset($_GET['popover']) && in_array((string) $_GET['popover'], $allowedPopovers, true)) {
+    $popoverOpen = (string) $_GET['popover'];
+}
 $subjectSaved = isset($_GET['subject']);
 $subjectError = (string) ($_GET['subject_error'] ?? '');
 
@@ -70,6 +77,7 @@ View::render('magazine-numero', [
     'issue' => $issue,
     'saved' => $saved,
     'error' => $error,
+    'popoverOpen' => $popoverOpen,
     'subjectSaved' => $subjectSaved,
     'subjectError' => $subjectError,
     'issueSubjects' => $issueSubjects,

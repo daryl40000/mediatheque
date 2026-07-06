@@ -44,6 +44,10 @@ $sortLink = static function (string $label, string $column) use ($targetUserId, 
             $platformShort = (string) ($game['platform_short'] ?? '');
             $bibliothequeId = (int) ($game['id'] ?? 0);
             $ownerUserId = (int) ($game['user_id'] ?? 0);
+            $oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
+            $catalogUrl = $oeuvreId > 0
+                ? Moncine\View::catalogOeuvreDetailUrlFromProfile($oeuvreId, Moncine\MediaDomain::JEU, $targetUserId)
+                : '';
             $returnTo = '/utilisateur.php?' . http_build_query([
                 'id' => (string) $targetUserId,
                 'liste' => (string) ($listMode ?? 'collection'),
@@ -56,7 +60,11 @@ $sortLink = static function (string $label, string $column) use ($targetUserId, 
             ?>
             <li class="collection-grid__item" role="listitem">
                 <article class="collection-grid__card">
-                    <div class="collection-grid__link social-profile-grid__card">
+                    <?php if ($catalogUrl !== ''): ?>
+                        <a href="<?= Moncine\View::escape($catalogUrl) ?>" class="collection-grid__link social-profile-grid__card">
+                    <?php else: ?>
+                        <div class="collection-grid__link social-profile-grid__card">
+                    <?php endif; ?>
                         <?php if ($posterSrc !== ''): ?>
                             <div class="collection-grid__poster-wrap">
                                 <img class="collection-grid__poster" src="<?= $posterSrc ?>"
@@ -77,7 +85,11 @@ $sortLink = static function (string $label, string $column) use ($targetUserId, 
                                 <span class="collection-grid__year"><?= $annee ?></span>
                             <?php endif; ?>
                         </div>
-                    </div>
+                    <?php if ($catalogUrl !== ''): ?>
+                        </a>
+                    <?php else: ?>
+                        </div>
+                    <?php endif; ?>
                     <?php require MONCINE_ROOT . '/templates/_user_public_loan_panel.php'; ?>
                 </article>
             </li>

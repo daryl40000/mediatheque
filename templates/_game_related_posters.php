@@ -2,7 +2,7 @@
 /**
  * Bandeau discret : affiches + année pour jeux liés (extensions, remakes…).
  *
- * @var list<array{title: string, items: list<array{url: string, poster_url: mixed, annee: int, titre: string}>}> $gameRelatedSections
+ * @var list<array{title: string, items: list<array{url: string, poster_url: mixed, annee: int, titre: string, in_library?: bool}>}> $gameRelatedSections
  */
 $gameRelatedSections = array_values(array_filter(
     $gameRelatedSections ?? [],
@@ -11,11 +11,17 @@ $gameRelatedSections = array_values(array_filter(
 if ($gameRelatedSections === []) {
     return;
 }
-$columnCount = count($gameRelatedSections);
 ?>
-<div class="game-related-layout<?= $columnCount > 1 ? ' game-related-layout--cols-2' : '' ?>">
+<div class="game-related-layout">
     <?php foreach ($gameRelatedSections as $section): ?>
-        <section class="game-related-col">
+        <?php
+        $layout = (string) ($section['layout'] ?? 'compact');
+        $colClass = 'game-related-col';
+        if ($layout === 'wide') {
+            $colClass .= ' game-related-col--wide';
+        }
+        ?>
+        <section class="<?= $colClass ?>">
             <h2 class="game-related-col__title"><?= Moncine\View::escape((string) ($section['title'] ?? '')) ?></h2>
             <ul class="game-related-posters" role="list">
                 <?php foreach ($section['items'] as $item): ?>
@@ -27,8 +33,9 @@ $columnCount = count($gameRelatedSections);
                     $url = trim((string) ($item['url'] ?? ''));
                     $annee = (int) ($item['annee'] ?? 0);
                     $titre = (string) ($item['titre'] ?? '');
+                    $inLibrary = !empty($item['in_library']);
                     ?>
-                    <li class="game-related-posters__item" role="listitem">
+                    <li class="game-related-posters__item<?= $inLibrary ? '' : ' game-related-posters__item--missing' ?>" role="listitem">
                         <?php if ($url !== ''): ?>
                             <a href="<?= Moncine\View::escape($url) ?>"
                                class="game-related-posters__link"

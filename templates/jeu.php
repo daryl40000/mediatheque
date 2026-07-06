@@ -89,26 +89,28 @@ if ($linuxBadge === '' && !empty($game['linux_not_supported'])) {
 
             <div class="film-detail__body game-detail__body">
                 <header class="film-detail__heading game-detail__heading">
-                    <div class="game-detail__title-bar">
-                        <h1 class="game-detail__title-row">
-                            <span><?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? 'Jeu')) ?></span>
-                            <?php if ($linuxBadge !== ''): ?>
-                                <?php
-                                $size = 'md';
-                                $plain = true;
-                                require MONCINE_ROOT . '/templates/_game_linux_badge_if_set.php';
-                                ?>
-                            <?php endif; ?>
-                            <?php if ((int) ($game['annee'] ?? 0) > 0): ?>
-                                <span class="film-year">(<?= (int) $game['annee'] ?>)</span>
-                            <?php endif; ?>
-                        </h1>
+                    <h1 class="game-detail__title-row">
+                        <span><?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? 'Jeu')) ?></span>
+                        <?php if ($linuxBadge !== ''): ?>
+                            <?php
+                            $size = 'md';
+                            $plain = true;
+                            require MONCINE_ROOT . '/templates/_game_linux_badge_if_set.php';
+                            ?>
+                        <?php endif; ?>
+                        <?php if ((int) ($game['annee'] ?? 0) > 0): ?>
+                            <span class="film-year">(<?= (int) $game['annee'] ?>)</span>
+                        <?php endif; ?>
                         <?php if (!$isWishlist || !empty($monRessenti)): ?>
                             <?php require MONCINE_ROOT . '/templates/_game_detail_ressenti_title.php'; ?>
                         <?php endif; ?>
-                    </div>
+                    </h1>
                     <?php
-                    $franchiseName = trim((string) ($game['franchise'] ?? ''));
+                    $franchiseName = Moncine\GameRelatedSections::resolveFranchiseName(
+                        $game,
+                        $baseGame ?? null,
+                        $originalGame ?? null,
+                    );
                     if ($franchiseName !== ''):
                         ?>
                         <p class="game-detail__saga">
@@ -135,7 +137,8 @@ if ($linuxBadge === '' && !empty($game['linux_not_supported'])) {
                     $originalGame ?? null,
                     $extensions ?? [],
                     $remakes ?? [],
-                    static fn (array $row): string => Moncine\View::gameUrl((int) ($row['bib_id'] ?? 0)),
+                    static fn (array $row): string => (string) ($row['library_url'] ?? ''),
+                    $franchiseGames ?? [],
                 );
                 if ($gameRelatedSections !== []):
                     ?>

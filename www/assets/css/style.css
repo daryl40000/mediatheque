@@ -2926,12 +2926,12 @@ textarea {
 }
 
 .film-detail--with-poster {
-    grid-template-columns: 200px 1fr;
+    grid-template-columns: 160px 1fr;
 }
 
 .film-poster--large {
     width: 100%;
-    max-width: 200px;
+    max-width: 160px;
 }
 
 .film-poster--bd {
@@ -3002,10 +3002,15 @@ textarea {
     max-width: 920px;
 }
 
-/* Magazines et BD : utiliser davantage la largeur sur écran PC */
-body.media-domain--magazine.page-wide .container--wide,
-body.media-domain--bd.page-wide .container--wide {
+/* Magazines et BD : utiliser davantage la largeur sur écran PC (listes, pas les fiches détail) */
+body.media-domain--magazine.page-wide .container--wide:not(:has(> .game-detail-page)),
+body.media-domain--bd.page-wide .container--wide:not(:has(> .game-detail-page)) {
     max-width: min(1240px, calc(100vw - 2.5rem));
+}
+
+/* Fiches détail : même largeur que la fiche jeu */
+body.page-wide .container--wide:has(> .game-detail-page) {
+    max-width: min(var(--container-wide), 100%);
 }
 
 .stats-page h1 {
@@ -3684,15 +3689,31 @@ body.media-domain--bd.page-wide .container--wide {
     box-shadow: 0 0 0 2px rgba(232, 185, 35, 0.2);
 }
 
-/* Jeux liés (extensions, remakes) — affiches discrètes */
+/* Jeux liés (extensions, saga, remakes) — affiches sur une ligne avec défilement */
 .game-related-layout {
-    display: grid;
-    gap: 1.25rem 2rem;
+    display: flex;
+    flex-wrap: nowrap;
+    gap: 1.25rem 4rem;
     margin-top: 1.25rem;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 0.35rem;
 }
 
-.game-related-layout--cols-2 {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+.game-related-col {
+    flex: 0 0 auto;
+    min-width: 0;
+    max-width: min(100%, 32rem);
+}
+
+.game-related-col--wide {
+    flex: 1 1 auto;
+    max-width: none;
+    min-width: 12rem;
+}
+
+.game-related-col--wide .game-related-posters {
+    width: 100%;
 }
 
 .game-related-col__title {
@@ -3704,16 +3725,29 @@ body.media-domain--bd.page-wide .container--wide {
 
 .game-related-posters {
     display: flex;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 0.75rem;
     list-style: none;
     margin: 0;
     padding: 0;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
 }
 
 .game-related-posters__item {
     width: 5.5rem;
     flex: 0 0 auto;
+}
+
+.game-related-posters__item--missing {
+    opacity: 0.45;
+    filter: grayscale(0.6);
+}
+
+.game-related-posters__item--missing .game-related-posters__link:hover .game-related-posters__poster,
+.game-related-posters__item--missing .game-related-posters__link:focus-visible .game-related-posters__poster {
+    opacity: 1;
 }
 
 .game-related-posters__link {
@@ -3757,14 +3791,74 @@ body.media-domain--bd.page-wide .container--wide {
     color: var(--muted);
 }
 
+/* Bandeau série BD : tome courant encadré au centre */
+.bd-series-context__strip {
+    justify-content: center;
+    flex-wrap: nowrap;
+    gap: 0.85rem;
+    padding: 0.35rem 0;
+}
+
+.bd-series-context__item--current {
+    width: 6.25rem;
+}
+
+.bd-series-context__link--current {
+    display: block;
+    padding: 0.35rem;
+    border-radius: 10px;
+    border: 2px solid var(--accent);
+    box-shadow: 0 0 0 2px rgba(232, 185, 35, 0.2);
+    background: rgba(232, 185, 35, 0.06);
+}
+
+.bd-series-context__tome {
+    display: block;
+    margin-top: 0.35rem;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--text);
+    text-align: center;
+    line-height: 1.2;
+}
+
+.bd-series-context__item--current .bd-series-context__tome {
+    color: var(--accent);
+}
+
+.bd-series-context__item--unowned .game-related-posters__poster,
+.bd-series-context__item--unowned .game-related-posters__placeholder {
+    filter: grayscale(100%);
+    opacity: 0.88;
+}
+
+.bd-series-context__item--unowned .game-related-posters__link:hover .game-related-posters__poster,
+.bd-series-context__item--unowned .game-related-posters__link:focus-visible .game-related-posters__poster {
+    filter: grayscale(65%);
+    opacity: 1;
+}
+
+.bd-series-context__item--current.game-related-posters__item--missing .bd-series-context__link--current {
+    opacity: 1;
+}
+
+.game-detail__synopsis-section {
+    margin-top: 1.25rem;
+}
+
+.game-detail-sidebar__wishlist-badge {
+    cursor: default;
+    color: #f472b6;
+}
+
 .game-related-posters__link:hover .game-related-posters__poster,
 .game-related-posters__link:focus-visible .game-related-posters__poster {
     opacity: 0.88;
 }
 
 @media (max-width: 540px) {
-    .game-related-layout--cols-2 {
-        grid-template-columns: 1fr;
+    .game-related-col {
+        max-width: min(100%, 22rem);
     }
 }
 
@@ -3843,6 +3937,25 @@ body.media-domain--bd.page-wide .container--wide {
 
 .social-profile-grid__card {
     cursor: default;
+}
+
+a.collection-grid__link.social-profile-grid__card,
+.social-poster-strip__link {
+    cursor: pointer;
+    text-decoration: none;
+    color: inherit;
+}
+
+.social-viewings-table__film-link {
+    display: flex;
+    align-items: center;
+    gap: 0.65rem;
+    color: inherit;
+    text-decoration: none;
+}
+
+.social-viewings-table__film-link:hover strong {
+    text-decoration: underline;
 }
 
 .social-viewings-table__film {
@@ -4131,6 +4244,44 @@ body.media-domain--bd.page-wide .container--wide {
     font-size: 0.95rem;
 }
 
+.game-detail-page .film-original-title {
+    margin: 0.25rem 0 0.5rem;
+}
+
+.game-detail-page .magazine-issue-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    margin-bottom: 0.75rem;
+}
+
+.game-detail-page .magazine-subjects-section {
+    margin-top: 1.25rem;
+}
+
+.game-detail-page .game-detail__saga .badge {
+    margin-right: 0.25rem;
+}
+
+.game-detail-page .film-detail__body > .film-list-nav-anchor {
+    margin-top: 0;
+    margin-bottom: 0.85rem;
+}
+
+.game-detail-page .film-list-nav-anchor--top {
+    position: static;
+    box-shadow: none;
+    padding: 0;
+    margin-bottom: 1rem;
+}
+
+.game-detail-sidebar__actions .btn-icon[href] {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
 .game-detail-page__toolbar {
     margin: 0.75rem 0 1rem;
 }
@@ -4245,6 +4396,7 @@ td .game-linux-badge--plain {
 
 .game-detail-sidebar__poster {
     margin: 0;
+    max-width: 160px;
 }
 
 .game-detail-sidebar__finished {
@@ -4432,25 +4584,20 @@ td .game-linux-badge--plain {
 }
 
 .game-detail__title-bar {
-    display: flex;
-    align-items: flex-start;
-    justify-content: space-between;
-    gap: 0.75rem 1.25rem;
-    flex-wrap: wrap;
+    margin: 0;
 }
 
 .game-detail__title-bar .game-detail__title-row {
-    flex: 1 1 auto;
-    min-width: 0;
     margin: 0;
 }
 
 .game-detail__title-ressenti {
-    display: flex;
+    display: inline-flex;
     align-items: center;
     gap: 0.45rem;
     flex-shrink: 0;
-    margin-top: 0.2rem;
+    margin-top: 0;
+    vertical-align: middle;
 }
 
 .game-detail__title-ressenti-main {
@@ -4860,6 +5007,20 @@ td .game-linux-badge--plain {
     line-height: 0;
 }
 
+.game-edition-icons__link {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    line-height: 0;
+    transition: opacity 0.15s ease, transform 0.15s ease;
+}
+
+.game-edition-icons__link:hover {
+    opacity: 0.85;
+    transform: translateY(-1px);
+}
+
 .game-edition-icons__text {
     font-size: 0.85rem;
 }
@@ -5025,6 +5186,10 @@ td .game-linux-badge--plain {
     flex-wrap: wrap;
     align-items: center;
     gap: 0.5rem;
+}
+
+.magazine-subject-tags__detach {
+    margin-left: auto;
 }
 
 .magazine-subject-tags__link {

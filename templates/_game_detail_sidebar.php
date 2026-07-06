@@ -23,6 +23,8 @@ $showPlaytime = Moncine\GamePlaytime::isAvailable()
     && $playtimeLabel !== '—'
     && empty($game['never_played']);
 $isWishlist = ((string) ($game['statut'] ?? '')) === Moncine\LibraryStatut::WISHLIST;
+$isInLibrary = $isInLibrary ?? true;
+$oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
 ?>
 <aside class="game-detail-sidebar" aria-label="Jaquette et infos rapides">
     <?php if ($posterSrc !== ''): ?>
@@ -64,6 +66,15 @@ $isWishlist = ((string) ($game['statut'] ?? '')) === Moncine\LibraryStatut::WISH
     <?php endif; ?>
 
     <?php if (!$isWishlist): ?>
-        <?php require MONCINE_ROOT . '/templates/_game_detail_action_popovers.php'; ?>
+        <?php if ($isInLibrary): ?>
+            <?php require MONCINE_ROOT . '/templates/_game_detail_action_popovers.php'; ?>
+        <?php else: ?>
+            <div class="game-detail-sidebar__actions">
+                <?php
+                $profileUserId = (int) ($_GET['profile_user'] ?? 0);
+                require MONCINE_ROOT . '/templates/_catalog_oeuvre_sidebar_actions.php';
+                ?>
+            </div>
+        <?php endif; ?>
     <?php endif; ?>
 </aside>

@@ -44,7 +44,7 @@ final class MagazineSubject
     {
         return [
             self::TEST => 'Test',
-            self::PREVIEW => 'Preview / avant-première',
+            self::PREVIEW => 'Preview',
             self::COMPARATIF => 'Comparatif',
             self::DOSSIER => 'Dossier',
             self::INTERVIEW => 'Interview',

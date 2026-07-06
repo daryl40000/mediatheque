@@ -89,6 +89,42 @@ final class GameEditionIcons
         };
     }
 
+    /** Lien magasin pour une icône (Steam, GOG, Epic, Battle.net) si connu. */
+    public static function linkUrlForKey(string $iconKey, array $gameRow): string
+    {
+        $storeKey = match ($iconKey) {
+            self::STEAM => GameDigitalStore::STEAM,
+            self::GOG => GameDigitalStore::GOG,
+            self::EPIC => GameDigitalStore::EPIC,
+            self::BATTLENET => GameDigitalStore::BATTLENET,
+            default => '',
+        };
+        if ($storeKey === '') {
+            return '';
+        }
+
+        foreach (GameDigitalStore::parseStoredList((string) ($gameRow['digital_stores'] ?? '')) as $entry) {
+            if (($entry['store'] ?? '') !== $storeKey) {
+                continue;
+            }
+            $url = trim((string) ($entry['url'] ?? ''));
+            if ($url !== '') {
+                return $url;
+            }
+        }
+
+        if ($storeKey !== GameDigitalStore::STEAM) {
+            return '';
+        }
+
+        $appid = (int) ($gameRow['library_steam_appid'] ?? $gameRow['steam_appid'] ?? 0);
+        if ($appid <= 0) {
+            return '';
+        }
+
+        return SteamWebApiClient::storeUrl($appid, GameTitle::displayTitle($gameRow));
+    }
+
     /** Nom du fichier image dans www/assets/img/game-editions/ (PNG ou WebP). */
     public static function iconImageFilename(string $iconKey): string
     {

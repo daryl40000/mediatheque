@@ -9,6 +9,8 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\BdPhysicalSupport;
 use Moncine\BdRepository;
+use Moncine\BdSeriesContext;
+use Moncine\BibliothequeRepository;
 use Moncine\HistoriqueRepository;
 use Moncine\LibraryStatut;
 use Moncine\MediaDomain;
@@ -51,6 +53,19 @@ $monRessenti = $isWishlist ? null : $historique->getBestRessentiScore($bibId);
 $readHistory = $isWishlist ? [] : $historique->findViewingsByFilm($bibId);
 $everRead = $isWishlist ? false : $historique->wasEverSeen($bibId);
 
+$allowedPopovers = ['note', 'edit', 'lu'];
+$popoverOpen = '';
+$editError = (string) ($_GET['edit_error'] ?? '');
+if (!empty($_GET['note_error'])) {
+    $popoverOpen = 'note';
+} elseif (!empty($_GET['lu_error'])) {
+    $popoverOpen = 'lu';
+} elseif (isset($_GET['popover']) && in_array((string) $_GET['popover'], $allowedPopovers, true)) {
+    $popoverOpen = (string) $_GET['popover'];
+} elseif ($editError !== '' || (isset($_GET['saved']) && $editError !== '')) {
+    $popoverOpen = 'edit';
+}
+
 $oeuvreId = (int) ($album['oeuvre_id'] ?? 0);
 $socialRessentis = !$isWishlist && $oeuvreId > 0
     ? (new SocialRessentiService())->listAroundOeuvre(
@@ -60,6 +75,27 @@ $socialRessentis = !$isWishlist && $oeuvreId > 0
         $foyerId
     )
     : ['foyer' => [], 'friends' => []];
+
+$bdSeriesNeighbors = [];
+if ($seriesId > 0 && $oeuvreId > 0) {
+    $bdSeriesNeighbors = BdSeriesContext::neighborStrip(
+        $repo,
+        $seriesId,
+        $oeuvreId,
+        $userId,
+        $foyerId,
+    );
+}
+
+$inWishlist = false;
+if ($oeuvreId > 0) {
+    $inWishlist = (new BibliothequeRepository())->findByOeuvreId(
+        $oeuvreId,
+        $userId,
+        $foyerId,
+        LibraryStatut::WISHLIST,
+    ) !== null;
+}
 
 View::render('album-bd', [
     'pageTitle' => (string) ($album['display_titre'] ?? 'Album'),
@@ -72,7 +108,11 @@ View::render('album-bd', [
     'socialRessentis' => $socialRessentis,
     'readHistory' => $readHistory,
     'everRead' => $everRead,
+    'popoverOpen' => $popoverOpen,
     'supportChoices' => BdPhysicalSupport::choices(),
     'knownGenres' => BdRepository::isAvailable() ? $repo->listKnownGenres() : [],
-    'editError' => (string) ($_GET['edit_error'] ?? ''),
+    'editError' => $editError,
+    'bdSeriesNeighbors' => $bdSeriesNeighbors,
+    'seriesTitre' => trim((string) ($album['series_titre'] ?? '')),
+    'inWishlist' => $inWishlist,
 ]);

@@ -42,4 +42,19 @@ final class GameDigitalStoreMergeTest extends TestCase
         $stores = GameDigitalStore::parseStoredList($merged);
         $this->assertSame('https://store.steampowered.com/app/440/', $stores[0]['url'] ?? '');
     }
+
+    public function testMergeStoreReplacesExistingUrl(): void
+    {
+        $existing = GameDigitalStore::serializeList([
+            ['store' => GameDigitalStore::STEAM, 'url' => 'https://store.steampowered.com/app/1/old/'],
+        ]);
+        $merged = GameDigitalStore::mergeStore(
+            $existing,
+            GameDigitalStore::STEAM,
+            'https://store.steampowered.com/app/1/new_slug/'
+        );
+
+        $stores = GameDigitalStore::parseStoredList($merged);
+        $this->assertSame('https://store.steampowered.com/app/1/new_slug/', $stores[0]['url'] ?? '');
+    }
 }

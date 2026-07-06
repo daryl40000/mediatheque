@@ -16,9 +16,12 @@ $targetUserId = (int) ($targetUserId ?? 0);
     <ul class="social-poster-strip" role="list">
         <?php foreach ($tomesList as $tome):
             $bibId = (int) ($tome['bib_id'] ?? $tome['id'] ?? 0);
-            $tomeUrl = $targetUserId > 0 && $bibId > 0
-                ? Moncine\View::userProfileBdAlbumUrl($targetUserId, $bibId)
-                : '';
+            $oeuvreId = (int) ($tome['oeuvre_id'] ?? 0);
+            $tomeUrl = $oeuvreId > 0
+                ? Moncine\View::catalogOeuvreDetailUrlFromProfile($oeuvreId, Moncine\MediaDomain::BD, $targetUserId)
+                : ($targetUserId > 0 && $bibId > 0
+                    ? Moncine\View::userProfileBdAlbumUrl($targetUserId, $bibId)
+                    : '');
             $poster = trim((string) ($tome['poster_url'] ?? ''));
             $posterSrc = Moncine\View::posterSrc($poster !== '' ? $poster : null);
             $seriesTitre = (string) ($tome['series_titre'] ?? '');

@@ -41,6 +41,20 @@ final class CatalogAdmin
         }
     }
 
+    /** Consultation d’une fiche catalogue (tout utilisateur connecté). */
+    public static function denyUnlessCatalogAvailable(): void
+    {
+        if (!CatalogSchema::usesCatalogTables(Database::getInstance())) {
+            header('Location: /');
+            exit;
+        }
+
+        if (UserContext::currentUserId() <= 0) {
+            header('Location: /connexion.php');
+            exit;
+        }
+    }
+
     public static function perPage(): int
     {
         return self::PER_PAGE;

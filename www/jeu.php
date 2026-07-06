@@ -10,6 +10,8 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\GameAttachmentRepository;
 use Moncine\GameCompletionRepository;
 use Moncine\GamePlatform;
+use Moncine\GameFranchiseRepository;
+use Moncine\GameRelatedSections;
 use Moncine\GameRepository;
 use Moncine\HistoriqueRepository;
 use Moncine\IgdbConfig;
@@ -111,6 +113,7 @@ $extensions = [];
 $originalGame = null;
 $remakes = [];
 $oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
+$canManageCatalog = UserContext::canManageCatalog();
 
 if (GameRepository::hasExtensionColumns()) {
     $baseGameOeuvreId = (int) ($game['base_game_oeuvre_id'] ?? 0);
@@ -119,14 +122,37 @@ if (GameRepository::hasExtensionColumns()) {
     if ($isExtension && $baseGameOeuvreId > 0) {
         $baseGame = $repo->findCatalogByOeuvreId($baseGameOeuvreId);
         if ($baseGame !== null) {
-            $baseBibId = $repo->findLibraryBibIdForCatalogOeuvre($baseGameOeuvreId, $userId, $foyerId);
-            $baseGame['library_bib_id'] = $baseBibId ?? 0;
-            $baseGame['library_url'] = $baseBibId !== null && $baseBibId > 0 ? View::gameUrl($baseBibId) : '';
+            $baseGame = array_merge(
+                $baseGame,
+                GameRelatedSections::libraryStateForRelatedOeuvre(
+                    $repo,
+                    $baseGameOeuvreId,
+                    $userId,
+                    $foyerId,
+                    $canManageCatalog ? View::oeuvreJeuUrl($baseGameOeuvreId) : null,
+                ),
+            );
         }
     }
 
     if (!$isExtension && $oeuvreId > 0) {
-        $extensions = $repo->listExtensionsForBaseGame($oeuvreId, $userId, $foyerId);
+        $extensions = $repo->listCatalogExtensionsForBaseGame($oeuvreId);
+        foreach ($extensions as $index => $row) {
+            $childOeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+            if ($childOeuvreId <= 0) {
+                continue;
+            }
+            $extensions[$index] = array_merge(
+                $extensions[$index],
+                GameRelatedSections::libraryStateForRelatedOeuvre(
+                    $repo,
+                    $childOeuvreId,
+                    $userId,
+                    $foyerId,
+                    $canManageCatalog ? View::oeuvreJeuUrl($childOeuvreId) : null,
+                ),
+            );
+        }
     }
 }
 
@@ -137,14 +163,60 @@ if (GameRepository::hasRemakeColumns()) {
     if ($isRemake && $originalGameOeuvreId > 0) {
         $originalGame = $repo->findCatalogByOeuvreId($originalGameOeuvreId);
         if ($originalGame !== null) {
-            $originalBibId = $repo->findLibraryBibIdForCatalogOeuvre($originalGameOeuvreId, $userId, $foyerId);
-            $originalGame['library_bib_id'] = $originalBibId ?? 0;
-            $originalGame['library_url'] = $originalBibId !== null && $originalBibId > 0 ? View::gameUrl($originalBibId) : '';
+            $originalGame = array_merge(
+                $originalGame,
+                GameRelatedSections::libraryStateForRelatedOeuvre(
+                    $repo,
+                    $originalGameOeuvreId,
+                    $userId,
+                    $foyerId,
+                    $canManageCatalog ? View::oeuvreJeuUrl($originalGameOeuvreId) : null,
+                ),
+            );
         }
     }
 
     if (!$isRemake && $oeuvreId > 0) {
-        $remakes = $repo->listRemakesForOriginalGame($oeuvreId, $userId, $foyerId);
+        $remakes = $repo->listCatalogRemakesForOriginalGame($oeuvreId);
+        foreach ($remakes as $index => $row) {
+            $childOeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+            if ($childOeuvreId <= 0) {
+                continue;
+            }
+            $remakes[$index] = array_merge(
+                $remakes[$index],
+                GameRelatedSections::libraryStateForRelatedOeuvre(
+                    $repo,
+                    $childOeuvreId,
+                    $userId,
+                    $foyerId,
+                    $canManageCatalog ? View::oeuvreJeuUrl($childOeuvreId) : null,
+                ),
+            );
+        }
+    }
+}
+
+$franchiseGames = [];
+$franchiseName = GameRelatedSections::resolveFranchiseName($game, $baseGame, $originalGame);
+if ($franchiseName !== '' && GameFranchiseRepository::isAvailable() && $oeuvreId > 0) {
+    $franchiseRepo = new GameFranchiseRepository();
+    $franchiseGames = $franchiseRepo->listCatalogByFranchise($franchiseName, $oeuvreId);
+    foreach ($franchiseGames as $index => $row) {
+        $sagaOeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+        if ($sagaOeuvreId <= 0) {
+            continue;
+        }
+        $franchiseGames[$index] = array_merge(
+            $franchiseGames[$index],
+            GameRelatedSections::libraryStateForRelatedOeuvre(
+                $repo,
+                $sagaOeuvreId,
+                $userId,
+                $foyerId,
+                $canManageCatalog ? View::oeuvreJeuUrl($sagaOeuvreId) : null,
+            ),
+        );
     }
 }
 
@@ -156,6 +228,7 @@ View::render('jeu', [
     'extensions' => $extensions,
     'originalGame' => $originalGame,
     'remakes' => $remakes,
+    'franchiseGames' => $franchiseGames,
     'saved' => $saved,
     'saveError' => $saveError,
     'editOpen' => $editOpen,

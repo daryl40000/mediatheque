@@ -226,6 +226,7 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                     <?php
                     $films = $lastViewed;
                     $emptyHint = 'Aucune vision enregistrée pour le moment.';
+                    $mediaDomain = MediaDomain::FILM;
                     require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
                     ?>
                 </section>
@@ -235,7 +236,7 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                     <?php
                     $films = $lastNoted ?? [];
                     $emptyHint = 'Aucune note enregistrée pour le moment.';
-                    $linkToGame = true;
+                    $mediaDomain = MediaDomain::JEU;
                     require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
                     ?>
                 </section>
@@ -272,7 +273,7 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                         $emptyHint = $isGameProfile
                             ? 'Aucun jeu dans la collection pour le moment.'
                             : 'Aucun film dans la collection pour le moment.';
-                        $linkToGame = $isGameProfile;
+                        $mediaDomain = $isGameProfile ? MediaDomain::JEU : MediaDomain::FILM;
                         require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
                         ?>
                     <?php endif; ?>
@@ -309,7 +310,7 @@ $profileDomainImplemented = !empty($profileDomainImplemented);
                     $emptyHint = $isGameProfile
                         ? 'Aucun jeu dans les envies pour le moment.'
                         : 'Aucun film dans les envies pour le moment.';
-                    $linkToGame = $isGameProfile;
+                    $mediaDomain = $isGameProfile ? MediaDomain::JEU : MediaDomain::FILM;
                     require MONCINE_ROOT . '/templates/_user_profile_poster_strip.php';
                     ?>
                 <?php endif; ?>

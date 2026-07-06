@@ -56,9 +56,16 @@ $sortLink = static function (string $label, string $column) use (
                     $annee = (int) ($row['annee'] ?? 0);
                     $dateVue = Moncine\HistoriqueRepository::formatDateVue((string) ($row['date_vue'] ?? ''));
                     $note = $row['note'] ?? null;
+                    $oeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+                    $catalogUrl = $oeuvreId > 0
+                        ? Moncine\View::catalogOeuvreDetailUrlFromProfile($oeuvreId, Moncine\MediaDomain::FILM, $targetUserId)
+                        : '';
                     ?>
                     <tr>
                         <td class="social-viewings-table__film">
+                            <?php if ($catalogUrl !== ''): ?>
+                                <a href="<?= Moncine\View::escape($catalogUrl) ?>" class="social-viewings-table__film-link">
+                            <?php endif; ?>
                             <?php if ($posterSrc !== ''): ?>
                                 <img class="social-viewings-table__poster" src="<?= $posterSrc ?>"
                                      alt="" width="40" height="60" loading="lazy" decoding="async">
@@ -69,6 +76,9 @@ $sortLink = static function (string $label, string $column) use (
                                     <span class="hint"> (<?= $annee ?>)</span>
                                 <?php endif; ?>
                             </span>
+                            <?php if ($catalogUrl !== ''): ?>
+                                </a>
+                            <?php endif; ?>
                         </td>
                         <td><?= Moncine\View::escape($dateVue) ?></td>
                         <td>

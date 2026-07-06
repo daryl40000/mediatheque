@@ -135,7 +135,7 @@ final class FilmListContext
 
         $query = array_merge(['id' => (string) $filmId], $this->queryParams(), $extraQuery);
 
-        return '/film.php?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986) . '#film-list-nav';
+        return '/film.php?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
     }
 
     public function backUrl(): string

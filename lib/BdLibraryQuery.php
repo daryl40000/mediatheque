@@ -552,6 +552,33 @@ final class BdLibraryQuery
         return $row !== false ? BdRowMapper::hydrateCatalogRow($row) : null;
     }
 
+    /**
+     * Tous les tomes catalogue d’une série, triés par ordre de lecture.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function listCatalogTomesForSeries(int $seriesId): array
+    {
+        if (!BdRepository::isAvailable() || $seriesId <= 0) {
+            return [];
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT ' . BdCatalogSql::selectCatalogRow()
+            . ' FROM oeuvres o'
+            . ' INNER JOIN oeuvre_bd ob ON ob.oeuvre_id = o.id'
+            . ' LEFT JOIN series s ON s.id = ob.series_id'
+            . ' WHERE ob.series_id = ? AND o.media_domain = ?'
+            . ' ORDER BY ob.tome_ordre ASC, ob.tome_numero ASC, o.titre COLLATE FRENCH_NOCASE ASC'
+        );
+        $stmt->execute([$seriesId, MediaDomain::BD]);
+
+        return array_map(
+            [BdRowMapper::class, 'hydrateCatalogRow'],
+            $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [],
+        );
+    }
+
     public function findLibraryBibIdForCatalogOeuvre(int $oeuvreId, int $userId, int $foyerId): ?int
     {
         if (!BdRepository::isAvailable() || $oeuvreId <= 0) {

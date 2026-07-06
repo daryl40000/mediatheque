@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.7.11** · **Date : 2026-07-06**
+**Version : 0.7.12** · **Date : 2026-07-06**
 
 ## Objectif
 
@@ -243,6 +243,8 @@ Fichiers dans `www/assets/img/game-editions/` : `cd_dvd`, `disquette`, `steam`, 
 - À l’**ajout** : les cases Extension / Remake restent visibles tant qu’aucun jeu catalogue n’est sélectionné dans l’autocomplétion du titre.
 - Affichage **discret** : jaquette cliquable + année sous l’image (`templates/_game_related_posters.php`) ; extensions et remakes côte à côte en deux colonnes si les deux existent.
 
+Depuis **0.7.12** : sur une fiche **extension** ou **remake**, bandeau **Saga** (franchise du jeu de base si la fiche n’en a pas) ; sections **Jeu de base** / **Jeu d’origine** en tête de fiche (`GameRelatedSections::resolveFranchiseName`).
+
 ### Recherche et autocomplétion (0.5.4)
 
 Classe **`SearchMatch`** (insensible **casse** et **accents**, **1 faute de frappe** par mot dans l’autocomplétion) :
@@ -276,7 +278,7 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | `/sagas-jeux.php` | Sagas jeux (liste avec jaquettes, détail ordonné par année, renommage) |
 | `/jeux-envies.php` | Liste des envies jeux |
 | `/jeu.php?id=` | Fiche jeu (+ section « Dans vos magazines », fichiers attachés) |
-| `/oeuvre-jeu.php?id=` | Fiche catalogue jeu (admin : édition, enrichissement IGDB) |
+| `/oeuvre-jeu.php?id=` | Fiche catalogue jeu (consultation tout utilisateur connecté depuis **0.7.12** ; édition / IGDB admin) |
 | `/enrichir-jeux.php` | Enrichissement IGDB par lots + config (POST) |
 | `/enrichir-jeu.php` | Enrichissement IGDB fiche bibliothèque (POST, admin) |
 | `/enrichir-oeuvre-jeu.php` | Enrichissement IGDB fiche catalogue (POST, admin) |
@@ -433,7 +435,7 @@ Les badges apparaissent sur la fiche jeu et dans les listes (Mes jeux, Mes envie
 
 ## Prêts entre amis (0.6.5)
 
-Même système que pour les films : un ami peut demander un prêt depuis votre **profil public** (onglet Jeux → collection).
+Même système que pour les films : un ami peut demander un prêt depuis votre **profil public** (onglet Jeux → collection). Depuis **0.7.12**, un clic sur un jeu ouvre la **fiche catalogue** (`/oeuvre-jeu.php`) avec bouton cœur pour vos envies.
 
 | Règle | Détail |
 |-------|--------|

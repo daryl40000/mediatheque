@@ -77,12 +77,19 @@ $subjectYearChoices = $subjectYearChoices ?? Moncine\MagazineSubject::subjectYea
                                 · <?= Moncine\View::escape((string) ($subject['catalog_game']['display_label'] ?? '')) ?>
                             </span>
                         <?php endif; ?>
-                        <form method="post" action="/traiter-sujets-numero-magazine.php" class="inline-form">
+                        <form method="post" action="/traiter-sujets-numero-magazine.php" class="inline-form magazine-subject-tags__detach">
                             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
                             <input type="hidden" name="bib_id" value="<?= $bibId ?>">
                             <input type="hidden" name="action" value="detach">
                             <input type="hidden" name="subject_id" value="<?= $subjectId ?>">
-                            <button type="submit" class="btn btn-secondary btn-sm" title="Retirer ce sujet">Retirer</button>
+                            <button type="submit"
+                                    class="btn btn-icon btn-danger-text btn-sm"
+                                    title="Retirer ce sujet"
+                                    aria-label="Retirer ce sujet">
+                                <svg class="icon-trash" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                    <path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/>
+                                </svg>
+                            </button>
                         </form>
                     </li>
                 <?php endforeach; ?>

@@ -524,7 +524,7 @@ textarea {
 }
 
 .film-poster--large {
-    max-width: 11rem;
+    max-width: 8.8rem;
     margin: 0 auto 0.5rem;
 }
 
@@ -538,13 +538,13 @@ textarea {
 
 @media (min-width: 640px) {
     .film-detail--with-poster {
-        grid-template-columns: minmax(140px, 200px) 1fr;
+        grid-template-columns: minmax(112px, 160px) 1fr;
         gap: 1.25rem 1.5rem;
     }
 
     .film-detail--with-poster .film-poster--large {
         margin: 0;
-        max-width: 200px;
+        max-width: 160px;
     }
 }
 

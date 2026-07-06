@@ -394,6 +394,16 @@ final class GameRepository
         return $this->libraryQuery()->findLibraryBibIdForCatalogOeuvre($oeuvreId, $userId, $foyerId);
     }
 
+    public function findCollectionBibIdForCatalogOeuvre(int $oeuvreId, int $userId, int $foyerId): ?int
+    {
+        return $this->libraryQuery()->findCollectionBibIdForCatalogOeuvre($oeuvreId, $userId, $foyerId);
+    }
+
+    public function findWishlistBibIdForCatalogOeuvre(int $oeuvreId, int $userId, int $foyerId): ?int
+    {
+        return $this->libraryQuery()->findWishlistBibIdForCatalogOeuvre($oeuvreId, $userId, $foyerId);
+    }
+
     /**
      * @return int|string bib_id ou message d’erreur
      */
