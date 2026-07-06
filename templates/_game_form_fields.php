@@ -11,6 +11,8 @@ $game = $game ?? null;
 $platformChoices = $platformChoices ?? Moncine\GamePlatform::choices();
 $knownGenres = $knownGenres ?? [];
 $knownSagas = $knownSagas ?? [];
+$catalogEditOnly = $catalogEditOnly ?? false;
+$libraryEditOnly = $libraryEditOnly ?? false;
 $useCatalogAutocomplete = $useCatalogAutocomplete ?? false;
 $canManageCatalog = $canManageCatalog ?? Moncine\UserContext::canManageCatalog();
 $gameFormFieldPrefix = $gameFormFieldPrefix ?? '';
@@ -42,7 +44,15 @@ $originalGameOeuvreId = (int) ($gameRow['original_game_oeuvre_id'] ?? 0);
 $originalGameLabel = trim((string) ($gameRow['original_game_label'] ?? ''));
 $titreFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_titre' : 'titre';
 $oeuvreIdFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_oeuvre_id' : 'oeuvre_id';
+
+$catalogPlatformKeys = $gameRow['platform_list'] ?? Moncine\GamePlatformList::catalogKeysFromRow($gameRow);
+$ownedPlatformKeys = $gameRow['owned_platform_list'] ?? Moncine\GamePlatformList::ownedKeysFromRow($gameRow);
+$catalogLinked = $libraryEditOnly
+    || (!$catalogEditOnly && $useCatalogAutocomplete && (int) ($gameRow['oeuvre_id'] ?? 0) > 0);
+$showCatalogEditFields = !$libraryEditOnly && ($catalogEditOnly || ($canManageCatalog && !$catalogLinked));
+$showLibraryFields = $libraryEditOnly || (!$catalogEditOnly && ($canManageCatalog || $catalogLinked));
 ?>
+<?php if (!$libraryEditOnly): ?>
 <label for="<?= Moncine\View::escape($titreFieldId) ?>">Titre du jeu (français) <span class="required">*</span></label>
 <?php if ($useCatalogAutocomplete): ?>
     <input type="hidden" name="oeuvre_id" id="<?= Moncine\View::escape($oeuvreIdFieldId) ?>"
@@ -80,21 +90,13 @@ $oeuvreIdFieldId = $gameFormFieldPrefix !== '' ? $gameFormFieldPrefix . '_oeuvre
        placeholder="Ex. Elden Ring, Gran Turismo 7">
 <?php endif; ?>
 
-<?php
-$catalogPlatformKeys = $gameRow['platform_list'] ?? Moncine\GamePlatformList::catalogKeysFromRow($gameRow);
-$ownedPlatformKeys = $gameRow['owned_platform_list'] ?? Moncine\GamePlatformList::ownedKeysFromRow($gameRow);
-$catalogLinked = $useCatalogAutocomplete && (int) ($gameRow['oeuvre_id'] ?? 0) > 0;
-$showCatalogEditFields = $canManageCatalog && !$catalogLinked;
-$showLibraryFields = $canManageCatalog || $catalogLinked;
-?>
-
 <?php if ($useCatalogAutocomplete && !$canManageCatalog && !$catalogLinked): ?>
     <p class="alert alert-info" data-game-pick-catalog-hint>
         Tapez le titre puis <strong>cliquez sur une suggestion du catalogue</strong> pour afficher les champs de votre exemplaire (plateformes possédées, supports…).
     </p>
 <?php endif; ?>
 
-<?php if ($catalogLinked && !$canManageCatalog): ?>
+<?php if ($catalogLinked && !$canManageCatalog && !$libraryEditOnly): ?>
     <p class="alert alert-info">
         Ce jeu est déjà au catalogue partagé. Indiquez seulement <strong>vos plateformes</strong> et les détails de <strong>votre exemplaire</strong>.
     </p>
@@ -258,6 +260,7 @@ require MONCINE_ROOT . '/templates/_game_genre_tags_field.php';
 <textarea name="synopsis" id="synopsis" rows="4"><?= Moncine\View::escape((string) ($gameRow['synopsis'] ?? '')) ?></textarea>
 
 </div>
+<?php endif; ?>
 
 <div class="game-library-fields" data-game-library-fields<?= $showLibraryFields ? '' : ' hidden' ?>>
 
@@ -265,7 +268,9 @@ require MONCINE_ROOT . '/templates/_game_genre_tags_field.php';
 $platformFieldName = 'owned_platforms[]';
 $selectedPlatformKeys = $ownedPlatformKeys !== [] ? $ownedPlatformKeys : [];
 $allowedPlatformKeys = $catalogLinked && $catalogPlatformKeys !== [] ? $catalogPlatformKeys : null;
-$legend = 'Mes plateformes (mon exemplaire)';
+$legend = $libraryEditOnly
+    ? 'Mes plateformes'
+    : 'Mes plateformes (mon exemplaire)';
 $hint = $catalogLinked
     ? 'Cochez les plateformes sur lesquelles vous possédez ce jeu.'
     : 'Indiquez les plateformes que vous possédez (selon celles cochées ci-dessus pour un nouveau jeu).';
@@ -361,6 +366,10 @@ $showLinuxFieldInitially = $linuxFieldAvailable && $hasPcOwned;
         </div>
     </div>
 </fieldset>
+
+<?php if ($showManualPlaytimeFields ?? true): ?>
+<?php require MONCINE_ROOT . '/templates/_game_manual_playtime_fields.php'; ?>
+<?php endif; ?>
 
 <?php
 $loanPrefsRow = array_merge(['media_domain' => Moncine\MediaDomain::JEU], $gameRow);

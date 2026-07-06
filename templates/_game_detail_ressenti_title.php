@@ -71,20 +71,6 @@ $renderOthersList = static function (array $entries): void {
             $size = 'default';
             require MONCINE_ROOT . '/templates/_ressenti_badge.php';
             ?>
-            <details class="game-detail-ressenti__edit">
-                <summary class="game-detail-ressenti__edit-trigger" aria-label="Modifier mon ressenti" title="Modifier mon ressenti">
-                    <svg class="icon-edit" width="14" height="14" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                        <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M12 20h9"/>
-                        <path fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4 12.5-12.5z"/>
-                    </svg>
-                </summary>
-                <div class="game-detail-ressenti__edit-form game-detail-ressenti__edit-popover">
-                    <?php
-                    $defaultNote = (int) $monRessenti;
-                    require MONCINE_ROOT . '/templates/_marquer_joue_form.php';
-                    ?>
-                </div>
-            </details>
         </div>
     <?php endif; ?>
 

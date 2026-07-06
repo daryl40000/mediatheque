@@ -23,7 +23,7 @@ final class ShareLinkGameRepository
         'genre' => 'oj.genre COLLATE FRENCH_NOCASE',
         'note' => 'note_max',
         'finished_at' => 'derniere_completion',
-        'steam_playtime' => 'COALESCE(gss.playtime_minutes, 0)',
+        'steam_playtime' => 'playtime_total',
     ];
 
     public function __construct()
@@ -332,8 +332,12 @@ final class ShareLinkGameRepository
             return self::SORT_COLUMNS['titre'];
         }
 
-        if ($sortBy === 'steam_playtime' && !GameSteamStatsRepository::isAvailable()) {
+        if ($sortBy === 'steam_playtime' && !GamePlaytime::isAvailable()) {
             return self::SORT_COLUMNS['titre'];
+        }
+
+        if ($sortBy === 'steam_playtime') {
+            return GamePlaytime::totalMinutesSql();
         }
 
         return self::SORT_COLUMNS[$sortBy] ?? self::SORT_COLUMNS['titre'];

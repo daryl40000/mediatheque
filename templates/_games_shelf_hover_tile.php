@@ -69,6 +69,11 @@ $posterSrc = (string) ($posterSrc ?? '');
                     }
                     ?>
                 </div>
+                <?php if (Moncine\GamePlaytime::isAvailable() && (int) ($game['playtime_minutes'] ?? 0) > 0): ?>
+                    <p class="collection-grid__meta collection-grid__meta--playtime">
+                        <?= Moncine\View::escape((string) ($game['playtime_label'] ?? '')) ?>
+                    </p>
+                <?php endif; ?>
             </div>
         </a>
     </article>

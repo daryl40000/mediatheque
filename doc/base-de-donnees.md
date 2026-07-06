@@ -122,6 +122,8 @@ Contrainte : `UNIQUE (titre, realisateur)` — pour les jeux, `realisateur` rest
 | `ean` | Code-barres exemplaire |
 | `tested_on_linux`, `linux_not_supported` | Jeux PC : compatibilité Linux (tri-état) |
 | `non_pretable` | Exemplaire exclu des prêts entre amis (migration 049) |
+| `owned_platforms` | Plateformes possédées (jeux, migration **051**) |
+| `manual_playtime_minutes` | Temps de jeu manuel en minutes (migration **061**, **0.7.11**) |
 
 #### `historique` — notes et dates
 
@@ -281,6 +283,8 @@ Liste complète : voir [`sql/schema.sql`](../sql/schema.sql).
 | 052 | `052_oeuvres_saga.sql` | Sagas films sur `oeuvres` (catalogue partagé) |
 | 053 | `053_game_platform_snes.sql` | Plateforme Super Nintendo (`snes`) |
 | 054 | `054_game_completion.sql` | Fins de partie jeux (`game_completion`) |
+| 058 | `058_steam_import.sql` | Import Steam : `game_steam_stats`, `steam_appid`, `utilisateurs.steam_id` |
+| 061 | `061_game_manual_playtime.sql` | Temps de jeu manuel (`bibliotheque.manual_playtime_minutes`) |
 
 Migration transversale multi-médias : **030** (`media_domain` sur `oeuvres`).
 

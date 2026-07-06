@@ -44,7 +44,7 @@ if ($oeuvreId <= 0) {
 }
 
 $repo = new GameRepository();
-$editions = GameRepository::editionPayloadFromPost($_POST);
+$platformPayload = GameRepository::catalogPlatformsFromPost($_POST);
 
 $result = $repo->updateCatalogByOeuvreId($oeuvreId, array_merge([
     'titre' => (string) ($_POST['titre'] ?? ''),
@@ -65,7 +65,7 @@ $result = $repo->updateCatalogByOeuvreId($oeuvreId, array_merge([
     'base_game_oeuvre_id' => (int) ($_POST['base_game_oeuvre_id'] ?? 0),
     'is_remake' => !empty($_POST['is_remake']),
     'original_game_oeuvre_id' => (int) ($_POST['original_game_oeuvre_id'] ?? 0),
-], $editions));
+], $platformPayload));
 
 if ($result !== true) {
     header('Location: ' . $returnUrl . '&edit=1&save_error=' . rawurlencode((string) $result));

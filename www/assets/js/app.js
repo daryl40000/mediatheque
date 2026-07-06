@@ -39,6 +39,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initShareLinkCopy();
     initSteamImportMapping();
     initCatalogOeuvreMerge();
+    initGameLibraryEditForms();
+    initGameDetailQuickActions();
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('vu') === '1') {
@@ -1235,6 +1237,7 @@ function getGameFormPlatformKeys(form) {
 /** État plateformes catalogue / exemplaire (lien catalogue ou saisie manuelle). */
 function setGameCatalogPlatformState(form, platformKeys, options = {}) {
     const catalogLinked = Boolean(options.catalogLinked);
+    const catalogEditOnly = form.dataset.catalogEditOnly === '1';
     const keys = new Set((platformKeys || []).filter(Boolean));
     const canManageCatalog = form.dataset.canManageCatalog === '1';
 
@@ -1245,6 +1248,28 @@ function setGameCatalogPlatformState(form, platformKeys, options = {}) {
     const catalogLabel = form.querySelector('label[for="platform"]');
     const catalogRoot = form.querySelector('[data-field-name="platforms[]"]');
     const ownedRoot = form.querySelector('[data-field-name="owned_platforms[]"]');
+
+    if (catalogEditOnly) {
+        if (catalogEditBlock) {
+            catalogEditBlock.hidden = false;
+        }
+        if (libraryBlock) {
+            libraryBlock.hidden = true;
+        }
+        if (pickHint) {
+            pickHint.hidden = true;
+        }
+        if (catalogBlock) {
+            catalogBlock.hidden = false;
+        }
+        if (catalogLabel) {
+            catalogLabel.hidden = false;
+        }
+        form.dataset.catalogPlatformKeys = '';
+        form.dataset.catalogPlatformLinked = '0';
+        form.dispatchEvent(new CustomEvent('game-platforms-changed'));
+        return;
+    }
 
     if (catalogEditBlock) {
         catalogEditBlock.hidden = catalogLinked || !canManageCatalog;
@@ -1319,7 +1344,14 @@ function initGamePlatformFields() {
     document.querySelectorAll('form').forEach((form) => {
         const catalogRoot = form.querySelector('[data-field-name="platforms[]"]');
         const ownedRoot = form.querySelector('[data-field-name="owned_platforms[]"]');
-        if (!catalogRoot || !ownedRoot) {
+        if (!ownedRoot) {
+            return;
+        }
+        if (!catalogRoot) {
+            if (form.dataset.gameLibraryEditForm === '1') {
+                const keys = (form.dataset.catalogPlatformKeys || '').split(',').filter(Boolean);
+                setGameCatalogPlatformState(form, keys, { catalogLinked: true });
+            }
             return;
         }
 
@@ -2004,4 +2036,131 @@ function initCatalogOeuvreMerge() {
 
         syncMergeIds();
     });
+}
+
+/** Fiche jeu bibliothèque : initialiser les plateformes autorisées pour « mon exemplaire ». */
+function initGameLibraryEditForms() {
+    document.querySelectorAll('[data-game-library-edit-form="1"]').forEach((form) => {
+        const keys = (form.getAttribute('data-catalog-platform-keys') || '').split(',').filter(Boolean);
+        setGameCatalogPlatformState(form, keys, { catalogLinked: true });
+    });
+}
+
+/** Fiche jeu : actions rapides sous le temps de jeu (bulles au clic). */
+function initGameDetailQuickActions() {
+    const root = document.querySelector('[data-game-detail-actions]');
+    if (!root) {
+        return;
+    }
+
+    const positionPopover = (anchor, popover) => {
+        const button = anchor.querySelector('[data-game-action]');
+        const panel = popover.querySelector('.game-action-popover__panel');
+        if (!button || !panel) {
+            return;
+        }
+
+        popover.hidden = false;
+        popover.style.visibility = 'hidden';
+        popover.style.left = '0';
+        popover.style.top = '0';
+
+        const buttonRect = button.getBoundingClientRect();
+        const panelRect = panel.getBoundingClientRect();
+        const margin = 12;
+        const gap = 8;
+        const viewportWidth = window.innerWidth;
+        const viewportHeight = window.innerHeight;
+
+        let left = buttonRect.right + gap;
+        if (left + panelRect.width > viewportWidth - margin) {
+            left = Math.max(margin, viewportWidth - panelRect.width - margin);
+        }
+
+        let top = buttonRect.top + (buttonRect.height / 2) - (panelRect.height / 2);
+        top = Math.max(margin, Math.min(top, viewportHeight - panelRect.height - margin));
+
+        popover.style.left = `${Math.round(left)}px`;
+        popover.style.top = `${Math.round(top)}px`;
+        popover.style.visibility = '';
+    };
+
+    const closeAll = () => {
+        root.querySelectorAll('[data-game-popover]').forEach((popover) => {
+            popover.hidden = true;
+            popover.style.left = '';
+            popover.style.top = '';
+            popover.style.visibility = '';
+        });
+        root.querySelectorAll('[data-game-action-anchor]').forEach((anchor) => {
+            anchor.classList.remove('is-open');
+            const btn = anchor.querySelector('[data-game-action]');
+            if (btn) {
+                btn.setAttribute('aria-expanded', 'false');
+            }
+        });
+    };
+
+    const openPopover = (action) => {
+        const anchor = root.querySelector(`[data-game-action-anchor="${action}"]`);
+        const popover = anchor?.querySelector('[data-game-popover]');
+        if (!anchor || !popover) {
+            return;
+        }
+        closeAll();
+        anchor.classList.add('is-open');
+        const btn = anchor.querySelector('[data-game-action]');
+        if (btn) {
+            btn.setAttribute('aria-expanded', 'true');
+        }
+        positionPopover(anchor, popover);
+        const focusable = popover.querySelector(
+            'input:not([type="hidden"]), select, textarea, button:not([type="submit"])'
+        );
+        if (focusable && typeof focusable.focus === 'function') {
+            focusable.focus();
+        }
+    };
+
+    root.querySelectorAll('[data-game-action]').forEach((btn) => {
+        btn.addEventListener('click', (event) => {
+            event.stopPropagation();
+            const action = btn.getAttribute('data-game-action') || '';
+            const anchor = btn.closest('[data-game-action-anchor]');
+            const popover = anchor?.querySelector('[data-game-popover]');
+            if (popover && !popover.hidden) {
+                closeAll();
+                return;
+            }
+            openPopover(action);
+        });
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!root.contains(event.target)) {
+            const openPopoverEl = root.querySelector('[data-game-popover]:not([hidden])');
+            if (openPopoverEl && !openPopoverEl.contains(event.target)) {
+                closeAll();
+            }
+        }
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape') {
+            closeAll();
+        }
+    });
+
+    window.addEventListener('resize', () => {
+        const openAnchor = root.querySelector('[data-game-action-anchor].is-open');
+        const openPopoverEl = openAnchor?.querySelector('[data-game-popover]');
+        if (openAnchor && openPopoverEl && !openPopoverEl.hidden) {
+            positionPopover(openAnchor, openPopoverEl);
+        }
+    });
+
+    const openOnLoad = root.getAttribute('data-popover-open');
+    if (openOnLoad) {
+        openPopover(openOnLoad);
+    }
 }

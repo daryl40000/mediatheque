@@ -2,7 +2,7 @@
 
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 
-**Version : 0.7.10**
+**Version : 0.7.11**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -70,6 +70,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.11** | Fiche jeu : actions en bulles, temps manuel Battle.net, stats temps total / Steam |
 | **0.7.10** | Fusion fiches catalogue, import Steam utilisateur, fiche catalogue jeu, correctifs saga |
 | **0.7.9** | Import Steam, refonte fiche jeu, stats temps de jeu, maintenance doublons légitimes |
 | **0.7.81** | Qualité code : moteur autocomplétion JS partagé, nettoyage CSS (CodeFactor), lisibilité PHP |

@@ -34,8 +34,8 @@ if (!$showBulkSelect && isset($existingFranchises)) {
                 <?php $sortHeader('Support', 'support'); ?>
                 <?php $sortHeader('Note', 'note'); ?>
                 <?php $sortHeader('Fini le', 'finished_at'); ?>
-                <?php if (Moncine\GameSteamStatsRepository::isAvailable()): ?>
-                <?php $sortHeader('Temps Steam', 'steam_playtime'); ?>
+                <?php if (Moncine\GamePlaytime::isAvailable()): ?>
+                <?php $sortHeader('Temps de jeu', 'steam_playtime'); ?>
                 <?php endif; ?>
             </tr>
         </thead>
@@ -103,9 +103,16 @@ if (!$showBulkSelect && isset($existingFranchises)) {
                     <td><?= (string) ($game['finished_at_label'] ?? '') !== ''
                         ? Moncine\View::escape((string) $game['finished_at_label'])
                         : '—' ?></td>
-                    <?php if (Moncine\GameSteamStatsRepository::isAvailable()): ?>
-                    <td class="<?= !empty($game['steam_never_played']) ? 'text-muted' : '' ?>">
-                        <?= Moncine\View::escape((string) ($game['steam_playtime_label'] ?? '—')) ?>
+                    <?php if (Moncine\GamePlaytime::isAvailable()): ?>
+                    <td class="<?= !empty($game['never_played']) ? 'text-muted' : '' ?>">
+                        <?php
+                        $playtimeMinutes = (int) ($game['playtime_minutes'] ?? 0);
+                        echo Moncine\View::escape(
+                            $playtimeMinutes > 0
+                                ? (string) ($game['playtime_label'] ?? Moncine\GamePlaytime::format($playtimeMinutes))
+                                : '—'
+                        );
+                        ?>
                     </td>
                     <?php endif; ?>
                 </tr>

@@ -44,8 +44,8 @@ $spineHeightPx = Moncine\View::gameShelfSpineHeightPx();
         <?php $shelfSortLink('Note', 'note'); ?>
         <?php $shelfSortLink('Studio', 'studio'); ?>
         <?php $shelfSortLink('Fini le', 'finished_at'); ?>
-        <?php if (Moncine\GameSteamStatsRepository::isAvailable()): ?>
-        <?php $shelfSortLink('Temps Steam', 'steam_playtime'); ?>
+        <?php if (Moncine\GamePlaytime::isAvailable()): ?>
+        <?php $shelfSortLink('Temps de jeu', 'steam_playtime'); ?>
         <?php endif; ?>
     </nav>
 </div>

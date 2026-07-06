@@ -41,7 +41,7 @@ if ($linuxBadge === '' && !empty($game['linux_not_supported'])) {
         <p><a href="<?= Moncine\View::escape($listBackUrl) ?>" class="btn btn-secondary btn-sm">← Retour à la liste</a></p>
 
         <?php if ($saved): ?>
-            <div class="alert alert-success">Jeu enregistré.</div>
+            <div class="alert alert-success">Exemplaire enregistré.</div>
         <?php endif; ?>
         <?php if (isset($_GET['promoted']) && (string) $_GET['promoted'] === '1'): ?>
             <div class="alert alert-success">Jeu ajouté à votre collection.</div>
@@ -82,12 +82,7 @@ if ($linuxBadge === '' && !empty($game['linux_not_supported'])) {
             <p class="hint film-wishlist-badge">Ce jeu est dans vos envies (pas encore dans votre collection).</p>
         <?php endif; ?>
 
-        <?php if (!empty($canManageCatalog)): ?>
-            <p class="game-detail-page__toolbar">
-                <a href="<?= Moncine\View::escape(Moncine\View::gameEditUrl((int) ($game['id'] ?? 0))) ?>"
-                   class="btn btn-secondary btn-sm">Modifier la fiche</a>
-            </p>
-        <?php endif; ?>
+        <?php // Actions centralisées sous le temps de jeu (sidebar). ?>
 
         <article class="film-detail game-detail<?= $posterSrc !== '' ? ' film-detail--with-poster' : '' ?>">
             <?php require MONCINE_ROOT . '/templates/_game_detail_sidebar.php'; ?>
@@ -123,10 +118,6 @@ if ($linuxBadge === '' && !empty($game['linux_not_supported'])) {
                     <?php endif; ?>
                 </header>
 
-                <?php if (!$isWishlist || !empty($monRessenti)): ?>
-                    <?php require MONCINE_ROOT . '/templates/_game_detail_ressenti_block.php'; ?>
-                <?php endif; ?>
-
                 <section class="game-detail__facts" aria-labelledby="game-facts-heading">
                     <h2 id="game-facts-heading" class="game-detail__section-title">Détails</h2>
                     <?php require MONCINE_ROOT . '/templates/_game_detail_facts_columns.php'; ?>
@@ -150,33 +141,6 @@ if ($linuxBadge === '' && !empty($game['linux_not_supported'])) {
                     ?>
                     <section class="game-detail__related" aria-label="Jeux liés">
                         <?php require MONCINE_ROOT . '/templates/_game_related_posters.php'; ?>
-                    </section>
-                <?php endif; ?>
-
-                <?php if (!$isWishlist && Moncine\GameCompletionRepository::isAvailable()): ?>
-                    <section class="game-detail__completion-form">
-                        <?php if (!empty($gameCompletions)): ?>
-                            <details class="game-detail__completion-history">
-                                <summary class="game-detail__section-title game-detail__section-title--link">
-                                    Historique des fins (<?= count($gameCompletions) ?>)
-                                </summary>
-                                <ul class="viewings-list">
-                                    <?php foreach ($gameCompletions as $completion):
-                                        $cDate = Moncine\HistoriqueRepository::formatDateVue((string) ($completion['completed_at'] ?? ''));
-                                        ?>
-                                        <li class="viewings-list__item">
-                                            <span class="viewings-list__info"><?= Moncine\View::escape($cDate) ?></span>
-                                        </li>
-                                    <?php endforeach; ?>
-                                </ul>
-                            </details>
-                        <?php endif; ?>
-                        <details class="game-detail__mark-finished">
-                            <summary class="btn btn-secondary btn-sm">Marquer comme terminé</summary>
-                            <div class="game-detail__mark-finished-form">
-                                <?php require MONCINE_ROOT . '/templates/_marquer_jeu_fini_form.php'; ?>
-                            </div>
-                        </details>
                     </section>
                 <?php endif; ?>
 

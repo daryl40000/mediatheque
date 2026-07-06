@@ -19,7 +19,7 @@ final class GameCatalogSql
         'genre' => 'oj.genre COLLATE FRENCH_NOCASE',
         'note' => 'note_max',
         'finished_at' => 'derniere_completion',
-        'steam_playtime' => 'COALESCE(gss.playtime_minutes, 0)',
+        'steam_playtime' => 'playtime_total',
     ];
 
     /** @return list<string> */
@@ -29,7 +29,7 @@ final class GameCatalogSql
         if (GameSchema::hasIgdbMetadataColumns()) {
             array_splice($columns, 3, 0, ['franchise']);
         }
-        if (GameSteamStatsRepository::isAvailable()) {
+        if (GameSteamStatsRepository::isAvailable() || GameSchema::hasManualPlaytimeColumn()) {
             $columns[] = 'steam_playtime';
         }
 
@@ -59,8 +59,12 @@ final class GameCatalogSql
             return self::SORT_COLUMNS['titre'];
         }
 
-        if ($sortBy === 'steam_playtime' && !GameSteamStatsRepository::isAvailable()) {
+        if ($sortBy === 'steam_playtime' && !GamePlaytime::isAvailable()) {
             return self::SORT_COLUMNS['titre'];
+        }
+
+        if ($sortBy === 'steam_playtime') {
+            return GamePlaytime::totalMinutesSql();
         }
 
         return self::SORT_COLUMNS[$sortBy] ?? self::SORT_COLUMNS['titre'];
@@ -81,11 +85,12 @@ final class GameCatalogSql
             : '';
         $nonPretable = GameSchema::hasNonPretableColumn() ? ', b.non_pretable' : '';
         $ownedPlatforms = GameSchema::hasOwnedPlatformsColumn() ? ', b.owned_platforms' : '';
+        $manualPlaytime = GameSchema::hasManualPlaytimeColumn() ? ', b.manual_playtime_minutes' : '';
         $platformsCol = GameSchema::hasPlatformsColumn() ? ', oj.platforms' : '';
 
         return 'b.id, b.user_id, b.foyer_id, b.oeuvre_id, b.statut, b.support_physique, b.created_at, b.saga_ordre,'
             . ' o.titre, o.titre_original, o.annee, o.poster_url, o.synopsis,'
-            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $platformsCol . $edition . $extension . $igdb . $igdbMeta . $linux . $nonPretable . $ownedPlatforms;
+            . ' oj.studio, oj.editeur, oj.genre, oj.platform, oj.is_digital' . $platformsCol . $edition . $extension . $igdb . $igdbMeta . $linux . $nonPretable . $ownedPlatforms . $manualPlaytime;
     }
 
     public static function selectGameHistoryExtras(): string

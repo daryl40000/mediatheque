@@ -729,4 +729,81 @@ final class GameRepositoryTest extends MoncineTestCase
         $this->assertContains('Switch Filter Test', $titles);
         $this->assertNotContains('Steam Filter Test', $titles);
     }
+
+    public function testUpdateCatalogByOeuvreIdPreservesEditionFieldsWithoutLibraryEntry(): void
+    {
+        if (!GameSchema::hasEditionColumns()) {
+            $this->markTestSkipped('Colonnes éditions absentes.');
+        }
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new GameRepository();
+
+        $steamStores = json_encode([['store' => GameDigitalStore::STEAM, 'url' => 'https://store.steampowered.com/app/1']], JSON_UNESCAPED_UNICODE);
+        $oeuvreId = $repo->createCatalogOnly([
+            'titre' => 'Catalog Edit Only Test',
+            'platform' => GamePlatform::PC,
+            'platforms' => [GamePlatform::PC],
+            'physical_supports' => '',
+            'digital_stores' => $steamStores,
+            'is_digital' => true,
+        ]);
+        $this->assertIsInt($oeuvreId);
+
+        $library = (new \Moncine\BibliothequeRepository())->findByOeuvreId($oeuvreId, $userId, $foyerId);
+        $this->assertNull($library);
+
+        $result = $repo->updateCatalogByOeuvreId($oeuvreId, [
+            'titre' => 'Catalog Edit Only Test — mis à jour',
+            'platform' => GamePlatform::PC,
+            'platforms' => [GamePlatform::PC],
+            'studio' => 'Studio Test',
+        ]);
+        $this->assertTrue($result === true);
+
+        $catalog = $repo->findCatalogByOeuvreId($oeuvreId);
+        $this->assertNotNull($catalog);
+        $this->assertSame('Catalog Edit Only Test — mis à jour', $catalog['titre']);
+        $this->assertTrue(!empty($catalog['is_digital']));
+        $this->assertStringContainsString(GameDigitalStore::STEAM, (string) ($catalog['digital_stores'] ?? ''));
+
+        $libraryAfter = (new \Moncine\BibliothequeRepository())->findByOeuvreId($oeuvreId, $userId, $foyerId);
+        $this->assertNull($libraryAfter);
+    }
+
+    public function testUpdateLibraryExemplaireSetsOwnedPlatformsAndEditions(): void
+    {
+        if (!GameSchema::hasEditionColumns() || !GameSchema::hasOwnedPlatformsColumn()) {
+            $this->markTestSkipped('Colonnes exemplaire absentes.');
+        }
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new GameRepository();
+
+        $bibId = $repo->createWithLibrary([
+            'titre' => 'Exemplaire Edit Test',
+            'platform' => GamePlatform::PC,
+            'platforms' => [GamePlatform::PC],
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        $result = $repo->updateLibraryExemplaire($bibId, [
+            'owned_platforms' => [GamePlatform::PC],
+            'physical_supports' => [GamePhysicalSupport::CD_DVD],
+            'is_digital' => '1',
+            'digital_pc_stores' => [GameDigitalStore::STEAM],
+            'digital_store_url' => [GameDigitalStore::STEAM => 'https://store.steampowered.com/app/42'],
+            'tested_on_linux' => '1',
+        ], $userId, $foyerId);
+        $this->assertTrue($result === true);
+
+        $game = $repo->findByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($game);
+        $this->assertContains(GamePlatform::PC, $game['owned_platform_list'] ?? []);
+        $this->assertContains('CD / DVD', $game['physical_support_labels'] ?? []);
+        $this->assertTrue(!empty($game['has_digital_edition']));
+        $this->assertTrue(!empty($game['tested_on_linux']));
+    }
 }

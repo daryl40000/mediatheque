@@ -78,20 +78,7 @@ final class GameRowMapper
 
     public static function formatSteamPlaytime(int $minutes): string
     {
-        if ($minutes <= 0) {
-            return 'Jamais joué';
-        }
-
-        $hours = intdiv($minutes, 60);
-        $mins = $minutes % 60;
-        if ($hours <= 0) {
-            return $mins . ' min';
-        }
-        if ($mins === 0) {
-            return $hours . ' h';
-        }
-
-        return $hours . ' h ' . $mins . ' min';
+        return GamePlaytime::format($minutes);
     }
 
     /**
@@ -131,9 +118,7 @@ final class GameRowMapper
         $row['added_at_label'] = self::formatAddedAt((string) ($row['created_at'] ?? ''));
         $row['finished_at_label'] = self::formatFinishedAt((string) ($row['derniere_completion'] ?? ''));
         $row['completion_count'] = (int) ($row['completion_count'] ?? 0);
-        $row['steam_playtime_minutes'] = (int) ($row['steam_playtime_minutes'] ?? 0);
-        $row['steam_playtime_label'] = self::formatSteamPlaytime($row['steam_playtime_minutes']);
-        $row['steam_never_played'] = $row['steam_playtime_minutes'] === 0;
+        $row = GamePlaytime::hydrateRow($row);
         $row['is_pc'] = in_array(GamePlatform::PC, GamePlatformList::ownedKeysFromRow($row), true)
             || in_array(GamePlatform::PC, GamePlatformList::catalogKeysFromRow($row), true);
         $row['tested_on_linux'] = !empty($row['tested_on_linux']);

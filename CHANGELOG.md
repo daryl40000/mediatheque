@@ -9,19 +9,31 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
----
+## [0.7.11] — 2026-07-06
 
----
+**Fiche jeu : actions en bulles, temps manuel, stats temps total / Steam**
 
----
+### Ajouté
 
----
+- **Temps de jeu manuel** : colonne `bibliotheque.manual_playtime_minutes` (migration `061`) pour Battle.net, Epic hors sync, etc. — classe `GamePlaytime`, somme **Steam + manuel** partout où le temps est affiché.
+- **Fiche jeu — actions rapides** : quatre icônes sous la jaquette (noter, temps, modifier exemplaire, marquer terminé) ouvrant des **bulles** à droite, sans sections inline encombrantes sur la page.
+- **Statistiques jeux** : deux cartes distinctes — **temps de jeu total** et **temps Steam** (synchro uniquement).
 
----
+### Modifié
 
----
+- **Liste Mes jeux** : colonne temps de jeu = **total** (Steam + saisie manuelle) ; affichage aussi en vue vignettes et au survol bibliothèque.
+- **Fiche jeu** : retrait des blocs inline « Mon ressenti », « Marquer terminé » et « Modifier mon exemplaire » (contenu déplacé dans les bulles) ; icône **coche** pour « terminé ».
+- **Édition catalogue jeu** : formulaire admin sans pollution des champs « mon exemplaire » (`$catalogEditOnly`).
 
----
+### Corrigé
+
+- **Édition fiche catalogue jeu** : enregistrement admin ne modifiait plus par erreur l’exemplaire personnel (plateformes / Steam).
+
+### Technique
+
+- `www/modifier-jeu-exemplaire.php` (exemplaire + scope `playtime`), `GameRepository::updateLibraryPlaytimeOnly()`.
+- Partial `templates/_game_detail_action_popovers.php` ; JS `initGameDetailQuickActions()` (positionnement bulles, fermeture Échap / clic extérieur).
+- Tests : `GamePlaytimeTest`, `GameCollectionStatsSteamTest` (total vs Steam).
 
 ---
 

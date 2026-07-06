@@ -1,8 +1,14 @@
 <?php
 /**
- * Colonne gauche de la fiche jeu : jaquette, statut, supports, temps Steam.
+ * Colonne gauche de la fiche jeu : jaquette, statut, supports, temps de jeu.
  *
  * @var array<string, mixed> $game
+ * @var int $gameId
+ * @var int|null $monRessenti
+ * @var string $popoverOpen
+ * @var string $saveError
+ * @var bool $canManageCatalog
+ * @var array<string, string> $platformChoices
  * @var int $completionCount
  * @var list<array<string, mixed>> $gameCompletions
  */
@@ -11,10 +17,12 @@ $gameCompletions = $gameCompletions ?? [];
 $posterSrc = Moncine\View::posterSrc($game['poster_url'] ?? null);
 $iconKeys = $game['edition_icon_keys'] ?? Moncine\GameEditionIcons::iconKeys($game);
 $supplementalText = Moncine\GameEditionIcons::supplementalText($game);
-$steamLabel = trim((string) ($game['steam_playtime_label'] ?? ''));
-$showSteamPlaytime = Moncine\GameSteamStatsRepository::isAvailable()
-    && $steamLabel !== ''
-    && $steamLabel !== '—';
+$playtimeLabel = trim((string) ($game['playtime_label'] ?? ''));
+$showPlaytime = Moncine\GamePlaytime::isAvailable()
+    && $playtimeLabel !== ''
+    && $playtimeLabel !== '—'
+    && empty($game['never_played']);
+$isWishlist = ((string) ($game['statut'] ?? '')) === Moncine\LibraryStatut::WISHLIST;
 ?>
 <aside class="game-detail-sidebar" aria-label="Jaquette et infos rapides">
     <?php if ($posterSrc !== ''): ?>
@@ -48,10 +56,14 @@ $showSteamPlaytime = Moncine\GameSteamStatsRepository::isAvailable()
         </div>
     <?php endif; ?>
 
-    <?php if ($showSteamPlaytime): ?>
-        <p class="game-detail-sidebar__playtime<?= !empty($game['steam_never_played']) ? ' text-muted' : '' ?>">
-            <span class="game-detail-sidebar__playtime-label">Temps Steam</span>
-            <strong><?= Moncine\View::escape($steamLabel) ?></strong>
+    <?php if ($showPlaytime): ?>
+        <p class="game-detail-sidebar__playtime">
+            <span class="game-detail-sidebar__playtime-label">Temps de jeu</span>
+            <strong><?= Moncine\View::escape($playtimeLabel) ?></strong>
         </p>
+    <?php endif; ?>
+
+    <?php if (!$isWishlist): ?>
+        <?php require MONCINE_ROOT . '/templates/_game_detail_action_popovers.php'; ?>
     <?php endif; ?>
 </aside>

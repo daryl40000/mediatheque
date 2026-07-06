@@ -34,10 +34,20 @@ final class GameCatalogUpdater
         $platformFields = GameFormPayload::resolveCatalogPlatformFields($data);
         $platform = $platformFields['platform'];
         $platformsCsv = $platformFields['platforms'];
-        $physicalSupports = (string) ($data['physical_supports'] ?? '');
-        $digitalStores = (string) ($data['digital_stores'] ?? '');
-        $isDigital = !empty($data['is_digital'])
-            || GameDigitalStore::hasDigitalEdition($digitalStores, false);
+        $existingEdition = $this->loadEditionFieldsIfNeeded($oeuvreId, $data);
+        $physicalSupports = array_key_exists('physical_supports', $data)
+            ? (string) $data['physical_supports']
+            : (string) ($existingEdition['physical_supports'] ?? '');
+        $digitalStores = array_key_exists('digital_stores', $data)
+            ? (string) $data['digital_stores']
+            : (string) ($existingEdition['digital_stores'] ?? '');
+        if (array_key_exists('is_digital', $data)) {
+            $isDigital = !empty($data['is_digital'])
+                || GameDigitalStore::hasDigitalEdition($digitalStores, false);
+        } else {
+            $isDigital = !empty($existingEdition['is_digital'])
+                || GameDigitalStore::hasDigitalEdition($digitalStores, false);
+        }
         $relationError = GameRelations::validateFlags($data, $oeuvreId);
         if ($relationError !== null) {
             return $relationError;
@@ -135,5 +145,38 @@ final class GameCatalogUpdater
             GameRelations::writeParams($data),
             [$oeuvreId]
         ));
+    }
+
+    /**
+     * @param array<string, mixed> $data
+     * @return array{physical_supports: string, digital_stores: string, is_digital: bool}|null
+     */
+    private function loadEditionFieldsIfNeeded(int $oeuvreId, array $data): ?array
+    {
+        if (!GameSchema::hasEditionColumns()) {
+            return null;
+        }
+        if (
+            array_key_exists('physical_supports', $data)
+            || array_key_exists('digital_stores', $data)
+            || array_key_exists('is_digital', $data)
+        ) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT physical_supports, digital_stores, is_digital FROM oeuvre_jeu WHERE oeuvre_id = ?'
+        );
+        $stmt->execute([$oeuvreId]);
+        $row = $stmt->fetch(\PDO::FETCH_ASSOC);
+        if (!is_array($row)) {
+            return null;
+        }
+
+        return [
+            'physical_supports' => (string) ($row['physical_supports'] ?? ''),
+            'digital_stores' => (string) ($row['digital_stores'] ?? ''),
+            'is_digital' => !empty($row['is_digital']),
+        ];
     }
 }

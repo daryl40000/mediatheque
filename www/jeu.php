@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\GameAttachmentRepository;
 use Moncine\GameCompletionRepository;
+use Moncine\GamePlatform;
 use Moncine\GameRepository;
 use Moncine\HistoriqueRepository;
 use Moncine\IgdbConfig;
@@ -62,6 +63,19 @@ $socialRessentis = !$isWishlist && $oeuvreId > 0
     : ['foyer' => [], 'friends' => []];
 
 $saved = isset($_GET['saved']);
+$saveError = trim((string) ($_GET['save_error'] ?? ''));
+$allowedPopovers = ['note', 'playtime', 'edit', 'finish'];
+$popoverOpen = '';
+if (!empty($_GET['note_error'])) {
+    $popoverOpen = 'note';
+} elseif (!empty($_GET['fin_error'])) {
+    $popoverOpen = 'finish';
+} elseif (isset($_GET['popover']) && in_array((string) $_GET['popover'], $allowedPopovers, true)) {
+    $popoverOpen = (string) $_GET['popover'];
+} elseif (isset($_GET['edit']) || $saveError !== '') {
+    $popoverOpen = 'edit';
+}
+$editOpen = $popoverOpen === 'edit';
 $enrichStatus = null;
 $enrichMessage = '';
 if (isset($_GET['enrich'])) {
@@ -143,6 +157,10 @@ View::render('jeu', [
     'originalGame' => $originalGame,
     'remakes' => $remakes,
     'saved' => $saved,
+    'saveError' => $saveError,
+    'editOpen' => $editOpen,
+    'popoverOpen' => $popoverOpen,
+    'platformChoices' => GamePlatform::choices(),
     'canManageCatalog' => UserContext::canManageCatalog(),
     'showIgdbEnrich' => UserContext::canManageCatalog() && GameRepository::hasIgdbColumns(),
     'hasIgdbCredentials' => IgdbConfig::hasCredentials() && GameRepository::hasIgdbColumns(),

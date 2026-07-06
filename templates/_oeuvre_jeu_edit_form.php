@@ -32,15 +32,20 @@ $catalogPage = (int) ($catalogPage ?? 1);
     <?php endif; ?>
 
     <form method="post" action="/enregistrer-modification-oeuvre-jeu.php" class="film-edit-form import-form"
-          enctype="multipart/form-data" data-game-catalog-url="/rechercher-jeux-catalogue.php">
+          enctype="multipart/form-data" data-game-catalog-url="/rechercher-jeux-catalogue.php"
+          data-catalog-edit-only="1" data-can-manage-catalog="1">
         <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
         <input type="hidden" name="oeuvre_id" value="<?= (int) $oeuvreId ?>">
+        <input type="hidden" name="catalog_edit_only" value="1">
         <input type="hidden" name="catalog_q" value="<?= Moncine\View::escape($catalogSearch) ?>">
         <input type="hidden" name="catalog_sort" value="<?= Moncine\View::escape($catalogSort) ?>">
         <input type="hidden" name="catalog_dir" value="<?= Moncine\View::escape($catalogDir) ?>">
         <input type="hidden" name="catalog_page" value="<?= max(1, $catalogPage) ?>">
 
-        <?php require MONCINE_ROOT . '/templates/_game_form_fields.php'; ?>
+        <?php
+        $catalogEditOnly = true;
+        require MONCINE_ROOT . '/templates/_game_form_fields.php';
+        ?>
 
         <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
     </form>

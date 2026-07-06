@@ -11,7 +11,7 @@ Synchroniser la bibliothèque Steam d’un utilisateur connecté vers **Mes jeux
 3. Enrichissement catalogue via le pipeline IGDB existant quand une correspondance existe
 4. Fiche catalogue minimale (titre Steam + PC + magasin Steam) sinon
 5. Fusion automatique des magasins démat (pas de doublon si le jeu existe déjà via GOG, Epic, etc.)
-6. Stockage et affichage du **temps de jeu Steam** (distinct de « Fini le » / `game_completion`)
+6. Stockage du **temps de jeu Steam** et affichage du **temps total** (Steam + saisie manuelle sur la fiche jeu — **0.7.11**)
 
 ## Prérequis
 
@@ -68,5 +68,6 @@ Synchroniser la bibliothèque Steam d’un utilisateur connecté vers **Mes jeux
 
 - Pas de synchronisation automatique planifiée (import manuel)
 - Pas d’import des succès Steam
-- Le temps de jeu n’est pas triable dans la liste
 - Titre catalogue en doublon strict : création refusée si un jeu du même titre existe déjà
+
+Le temps affiché en liste et sur la fiche est le **total** (Steam + manuel). Le tri par « Temps de jeu » utilise ce total. Les statistiques distinguent cumul **total** et cumul **Steam seul** (**0.7.11**).

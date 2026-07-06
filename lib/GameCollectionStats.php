@@ -47,10 +47,13 @@ final class GameCollectionStats
         $completionsTotal = GameCompletionRepository::isAvailable()
             ? (new GameCompletionRepository())->countTotalCompletions($userId, $foyerId)
             : 0;
-        $steamPlaytimeMinutesTotal = GameSteamStatsRepository::isAvailable()
-            ? $this->totalSteamPlaytimeMinutes($userId, $foyerId)
+        $playtimeMinutesTotal = GamePlaytime::isAvailable()
+            ? $this->totalPlaytimeMinutes($userId, $foyerId)
             : 0;
-        $topPlayedGames = GameSteamStatsRepository::isAvailable()
+        $steamPlaytimeMinutesTotal = GameSteamStatsRepository::isAvailable()
+            ? $this->totalSteamOnlyPlaytimeMinutes($userId, $foyerId)
+            : 0;
+        $topPlayedGames = GamePlaytime::isAvailable()
             ? $this->topPlayedGames($userId, $foyerId, 10)
             : [];
 
@@ -70,6 +73,8 @@ final class GameCollectionStats
                 : 0.0,
             'steam_playtime_minutes_total' => $steamPlaytimeMinutesTotal,
             'steam_playtime_duration_label' => CollectionStats::formatViewingDuration($steamPlaytimeMinutesTotal),
+            'playtime_minutes_total' => $playtimeMinutesTotal,
+            'playtime_duration_label' => CollectionStats::formatViewingDuration($playtimeMinutesTotal),
             'steam_playtime_games_count' => count($topPlayedGames),
             'top_played_games' => $topPlayedGames,
             'platform_breakdown' => $platformBreakdown,
@@ -100,6 +105,8 @@ final class GameCollectionStats
             'finished_percent' => 0.0,
             'steam_playtime_minutes_total' => 0,
             'steam_playtime_duration_label' => CollectionStats::formatViewingDuration(0),
+            'playtime_minutes_total' => 0,
+            'playtime_duration_label' => CollectionStats::formatViewingDuration(0),
             'steam_playtime_games_count' => 0,
             'top_played_games' => [],
         ];
@@ -419,7 +426,40 @@ final class GameCollectionStats
         return (int) $stmt->fetchColumn();
     }
 
-    private function totalSteamPlaytimeMinutes(int $userId, int $foyerId): int
+    private function totalPlaytimeMinutes(int $userId, int $foyerId): int
+    {
+        $steamJoin = GameSteamStatsRepository::isAvailable()
+            ? ' LEFT JOIN game_steam_stats gss ON gss.bibliotheque_id = b.id'
+            : '';
+        $steamSum = GameSteamStatsRepository::isAvailable()
+            ? 'COALESCE(gss.playtime_minutes, 0)'
+            : '0';
+        $manualSum = GameSchema::hasManualPlaytimeColumn()
+            ? 'COALESCE(b.manual_playtime_minutes, 0)'
+            : '0';
+
+        $params = [
+            'game_domain' => MediaDomain::JEU,
+            'collection' => LibraryStatut::COLLECTION,
+            'foyer_id' => $foyerId,
+        ];
+
+        $stmt = $this->db->prepare(
+            'SELECT COALESCE(SUM(' . $steamSum . ' + ' . $manualSum . '), 0)
+             FROM bibliotheque b
+             INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+             INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . $steamJoin . '
+             WHERE o.media_domain = :game_domain
+               AND b.statut = :collection
+               AND b.foyer_id = :foyer_id'
+        );
+        $stmt->execute($params);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    private function totalSteamOnlyPlaytimeMinutes(int $userId, int $foyerId): int
     {
         if (!GameSteamStatsRepository::isAvailable()) {
             return 0;
@@ -432,11 +472,11 @@ final class GameCollectionStats
         ];
 
         $stmt = $this->db->prepare(
-            'SELECT COALESCE(SUM(gss.playtime_minutes), 0)
+            'SELECT COALESCE(SUM(COALESCE(gss.playtime_minutes, 0)), 0)
              FROM bibliotheque b
              INNER JOIN oeuvres o ON o.id = b.oeuvre_id
              INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id
-             INNER JOIN game_steam_stats gss ON gss.bibliotheque_id = b.id
+             LEFT JOIN game_steam_stats gss ON gss.bibliotheque_id = b.id
              WHERE o.media_domain = :game_domain
                AND b.statut = :collection
                AND b.foyer_id = :foyer_id'
@@ -451,11 +491,22 @@ final class GameCollectionStats
      */
     private function topPlayedGames(int $userId, int $foyerId, int $limit): array
     {
-        if (!GameSteamStatsRepository::isAvailable() || $limit <= 0) {
+        if (!GamePlaytime::isAvailable() || $limit <= 0) {
             return [];
         }
 
         $limit = max(1, min($limit, 25));
+        $steamJoin = GameSteamStatsRepository::isAvailable()
+            ? ' LEFT JOIN game_steam_stats gss ON gss.bibliotheque_id = b.id'
+            : '';
+        $steamExpr = GameSteamStatsRepository::isAvailable()
+            ? 'COALESCE(gss.playtime_minutes, 0)'
+            : '0';
+        $manualExpr = GameSchema::hasManualPlaytimeColumn()
+            ? 'COALESCE(b.manual_playtime_minutes, 0)'
+            : '0';
+        $totalExpr = '(' . $steamExpr . ' + ' . $manualExpr . ')';
+
         $params = [
             'game_domain' => MediaDomain::JEU,
             'collection' => LibraryStatut::COLLECTION,
@@ -463,16 +514,16 @@ final class GameCollectionStats
         ];
 
         $stmt = $this->db->prepare(
-            'SELECT b.id AS bib_id, o.titre, o.titre_original, gss.playtime_minutes
+            'SELECT b.id AS bib_id, o.titre, o.titre_original, ' . $totalExpr . ' AS playtime_minutes
              FROM bibliotheque b
              INNER JOIN oeuvres o ON o.id = b.oeuvre_id
-             INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id
-             INNER JOIN game_steam_stats gss ON gss.bibliotheque_id = b.id
+             INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id'
+            . $steamJoin . '
              WHERE o.media_domain = :game_domain
                AND b.statut = :collection
                AND b.foyer_id = :foyer_id
-               AND gss.playtime_minutes > 0
-             ORDER BY gss.playtime_minutes DESC, o.titre COLLATE FRENCH_NOCASE ASC
+               AND ' . $totalExpr . ' > 0
+             ORDER BY playtime_minutes DESC, o.titre COLLATE FRENCH_NOCASE ASC
              LIMIT ' . $limit
         );
         $stmt->execute($params);
@@ -494,7 +545,7 @@ final class GameCollectionStats
                 'bib_id' => $bibId,
                 'titre' => $titre,
                 'playtime_minutes' => $minutes,
-                'playtime_label' => GameRowMapper::formatSteamPlaytime($minutes),
+                'playtime_label' => GamePlaytime::format($minutes),
                 'url' => View::gameUrl($bibId),
             ];
         }

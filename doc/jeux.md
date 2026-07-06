@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.7.0** · **Date : 2026-06-16**
+**Version : 0.7.11** · **Date : 2026-07-06**
 
 ## Objectif
 
@@ -178,6 +178,44 @@ Même principe que « marquer un film comme vu » :
 
 Handler : `/marquer-jeu-fini.php` · Classe : `GameCompletionRepository`.
 
+### Fiche jeu — actions en bulles (**0.7.11**)
+
+Sur `/jeu.php`, quatre **icônes** sous la jaquette (sidebar) remplacent les anciens blocs inline :
+
+| Icône | Action |
+|-------|--------|
+| Étoile | Noter ou modifier son **ressenti** |
+| Chrono | Saisir le **temps de jeu manuel** |
+| Crayon | Modifier **mon exemplaire** (plateformes, supports, démat) |
+| Coche | **Marquer comme terminé** (+ historique des fins dans la bulle) |
+
+Les formulaires s’ouvrent dans une **bulle à droite** des icônes (sans faire défiler toute la page). Fermeture : clic ailleurs, Échap, ou second clic sur l’icône.
+
+Partial : `templates/_game_detail_action_popovers.php` · JS : `initGameDetailQuickActions()` dans `app.js`.
+
+### Temps de jeu manuel (**0.7.11**)
+
+Pour les plateformes **sans synchro automatique** (Battle.net, temps Epic non importé, etc.) :
+
+| Élément | Détail |
+|---------|--------|
+| Colonne | `bibliotheque.manual_playtime_minutes` (migration **061**) |
+| Saisie | Bulle chrono sur la fiche jeu, ou formulaire exemplaire |
+| Affichage | **Total** = temps Steam (`game_steam_stats`) + temps manuel |
+| Handler dédié | `/modifier-jeu-exemplaire.php` avec `scope=playtime` |
+| Classe | `GamePlaytime` (formatage, parsing formulaire, SQL tri) |
+
+Exemple : WoW — saisir le temps affiché en jeu (`/played`, profil Battle.net). Le temps Steam reste additionné séparément si le jeu est aussi sur Steam.
+
+### Statistiques temps de jeu (**0.7.11**)
+
+Page `/statistiques.php` (onglet Jeux) — **deux cartes** :
+
+1. **Temps de jeu total** — Steam + saisies manuelles
+2. **Temps Steam** — synchronisation Steam uniquement
+
+Le top « Jeux les plus joués » classe selon le **temps total**.
+
 ### Icônes support / magasin (**0.6.9**)
 
 Fichiers dans `www/assets/img/game-editions/` : `cd_dvd`, `disquette`, `steam`, `gog`, `epic` (PNG ou SVG). La **disquette/cartouche** utilise une icône dédiée (CF2) en listes et sur la fiche jeu (section Exemplaires). Classe : `GameEditionIcons`.
@@ -248,6 +286,7 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | `/rechercher-jeux-catalogue.php` | API JSON autocomplétion catalogue |
 | `/marquer-joue.php` | Enregistrer une note sur 10 |
 | `/marquer-jeu-fini.php` | Marquer un jeu comme terminé (date, plusieurs fois) |
+| `/modifier-jeu-exemplaire.php` | Enregistrer mon exemplaire ou le temps manuel seul (`scope=playtime`) |
 | `/supprimer-jeu.php` | Retirer un jeu de la collection ou des envies |
 | `/promouvoir-jeu-collection.php` | Passer une envie en collection (« J’ai acheté ») |
 | `/enregistrer-fichier-jeu.php` | Ajouter un fichier joint (POST) |
@@ -272,6 +311,7 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | `GameGenre` | Genres réutilisables (tags, comme magazines) |
 | `GameCollectionStats` | Statistiques collection jeux |
 | `GameCompletionRepository` | Fins de partie (date, historique, stats) |
+| `GamePlaytime` | Temps total Steam + manuel, formatage, tri SQL (**0.7.11**) |
 | `GamePlatform` | Liste et normalisation des plateformes (délègue au registre) |
 | `GamePlatformRegistry` | Lecture plateformes depuis `game_platform` (**0.6.5**) |
 | `GamePlatformAdmin` | CRUD admin plateformes (**0.6.5**) |
@@ -436,7 +476,7 @@ Quand l’onglet **Jeux** est actif, la page d’accueil (`home-jeu.php`) affich
 
 Sur `/jeux.php` :
 
-- **Colonnes triables** : titre, année, studio, genre, support, note, date d’ajout ;
+- **Colonnes triables** : titre, année, studio, genre, support, note, **fini le**, **temps de jeu** (total Steam + manuel) ;
 - **Recherche texte** : titre, studio, genre, **acronymes** (`alternative_names`) ;
 - **Trois vues** (`CollectionViewMode`) — même principe que Mes films :
   - **Liste** (défaut) ;
@@ -447,7 +487,7 @@ Styles : classes `.game-shelf-*` ; script `initGameShelfHoverPreviews()` dans `a
 
 ## Statistiques
 
-Page `/statistiques.php` (onglet Jeux) : répartition par plateforme, physique/démat, genres, décennies, sujets magazine reliés.
+Page `/statistiques.php` (onglet Jeux) : répartition par plateforme, physique/démat, genres, décennies, sujets magazine reliés, **temps de jeu total** et **temps Steam** (**0.7.11**), jeux les plus joués (selon temps total).
 
 ## Import bibliothèque GOG (à venir)
 

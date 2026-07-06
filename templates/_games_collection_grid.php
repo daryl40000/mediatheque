@@ -40,8 +40,8 @@ $gridSortLink = static function (string $label, string $column) use ($sortBy, $s
         <?php $gridSortLink('Note', 'note'); ?>
         <?php $gridSortLink('Studio', 'studio'); ?>
         <?php $gridSortLink('Fini le', 'finished_at'); ?>
-        <?php if (Moncine\GameSteamStatsRepository::isAvailable()): ?>
-        <?php $gridSortLink('Temps Steam', 'steam_playtime'); ?>
+        <?php if (Moncine\GamePlaytime::isAvailable()): ?>
+        <?php $gridSortLink('Temps de jeu', 'steam_playtime'); ?>
         <?php endif; ?>
     </nav>
 </div>
@@ -119,6 +119,11 @@ $gridSortLink = static function (string $label, string $column) use ($sortBy, $s
                             }
                             ?>
                         </div>
+                        <?php if (Moncine\GamePlaytime::isAvailable() && (int) ($game['playtime_minutes'] ?? 0) > 0): ?>
+                            <p class="collection-grid__meta collection-grid__meta--playtime">
+                                <?= Moncine\View::escape((string) ($game['playtime_label'] ?? '')) ?>
+                            </p>
+                        <?php endif; ?>
                     </div>
                 </a>
             </article>

@@ -33,7 +33,7 @@ final class PrintListHelper
         'support' => 'Support',
         'note' => 'Notes',
         'finished_at' => 'Fini le',
-        'steam_playtime' => 'Temps Steam',
+        'steam_playtime' => 'Temps de jeu',
     ];
 
     public static function sortLabel(string $sortBy): string

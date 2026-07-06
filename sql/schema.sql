@@ -181,6 +181,7 @@ CREATE TABLE IF NOT EXISTS bibliotheque (
     linux_not_supported INTEGER NOT NULL DEFAULT 0,
     non_pretable INTEGER NOT NULL DEFAULT 0,
     owned_platforms TEXT NOT NULL DEFAULT '',
+    manual_playtime_minutes INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now'))
 );
 

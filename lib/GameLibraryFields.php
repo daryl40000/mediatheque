@@ -62,4 +62,14 @@ final class GameLibraryFields
         $db->prepare('UPDATE bibliotheque SET owned_platforms = ? WHERE id = ?')
             ->execute([$ownedPlatformsCsv, $bibId]);
     }
+
+    public static function saveManualPlaytime(PDO $db, int $bibId, int $minutes): void
+    {
+        if (!GameSchema::hasManualPlaytimeColumn() || $bibId <= 0) {
+            return;
+        }
+
+        $db->prepare('UPDATE bibliotheque SET manual_playtime_minutes = ? WHERE id = ?')
+            ->execute([max(0, $minutes), $bibId]);
+    }
 }

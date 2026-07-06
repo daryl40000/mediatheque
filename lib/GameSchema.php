@@ -129,6 +129,11 @@ final class GameSchema
         return self::tableExists('game_steam_appid_map');
     }
 
+    public static function hasManualPlaytimeColumn(): bool
+    {
+        return self::hasColumn('bibliotheque', 'manual_playtime_minutes');
+    }
+
     public static function hasUserSteamIdColumn(): bool
     {
         return self::hasColumn('utilisateurs', 'steam_id');

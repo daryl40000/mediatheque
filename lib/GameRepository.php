@@ -530,6 +530,80 @@ final class GameRepository
     }
 
     /**
+     * Met à jour l’exemplaire personnel (plateformes possédées, supports, démat, Linux).
+     *
+     * @param array<string, mixed> $data
+     * @return true|string
+     */
+    public function updateLibraryExemplaire(int $bibId, array $data, int $userId, int $foyerId): bool|string
+    {
+        if (!self::isAvailable()) {
+            return 'Module jeux non disponible.';
+        }
+
+        $game = $this->findByBibId($bibId, $userId, $foyerId);
+        if ($game === null) {
+            return 'Jeu introuvable.';
+        }
+
+        $oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
+        if ($oeuvreId <= 0) {
+            return 'Fiche catalogue introuvable.';
+        }
+
+        $payload = array_merge(
+            self::editionPayloadFromPost($data),
+            self::linuxFlagsFromPost($data),
+            [
+                'owned_platforms' => $data['owned_platforms'] ?? [],
+                'non_pretable' => self::nonPretableFromPost($data),
+            ]
+        );
+
+        $this->libraryAttach()->applyDetailsAfterCatalogAttach($bibId, $oeuvreId, $payload);
+
+        if (GameSchema::hasManualPlaytimeColumn()) {
+            GameLibraryFields::saveManualPlaytime(
+                $this->db,
+                $bibId,
+                GamePlaytime::manualMinutesFromPost($data)
+            );
+        }
+
+        return true;
+    }
+
+    /**
+     * Met à jour uniquement le temps de jeu manuel (sans toucher aux plateformes ni supports).
+     *
+     * @param array<string, mixed> $data
+     * @return true|string
+     */
+    public function updateLibraryPlaytimeOnly(int $bibId, array $data, int $userId, int $foyerId): bool|string
+    {
+        if (!self::isAvailable()) {
+            return 'Module jeux non disponible.';
+        }
+
+        if (!GameSchema::hasManualPlaytimeColumn()) {
+            return 'Temps de jeu manuel non disponible.';
+        }
+
+        $game = $this->findByBibId($bibId, $userId, $foyerId);
+        if ($game === null) {
+            return 'Jeu introuvable.';
+        }
+
+        GameLibraryFields::saveManualPlaytime(
+            $this->db,
+            $bibId,
+            GamePlaytime::manualMinutesFromPost($data)
+        );
+
+        return true;
+    }
+
+    /**
      * @param array<string, mixed> $data
      * @return true|string
      */
