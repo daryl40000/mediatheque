@@ -43,7 +43,13 @@ $catalogPage = (int) ($catalogPage ?? 1);
         <input type="hidden" name="catalog_page" value="<?= max(1, $catalogPage) ?>">
 
         <?php
+        // Important : ce template peut être inclus après un formulaire "bibliothèque" qui définit
+        // $libraryEditOnly = true. On force ici le mode "catalogue" pour ne pas afficher les champs
+        // d’exemplaire (bibliothèque) dans l’édition admin du catalogue.
+        $libraryEditOnly = false;
         $catalogEditOnly = true;
+        $useCatalogAutocomplete = false;
+        $showManualPlaytimeFields = false;
         require MONCINE_ROOT . '/templates/_game_form_fields.php';
         ?>
 
