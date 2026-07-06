@@ -113,7 +113,6 @@ $extensions = [];
 $originalGame = null;
 $remakes = [];
 $oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
-$canManageCatalog = UserContext::canManageCatalog();
 
 if (GameRepository::hasExtensionColumns()) {
     $baseGameOeuvreId = (int) ($game['base_game_oeuvre_id'] ?? 0);
@@ -129,7 +128,7 @@ if (GameRepository::hasExtensionColumns()) {
                     $baseGameOeuvreId,
                     $userId,
                     $foyerId,
-                    $canManageCatalog ? View::oeuvreJeuUrl($baseGameOeuvreId) : null,
+                    View::oeuvreJeuUrl($baseGameOeuvreId),
                 ),
             );
         }
@@ -149,7 +148,7 @@ if (GameRepository::hasExtensionColumns()) {
                     $childOeuvreId,
                     $userId,
                     $foyerId,
-                    $canManageCatalog ? View::oeuvreJeuUrl($childOeuvreId) : null,
+                    View::oeuvreJeuUrl($childOeuvreId),
                 ),
             );
         }
@@ -170,7 +169,7 @@ if (GameRepository::hasRemakeColumns()) {
                     $originalGameOeuvreId,
                     $userId,
                     $foyerId,
-                    $canManageCatalog ? View::oeuvreJeuUrl($originalGameOeuvreId) : null,
+                    View::oeuvreJeuUrl($originalGameOeuvreId),
                 ),
             );
         }
@@ -190,7 +189,7 @@ if (GameRepository::hasRemakeColumns()) {
                     $childOeuvreId,
                     $userId,
                     $foyerId,
-                    $canManageCatalog ? View::oeuvreJeuUrl($childOeuvreId) : null,
+                    View::oeuvreJeuUrl($childOeuvreId),
                 ),
             );
         }
@@ -214,7 +213,7 @@ if ($franchiseName !== '' && GameFranchiseRepository::isAvailable() && $oeuvreId
                 $sagaOeuvreId,
                 $userId,
                 $foyerId,
-                $canManageCatalog ? View::oeuvreJeuUrl($sagaOeuvreId) : null,
+                View::oeuvreJeuUrl($sagaOeuvreId),
             ),
         );
     }

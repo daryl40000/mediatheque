@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.7.12** · **Date : 2026-07-06**
+**Version : 0.7.13** · **Date : 2026-07-06**
 
 ## Objectif
 
@@ -244,6 +244,8 @@ Fichiers dans `www/assets/img/game-editions/` : `cd_dvd`, `disquette`, `steam`, 
 - Affichage **discret** : jaquette cliquable + année sous l’image (`templates/_game_related_posters.php`) ; extensions et remakes côte à côte en deux colonnes si les deux existent.
 
 Depuis **0.7.12** : sur une fiche **extension** ou **remake**, bandeau **Saga** (franchise du jeu de base si la fiche n’en a pas) ; sections **Jeu de base** / **Jeu d’origine** en tête de fiche (`GameRelatedSections::resolveFranchiseName`).
+
+Depuis **0.7.13** : sur la fiche bibliothèque (`/jeu.php`), les jaquettes de saga / extensions / remakes **non possédées** restent grisées mais **cliquables** vers la fiche catalogue (`/oeuvre-jeu.php`) pour tout utilisateur connecté.
 
 ### Recherche et autocomplétion (0.5.4)
 

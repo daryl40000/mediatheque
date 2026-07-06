@@ -68,6 +68,7 @@ final class BdSeriesContext
                 $userId,
                 $foyerId,
                 static fn (int $bibId): string => View::bdUrl($bibId),
+                View::oeuvreBdUrl($oeuvreId),
             );
 
             $isPossessed = false;

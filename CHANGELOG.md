@@ -9,6 +9,19 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.13] — 2026-07-06
+
+**Liens catalogue sur les sagas et correctif défilement bandeau saga**
+
+### Corrigé
+
+- **Jeux liés (saga, extensions, remakes)** : les jaquettes non possédées sont cliquables pour tout utilisateur connecté (lien vers `/oeuvre-jeu.php`), plus seulement pour l’admin.
+- **Films de saga** : même correction sur `/film.php` (lien vers `/oeuvre.php`).
+- **BD — bandeau série** : tomes voisins absents de la bibliothèque liés vers `/oeuvre-bd.php`.
+- **Fiche jeu bibliothèque** : bandeau saga long ne déborde plus de la page (défilement horizontal interne).
+
+---
+
 ## [0.7.12] — 2026-07-06
 
 **Profil ami → fiches catalogue, actions envies sous la jaquette, fiches détaillées harmonisées**

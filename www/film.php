@@ -132,7 +132,7 @@ if ($sagaName !== '' && $repo->usesCatalogModel() && $oeuvreId > 0) {
                 $userId,
                 $foyerId,
                 static fn (int $bibId): string => '/film.php?id=' . $bibId,
-                $canManageCatalog ? View::oeuvreUrl($childOeuvreId) : null,
+                View::oeuvreUrl($childOeuvreId),
             ),
         );
     }
