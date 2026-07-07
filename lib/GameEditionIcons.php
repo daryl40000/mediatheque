@@ -103,6 +103,16 @@ final class GameEditionIcons
             return '';
         }
 
+        $catalogUrls = is_array($gameRow['catalog_store_urls'] ?? null) ? $gameRow['catalog_store_urls'] : [];
+        if (isset($catalogUrls[$storeKey]) && trim((string) $catalogUrls[$storeKey]) !== '') {
+            return trim((string) $catalogUrls[$storeKey]);
+        }
+
+        $catalogDirect = trim((string) ($gameRow['catalog_store_url_' . $storeKey] ?? ''));
+        if ($catalogDirect !== '') {
+            return $catalogDirect;
+        }
+
         foreach (GameDigitalStore::parseStoredList((string) ($gameRow['digital_stores'] ?? '')) as $entry) {
             if (($entry['store'] ?? '') !== $storeKey) {
                 continue;
@@ -114,6 +124,15 @@ final class GameEditionIcons
         }
 
         if ($storeKey !== GameDigitalStore::STEAM) {
+            $slug = trim((string) ($gameRow['store_link_slug_' . $storeKey] ?? ''));
+            if ($slug !== '') {
+                return match ($storeKey) {
+                    GameDigitalStore::GOG => GogCatalogClient::storeUrl($slug),
+                    GameDigitalStore::EPIC => EpicCatalogClient::storeUrl($slug),
+                    default => '',
+                };
+            }
+
             return '';
         }
 

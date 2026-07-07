@@ -74,6 +74,17 @@ final class MediaDomain
         return self::choices()[$domain] ?? self::choices()[self::FILM];
     }
 
+    /** Filtre liste catalogue admin : chaîne vide = tous les médias. */
+    public static function normalizeCatalogFilter(string $raw): string
+    {
+        $raw = mb_strtolower(trim($raw));
+        if ($raw === '' || $raw === 'all' || $raw === 'tous') {
+            return '';
+        }
+
+        return isset(self::choices()[$raw]) ? $raw : '';
+    }
+
     public static function isFilm(string $domain): bool
     {
         return self::normalize($domain) === self::FILM;

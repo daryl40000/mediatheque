@@ -214,7 +214,13 @@ if (isset($_GET['poster_uploaded']) && (string) $_GET['poster_uploaded'] === '1'
 }
 
 $oeuvreNav = CatalogAdmin::canAccess()
-    ? $admin->getOeuvreNavigation($oeuvreId, $catalogSearch, $catalogSort, $catalogDir)
+    ? $admin->getOeuvreNavigation(
+        $oeuvreId,
+        $catalogSearch,
+        $catalogSort,
+        $catalogDir,
+        $catalogListContext->mediaDomain()
+    )
     : null;
 $library = $detail['library'];
 $libraryBibId = null;
@@ -300,4 +306,6 @@ View::render('oeuvre-jeu', [
     'completionCount' => $completionCount,
     'mergeMessage' => $mergeMessage,
     'mergeError' => $mergeError,
+    'storeLinksSaved' => isset($_GET['store_links_saved']) && (string) $_GET['store_links_saved'] === '1',
+    'storeLinksError' => trim((string) ($_GET['store_links_error'] ?? '')),
 ]);

@@ -1,6 +1,6 @@
 # Structure de la base de données — Médiathèque
 
-**Version : 0.6.5** · **Moteur :** SQLite (`data/moncine.db`) · **Schéma de référence :** [`sql/schema.sql`](../sql/schema.sql)
+**Version : 0.7.14** · **Moteur :** SQLite (`data/moncine.db`) · **Schéma de référence :** [`sql/schema.sql`](../sql/schema.sql)
 
 Ce document décrit **comment la base est organisée** : quelles tables existent, à quoi elles servent, et comment elles sont reliées entre elles. Il complète la doc fonctionnelle par domaine ([jeux.md](jeux.md), [magazines.md](magazines.md)).
 
@@ -155,6 +155,19 @@ Extension de `oeuvres` quand `media_domain = 'jeu'`. Clé primaire = `oeuvre_id`
 
 Le **nom** de saga est sur `oeuvre_jeu.franchise` (catalogue, souvent IGDB). Le **classement** dans une saga se fait par **année de sortie**, puis titre. Page dédiée : `/sagas-jeux.php` — voir [jeux.md](jeux.md).
 
+#### `oeuvre_store_links` — liens magasins catalogue (**063**, **0.7.14**)
+
+URLs des pages Steam / GOG / Epic sur la fiche **catalogue** jeu (pas la possession utilisateur).
+
+| Colonne | Rôle |
+|---------|------|
+| `oeuvre_id`, `store` | Clé composite (un lien par magasin et par jeu) |
+| `store_slug`, `store_url`, `store_title` | Identifiant et URL sur le magasin |
+| `match_confidence` | Score enrichissement automatique (nullable) |
+| `manually_verified` | 1 = lien validé (affiché publiquement) |
+
+La **possession** reste dans `oeuvre_jeu.digital_stores` (cases bibliothèque). Voir [jeux.md](jeux.md) et [enrichissement-magasins.md](enrichissement-magasins.md).
+
 #### `game_attachment` — fichiers joints à la bibliothèque
 
 Pièces jointes (manuels, sauvegardes…) liées à une entrée `bibliotheque`, via `stored_objects`.
@@ -285,6 +298,7 @@ Liste complète : voir [`sql/schema.sql`](../sql/schema.sql).
 | 054 | `054_game_completion.sql` | Fins de partie jeux (`game_completion`) |
 | 058 | `058_steam_import.sql` | Import Steam : `game_steam_stats`, `steam_appid`, `utilisateurs.steam_id` |
 | 061 | `061_game_manual_playtime.sql` | Temps de jeu manuel (`bibliotheque.manual_playtime_minutes`) |
+| 063 | `063_oeuvre_store_links.sql` | Liens catalogue GOG / Epic (`oeuvre_store_links`) |
 
 Migration transversale multi-médias : **030** (`media_domain` sur `oeuvres`).
 

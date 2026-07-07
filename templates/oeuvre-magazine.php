@@ -55,7 +55,7 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::MAGAZINE);
             </div>
         <?php endif; ?>
 
-        <article class="film-detail game-detail magazine-issue-layout<?= $posterSrc !== '' ? ' film-detail--with-poster' : '' ?>">
+        <article class="film-detail game-detail<?= $posterSrc !== '' ? ' film-detail--with-poster' : '' ?>">
             <?php
             $mediaDomain = Moncine\MediaDomain::MAGAZINE;
             $posterAlt = 'Couverture de ' . (string) ($issue['series_titre'] ?? '');
@@ -63,7 +63,7 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::MAGAZINE);
             require MONCINE_ROOT . '/templates/_catalog_oeuvre_poster_sidebar.php';
             ?>
 
-            <div class="film-detail__body game-detail__body magazine-issue-layout__main">
+            <div class="film-detail__body game-detail__body">
                 <header class="film-detail__heading">
                     <h1><?= Moncine\View::escape((string) ($issue['series_titre'] ?? '')) ?></h1>
                     <p class="lead">

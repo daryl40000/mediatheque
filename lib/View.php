@@ -64,6 +64,9 @@ final class View
             'statistiques-jeux',
             'catalogue',
             'oeuvre',
+            'oeuvre-jeu',
+            'oeuvre-bd',
+            'oeuvre-magazine',
             'maintenance-catalogue',
             'maintenance-medias',
             'magazines',
@@ -483,11 +486,12 @@ final class View
         string $catalogSearch = '',
         string $catalogSort = 'titre',
         string $catalogDir = 'asc',
-        int $catalogPage = 1
+        int $catalogPage = 1,
+        string $catalogMedia = ''
     ): string {
         $oeuvreId = (int) ($oeuvre['id'] ?? $oeuvre['oeuvre_id'] ?? 0);
         if ($oeuvreId <= 0) {
-            return self::catalogueUrl($catalogSearch, $catalogSort, $catalogDir, $catalogPage);
+            return self::catalogueUrl($catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
         }
 
         $domain = CatalogSchema::hasMediaDomainColumn()
@@ -500,7 +504,8 @@ final class View
             $catalogSearch,
             $catalogSort,
             $catalogDir,
-            $catalogPage
+            $catalogPage,
+            $catalogMedia
         );
     }
 
@@ -510,13 +515,14 @@ final class View
         string $catalogSearch = '',
         string $catalogSort = 'titre',
         string $catalogDir = 'asc',
-        int $catalogPage = 1
+        int $catalogPage = 1,
+        string $catalogMedia = ''
     ): string {
         return match (MediaDomain::normalize($mediaDomain)) {
-            MediaDomain::JEU => self::oeuvreJeuUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
-            MediaDomain::MAGAZINE => self::oeuvreMagazineUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
-            MediaDomain::BD => self::oeuvreBdUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
-            default => self::oeuvreUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
+            MediaDomain::JEU => self::oeuvreJeuUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia),
+            MediaDomain::MAGAZINE => self::oeuvreMagazineUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia),
+            MediaDomain::BD => self::oeuvreBdUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia),
+            default => self::oeuvreUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia),
         };
     }
 
@@ -562,9 +568,10 @@ final class View
         string $catalogSearch = '',
         string $catalogSort = 'titre',
         string $catalogDir = 'asc',
-        int $catalogPage = 1
+        int $catalogPage = 1,
+        string $catalogMedia = ''
     ): string {
-        return self::catalogOeuvrePageUrl('/oeuvre-jeu.php', $oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage);
+        return self::catalogOeuvrePageUrl('/oeuvre-jeu.php', $oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
     }
 
     /** Fiche catalogue admin — numéro de magazine. */
@@ -573,9 +580,10 @@ final class View
         string $catalogSearch = '',
         string $catalogSort = 'titre',
         string $catalogDir = 'asc',
-        int $catalogPage = 1
+        int $catalogPage = 1,
+        string $catalogMedia = ''
     ): string {
-        return self::catalogOeuvrePageUrl('/oeuvre-magazine.php', $oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage);
+        return self::catalogOeuvrePageUrl('/oeuvre-magazine.php', $oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
     }
 
     /** Fiche catalogue admin — album BD / manga. */
@@ -584,9 +592,10 @@ final class View
         string $catalogSearch = '',
         string $catalogSort = 'titre',
         string $catalogDir = 'asc',
-        int $catalogPage = 1
+        int $catalogPage = 1,
+        string $catalogMedia = ''
     ): string {
-        return self::catalogOeuvrePageUrl('/oeuvre-bd.php', $oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage);
+        return self::catalogOeuvrePageUrl('/oeuvre-bd.php', $oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
     }
 
     private static function catalogOeuvrePageUrl(
@@ -595,10 +604,11 @@ final class View
         string $catalogSearch,
         string $catalogSort,
         string $catalogDir,
-        int $catalogPage
+        int $catalogPage,
+        string $catalogMedia = ''
     ): string {
         if ($oeuvreId <= 0) {
-            return self::catalogueUrl($catalogSearch, $catalogSort, $catalogDir, $catalogPage);
+            return self::catalogueUrl($catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
         }
 
         $params = ['id' => (string) $oeuvreId];
@@ -614,6 +624,10 @@ final class View
         }
         if ($catalogPage > 1) {
             $params['catalog_page'] = (string) $catalogPage;
+        }
+        $catalogMedia = MediaDomain::normalizeCatalogFilter($catalogMedia);
+        if ($catalogMedia !== '') {
+            $params['catalog_media'] = $catalogMedia;
         }
 
         return $path . '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986) . '#catalog-oeuvre-nav';
@@ -625,10 +639,11 @@ final class View
         string $catalogSearch = '',
         string $catalogSort = 'titre',
         string $catalogDir = 'asc',
-        int $catalogPage = 1
+        int $catalogPage = 1,
+        string $catalogMedia = ''
     ): string {
         if ($oeuvreId <= 0) {
-            return self::catalogueUrl($catalogSearch, $catalogSort, $catalogDir, $catalogPage);
+            return self::catalogueUrl($catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
         }
 
         $params = ['id' => (string) $oeuvreId];
@@ -645,6 +660,10 @@ final class View
         if ($catalogPage > 1) {
             $params['catalog_page'] = (string) $catalogPage;
         }
+        $catalogMedia = MediaDomain::normalizeCatalogFilter($catalogMedia);
+        if ($catalogMedia !== '') {
+            $params['catalog_media'] = $catalogMedia;
+        }
 
         return '/oeuvre.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986) . '#catalog-oeuvre-nav';
     }
@@ -654,7 +673,8 @@ final class View
         string $search = '',
         string $sortBy = 'titre',
         string $sortDir = 'asc',
-        int $page = 1
+        int $page = 1,
+        string $mediaDomain = ''
     ): string {
         $params = [];
         $search = trim($search);
@@ -669,6 +689,10 @@ final class View
         }
         if ($page > 1) {
             $params['page'] = (string) $page;
+        }
+        $mediaDomain = MediaDomain::normalizeCatalogFilter($mediaDomain);
+        if ($mediaDomain !== '') {
+            $params['media'] = $mediaDomain;
         }
 
         return $params === [] ? '/catalogue.php' : '/catalogue.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
@@ -1375,5 +1399,45 @@ final class View
     public static function ressentiLabel(?int $score): string
     {
         return RessentiNote::labelFromScore(RessentiNote::normalizeScore($score));
+    }
+
+    public static function globalSearchUrl(string $query = ''): string
+    {
+        $query = trim($query);
+        if ($query === '') {
+            return '/recherche.php';
+        }
+
+        return '/recherche.php?' . http_build_query(['q' => $query], '', '&', PHP_QUERY_RFC3986);
+    }
+
+    public static function globalSearchApiUrl(): string
+    {
+        return '/rechercher-global.php';
+    }
+
+    /** Fiche bibliothèque (bascule d’onglet média si besoin). */
+    public static function libraryItemNavUrl(int $bibId, string $mediaDomain): string
+    {
+        if ($bibId <= 0) {
+            return MediaDomain::collectionPath($mediaDomain);
+        }
+
+        return match (MediaDomain::normalize($mediaDomain)) {
+            MediaDomain::JEU => self::gameNavUrl($bibId),
+            MediaDomain::BD => self::bdNavUrl($bibId),
+            MediaDomain::MAGAZINE => self::magazineIssueNavUrl($bibId),
+            default => self::filmLibraryNavUrl($bibId),
+        };
+    }
+
+    public static function filmLibraryNavUrl(int $bibId): string
+    {
+        $path = '/film.php?id=' . $bibId;
+        if (MediaContext::current() === MediaDomain::FILM) {
+            return $path;
+        }
+
+        return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::FILM, $path);
     }
 }

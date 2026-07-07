@@ -66,16 +66,9 @@ final class GameLibraryAttach
             ? (string) ($details['physical_supports'] ?? '')
             : (string) ($game['physical_supports'] ?? '');
 
-        $digitalStores = (string) ($game['digital_stores'] ?? '');
-        if (array_key_exists('digital_stores', $details) && trim((string) ($details['digital_stores'] ?? '')) !== '') {
-            foreach (GameDigitalStore::parseStoredList((string) $details['digital_stores']) as $entry) {
-                $digitalStores = GameDigitalStore::mergeStore(
-                    $digitalStores,
-                    (string) ($entry['store'] ?? ''),
-                    (string) ($entry['url'] ?? '')
-                );
-            }
-        }
+        $digitalStores = array_key_exists('digital_stores', $details)
+            ? (string) ($details['digital_stores'] ?? '')
+            : (string) ($game['digital_stores'] ?? '');
 
         $isDigital = array_key_exists('is_digital', $details)
             ? (!empty($details['is_digital']) || GameDigitalStore::hasDigitalEdition($digitalStores, false))

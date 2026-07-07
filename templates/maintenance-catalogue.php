@@ -403,6 +403,16 @@
     </section>
 
     <section class="catalog-maintenance-panel">
+        <h2>Liens magasins à valider</h2>
+        <p class="hint">
+            Propositions GOG / Epic avec score de confiance moyen (60–84 %).
+            Pour lancer l’enrichissement automatique :
+            <a href="/import.php#liens-magasins-catalogue">Importer → Liens magasins catalogue</a>.
+        </p>
+        <?php require MONCINE_ROOT . '/templates/_store_links_review_panel.php'; ?>
+    </section>
+
+    <section class="catalog-maintenance-panel">
         <h2>Journal des actions</h2>
         <?php if ($auditLog === []): ?>
             <p class="hint">Aucune action enregistrée pour l’instant.</p>

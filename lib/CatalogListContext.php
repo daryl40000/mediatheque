@@ -13,12 +13,14 @@ final class CatalogListContext
         private string $search = '',
         private string $sortBy = 'titre',
         private string $sortDir = 'asc',
-        private int $page = 1
+        private int $page = 1,
+        private string $mediaDomain = ''
     ) {
         $this->search = trim($this->search);
         $this->sortBy = trim($this->sortBy) !== '' ? trim($this->sortBy) : 'titre';
         $this->sortDir = strtolower(trim($this->sortDir)) === 'desc' ? 'desc' : 'asc';
         $this->page = max(1, $this->page);
+        $this->mediaDomain = MediaDomain::normalizeCatalogFilter($this->mediaDomain);
     }
 
     /** @param array<string, mixed> $query */
@@ -28,7 +30,8 @@ final class CatalogListContext
             (string) ($query['catalog_q'] ?? $query['q'] ?? ''),
             (string) ($query['catalog_sort'] ?? $query['sort'] ?? 'titre'),
             (string) ($query['catalog_dir'] ?? $query['dir'] ?? 'asc'),
-            max(1, (int) ($query['catalog_page'] ?? $query['page'] ?? 1))
+            max(1, (int) ($query['catalog_page'] ?? $query['page'] ?? 1)),
+            (string) ($query['catalog_media'] ?? $query['media'] ?? '')
         );
     }
 
@@ -52,9 +55,14 @@ final class CatalogListContext
         return $this->page;
     }
 
+    public function mediaDomain(): string
+    {
+        return $this->mediaDomain;
+    }
+
     public function backUrl(): string
     {
-        return View::catalogueUrl($this->search, $this->sortBy, $this->sortDir, $this->page);
+        return View::catalogueUrl($this->search, $this->sortBy, $this->sortDir, $this->page, $this->mediaDomain);
     }
 
     public function oeuvreUrl(int $oeuvreId): string
@@ -73,7 +81,8 @@ final class CatalogListContext
             $this->search,
             $this->sortBy,
             $this->sortDir,
-            $this->page
+            $this->page,
+            $this->mediaDomain
         );
 
         return str_contains($url, '#') ? $url : $url . '#catalog-oeuvre-nav';

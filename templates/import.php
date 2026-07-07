@@ -340,6 +340,72 @@
     <?php endif; ?>
 </section>
 
+<?php if (!empty($canManageCatalog)): ?>
+<section class="enrich-panel enrich-panel--store-links" id="liens-magasins-catalogue">
+    <h2>Liens magasins catalogue (GOG / Epic)</h2>
+    <p class="lead">
+        Recherche publique par titre pour proposer des liens vers les pages
+        <strong>GOG</strong> et <strong>Epic Games Store</strong> sur les fiches catalogue jeux.
+        <strong>Epic</strong> bloque souvent les serveurs : le repli passe par <strong>IGDB</strong>
+        (identifiants Twitch sur cette page) quand c’est possible.
+        Les matchs incertains sont à valider dans
+        <a href="/maintenance-catalogue.php">Maintenance catalogue</a>.
+    </p>
+
+    <?php if (empty($storeLinksModuleReady)): ?>
+        <p class="hint">Migration <code>063_oeuvre_store_links.sql</code> non appliquée.</p>
+    <?php else: ?>
+        <?php if (!empty($storeLinksMessage)): ?>
+            <div class="alert <?= (isset($_GET['store_links_test']) && $_GET['store_links_test'] !== 'ok') ? 'alert-error' : 'alert-success' ?>">
+                <?= Moncine\View::escape($storeLinksMessage) ?>
+            </div>
+        <?php endif; ?>
+        <?php if (!empty($storeLinksEnrichMessage)): ?>
+            <div class="alert alert-success"><?= Moncine\View::escape($storeLinksEnrichMessage) ?></div>
+        <?php endif; ?>
+
+        <?php if ((int) ($storeLinksPendingReview ?? 0) > 0): ?>
+            <p class="hint">
+                <?= (int) $storeLinksPendingReview ?> lien(s) en attente de validation —
+                <a href="/maintenance-catalogue.php">ouvrir la file de relecture</a>.
+            </p>
+        <?php endif; ?>
+
+        <form method="post" action="/enrichir-liens-magasins.php" class="import-form enrich-actions">
+            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+            <input type="hidden" name="action" value="enrichir_store_links">
+            <p class="hint">Environ <?= (int) $enrichBatchSize ?> fiche(s) catalogue par clic.</p>
+            <div class="export-actions">
+                <label class="checkbox">
+                    <input type="checkbox" name="store_gog" value="1" checked>
+                    GOG
+                </label>
+                <label class="checkbox">
+                    <input type="checkbox" name="store_epic" value="1" checked>
+                    Epic Games Store
+                </label>
+                <label class="checkbox">
+                    <input type="checkbox" name="force_all_store_links" value="1">
+                    Tout retraiter (y compris liens déjà validés)
+                </label>
+            </div>
+            <button type="submit" class="btn btn-accent">Enrichir les liens magasins</button>
+        </form>
+
+        <form method="post" action="/enrichir-liens-magasins.php" class="inline-form">
+            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+            <input type="hidden" name="action" value="test_gog_catalog">
+            <button type="submit" class="btn btn-secondary btn-sm">Tester GOG</button>
+        </form>
+        <form method="post" action="/enrichir-liens-magasins.php" class="inline-form">
+            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+            <input type="hidden" name="action" value="test_epic_catalog">
+            <button type="submit" class="btn btn-secondary btn-sm">Tester Epic</button>
+        </form>
+    <?php endif; ?>
+</section>
+<?php endif; ?>
+
 <section class="export-panel">
     <h2>Import bibliothèque Steam</h2>
     <p class="lead">

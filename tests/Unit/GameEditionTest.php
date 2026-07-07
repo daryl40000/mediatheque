@@ -29,7 +29,7 @@ final class GameEditionTest extends TestCase
         );
     }
 
-    public function testPcDigitalStoresWithUrls(): void
+    public function testPcDigitalStoresOwnershipOnly(): void
     {
         $json = GameDigitalStore::buildFromPost([
             'is_digital' => '1',
@@ -44,7 +44,9 @@ final class GameEditionTest extends TestCase
         $stores = GameDigitalStore::parseStoredList($json);
         $this->assertCount(2, $stores);
         $this->assertSame('steam', $stores[0]['store']);
-        $this->assertStringContainsString('steampowered.com', $stores[0]['url']);
+        $this->assertSame('', $stores[0]['url']);
+        $this->assertSame('gog', $stores[1]['store']);
+        $this->assertSame('', $stores[1]['url']);
     }
 
     public function testBattlenetStoreNormalizeAndIcon(): void

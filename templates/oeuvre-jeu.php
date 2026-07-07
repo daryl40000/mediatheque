@@ -126,6 +126,8 @@ $completionCount = (int) ($completionCount ?? 0);
                     <?php endif; ?>
                 </section>
 
+                <?php require MONCINE_ROOT . '/templates/_catalog_game_store_links_display.php'; ?>
+
                 <?php
                 $gameRelatedSections = Moncine\GameRelatedSections::build(
                     $game,
@@ -185,6 +187,8 @@ $completionCount = (int) ($completionCount ?? 0);
                 <?php if (Moncine\CatalogAdmin::canAccess()): ?>
                 <section class="oeuvre-catalog-page__admin-tools" aria-labelledby="catalog-game-admin-heading">
                     <h2 id="catalog-game-admin-heading" class="game-detail__section-title">Administration catalogue</h2>
+
+                    <?php require MONCINE_ROOT . '/templates/_catalog_game_store_links_panel.php'; ?>
 
                     <?php require MONCINE_ROOT . '/templates/_oeuvre_jeu_edit_form.php'; ?>
 

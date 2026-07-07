@@ -41,6 +41,9 @@ $catalogPage = (int) ($catalogPage ?? 1);
         <input type="hidden" name="catalog_sort" value="<?= Moncine\View::escape($catalogSort) ?>">
         <input type="hidden" name="catalog_dir" value="<?= Moncine\View::escape($catalogDir) ?>">
         <input type="hidden" name="catalog_page" value="<?= max(1, $catalogPage) ?>">
+        <?php if (isset($catalogListContext) && $catalogListContext->mediaDomain() !== ''): ?>
+            <input type="hidden" name="catalog_media" value="<?= Moncine\View::escape($catalogListContext->mediaDomain()) ?>">
+        <?php endif; ?>
 
         <?php
         // Important : ce template peut être inclus après un formulaire "bibliothèque" qui définit

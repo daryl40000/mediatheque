@@ -139,6 +139,11 @@ final class GameSchema
         return self::hasColumn('utilisateurs', 'steam_id');
     }
 
+    public static function oeuvreStoreLinksTableExists(): bool
+    {
+        return self::tableExists('oeuvre_store_links');
+    }
+
     /** @internal Tests PHPUnit */
     public static function resetColumnCacheForTests(): void
     {

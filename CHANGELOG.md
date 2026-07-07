@@ -9,6 +9,34 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.14] — 2026-07-07
+
+**Recherche globale, liens magasins catalogue séparés de la possession, correctifs bibliothèque démat**
+
+### Ajouté
+
+- **Recherche globale** : barre dans l’en-tête (entre notifications et navigation) — suggestions en direct, page `/recherche.php`, API `/rechercher-global.php` ; cherche dans **toute la bibliothèque** (films, jeux, BD, magazines) et le **catalogue partagé** (tous médias).
+- **Liens magasins catalogue jeux** : table `oeuvre_store_links` (migration **063**), saisie manuelle admin sur `/oeuvre-jeu.php`, section publique **« Disponible sur »** (Steam, GOG, Epic).
+- **Enrichissement automatique GOG/Epic** (base technique) : clients catalogue, matcher, file de relecture admin — voir [doc/enrichissement-magasins.md](doc/enrichissement-magasins.md) ; automatisation mise en pause côté produit, saisie manuelle prioritaire.
+- **Catalogue admin** : filtre par type de média (Tous / Films / Jeux / BD / Magazines…) sur `/catalogue.php`.
+
+### Modifié
+
+- **`digital_stores`** : ne représente plus que la **possession** (cases « Exemplaires possédés ») ; les **URLs magasins** sont sur `oeuvre_store_links` (catalogue).
+- **Formulaire bibliothèque jeux** : retrait des champs « lien magasin » ; l’utilisateur coche uniquement Steam / GOG / Epic / Battle.net s’il possède le jeu.
+
+### Corrigé
+
+- **Bibliothèque** : décocher un magasin dématérialisé enregistre correctement la suppression (`GameLibraryAttach` remplace la liste au lieu de fusionner).
+- **Liens magasin catalogue** : n’ajoutent plus le jeu à la bibliothèque ni les icônes de possession par erreur ; migration des anciens liens depuis `digital_stores` à l’enregistrement admin.
+
+### Technique
+
+- `GlobalSearch`, `CatalogGameStoreLinks`, `OeuvreStoreLinkRepository`, `StoreLinkEnricher` (+ clients GOG/Epic, matcher, normalizer).
+- Tests : `GlobalSearchTest`, `CatalogGameStoreLinksTest`, `StoreLink*Test`, `GameEditionIconsLinkTest`.
+
+---
+
 ## [0.7.13] — 2026-07-06
 
 **Liens catalogue sur les sagas et correctif défilement bandeau saga**

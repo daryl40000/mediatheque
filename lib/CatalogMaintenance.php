@@ -433,6 +433,9 @@ final class CatalogMaintenance
             if (GameSteamAppIdMapRepository::isAvailable()) {
                 (new GameSteamAppIdMapRepository())->reassignOnOeuvreMerge($keepId, $removeId);
             }
+            if (OeuvreStoreLinkRepository::isAvailable()) {
+                (new OeuvreStoreLinkRepository())->reassignOnOeuvreMerge($keepId, $removeId);
+            }
             $this->transferSteamAppIdOnMerge($keepId, $removeId);
             (new PosterStorage())->deleteLocalForOeuvre($removeId);
             if (!$this->oeuvres->deleteById($removeId)) {

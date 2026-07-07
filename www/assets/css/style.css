@@ -417,6 +417,199 @@ a.support-link:hover,
     text-align: center;
 }
 
+.site-header__search {
+    flex: 1 1 12rem;
+    min-width: 0;
+    max-width: 28rem;
+    position: relative;
+}
+
+.global-search__form {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    padding: 0.2rem 0.45rem 0.2rem 0.65rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    background: var(--bg);
+}
+
+.global-search__input {
+    flex: 1 1 auto;
+    min-width: 0;
+    margin: 0;
+    padding: 0.35rem 0;
+    border: 0;
+    background: transparent;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+.global-search__input:focus {
+    outline: none;
+}
+
+.global-search__submit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2rem;
+    height: 2rem;
+    margin: 0;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+}
+
+.global-search__submit:hover,
+.global-search__submit:focus-visible {
+    color: var(--text);
+    background: rgba(255, 255, 255, 0.06);
+}
+
+.global-search__suggestions {
+    position: absolute;
+    top: calc(100% + 0.35rem);
+    left: 0;
+    right: 0;
+    z-index: 120;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    background: var(--surface);
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+    overflow: hidden;
+}
+
+.global-search__group-title {
+    margin: 0;
+    padding: 0.55rem 0.85rem 0.25rem;
+    font-size: 0.75rem;
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    text-transform: uppercase;
+    color: var(--muted);
+}
+
+.global-search__option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.75rem;
+    padding: 0.55rem 0.85rem;
+    color: inherit;
+    text-decoration: none;
+    cursor: pointer;
+}
+
+.global-search__option:hover,
+.global-search__option.is-active {
+    background: var(--media-accent-muted, rgba(255, 255, 255, 0.06));
+}
+
+.global-search__option-label {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.global-search__option-badges {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    flex-shrink: 0;
+}
+
+.global-search__badge {
+    display: inline-block;
+    padding: 0.1rem 0.45rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 0.72rem;
+    color: var(--muted);
+}
+
+.global-search__footer {
+    margin: 0;
+    padding: 0.45rem 0.85rem 0.65rem;
+    border-top: 1px solid var(--border);
+    font-size: 0.85rem;
+}
+
+.global-search-page__form {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+}
+
+.global-search-page__form input[type="search"] {
+    flex: 1 1 14rem;
+    min-width: 0;
+}
+
+.global-search-page__section {
+    margin-bottom: 2rem;
+}
+
+.global-search-page__section-title {
+    margin-bottom: 0.75rem;
+}
+
+.global-search-results {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 0.75rem;
+    overflow: hidden;
+}
+
+.global-search-results__item + .global-search-results__item {
+    border-top: 1px solid var(--border);
+}
+
+.global-search-results__link {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    padding: 0.75rem 1rem;
+    color: inherit;
+    text-decoration: none;
+}
+
+.global-search-results__link:hover,
+.global-search-results__link:focus-visible {
+    background: var(--media-accent-muted, rgba(255, 255, 255, 0.06));
+}
+
+.global-search-results__label {
+    font-weight: 600;
+}
+
+.global-search-results__meta {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.global-search-results__badge {
+    display: inline-block;
+    padding: 0.15rem 0.5rem;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.08);
+    font-size: 0.78rem;
+}
+
+.global-search-results__badge--muted {
+    color: var(--muted);
+}
+
 /* Liens de navigation : styles détaillés dans responsive.css (.site-nav) */
 .site-header .site-nav a {
     color: var(--muted);
@@ -1778,6 +1971,63 @@ textarea {
     margin: 0 0 1rem;
 }
 
+.catalog-admin-media-filter {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin: 0 0 1rem;
+}
+
+.catalog-admin-media-filter__link {
+    display: inline-block;
+    padding: 0.35rem 0.75rem;
+    border-radius: 999px;
+    border: 1px solid var(--border, #d8d8d8);
+    text-decoration: none;
+    color: inherit;
+    font-size: 0.92rem;
+}
+
+.catalog-admin-media-filter__link.is-active {
+    background: var(--accent, #2f6fed);
+    border-color: var(--accent, #2f6fed);
+    color: #fff;
+}
+
+.catalog-game-store-links__row {
+    margin-bottom: 1rem;
+}
+
+.catalog-game-store-links__row label:first-child {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.catalog-game-store-links__row input[type="url"] {
+    width: 100%;
+    max-width: 40rem;
+}
+
+.game-store-links-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem 1.25rem;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.game-store-links-list__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.game-store-links-list__icon {
+    flex-shrink: 0;
+}
+
 .catalog-admin-table__actions {
     white-space: nowrap;
 }
@@ -2925,8 +3175,9 @@ textarea {
     align-items: start;
 }
 
+/* 2 colonnes à partir de 640px — voir responsive.css */
 .film-detail--with-poster {
-    grid-template-columns: 160px 1fr;
+    grid-template-columns: 1fr;
 }
 
 .film-poster--large {
@@ -2970,16 +3221,6 @@ textarea {
 .film-detail h2 {
     font-size: 1.1rem;
     margin: 1.25rem 0 0.5rem;
-}
-
-@media (max-width: 600px) {
-    .film-detail--with-poster {
-        grid-template-columns: 1fr;
-    }
-
-    .film-poster--large {
-        margin: 0 auto;
-    }
 }
 
 .site-footer {
@@ -3716,21 +3957,23 @@ body.page-wide .container--wide:has(> .game-detail-page) {
     width: 100%;
 }
 
-/* Fiche jeu bibliothèque : la saga ne doit pas élargir la page */
-.collection-page.game-detail-page .game-detail__body,
-.collection-page.game-detail-page .game-detail__related,
-.collection-page.game-detail-page .game-related-layout,
-.collection-page.game-detail-page .game-related-col--wide {
+/* Fiches détail : bandeaux saga / extensions ne doivent pas élargir la page */
+.game-detail-page .game-detail__body,
+.game-detail-page .game-detail__related,
+.game-detail-page .game-related-layout,
+.game-detail-page .game-related-col--wide,
+.game-detail-page .bd-series-context__strip {
     min-width: 0;
     max-width: 100%;
 }
 
-.collection-page.game-detail-page .game-related-col--wide {
+.game-detail-page .game-related-col--wide {
     flex: 1 1 auto;
     width: 100%;
 }
 
-.collection-page.game-detail-page .game-related-col--wide .game-related-posters {
+.game-detail-page .game-related-col--wide .game-related-posters,
+.game-detail-page .bd-series-context__strip {
     max-width: 100%;
     overflow-x: auto;
     scrollbar-width: thin;
@@ -4467,11 +4710,12 @@ td .game-linux-badge--plain {
 
 .game-detail-sidebar__actions {
     display: flex;
-    flex-wrap: nowrap;
+    flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     gap: 0.35rem;
     width: 100%;
+    max-width: 100%;
     margin-top: 0.15rem;
     overflow: visible;
 }
@@ -4507,7 +4751,7 @@ td .game-linux-badge--plain {
 }
 
 .game-action-popover__panel--wide {
-    width: min(32rem, calc(100vw - 240px));
+    width: min(32rem, calc(100vw - 1.5rem));
 }
 
 .game-action-popover__title {
@@ -4537,9 +4781,9 @@ td .game-linux-badge--plain {
     color: var(--muted);
 }
 
-@media (max-width: 600px) {
+@media (min-width: 900px) {
     .game-action-popover__panel--wide {
-        width: min(32rem, calc(100vw - 1.5rem));
+        width: min(32rem, calc(100vw - 240px));
     }
 }
 
@@ -4591,7 +4835,7 @@ td .game-linux-badge--plain {
     font-weight: 500;
 }
 
-@media (max-width: 720px) {
+@media (max-width: 639px) {
     .game-detail-facts-grid {
         grid-template-columns: 1fr;
         gap: 0.5rem 0;
@@ -4753,11 +4997,6 @@ td .game-linux-badge--plain {
     margin-top: 0.75rem;
 }
 
-@media (max-width: 600px) {
-    .game-detail-sidebar {
-        margin-bottom: 0.5rem;
-    }
-}
 
 .collection-grid__title--game {
     display: flex;

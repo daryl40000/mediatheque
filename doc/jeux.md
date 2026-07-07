@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.7.13** · **Date : 2026-07-06**
+**Version : 0.7.14** · **Date : 2026-07-07**
 
 ## Objectif
 
@@ -28,7 +28,7 @@ Vue d’ensemble de **toutes** les tables (catalogue, bibliothèque, magazines, 
 | `platforms` | Toutes les plateformes du titre (liste CSV : `pc,ps5`) — migration **051** |
 | `is_digital` | 1 = version démat, 0 = physique |
 | `physical_supports` | Supports physiques possédés (CD/DVD, disquette/cartouche…) |
-| `digital_stores` | Magasins démat (Steam, GOG, Epic, Battle.net…) + URLs |
+| `digital_stores` | Magasins **possédés** par l’utilisateur (Steam, GOG, Epic, Battle.net…) — **sans URL** depuis **0.7.14** |
 | `is_extension` | 1 = extension (DLC / add-on) — migration **044** |
 | `base_game_oeuvre_id` | Jeu de base du catalogue (extensions) |
 | `is_remake` | 1 = remake — migration **045** |
@@ -247,6 +247,20 @@ Depuis **0.7.12** : sur une fiche **extension** ou **remake**, bandeau **Saga** 
 
 Depuis **0.7.13** : sur la fiche bibliothèque (`/jeu.php`), les jaquettes de saga / extensions / remakes **non possédées** restent grisées mais **cliquables** vers la fiche catalogue (`/oeuvre-jeu.php`) pour tout utilisateur connecté.
 
+### Liens magasins catalogue vs possession (**0.7.14**)
+
+Deux notions distinctes :
+
+| Rôle | Stockage | Qui le remplit |
+|------|----------|----------------|
+| **Lien vers la page Steam / GOG / Epic** (catalogue partagé) | Table `oeuvre_store_links` | Admin sur `/oeuvre-jeu.php` (panneau « Liens magasins ») |
+| **« J’ai ce jeu sur ce magasin »** (bibliothèque) | `oeuvre_jeu.digital_stores` (JSON sans URL) | Utilisateur — cases à cocher « Exemplaires possédés » |
+
+- Affichage public **« Disponible sur »** sur la fiche catalogue : URLs depuis `oeuvre_store_links`.
+- Icônes de possession sur la fiche bibliothèque : uniquement si le magasin est dans `digital_stores`.
+- Lien cliquable d’une icône : URL catalogue si connue, sinon repli `steam_appid` / slug.
+- Spécification enrichissement automatique : [enrichissement-magasins.md](enrichissement-magasins.md).
+
 ### Recherche et autocomplétion (0.5.4)
 
 Classe **`SearchMatch`** (insensible **casse** et **accents**, **1 faute de frappe** par mot dans l’autocomplétion) :
@@ -258,6 +272,7 @@ Classe **`SearchMatch`** (insensible **casse** et **accents**, **1 faute de frap
 | Autocomplétion **sujets magazines** | accents + 1 faute / mot (+ FTS si disponible) |
 | Recherche **Mes jeux** / **Mes films** | accents ; jeux : acronymes (`alternative_names`, **0.5.7**) |
 | Recherche **catalogue admin** | accents |
+| **Recherche globale** en-tête (`/rechercher-global.php`, `/recherche.php`) | bibliothèque + catalogue, tous médias (**0.7.14**) |
 
 Fonction SQL **`fold_search()`** enregistrée au démarrage (`FrenchSort::fold`) pour comparer sans accents dans les requêtes.
 
@@ -495,9 +510,15 @@ Page `/statistiques.php` (onglet Jeux) : répartition par plateforme, physique/d
 
 ## Import bibliothèque GOG (à venir)
 
-Spécification détaillée (non implémentée) : [import-gog.md](import-gog.md).
+Cahier des charges complet (non implémenté — **compte développeur GOG requis**) : [import-gog.md](import-gog.md).
 
-Résumé : connexion compte GOG → rapprochement avec le **catalogue existant** → validation utilisateur si le match est incertain → ajout à Mes jeux ou **fusion du magasin GOG** (`digital_stores`) si le jeu est déjà en collection (Steam, physique, etc.).
+Résumé : OAuth GOG (approche A) → bibliothèque + temps de jeu (partiel) → rapprochement par **`gog_product_id`** sur la fiche catalogue (renseigné à la construction du catalogue) → validation utilisateur si match incertain → ajout à Mes jeux ou **fusion magasin GOG** (`digital_stores`) ; temps total affiché = **Steam + GOG + manuel**.
+
+## Enrichissement liens magasins GOG / Epic (à venir)
+
+Cahier des charges (non implémenté) : [enrichissement-magasins.md](enrichissement-magasins.md).
+
+Résumé : APIs **publiques** (sans compte utilisateur) → recherche par **titre** → score de confiance → validation admin si doute → URL stockée dans **`oeuvre_store_links`** (catalogue, **0.7.14**) → section **« Disponible sur »** et liens icônes. Complémentaire de l’import bibliothèque GOG et de l’import Steam.
 
 ## Priorité produit
 

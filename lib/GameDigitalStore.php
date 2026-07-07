@@ -159,6 +159,28 @@ final class GameDigitalStore
         return json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
     }
 
+    /** Retire un magasin du JSON stocké. */
+    public static function removeStore(string $existingJson, string $store): string
+    {
+        $store = self::normalizeStoreKey($store);
+        if ($store === '') {
+            return trim($existingJson);
+        }
+
+        $items = [];
+        foreach (self::parseStoredList($existingJson) as $entry) {
+            if (($entry['store'] ?? '') === $store) {
+                continue;
+            }
+            $items[] = [
+                'store' => (string) ($entry['store'] ?? ''),
+                'url' => (string) ($entry['url'] ?? ''),
+            ];
+        }
+
+        return self::serializeList($items);
+    }
+
     /**
      * Construit le JSON magasins depuis un formulaire POST.
      *
@@ -179,13 +201,9 @@ final class GameDigitalStore
                 if (!isset(self::pcStoreChoices()[$store])) {
                     continue;
                 }
-                $urlRaw = '';
-                if (isset($post['digital_store_url']) && is_array($post['digital_store_url'])) {
-                    $urlRaw = (string) ($post['digital_store_url'][$store] ?? '');
-                }
                 $entries[] = [
                     'store' => $store,
-                    'url' => SecureUrl::sanitizePosterUrl(trim($urlRaw)),
+                    'url' => '',
                 ];
             }
 
@@ -322,7 +340,7 @@ final class GameDigitalStore
         )';
     }
 
-    private static function normalizeStoreKey(string $raw): string
+    public static function normalizeStoreKey(string $raw): string
     {
         $raw = mb_strtolower(trim($raw));
 

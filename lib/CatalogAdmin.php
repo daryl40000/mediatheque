@@ -67,13 +67,14 @@ final class CatalogAdmin
         string $search,
         string $sortBy,
         string $sortDir,
-        int $page
+        int $page,
+        string $mediaDomain = ''
     ): array {
         [$sqlSort, $direction] = $this->resolveSort($sortBy, $sortDir);
         $page = max(1, $page);
         $offset = ($page - 1) * self::PER_PAGE;
 
-        [$whereSql, $params] = $this->searchWhere($search);
+        [$whereSql, $params] = $this->searchWhere($search, $mediaDomain);
         $sql = 'SELECT o.*, (
                     SELECT COUNT(*) FROM bibliotheque b WHERE b.oeuvre_id = o.id
                 ) AS library_count,
@@ -96,9 +97,9 @@ final class CatalogAdmin
         return $stmt->fetchAll() ?: [];
     }
 
-    public function countOeuvres(string $search): int
+    public function countOeuvres(string $search, string $mediaDomain = ''): int
     {
-        [$whereSql, $params] = $this->searchWhere($search);
+        [$whereSql, $params] = $this->searchWhere($search, $mediaDomain);
         $stmt = $this->db->prepare('SELECT COUNT(*) FROM oeuvres o' . $whereSql);
         $stmt->execute($params);
 
@@ -110,10 +111,10 @@ final class CatalogAdmin
      *
      * @return list<int>
      */
-    public function listOeuvreIds(string $search, string $sortBy, string $sortDir): array
+    public function listOeuvreIds(string $search, string $sortBy, string $sortDir, string $mediaDomain = ''): array
     {
         [$sqlSort, $direction] = $this->resolveSort($sortBy, $sortDir);
-        [$whereSql, $params] = $this->searchWhere($search);
+        [$whereSql, $params] = $this->searchWhere($search, $mediaDomain);
         $sql = 'SELECT o.id FROM oeuvres o' . $whereSql
             . ' ORDER BY ' . $sqlSort . ' ' . $direction;
         $stmt = $this->db->prepare($sql);
@@ -145,7 +146,8 @@ final class CatalogAdmin
         int $oeuvreId,
         string $search,
         string $sortBy,
-        string $sortDir
+        string $sortDir,
+        string $mediaDomain = ''
     ): array {
         if ($oeuvreId <= 0) {
             return [
@@ -157,7 +159,7 @@ final class CatalogAdmin
             ];
         }
 
-        $ids = $this->listOeuvreIds($search, $sortBy, $sortDir);
+        $ids = $this->listOeuvreIds($search, $sortBy, $sortDir, $mediaDomain);
         $total = count($ids);
         $index = array_search($oeuvreId, $ids, true);
         if ($index === false) {
@@ -472,14 +474,20 @@ final class CatalogAdmin
         return true;
     }
 
-    public function sortUrl(string $column, string $currentSort, string $currentDir, string $search, int $page): string
-    {
+    public function sortUrl(
+        string $column,
+        string $currentSort,
+        string $currentDir,
+        string $search,
+        int $page,
+        string $mediaDomain = ''
+    ): string {
         $newDir = 'asc';
         if ($currentSort === $column && strtolower($currentDir) !== 'desc') {
             $newDir = 'desc';
         }
 
-        return View::catalogueUrl(trim($search), $column, $newDir, max(1, $page));
+        return View::catalogueUrl(trim($search), $column, $newDir, max(1, $page), $mediaDomain);
     }
 
     /**
@@ -502,10 +510,16 @@ final class CatalogAdmin
     /**
      * @return array{0: string, 1: list<mixed>}
      */
-    private function searchWhere(string $search): array
+    private function searchWhere(string $search, string $mediaDomain = ''): array
     {
         $parts = [];
         $params = [];
+
+        $mediaDomain = MediaDomain::normalizeCatalogFilter($mediaDomain);
+        if ($mediaDomain !== '' && CatalogSchema::hasMediaDomainColumn()) {
+            $parts[] = 'o.media_domain = :catalog_media_domain';
+            $params['catalog_media_domain'] = $mediaDomain;
+        }
 
         $search = trim($search);
         if ($search !== '') {

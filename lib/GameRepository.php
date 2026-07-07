@@ -363,6 +363,27 @@ final class GameRepository
         )->execute([$appid, $oeuvreId]);
     }
 
+    public function clearSteamAppId(int $oeuvreId): void
+    {
+        if (!GameSchema::hasSteamAppIdColumn() || $oeuvreId <= 0) {
+            return;
+        }
+
+        $this->db->prepare('UPDATE oeuvre_jeu SET steam_appid = NULL WHERE oeuvre_id = ?')
+            ->execute([$oeuvreId]);
+    }
+
+    public function updateCatalogDigitalStores(int $oeuvreId, string $digitalStores, bool $isDigital): void
+    {
+        if (!GameSchema::hasEditionColumns() || $oeuvreId <= 0) {
+            return;
+        }
+
+        $this->db->prepare(
+            'UPDATE oeuvre_jeu SET digital_stores = ?, is_digital = ? WHERE oeuvre_id = ?'
+        )->execute([$digitalStores, $isDigital ? 1 : 0, $oeuvreId]);
+    }
+
     public function mergeDigitalStoreForOeuvre(int $oeuvreId, string $store, string $url = ''): void
     {
         if (!GameSchema::hasEditionColumns() || $oeuvreId <= 0) {

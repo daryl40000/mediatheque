@@ -161,6 +161,41 @@ final class IgdbClient
         return [];
     }
 
+    /**
+     * Liens magasins connus d’un jeu IGDB (external_games).
+     *
+     * @return list<array{name: string, url: string}>
+     */
+    public function listExternalStoreUrlsForGame(int $igdbId): array
+    {
+        if ($igdbId <= 0) {
+            return [];
+        }
+
+        $body = 'fields name, url; where game = ' . $igdbId . ' & url != null; limit 50;';
+        $rows = $this->queryEndpoint('external_games', $body);
+        if ($rows === null || $rows === []) {
+            return [];
+        }
+
+        $out = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $url = SecureUrl::sanitizePosterUrl(trim((string) ($row['url'] ?? '')));
+            if ($url === '') {
+                continue;
+            }
+            $out[] = [
+                'name' => trim((string) ($row['name'] ?? '')),
+                'url' => $url,
+            ];
+        }
+
+        return $out;
+    }
+
     private function resolveSteamExternalGameSourceId(): ?int
     {
         if (self::$steamExternalGameSourceLookupDone) {

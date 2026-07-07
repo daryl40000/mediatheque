@@ -22,13 +22,11 @@ $selectedPlatform = (string) ($gameRow['platform'] ?? '');
 $physicalSelected = $gameRow['physical_support_list'] ?? Moncine\GamePhysicalSupport::parseList((string) ($gameRow['physical_supports'] ?? ''));
 $hasDigital = !empty($gameRow['has_digital_edition']) || !empty($gameRow['is_digital']);
 $digitalStoreList = $gameRow['digital_store_list'] ?? Moncine\GameDigitalStore::parseStoredList((string) ($gameRow['digital_stores'] ?? ''));
-$pcStoreUrls = [];
 $pcStoresSelected = [];
 foreach ($digitalStoreList as $entry) {
     $storeKey = (string) ($entry['store'] ?? '');
     if (isset(Moncine\GameDigitalStore::pcStoreChoices()[$storeKey])) {
         $pcStoresSelected[] = $storeKey;
-        $pcStoreUrls[$storeKey] = (string) ($entry['url'] ?? '');
     }
 }
 $consoleStoreKey = Moncine\GameDigitalStore::consoleStoreForPlatform($selectedPlatform);
@@ -337,23 +335,22 @@ $showLinuxFieldInitially = $linuxFieldAvailable && $hasPcOwned;
         </label>
 
         <div class="game-digital-panel game-digital-panel--pc" data-game-digital-pc hidden>
-            <p class="hint">Magasins PC — vous pouvez en cocher plusieurs et renseigner le lien vers la page du magasin.</p>
+            <p class="hint">
+                <?php if ($libraryEditOnly): ?>
+                    Cochez les magasins PC où vous possédez ce jeu. Les liens vers les pages magasins
+                    sont gérés sur la fiche catalogue.
+                <?php else: ?>
+                    Cochez les magasins PC où ce jeu est possédé (plusieurs choix possibles).
+                    Les liens vers les pages magasins se gèrent sur la fiche catalogue.
+                <?php endif; ?>
+            </p>
             <?php foreach (Moncine\GameDigitalStore::pcStoreChoices() as $storeKey => $storeLabel): ?>
-                <div class="game-digital-store-row">
-                    <label class="checkbox-inline">
-                        <input type="checkbox" name="digital_pc_stores[]" value="<?= Moncine\View::escape($storeKey) ?>"
-                            data-game-pc-store="<?= Moncine\View::escape($storeKey) ?>"
-                            <?= in_array($storeKey, $pcStoresSelected, true) ? ' checked' : '' ?>>
-                        <?= Moncine\View::escape($storeLabel) ?>
-                    </label>
-                    <label class="game-digital-store-url">
-                        <span class="visually-hidden">Lien <?= Moncine\View::escape($storeLabel) ?></span>
-                        <input type="url" name="digital_store_url[<?= Moncine\View::escape($storeKey) ?>]"
-                               maxlength="500" placeholder="https://… page du magasin"
-                               value="<?= Moncine\View::escape((string) ($pcStoreUrls[$storeKey] ?? '')) ?>"
-                               data-game-pc-store-url="<?= Moncine\View::escape($storeKey) ?>">
-                    </label>
-                </div>
+                <label class="checkbox-inline game-digital-store-row">
+                    <input type="checkbox" name="digital_pc_stores[]" value="<?= Moncine\View::escape($storeKey) ?>"
+                        data-game-pc-store="<?= Moncine\View::escape($storeKey) ?>"
+                        <?= in_array($storeKey, $pcStoresSelected, true) ? ' checked' : '' ?>>
+                    <?= Moncine\View::escape($storeLabel) ?>
+                </label>
             <?php endforeach; ?>
         </div>
 

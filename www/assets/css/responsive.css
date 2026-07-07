@@ -101,6 +101,21 @@ video {
     height: 2.75rem;
 }
 
+.site-header__search {
+    order: 2;
+    width: 100%;
+    max-width: none;
+}
+
+@media (min-width: 900px) {
+    .site-header__search {
+        order: 0;
+        width: auto;
+        margin-left: 0.5rem;
+        margin-right: 0.5rem;
+    }
+}
+
 .nav-toggle {
     display: flex;
     flex-direction: column;
@@ -517,10 +532,16 @@ textarea {
     }
 }
 
-/* —— Fiche film —— */
+/* —— Fiche film / jeu / BD / magazine —— */
 
 .film-detail {
     grid-template-columns: 1fr;
+    min-width: 0;
+}
+
+.film-detail--with-poster .game-detail-sidebar,
+.film-detail__body {
+    min-width: 0;
 }
 
 .film-poster--large {
@@ -534,6 +555,30 @@ textarea {
 
 .film-facts dt {
     padding-top: 0.35rem;
+}
+
+@media (max-width: 639px) {
+    .film-detail--with-poster {
+        grid-template-columns: 1fr;
+    }
+
+    .game-detail-sidebar {
+        width: 100%;
+        margin-bottom: 0.5rem;
+    }
+
+    .game-detail__title-row {
+        font-size: clamp(1.1rem, 5.2vw, 1.45rem);
+        line-height: 1.25;
+    }
+
+    .game-detail__heading h1 {
+        overflow-wrap: anywhere;
+    }
+
+    .catalog-oeuvre-nav-anchor {
+        top: 3.5rem;
+    }
 }
 
 @media (min-width: 640px) {

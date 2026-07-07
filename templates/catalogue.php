@@ -8,6 +8,7 @@
  * @var int $totalPages
  * @var int $totalCount
  * @var int $perPage
+ * @var string $mediaDomain
  * @var bool $added
  * @var bool $deleted
  * @var string $saveError
@@ -18,8 +19,9 @@
  */
 
 $admin = new Moncine\CatalogAdmin();
+$mediaDomain = $mediaDomain ?? '';
 
-$sortHeader = static function (string $label, string $column) use ($sortBy, $sortDir, $search, $page, $admin): void {
+$sortHeader = static function (string $label, string $column) use ($sortBy, $sortDir, $search, $page, $mediaDomain, $admin): void {
     $active = $sortBy === $column;
     $aria = $active
         ? (strtolower($sortDir) === 'desc' ? 'descending' : 'ascending')
@@ -30,7 +32,7 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
     }
     ?>
     <th class="<?= $active ? 'sorted' : '' ?>" aria-sort="<?= $aria ?>">
-        <a href="<?= Moncine\View::escape($admin->sortUrl($column, $sortBy, $sortDir, $search, $page)) ?>">
+        <a href="<?= Moncine\View::escape($admin->sortUrl($column, $sortBy, $sortDir, $search, $page, $mediaDomain)) ?>">
             <?= Moncine\View::escape($label) ?><?= $indicator ?>
         </a>
     </th>
@@ -195,6 +197,21 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
     <section class="catalog-admin-list">
         <h2>Œuvres enregistrées</h2>
 
+        <nav class="catalog-admin-media-filter" aria-label="Filtrer par type de média">
+            <?php
+            $mediaFilters = ['' => 'Tous'] + Moncine\MediaDomain::choices();
+            foreach ($mediaFilters as $filterKey => $filterLabel):
+                $isActive = $filterKey === $mediaDomain;
+                $filterUrl = Moncine\View::catalogueUrl($search, $sortBy, $sortDir, 1, $filterKey);
+                ?>
+                <a href="<?= Moncine\View::escape($filterUrl) ?>"
+                   class="catalog-admin-media-filter__link<?= $isActive ? ' is-active' : '' ?>"
+                   <?= $isActive ? ' aria-current="page"' : '' ?>>
+                    <?= Moncine\View::escape($filterLabel) ?>
+                </a>
+            <?php endforeach; ?>
+        </nav>
+
         <form method="get" action="/catalogue.php" class="collection-search import-form">
             <label for="catalog_search_q">Rechercher dans le catalogue</label>
             <div class="collection-search__row">
@@ -204,9 +221,12 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                        autocomplete="off">
                 <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
                 <input type="hidden" name="dir" value="<?= Moncine\View::escape($sortDir) ?>">
+                <?php if ($mediaDomain !== ''): ?>
+                    <input type="hidden" name="media" value="<?= Moncine\View::escape($mediaDomain) ?>">
+                <?php endif; ?>
                 <button type="submit" class="btn btn-primary">Rechercher</button>
                 <?php if ($search !== ''): ?>
-                    <a href="/catalogue.php?sort=<?= Moncine\View::escape($sortBy) ?>&amp;dir=<?= Moncine\View::escape($sortDir) ?>"
+                    <a href="/catalogue.php?sort=<?= Moncine\View::escape($sortBy) ?>&amp;dir=<?= Moncine\View::escape($sortDir) ?><?= $mediaDomain !== '' ? '&amp;media=' . rawurlencode($mediaDomain) : '' ?>"
                        class="btn btn-secondary">Effacer</a>
                 <?php endif; ?>
             </div>
@@ -262,7 +282,8 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                                         $search,
                                         $sortBy,
                                         $sortDir,
-                                        $page
+                                        $page,
+                                        $mediaDomain
                                     )) ?>" class="film-link catalog-admin-table__title">
                                         <?= Moncine\View::escape((string) ($oeuvre['titre'] ?? '')) ?>
                                     </a>
@@ -308,6 +329,9 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                                         <input type="hidden" name="q" value="<?= Moncine\View::escape($search) ?>">
                                         <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
                                         <input type="hidden" name="dir" value="<?= Moncine\View::escape($sortDir) ?>">
+                                        <?php if ($mediaDomain !== ''): ?>
+                                            <input type="hidden" name="media" value="<?= Moncine\View::escape($mediaDomain) ?>">
+                                        <?php endif; ?>
                                         <button type="submit" class="btn btn-icon btn-danger-text"
                                                 title="Supprimer du catalogue"
                                                 aria-label="Supprimer « <?= Moncine\View::escape((string) ($oeuvre['titre'] ?? '')) ?> » du catalogue">

@@ -179,6 +179,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ### Priorité 3 — Polish **M4** (non bloquant)
 
 9. **Import bibliothèque GOG** — voir [doc/import-gog.md](doc/import-gog.md) (catalogue existant uniquement).
+10. **Enrichissement liens magasins** (GOG/Epic, API publiques) — voir [doc/enrichissement-magasins.md](doc/enrichissement-magasins.md).
 
 ### Priorité 4 — **M8 Musique** (après M3 Livres)
 

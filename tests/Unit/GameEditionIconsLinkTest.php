@@ -33,4 +33,18 @@ final class GameEditionIconsLinkTest extends TestCase
 
         $this->assertStringStartsWith('https://store.steampowered.com/app/220/', $url);
     }
+
+    public function testLinkUrlPrefersCatalogStoreUrls(): void
+    {
+        $url = GameEditionIcons::linkUrlForKey(GameEditionIcons::GOG, [
+            'catalog_store_urls' => [
+                GameDigitalStore::GOG => 'https://www.gog.com/game/catalog-link',
+            ],
+            'digital_stores' => GameDigitalStore::serializeList([
+                ['store' => GameDigitalStore::GOG, 'url' => 'https://www.gog.com/game/user-link'],
+            ]),
+        ]);
+
+        $this->assertSame('https://www.gog.com/game/catalog-link', $url);
+    }
 }

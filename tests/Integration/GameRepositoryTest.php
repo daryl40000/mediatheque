@@ -794,7 +794,6 @@ final class GameRepositoryTest extends MoncineTestCase
             'physical_supports' => [GamePhysicalSupport::CD_DVD],
             'is_digital' => '1',
             'digital_pc_stores' => [GameDigitalStore::STEAM],
-            'digital_store_url' => [GameDigitalStore::STEAM => 'https://store.steampowered.com/app/42'],
             'tested_on_linux' => '1',
         ], $userId, $foyerId);
         $this->assertTrue($result === true);
@@ -805,5 +804,23 @@ final class GameRepositoryTest extends MoncineTestCase
         $this->assertContains('CD / DVD', $game['physical_support_labels'] ?? []);
         $this->assertTrue(!empty($game['has_digital_edition']));
         $this->assertTrue(!empty($game['tested_on_linux']));
+
+        $stores = GameDigitalStore::parseStoredList((string) ($game['digital_stores'] ?? ''));
+        $this->assertCount(1, $stores);
+        $this->assertSame(GameDigitalStore::STEAM, $stores[0]['store']);
+
+        $result = $repo->updateLibraryExemplaire($bibId, [
+            'owned_platforms' => [GamePlatform::PC],
+            'physical_supports' => [GamePhysicalSupport::CD_DVD],
+            'is_digital' => '1',
+            'digital_pc_stores' => [],
+            'tested_on_linux' => '1',
+        ], $userId, $foyerId);
+        $this->assertTrue($result === true);
+
+        $game = $repo->findByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($game);
+        $stores = GameDigitalStore::parseStoredList((string) ($game['digital_stores'] ?? ''));
+        $this->assertSame([], $stores);
     }
 }

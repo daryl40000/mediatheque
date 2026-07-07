@@ -180,6 +180,27 @@ final class GameRowMapper
             !empty($row['is_digital'])
         );
         $row['edition_summary'] = self::editionSummary($row);
+        $row = self::hydrateCatalogStoreLinks($row);
+
+        return $row;
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    private static function hydrateCatalogStoreLinks(array $row): array
+    {
+        $oeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+        $row['catalog_store_urls'] = [];
+
+        if ($oeuvreId > 0 && OeuvreStoreLinkRepository::isAvailable()) {
+            $row['catalog_store_urls'] = (new OeuvreStoreLinkRepository())->listVerifiedUrlsForOeuvre($oeuvreId);
+        }
+
+        foreach ($row['catalog_store_urls'] as $store => $url) {
+            $row['catalog_store_url_' . $store] = $url;
+        }
 
         return $row;
     }

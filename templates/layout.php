@@ -97,6 +97,12 @@ $mediaCssVars = implode('; ', [
                     </a>
                 <?php endif; ?>
             </div>
+            <?php
+            $globalSearchQuery = $currentPath === '/recherche.php'
+                ? trim((string) ($_GET['q'] ?? ''))
+                : '';
+            require MONCINE_ROOT . '/templates/_global_search_header.php';
+            ?>
             <button type="button" class="nav-toggle" id="nav-toggle"
                     aria-expanded="false" aria-controls="site-nav"
                     aria-label="Ouvrir le menu">
@@ -177,6 +183,7 @@ $mediaCssVars = implode('; ', [
                                 </a>
                             <?php endif; ?>
                             <a href="/maintenance-catalogue.php" class="site-nav__admin"<?= $currentPath === '/maintenance-catalogue.php' ? ' aria-current="page"' : '' ?>>Maintenance</a>
+                            <a href="/import.php#liens-magasins-catalogue" class="site-nav__admin">Liens magasins GOG/Epic</a>
                             <a href="/import-catalogue-magazines.php" class="site-nav__admin"<?= $currentPath === '/import-catalogue-magazines.php' ? ' aria-current="page"' : '' ?>>Import magazines</a>
                             <a href="/maintenance-magazine-sujets.php" class="site-nav__admin"<?= $currentPath === '/maintenance-magazine-sujets.php' ? ' aria-current="page"' : '' ?>>Sujets magazines</a>
                             <a href="/maintenance-magazine-jeux-liens.php" class="site-nav__admin"<?= $currentPath === '/maintenance-magazine-jeux-liens.php' ? ' aria-current="page"' : '' ?>>Liens magazine ↔ jeux</a>

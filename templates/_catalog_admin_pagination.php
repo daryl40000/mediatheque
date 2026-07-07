@@ -9,12 +9,14 @@
  * @var int $totalPages
  * @var int $totalCount
  * @var string $paginationIdSuffix suffixe pour les id de formulaire (ex. -top)
+ * @var string $mediaDomain
  */
 $page = max(1, (int) ($page ?? 1));
 $totalPages = max(1, (int) ($totalPages ?? 1));
 $search = $search ?? '';
 $sortBy = $sortBy ?? 'titre';
 $sortDir = $sortDir ?? 'asc';
+$mediaDomain = $mediaDomain ?? '';
 $totalCount = (int) ($totalCount ?? 0);
 $paginationIdSuffix = (string) ($paginationIdSuffix ?? '');
 
@@ -22,10 +24,10 @@ if ($totalPages <= 1) {
     return;
 }
 
-$pageLink = static function (int $targetPage) use ($search, $sortBy, $sortDir, $totalPages): string {
+$pageLink = static function (int $targetPage) use ($search, $sortBy, $sortDir, $totalPages, $mediaDomain): string {
     $targetPage = max(1, min($targetPage, $totalPages));
 
-    return Moncine\View::catalogueUrl($search, $sortBy, $sortDir, $targetPage) . '#catalog-list-nav';
+    return Moncine\View::catalogueUrl($search, $sortBy, $sortDir, $targetPage, $mediaDomain) . '#catalog-list-nav';
 };
 
 $gotoPageId = 'catalog_goto_page' . $paginationIdSuffix;
@@ -64,6 +66,9 @@ $gotoPageId = 'catalog_goto_page' . $paginationIdSuffix;
         <?php endif; ?>
         <?php if (strtolower($sortDir) === 'desc'): ?>
             <input type="hidden" name="dir" value="desc">
+        <?php endif; ?>
+        <?php if ($mediaDomain !== ''): ?>
+            <input type="hidden" name="media" value="<?= Moncine\View::escape($mediaDomain) ?>">
         <?php endif; ?>
         <label for="<?= Moncine\View::escape($gotoPageId) ?>" class="list-pager__goto-label">Page</label>
         <input type="number" name="page" id="<?= Moncine\View::escape($gotoPageId) ?>"

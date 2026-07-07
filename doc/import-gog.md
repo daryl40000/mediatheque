@@ -1,48 +1,259 @@
-# Import bibliothèque GOG (spécification — à implémenter)
+# Import bibliothèque GOG
 
-**Statut :** 📋 **Notice / cahier des charges** — fonctionnalité **non développée**  
-**Version cible (indicatif) :** 0.6.x ou ultérieur (polish M4)  
-**Date de rédaction :** 2026-06-16
+**Statut :** 📋 **Cahier des charges — non implémenté**  
+**Version cible (indicatif) :** 0.7.14+ (polish M4 jeux)  
+**Dernière mise à jour :** 2026-07-07
+
+> **Blocage actuel :** compte développeur GOG requis pour l’**approche A** (OAuth avec `redirect_uri` sur le site). Ce document sert de référence pour l’implémentation ultérieure.
 
 ---
 
 ## Objectif
 
-Permettre à un utilisateur connecté à son compte **GOG** de synchroniser sa **bibliothèque de jeux possédés** vers **Mes jeux** dans Médiathèque, **sans créer de nouvelles fiches catalogue**.
+Permettre à un utilisateur connecté à son compte **GOG** de synchroniser sa **bibliothèque de jeux possédés** et son **temps de jeu** (partiel) vers **Mes jeux**, sur le modèle de l’import Steam (`doc/import-steam.md`).
 
-Principe retenu :
+Principes retenus :
 
-- seuls les jeux **déjà présents dans le catalogue partagé** (`oeuvres` + `oeuvre_jeu`) peuvent être traités ;
+- seuls les jeux **déjà présents dans le catalogue partagé** (`oeuvres` + `oeuvre_jeu`) sont importables en v1 ;
+- le lien fiable catalogue ↔ GOG repose sur **`oeuvre_jeu.gog_product_id`** (comme `steam_appid` pour Steam) — **c’est le travail de construction du catalogue** de renseigner cet identifiant ;
 - l’utilisateur **valide** les correspondances douteuses avant import ;
-- si un jeu est **déjà en collection** (ex. version Steam ou boîte physique), on **ajoute quand même** le magasin **GOG** sur la fiche (icône + lien), sans dupliquer l’entrée bibliothèque.
+- si un jeu est **déjà en collection** (Steam, physique, autre démat), on **fusionne** le magasin GOG (`digital_stores`) sans dupliquer l’entrée bibliothèque ;
+- le **temps de jeu GOG** est importé mais peut être incomplet (jeux lancés hors Galaxy) ; la **saisie manuelle** reste disponible pour compléter ;
+- le **total affiché** devient : **Steam + GOG + manuel** (extension de `GamePlaytime`).
 
-Référence API (non officielle) : [GOG API Documentation](https://gogapidocs.readthedocs.io/en/latest/).
+Références API :
+
+- [GOG API Documentation (communauté)](https://gogapidocs.readthedocs.io/en/latest/)
+- Endpoints `api.gog.com` documentés ci-dessous (utilisés par des clients open-source type Heroic Games Launcher)
 
 ---
 
-## Périmètre
+## Comparaison avec Steam (référence implémentée)
+
+| Aspect | Steam (actuel) | GOG (prévu) |
+|--------|----------------|-------------|
+| Auth admin | Clé API globale (`SteamConfig`) | `client_id` + `client_secret` GOG (`GogConfig`) |
+| Auth utilisateur | SteamID64 dans Paramètres | OAuth navigateur + tokens par utilisateur |
+| ID catalogue | `oeuvre_jeu.steam_appid` | `oeuvre_jeu.gog_product_id` |
+| Liens manuels import | `game_steam_appid_map` | `game_gog_product_map` |
+| Stats playtime | `game_steam_stats` | `game_gog_stats` |
+| Création fiches catalogue | Oui (admin / IGDB) | **Non en v1** — catalogue existant uniquement |
+| API | Officielle Steam Web | Partiellement documentée ; OAuth approche A recommandée |
+
+---
+
+## Prérequis (avant de coder)
+
+### 1. Compte développeur GOG — approche A (retenue)
+
+Créer une application sur le portail développeur GOG et enregistrer :
+
+| Paramètre | Valeur |
+|-----------|--------|
+| Authorization endpoint | `https://auth.gog.com/oauth2/authorize` ou `https://auth.gog.com/auth` |
+| Token endpoint | `https://auth.gog.com/token` |
+| Refresh | `POST https://auth.gog.com/token` (`grant_type=refresh_token`) |
+| Scope | `gamelist` |
+| Redirect URI | `{APP_URL}/gog-callback.php` (URL absolue du site Médiathèque) |
+
+Stockage des identifiants app (admin), sur le modèle IGDB :
+
+- variables d’environnement `MONCINE_GOG_CLIENT_ID` / `MONCINE_GOG_CLIENT_SECRET`
+- ou fichier `data/gog_credentials.json` (chmod 0600)
+
+### 2. Approche B — non retenue pour Médiathèque
+
+Les identifiants du client **Galaxy** (`client_id` public, `redirect_uri = https://embed.gog.com/on_login_success?origin=client`) conviennent aux applications **bureau** (Heroic, lgogdownloader), pas à une app web dont le callback doit revenir sur **votre domaine**. Ne pas utiliser pour Médiathèque.
+
+### 3. Migration base
+
+Appliquer `sql/migrations/062_gog_import.sql` (à créer — voir § Schéma).
+
+---
+
+## Périmètre v1
 
 ### Inclus
 
 | Élément | Détail |
 |---------|--------|
-| Connexion OAuth GOG | Flux navigateur + token + refresh (voir doc GOG) |
-| Liste des jeux possédés | Endpoints `embed.gog.com` (filtrer `isGame`) |
-| Rapprochement catalogue | `GameRepository::searchCatalog()` + `SearchMatch` |
+| Connexion OAuth GOG (approche A) | Flux navigateur, `access_token` + `refresh_token`, refresh auto |
+| Bibliothèque possédée | `GET https://api.gog.com/users/me/games` (paginé) |
+| Temps de jeu | `GET https://api.gog.com/v2/users/me/stats?stat=playtime` (batch) |
+| Rapprochement catalogue | Priorité `gog_product_id` → map manuelle → URL → titre |
 | Écran de prévisualisation | Cases à cocher, choix manuel si ambiguïté |
-| Ajout collection | `GameRepository::addFromCatalogOeuvre()` si absent de la bibliothèque |
-| Tag GOG | Fusion dans `oeuvre_jeu.digital_stores` si déjà en bibliothèque |
-| Rapport final | X ajoutés, Y enrichis (GOG), Z ignorés, W absents du catalogue |
+| Ajout / enrichissement Mes jeux | `addFromCatalogOeuvre` ou fusion `digital_stores` |
+| Icône GOG cliquable | Lien magasin (URL stockée ou repli `slug` / `product_id`) |
+| Temps total affiché | Steam + GOG + saisie manuelle |
+| Rapport final | X ajoutés, Y enrichis, Z ignorés, W absents catalogue |
 
 ### Exclus (v1)
 
 | Élément | Raison |
 |---------|--------|
-| Création de fiches catalogue | Catalogue = admin / enrichissement IGDB / saisie manuelle |
-| Import des **films** GOG | Hors périmètre jeux |
-| Import liste d’**envies** GOG | Extension possible plus tard (`/user/wishlist.json`) |
-| Synchronisation automatique planifiée | v1 = action manuelle depuis **Importer** |
-| Stockage permanent du token GOG côté serveur | À trancher (session vs chiffrement) — voir § Sécurité |
+| Création automatique de fiches catalogue | Catalogue = admin ; aligné spec initiale M4 |
+| Import films GOG | Hors périmètre jeux |
+| Import envies GOG | Extension ultérieure |
+| Sync automatique planifiée (cron) | Import manuel comme Steam v1 |
+| Mapping IGDB source GOG | Option ultérieure ; v1 = `gog_product_id` catalogue |
+
+---
+
+## Schéma base de données (migration `062_gog_import.sql`)
+
+Sur le modèle de `058_steam_import.sql` et `059_steam_appid_map.sql` :
+
+```sql
+-- Identifiant produit GOG sur la fiche catalogue (renseigné par l’admin)
+ALTER TABLE oeuvre_jeu ADD COLUMN gog_product_id INTEGER NOT NULL DEFAULT 0;
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_oeuvre_jeu_gog_product_id
+    ON oeuvre_jeu(gog_product_id) WHERE gog_product_id > 0;
+
+-- Correspondance manuelle product_id → œuvre (persistante entre imports)
+CREATE TABLE IF NOT EXISTS game_gog_product_map (
+    gog_product_id INTEGER PRIMARY KEY,
+    oeuvre_id INTEGER NOT NULL REFERENCES oeuvres(id) ON DELETE CASCADE,
+    mapped_by_user_id INTEGER NOT NULL DEFAULT 0,
+    source TEXT NOT NULL DEFAULT 'manual',
+    mapped_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_game_gog_product_map_oeuvre
+    ON game_gog_product_map(oeuvre_id) WHERE oeuvre_id > 0;
+
+-- Temps de jeu GOG synchronisé (par entrée bibliothèque)
+CREATE TABLE IF NOT EXISTS game_gog_stats (
+    bibliotheque_id INTEGER PRIMARY KEY REFERENCES bibliotheque(id) ON DELETE CASCADE,
+    gog_product_id INTEGER NOT NULL DEFAULT 0,
+    playtime_minutes INTEGER NOT NULL DEFAULT 0,
+    last_played_unix INTEGER NOT NULL DEFAULT 0,
+    synced_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_game_gog_stats_product
+    ON game_gog_stats(gog_product_id) WHERE gog_product_id > 0;
+
+-- Tokens OAuth GOG par utilisateur (chiffrés — pas de colonne sur utilisateurs)
+CREATE TABLE IF NOT EXISTS user_gog_tokens (
+    user_id INTEGER PRIMARY KEY REFERENCES utilisateurs(id) ON DELETE CASCADE,
+    gog_user_id TEXT NOT NULL DEFAULT '',
+    username TEXT NOT NULL DEFAULT '',
+    access_token_enc TEXT NOT NULL DEFAULT '',
+    refresh_token_enc TEXT NOT NULL DEFAULT '',
+    expires_at TEXT NOT NULL DEFAULT '',
+    connected_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+```
+
+Mettre à jour `lib/GameSchema.php` : `hasGogProductIdColumn()`, `gogStatsTableExists()`, `gogProductMapTableExists()`, `userGogTokensTableExists()`.
+
+---
+
+## API GOG — endpoints retenus
+
+### Authentification
+
+```
+GET  https://auth.gog.com/auth?client_id=...&redirect_uri=...&response_type=code&layout=client2
+POST https://auth.gog.com/token
+     grant_type=authorization_code | refresh_token
+     code=... | refresh_token=...
+     client_id=... & client_secret=... & redirect_uri=...
+```
+
+Réponse token typique :
+
+```json
+{
+  "access_token": "...",
+  "expires_in": 3600,
+  "refresh_token": "...",
+  "token_type": "Bearer",
+  "scope": "gamelist",
+  "user_id": "46988961654682898"
+}
+```
+
+### Utilisateur courant
+
+```
+GET https://api.gog.com/users/me
+Authorization: Bearer {access_token}
+```
+
+### Bibliothèque (paginée)
+
+```
+GET https://api.gog.com/users/me/games?page=1&limit=50
+Authorization: Bearer {access_token}
+```
+
+Réponse (extrait) :
+
+```json
+{
+  "owned": [
+    {
+      "product_id": 1207658930,
+      "title": "Cyberpunk 2077",
+      "slug": "cyberpunk_2077",
+      "platform_flags": { "windows": true, "mac": false, "linux": false },
+      "image": "//images-1.gog.com/...",
+      "dlcs": [1207658931],
+      "is_hidden": false,
+      "is_secret": false,
+      "added_at": 1607584200
+    }
+  ],
+  "total_count": 342,
+  "page": 1,
+  "limit": 50
+}
+```
+
+Boucle `do…while` jusqu’à `count($all) >= total_count`. Filtrer films / contenus non-jeux selon champs disponibles.
+
+### Temps de jeu (batch — préféré)
+
+```
+GET https://api.gog.com/v2/users/me/stats?stat=playtime
+Authorization: Bearer {access_token}
+```
+
+```json
+{
+  "stats": [
+    {
+      "gameId": 1207658930,
+      "stat": "playtime",
+      "value": 45231,
+      "unit": "seconds",
+      "lastPlayed": "2024-05-01T12:34:56Z"
+    }
+  ]
+}
+```
+
+- `value` est en **secondes** → convertir en minutes (`intdiv($seconds, 60)`).
+- `value: 0` et `lastPlayed: null` = normal (jamais lancé via client compatible Galaxy).
+
+### Métadonnées produit (public, sans auth)
+
+```
+GET https://api.gog.com/products/{product_id}
+```
+
+Utile pour enrichir titre / image si la bibliothèque est incomplète. Throttle ~1 req/s recommandé.
+
+### URLs magasin
+
+| Cas | URL |
+|-----|-----|
+| Avec `slug` | `https://www.gog.com/game/{slug}` |
+| URL dans `digital_stores` | Conserver telle quelle |
+| Images protocol-relative | Préfixer `https:` sur `//images-...` |
 
 ---
 
@@ -50,62 +261,53 @@ Référence API (non officielle) : [GOG API Documentation](https://gogapidocs.re
 
 ```mermaid
 flowchart TD
-  A[Page Importer — section GOG] --> B[Connexion compte GOG]
-  B --> C[Récupération bibliothèque paginée]
-  C --> D[Rapprochement titre ↔ catalogue]
-  D --> E[Écran de prévisualisation]
-  E --> F{Utilisateur valide}
-  F --> G[Pour chaque ligne cochée]
-  G --> H{Déjà dans Mes jeux ?}
-  H -->|non| I[addFromCatalogOeuvre + GOG]
-  H -->|oui| J[Fusion magasin GOG]
-  I --> K[Rapport]
-  J --> K
+  A[Admin : client_id/secret sur Importer] --> B[Utilisateur : Connecter GOG]
+  B --> C[OAuth callback → tokens chiffrés]
+  C --> D[Préparer import GOG]
+  D --> E[API bibliothèque + stats playtime]
+  E --> F[GogGameResolver : product_id / titre]
+  F --> G[Aperçu /import-gog.php]
+  G --> H{Validation}
+  H --> I[Ajout ou enrichissement Mes jeux]
+  I --> J[game_gog_stats + digital_stores]
+  J --> K[Rapport]
 ```
 
 ### Étapes détaillées
 
-1. **Importer** (`/import.php`) — nouvelle section « Importer depuis GOG » (onglet Jeux).
-2. **Connexion** — redirection `auth.gog.com` ; récupération `code` → `access_token` + `refresh_token`.
-3. **Téléchargement** — `GET /account/getFilteredProducts` (paginé, `mediaType` = jeux) ; ignorer `isMovie`.
-4. **Matching** — pour chaque titre GOG, recherche catalogue ; classer en trois niveaux :
-   - **Auto** : un seul candidat, score élevé (`SearchMatch`) ;
-   - **À confirmer** : plusieurs candidats ou score moyen → l’utilisateur choisit ou ignore ;
-   - **Absent** : aucun candidat → ligne grisée, non importable.
-5. **Validation** — l’utilisateur coche les lignes à traiter (auto cochées, ambiguës décochées par défaut).
-6. **Application** — voir § Comportement bibliothèque.
-7. **Rapport** — message récapitulatif + lien vers Mes jeux.
+1. **Admin** — enregistre `client_id` / `client_secret` sur `/import.php` (section GOG).
+2. **Utilisateur** — « Connecter mon compte GOG » → `/gog-connect.php` → login GOG → `/gog-callback.php`.
+3. **Préparer l’import** — téléchargement bibliothèque + batch playtime → session preview (TTL 1 h, comme Steam).
+4. **Aperçu** — `/import-gog.php` : lignes pré-cochées si match `gog_product_id` ou map manuelle ; décochées si ambiguïté.
+5. **Validation** — POST `/import-gog-actions.php` (CSRF).
+6. **Rapport** — ajoutés / enrichis / ignorés / absents catalogue.
 
 ---
 
 ## Rapprochement catalogue
 
-### Données GOG utiles
+### Priorité (miroir `SteamGameResolver`)
 
-| Champ GOG | Usage |
-|-----------|--------|
-| `id` | Identifiant produit (traçabilité ; optionnel en v1) |
-| `title` | Recherche `searchCatalog()` |
-| `slug` | URL `https://www.gog.com/game/{slug}` |
-| `isGame` | Filtrer les films |
-| `releaseDate` | Affiner le choix si plusieurs candidats |
-| `worksOn.Linux` | Info affichée à l’utilisateur (pas d’écriture auto Linux en v1) |
+1. **`game_gog_product_map`** — lien manuel enregistré lors d’un import précédent
+2. **`oeuvre_jeu.gog_product_id`** — renseigné à la construction du catalogue (admin)
+3. **URL GOG** déjà présente dans `digital_stores`
+4. **Titre** — bibliothèque utilisateur, puis catalogue (`SearchMatch` / clés pliées)
 
-### Règles de confiance (proposition)
+### Rôle de l’admin catalogue
 
-| Niveau | Condition | UI |
-|--------|-----------|-----|
-| **Fort** | 1 candidat, score `SearchMatch` ≥ seuil à définir | Pré-coché |
-| **Moyen** | 1 candidat score moyen, ou 2–3 candidats proches | Décoché ; liste de choix |
-| **Faible / aucun** | 0 candidat ou homonymes trop éloignés | Ignoré ou choix manuel obligatoire |
+L’import **ne crée pas** de fiches catalogue en v1. Pour qu’un jeu GOG soit importable :
 
-Ne **jamais** importer automatiquement une ligne « moyenne » sans action utilisateur.
+1. Créer ou identifier la fiche `oeuvre_jeu` au catalogue.
+2. Renseigner **`gog_product_id`** (champ à ajouter au formulaire d’édition fiche jeu catalogue, ex. `_oeuvre_jeu_edit_form.php`).
+3. L’import matchera automatiquement par `product_id`.
+
+Les liens manuels à l’import (`game_gog_product_map`) servent de filet pour les cas où le catalogue n’a pas encore l’ID mais l’utilisateur associe une fois.
 
 ### Cas particuliers
 
-- **DLC / éditions GOG** listés comme produits séparés : souvent **sans** équivalent catalogue → ignorés (normal).
-- **Titres GOG** avec ordre des mots différent (« The Witcher 3 » vs « Witcher 3: Wild Hunt, The ») : `SearchMatch` + année.
-- **Bundles** : traiter comme un produit ; match souvent impossible → ignoré.
+- **DLC / bundles** listés comme produits séparés : souvent sans `gog_product_id` catalogue → ignorés (normal).
+- **Titres différents** GOG vs catalogue : repli titre ; sinon choix manuel à l’import.
+- **Jeux à 0 min** : ne pas filtrer (comme Steam).
 
 ---
 
@@ -113,123 +315,194 @@ Ne **jamais** importer automatiquement une ligne « moyenne » sans action utili
 
 ### Jeu pas encore dans Mes jeux
 
-Appeler `GameRepository::addFromCatalogOeuvre($oeuvreId, COLLECTION, $userId, $foyerId, $details)` avec :
-
 ```php
 $details = [
-    'platform' => 'pc',  // GamePlatform::PC
+    'platform' => GamePlatform::PC,
     'is_digital' => true,
     'digital_stores' => GameDigitalStore::serializeList([
-        ['store' => 'gog', 'url' => 'https://www.gog.com/game/{slug}'],
+        ['store' => GameDigitalStore::GOG, 'url' => GogWebApiClient::storeUrl($productId, $slug)],
     ]),
-    // physical_supports : ne pas écraser si déjà renseigné sur la fiche
 ];
+GameRepository::addFromCatalogOeuvre($oeuvreId, LibraryStatut::COLLECTION, $userId, $foyerId, $details);
+GameGogStatsRepository::upsert($bibId, $productId, $playtimeMinutes, $lastPlayedUnix);
+GameRepository::setGogProductIdIfEmpty($oeuvreId, $productId);
 ```
 
 ### Jeu déjà dans Mes jeux (Steam, physique, autre démat)
 
-- **Ne pas** rappeler `addFromCatalogOeuvre` (message « déjà dans la collection »).
-- **Fusionner** le magasin GOG dans `oeuvre_jeu.digital_stores` :
-  1. lire le JSON actuel (`GameDigitalStore::parseStoredList`) ;
-  2. si `gog` absent, ajouter `{ store: 'gog', url: '...' }` ;
-  3. conserver Steam / Epic / supports physiques existants ;
-  4. `is_digital = 1` si au moins un magasin démat.
-- Résultat attendu : icône GOG visible (`GameEditionIcons`) en plus de Steam / CD, etc.
+- **Ne pas** dupliquer l’entrée `bibliotheque`.
+- **Fusionner** GOG : `GameRepository::mergeDigitalStoreForOeuvre($oeuvreId, GameDigitalStore::GOG, $url)` — utilise déjà `GameDigitalStore::mergeStore()` en interne.
+- **Mettre à jour** `game_gog_stats` pour cette entrée bibliothèque.
 
-> **Note modèle de données :** `digital_stores` et `physical_supports` sont sur **`oeuvre_jeu`** (fiche catalogue), pas sur `bibliotheque`. C’est le comportement actuel des formulaires d’ajout jeu. Les flags **Linux** restent sur `bibliotheque` (`tested_on_linux`, `linux_not_supported`).
+### Temps de jeu affiché
 
-### Fonction à prévoir
+Étendre `lib/GamePlaytime.php` :
 
-```php
-// Exemple de signature (à implémenter)
-GameDigitalStore::mergeStore(string $existingJson, string $store, string $url = ''): string
+```
+total_minutes = steam_playtime_minutes + gog_playtime_minutes + manual_playtime_minutes
 ```
 
-Ou méthode dédiée dans `GameRepository::appendDigitalStoreForOeuvre(int $oeuvreId, string $store, string $url): void`.
+Fichiers à adapter : `GamePlaytime`, `GameLibraryQuery` (JOIN `game_gog_stats`), `GameCollectionStats` (optionnel : cumul GOG seul), templates listes / fiche jeu.
+
+La saisie manuelle sur la fiche jeu **complète** les imports ; elle n’est pas remplacée.
 
 ---
 
-## API GOG (rappel technique)
+## Icône GOG cliquable
 
-Documentation : [Authentication](https://gogapidocs.readthedocs.io/en/latest/auth.html), [Account — Games](https://gogapidocs.readthedocs.io/en/latest/account.html), [Listing](https://gogapidocs.readthedocs.io/en/latest/listing.html).
+Aujourd’hui `GameEditionIcons::linkUrlForKey()` a un **repli Steam** via `steam_appid` si l’URL est vide ; **pas encore pour GOG**.
 
-| Étape | Endpoint |
-|-------|----------|
-| Login | `GET https://auth.gog.com/auth` (navigateur) |
-| Token | `GET https://auth.gog.com/token` |
-| IDs possédés | `GET https://embed.gog.com/user/data/games` |
-| Liste détaillée | `GET https://embed.gog.com/account/getFilteredProducts` |
-| Détail jeu | `GET https://embed.gog.com/account/gameDetails/{id}.json` |
+À implémenter pour `GameEditionIcons::GOG` :
 
-En-tête : `Authorization: Bearer {access_token}`.
+1. URL dans `digital_stores` (priorité)
+2. Sinon `https://www.gog.com/game/{slug}` si `slug` connu (ligne import ou catalogue)
+3. Sinon repli via `gog_product_id` / `library_gog_product_id` (helper `GogWebApiClient::storeUrl()`)
 
-**Limites connues :**
-
-- API **non officielle** (reverse-engineering client Galaxy / site) — peut casser sans préavis.
-- CAPTCHA possible à la connexion.
-- Token ~1 h ; prévoir `refresh_token`.
-- Conditions d’utilisation GOG à vérifier avant mise en production.
+Tests : étendre `tests/Unit/GameEditionIconsLinkTest.php`.
 
 ---
 
-## Intégration Médiathèque (fichiers prévus)
+## Architecture code (fichiers à créer)
 
-| Zone | Fichiers / classes (indicatif) |
-|------|--------------------------------|
-| Config | `GogConfig` — tokens en session ou `data/gog_credentials.json` chiffré (à décider) |
-| Client HTTP | `GogClient` — auth, refresh, `getOwnedGames()`, `getFilteredProducts()` |
-| Import | `GogLibraryImporter` — matching, preview DTO, apply |
-| UI | Section dans `templates/import.php` ; page ou panneau `_gog_import_panel.php` |
-| Handlers | `www/connecter-gog.php`, `www/importer-gog.php` (POST validation) |
-| Tests | `GogLibraryImporterTest`, `GameDigitalStoreTest::testMergeStore` |
+### Configuration et auth
 
-### Réutilisation existante
+| Fichier | Rôle |
+|---------|------|
+| `lib/GogConfig.php` | Credentials app (env / fichier), `redirectUri()` |
+| `lib/GogAuthClient.php` | OAuth authorize, exchange, refresh, `users/me` |
+| `lib/UserGogTokenRepository.php` | Stockage tokens chiffrés par `user_id` |
+
+### Client API et import
+
+| Fichier | Rôle |
+|---------|------|
+| `lib/GogWebApiClient.php` | Bibliothèque paginée, stats playtime, URLs, images |
+| `lib/GogGameResolver.php` | Rapprochement product_id ↔ catalogue / bibliothèque |
+| `lib/GogProductIdMapRepository.php` | Miroir `GameSteamAppIdMapRepository` |
+| `lib/GameGogStatsRepository.php` | Miroir `GameSteamStatsRepository` |
+| `lib/GogLibraryImporter.php` | Miroir `SteamLibraryImporter` (preview, apply, session) |
+
+### Web
+
+| Fichier | Rôle |
+|---------|------|
+| `www/gog-connect.php` | Redirect OAuth + `state` en session |
+| `www/gog-callback.php` | Échange code, sauve tokens, redirect import |
+| `www/gog-disconnect.php` | Suppression liaison compte |
+| `www/import-gog-actions.php` | prepare / apply / map manuel |
+| `www/import-gog.php` | Page aperçu |
+| `templates/import-gog.php` | Tableau preview |
+| `templates/import.php` | Section GOG (config + connexion + boutons) |
+
+### Catalogue et maintenance
+
+| Fichier | Rôle |
+|---------|------|
+| `templates/_oeuvre_jeu_edit_form.php` | Champ `gog_product_id` (admin) |
+| `lib/GameRepository.php` | `setGogProductId`, `findCatalogByGogProductId`, etc. |
+| `lib/CatalogMaintenance.php` | Fusion `gog_product_id` + migration `game_gog_product_map` |
+| `lib/GameCatalogSql.php` | Exposer `gog_product_id` dans les requêtes catalogue |
+
+### Réutilisation existante (déjà en place)
 
 | Besoin | Existant |
 |--------|----------|
-| Recherche catalogue | `GameRepository::searchCatalog()`, `SearchMatch`, `GameTitle` |
+| Fusion magasin démat | `GameDigitalStore::mergeStore()`, `GameRepository::mergeDigitalStoreForOeuvre()` |
+| Icône GOG (affichage) | `GameEditionIcons`, `www/assets/img/game-editions/gog.png` |
 | Ajout bibliothèque | `GameRepository::addFromCatalogOeuvre()` |
-| Magasins démat | `GameDigitalStore` (`gog`, `steam`, `epic`) |
-| Déjà en collection ? | `GameRepository::findLibraryBibIdForCatalogOeuvre()` |
-| Page d’entrée | `/import.php` (comme enrichissement IGDB) |
+| Recherche titre | `GameRepository::searchCatalog()`, `SearchMatch` |
+| Modèle import Steam | `SteamLibraryImporter`, `import-steam.php`, `import-steam-actions.php` |
+| CSRF | `Csrf::rejectUnlessValid` |
 
 ---
 
-## Sécurité et confidentialité
+## Sécurité
 
-- Ne jamais logger les `access_token` / `refresh_token`.
-- Stocker les tokens de façon **chiffrée** ou en **session** uniquement (durée limitée).
-- CSRF sur toutes les actions POST (`Csrf::rejectUnlessValid`).
-- L’import ne modifie que la bibliothèque du **foyer / utilisateur** connecté ; la fusion `digital_stores` touche la fiche **catalogue** partagée — documenter pour l’utilisateur si plusieurs foyers partagent le même catalogue admin.
+- Ne **jamais** logger `access_token` / `refresh_token`.
+- Tokens utilisateur : **chiffrés** en base (`user_gog_tokens`), pas en session seule (durée refresh longue).
+- Credentials app (`client_secret`) : fichier 0600 ou variables d’environnement (comme IGDB).
+- CSRF sur tous les POST.
+- Valider `state` OAuth en session au callback.
+- L’import modifie la bibliothèque du foyer connecté ; la fusion `digital_stores` touche le **catalogue partagé** — message utilisateur si pertinent.
 
 ---
 
-## Évolutions ultérieures (hors v1)
+## Ordre d’implémentation recommandé
 
-- Colonne ou table `gog_product_id` ↔ `oeuvre_id` pour resync fiable.
-- Import **envies** GOG → `LibraryStatut::WISHLIST`.
-- Proposition Steam / Epic sur le même modèle.
-- Mise à jour **Linux** si `worksOn.Linux` sur GOG (avec confirmation).
-- Export inverse (lecture seule) — peu probable.
+```
+Phase 0  Obtenir compte dev GOG + redirect URI
+Phase 1  Migration 062 + GameSchema
+Phase 2  GogConfig + GogAuthClient + UserGogTokenRepository
+Phase 3  www/gog-connect.php + gog-callback.php (connexion testable)
+Phase 4  GogWebApiClient (bibliothèque + playtime)
+Phase 5  GogGameResolver + GogProductIdMapRepository + GameRepository
+Phase 6  GameGogStatsRepository + extension GamePlaytime (steam+gog+manuel)
+Phase 7  GogLibraryImporter + UI import-gog
+Phase 8  GameEditionIcons lien GOG + champ gog_product_id formulaire catalogue
+Phase 9  CatalogMaintenance + tests + doc/jeux.md + CHANGELOG
+```
+
+Estimation : **5 à 8 jours** de développement une fois le compte dev disponible.
+
+---
+
+## Tests à prévoir
+
+| Fichier | Sujet |
+|---------|--------|
+| `tests/Unit/GogWebApiClientTest.php` | Pagination, secondes→minutes, URLs, images |
+| `tests/Unit/GogGameResolverTest.php` | Priorité product_id / map / titre |
+| `tests/Unit/GogLibraryImporterTest.php` | Preview, merge, skip absent catalogue |
+| `tests/Unit/GameGogStatsRepositoryTest.php` | upsert |
+| `tests/Unit/GamePlaytimeTest.php` | total steam + gog + manuel |
+| `tests/Unit/GameEditionIconsLinkTest.php` | lien GOG (étendre fichier existant) |
+
+Pas d’appels HTTP réels GOG en CI — mocks JSON.
+
+---
+
+## Limites connues
+
+| Limite | Détail |
+|--------|--------|
+| API non contractuelle | Endpoints peuvent changer ; surveiller projets open-source |
+| Playtime incomplet | Jeux lancés hors Galaxy souvent à 0 |
+| CAPTCHA | Possible à la connexion OAuth |
+| Token ~1 h | Refresh automatique obligatoire |
+| Pas de création catalogue v1 | Dépend du travail admin sur `gog_product_id` |
+| Rate limiting | ~1 req/s sur endpoints authentifiés si grosse bibliothèque |
 
 ---
 
 ## Critères d’acceptation (tests manuels)
 
-1. Jeu GOG présent au catalogue, absent de Mes jeux → ajouté avec icône GOG.
-2. Jeu déjà en Mes jeux (Steam seul) → pas de doublon ; icône GOG ajoutée.
-3. Jeu déjà en Mes jeux (GOG déjà présent) → aucun changement / message « déjà GOG ».
-4. Jeu absent du catalogue → ignoré, mentionné dans le rapport.
-5. Deux candidats catalogue → utilisateur doit choisir ; rien n’est importé sans choix.
-6. Film GOG → ignoré.
-7. Déconnexion / token expiré → message clair, pas d’état corrompu.
+1. Admin : credentials GOG enregistrés sur Importer.
+2. Utilisateur : connexion GOG OAuth réussie ; déconnexion possible.
+3. Jeu catalogue avec `gog_product_id` → ajouté ou enrichi ; icône GOG cliquable vers le magasin.
+4. Jeu déjà Steam en bibliothèque → pas de doublon ; icône GOG ajoutée.
+5. Temps GOG importé ; total affiché = Steam + GOG + manuel.
+6. Jeu absent catalogue → ignoré, mentionné au rapport.
+7. Match ambigu → utilisateur choisit ; rien sans validation.
+8. Token expiré → refresh silencieux ou message clair.
+9. Film / non-jeu GOG → ignoré.
+
+---
+
+## Évolutions ultérieures (hors v1)
+
+- Sync planifiée playtime seul (cron)
+- Import envies GOG → `LibraryStatut::WISHLIST`
+- Propositions catalogue (comme import Steam utilisateur non-admin)
+- Mapping IGDB external source GOG
+- Mise à jour flag Linux depuis `platform_flags.linux` (avec confirmation)
 
 ---
 
 ## Liens
 
-- [doc/jeux.md](jeux.md) — module jeux, `digital_stores`, enrichissement IGDB
-- [ROADMAP.md](../ROADMAP.md) § M4 — polish jeux
-- [doc/conventions-techniques.md](conventions-techniques.md) — nommage code
-
-*Dernière mise à jour : 2026-06-16 — notice initiale, implémentation à planifier.*
+- [doc/import-steam.md](import-steam.md) — référence implémentée
+- [doc/enrichissement-magasins.md](enrichissement-magasins.md) — liens catalogue GOG/Epic (API publiques, sans OAuth)
+- [doc/jeux.md](jeux.md) — module jeux, `digital_stores`, temps de jeu
+- [ROADMAP.md](../ROADMAP.md) § M4 — polish jeux GOG
+- [doc/conventions-techniques.md](conventions-techniques.md) — nommage `Moncine\`, migrations SQL
+- [doc/base-de-donnees.md](base-de-donnees.md) — inventaire migrations (ajouter 062 à l’implémentation)
