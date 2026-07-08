@@ -48,4 +48,20 @@ final class CatalogGameStoreLinksTest extends TestCase
         $this->assertStringNotContainsString('gog.com', $cleared);
         $this->assertStringContainsString('epicgames.com', $cleared);
     }
+
+    public function testClearStoreUrlKeepsOwnershipWithoutUrl(): void
+    {
+        $json = GameDigitalStore::serializeList([
+            ['store' => 'steam', 'url' => 'https://store.steampowered.com/app/42/'],
+            ['store' => 'gog', 'url' => ''],
+        ]);
+
+        $cleared = GameDigitalStore::clearStoreUrl($json, 'steam');
+        $stores = GameDigitalStore::parseStoredList($cleared);
+
+        $this->assertCount(2, $stores);
+        $this->assertSame('steam', $stores[0]['store']);
+        $this->assertSame('', $stores[0]['url']);
+        $this->assertSame('gog', $stores[1]['store']);
+    }
 }

@@ -10,7 +10,7 @@
  * @var int $perPage
  * @var string $mediaDomain
  * @var bool $added
- * @var bool $deleted
+ * @var int $deletedCount
  * @var string $saveError
  * @var string $deleteError
  * @var bool $hasTmdbKey
@@ -57,8 +57,11 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
     <?php if ($added): ?>
         <p class="alert alert-success">Œuvre ajoutée au catalogue.</p>
     <?php endif; ?>
-    <?php if ($deleted): ?>
-        <p class="alert alert-success">Œuvre supprimée du catalogue.</p>
+    <?php if ($deletedCount > 0): ?>
+        <p class="alert alert-success">
+            <?= (int) $deletedCount ?> œuvre<?= $deletedCount > 1 ? 's' : '' ?>
+            supprimée<?= $deletedCount > 1 ? 's' : '' ?> du catalogue.
+        </p>
     <?php endif; ?>
     <?php if ($saveError !== ''): ?>
         <p class="alert alert-warning"><?= Moncine\View::escape($saveError) ?></p>
@@ -203,9 +206,17 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
             foreach ($mediaFilters as $filterKey => $filterLabel):
                 $isActive = $filterKey === $mediaDomain;
                 $filterUrl = Moncine\View::catalogueUrl($search, $sortBy, $sortDir, 1, $filterKey);
+                $filterTheme = Moncine\MediaDomain::theme($filterKey !== '' ? $filterKey : Moncine\MediaDomain::FILM);
+                $filterStyle = $isActive
+                    ? ' style="background:' . Moncine\View::escape($filterTheme['accent'])
+                        . ';border-color:' . Moncine\View::escape($filterTheme['accent']) . ';color:#fff"'
+                    : '';
+                $filterClass = 'catalog-admin-media-filter__link catalog-admin-media-filter__link--'
+                    . ($filterKey !== '' ? $filterKey : 'all');
                 ?>
                 <a href="<?= Moncine\View::escape($filterUrl) ?>"
-                   class="catalog-admin-media-filter__link<?= $isActive ? ' is-active' : '' ?>"
+                   class="<?= Moncine\View::escape($filterClass) ?><?= $isActive ? ' is-active' : '' ?>"
+                   <?= $filterStyle ?>
                    <?= $isActive ? ' aria-current="page"' : '' ?>>
                     <?= Moncine\View::escape($filterLabel) ?>
                 </a>
@@ -255,11 +266,47 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                 </div>
             <?php endif; ?>
 
+            <form method="post" action="/catalogue.php#catalog-list-nav" id="catalog-bulk-form"
+                  class="catalog-admin-bulk-form">
+                <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                <input type="hidden" name="action" value="delete_oeuvres_bulk">
+                <input type="hidden" name="q" value="<?= Moncine\View::escape($search) ?>">
+                <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
+                <input type="hidden" name="dir" value="<?= Moncine\View::escape($sortDir) ?>">
+                <input type="hidden" name="page" value="<?= (int) $page ?>">
+                <?php if ($mediaDomain !== ''): ?>
+                    <input type="hidden" name="media" value="<?= Moncine\View::escape($mediaDomain) ?>">
+                <?php endif; ?>
+
+                <div class="collection-toolbar catalog-admin-bulk-toolbar" id="catalog-bulk-toolbar" hidden>
+                    <div class="collection-toolbar__head">
+                        <span>
+                            <strong id="catalog-bulk-selected-count">0</strong>
+                            fiche(s) sélectionnée(s)
+                        </span>
+                        <button type="button" class="btn btn-ghost btn-sm" id="catalog-bulk-deselect-all">
+                            Tout désélectionner
+                        </button>
+                    </div>
+                    <button type="submit" class="btn btn-danger btn-sm" id="catalog-bulk-delete-btn"
+                            data-confirm="Supprimer les fiches sélectionnées du catalogue ? Les entrées bibliothèque liées seront aussi supprimées.">
+                        Supprimer la sélection
+                    </button>
+                </div>
+            </form>
+
             <p class="table-scroll-hint show-mobile-only">Faites glisser le tableau horizontalement pour voir toutes les colonnes.</p>
             <div id="catalogue-list" class="table-scroll catalogue-list-anchor">
                 <table class="films-table films-table--sortable catalog-admin-table">
                     <thead>
                         <tr>
+                            <th scope="col" class="catalog-admin-table__select">
+                                <label class="collection-select-all" title="Tout sélectionner sur cette page">
+                                    <input type="checkbox" id="catalog-bulk-select-all"
+                                           form="catalog-bulk-form"
+                                           aria-label="Tout sélectionner sur cette page">
+                                </label>
+                            </th>
                             <th scope="col">ID</th>
                             <?php $sortHeader('Titre', 'titre'); ?>
                             <?php $sortHeader('Réalisateur', 'realisateur'); ?>
@@ -275,6 +322,12 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                             $libraryCount = (int) ($oeuvre['library_count'] ?? 0);
                             ?>
                             <tr>
+                                <td class="catalog-admin-table__select">
+                                    <input type="checkbox" class="catalog-oeuvre-cb"
+                                           form="catalog-bulk-form"
+                                           name="oeuvre_ids[]" value="<?= $oeuvreId ?>"
+                                           aria-label="Sélectionner « <?= Moncine\View::escape((string) ($oeuvre['titre'] ?? '')) ?> »">
+                                </td>
                                 <td><?= $oeuvreId ?></td>
                                 <td>
                                     <a href="<?= Moncine\View::escape(Moncine\View::catalogOeuvreUrl(
@@ -329,6 +382,7 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                                         <input type="hidden" name="q" value="<?= Moncine\View::escape($search) ?>">
                                         <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
                                         <input type="hidden" name="dir" value="<?= Moncine\View::escape($sortDir) ?>">
+                                        <input type="hidden" name="page" value="<?= (int) $page ?>">
                                         <?php if ($mediaDomain !== ''): ?>
                                             <input type="hidden" name="media" value="<?= Moncine\View::escape($mediaDomain) ?>">
                                         <?php endif; ?>

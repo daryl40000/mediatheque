@@ -159,6 +159,41 @@ final class GameDigitalStore
         return json_encode($out, JSON_UNESCAPED_UNICODE | JSON_UNESCAPED_SLASHES) ?: '';
     }
 
+    /** Retire l’URL d’un magasin sans retirer la possession (case bibliothèque). */
+    public static function clearStoreUrl(string $existingJson, string $store): string
+    {
+        $store = self::normalizeStoreKey($store);
+        if ($store === '') {
+            return trim($existingJson);
+        }
+
+        $items = self::parseStoredList($existingJson);
+        $changed = false;
+        foreach ($items as $index => $entry) {
+            if (($entry['store'] ?? '') !== $store) {
+                continue;
+            }
+            if (trim((string) ($entry['url'] ?? '')) === '') {
+                return trim($existingJson);
+            }
+            $items[$index]['url'] = '';
+            $changed = true;
+            break;
+        }
+
+        if (!$changed) {
+            return trim($existingJson);
+        }
+
+        return self::serializeList(array_map(
+            static fn (array $item): array => [
+                'store' => (string) ($item['store'] ?? ''),
+                'url' => (string) ($item['url'] ?? ''),
+            ],
+            $items
+        ));
+    }
+
     /** Retire un magasin du JSON stocké. */
     public static function removeStore(string $existingJson, string $store): string
     {

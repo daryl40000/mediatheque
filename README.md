@@ -2,7 +2,7 @@
 
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 
-**Version : 0.7.14**
+**Version : 0.7.15**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -41,7 +41,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. Depuis 
 | **BD / Manga** | 🔄 En cours (M2) | Collection, envies, partage, profil public, impression ; import CSV à venir |
 | **Livres** | ⏸️ Placeholder | Onglet + page « bientôt » (`/livres.php`) — **0.7.8** |
 | **Musique** | ⏸️ Placeholder | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles/CD — **0.7.8** |
-| **Transversal** | Partiel | Catalogue partagé multi-domaines, **recherche globale** en-tête (**0.7.14**), foyers, amis, partage visiteur, profil public (films + magazines + **jeux**) |
+| **Transversal** | Partiel | Catalogue partagé multi-domaines, **recherche globale** en-tête (**0.7.14**), **suppression groupée catalogue admin** (**0.7.15**), foyers, amis, partage visiteur, profil public (films + magazines + **jeux**) |
 
 **Commun à tous les onglets actifs :** prêts entre amis (physique), import/export, comptes et foyers, codes EAN catalogue, soumissions au catalogue, notifications.
 
@@ -71,6 +71,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.15** | Suppression groupée catalogue admin, pagination après suppression, filtre média coloré, liens icônes GOG/Epic, import ABM couvertures (%20) |
 | **0.7.14** | Recherche globale (bibliothèque + catalogue), liens magasins catalogue jeux, filtre média admin, possession démat corrigée |
 | **0.7.13** | Sagas/extensions cliquables vers le catalogue pour tous, défilement bandeau saga jeu |
 | **0.7.12** | Profil ami → fiches catalogue, cœur envies sous jaquette, fiches film/BD/magazine harmonisées, saga extensions jeux |

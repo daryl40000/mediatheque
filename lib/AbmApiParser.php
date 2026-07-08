@@ -86,7 +86,7 @@ final class AbmApiParser
                 continue;
             }
 
-            $coverUrl = (string) array_pop($parts);
+            $rawCoverUrl = (string) array_pop($parts);
             $dateLabel = (string) array_pop($parts);
             $filename = (string) array_pop($parts);
             $numero = (string) array_pop($parts);
@@ -96,7 +96,7 @@ final class AbmApiParser
             $magazineTitre = (string) array_pop($parts);
             $issueId = (int) array_pop($parts);
 
-            if ($issueId <= 0 || $magazineId <= 0 || $magazineTitre === '' || $coverUrl === '') {
+            if ($issueId <= 0 || $magazineId <= 0 || $magazineTitre === '' || $rawCoverUrl === '') {
                 continue;
             }
 
@@ -109,7 +109,7 @@ final class AbmApiParser
                 'numero' => $numero,
                 'cover_filename' => $filename,
                 'date_label' => $dateLabel,
-                'cover_url' => $coverUrl,
+                'cover_url' => self::normalizeCoverUrl($rawCoverUrl),
             ];
         }
 
@@ -170,7 +170,7 @@ final class AbmApiParser
                 'date_parution' => PublicationType::parseParutionDateLabel((string) ($issue['date_label'] ?? '')) ?? '',
                 'annee' => self::extractYear((string) ($issue['date_label'] ?? '')),
                 'cover_filename' => (string) ($issue['cover_filename'] ?? ''),
-                'cover_url' => (string) ($issue['cover_url'] ?? ''),
+                'cover_url' => self::normalizeCoverUrl((string) ($issue['cover_url'] ?? '')),
             ];
         }
 
@@ -222,6 +222,52 @@ final class AbmApiParser
         return $horsSerie ? 0.5 : 0.0;
     }
 
+    /**
+     * Corrige les URLs de couverture ABM pour l’export JSON.
+     * L’API renvoie parfois des espaces littéraux dans le chemin (ex. « PC Team ») :
+     * ils sont encodés en %20 pour que l’URL reste valide en JSON et à l’import,
+     * tout en pointant vers le bon fichier sur le serveur ABM.
+     */
+    public static function normalizeCoverUrl(string $url): string
+    {
+        $url = trim($url);
+        if ($url === '') {
+            return '';
+        }
+
+        if (str_starts_with($url, 'http://')) {
+            $url = 'https://' . substr($url, 7);
+        }
+
+        if (str_contains(strtolower($url), 'abandonware-magazines.org')) {
+            $parts = parse_url($url);
+            if (is_array($parts) && isset($parts['path'])) {
+                $parts['path'] = self::encodeSpacesInUrlPath((string) $parts['path']);
+                $url = self::buildHttpUrl($parts);
+            }
+        }
+
+        return SecureUrl::sanitizePosterUrl($url);
+    }
+
+    /** Encode les espaces du chemin URL (%20 = espace ASCII en notation URL). */
+    private static function encodeSpacesInUrlPath(string $path): string
+    {
+        if ($path === '' || !str_contains($path, ' ')) {
+            return $path;
+        }
+
+        $segments = explode('/', $path);
+        foreach ($segments as $i => $segment) {
+            if ($segment === '' || !str_contains($segment, ' ')) {
+                continue;
+            }
+            $segments[$i] = str_replace(' ', '%20', $segment);
+        }
+
+        return implode('/', $segments);
+    }
+
     private static function normalizeRaw(string $raw): string
     {
         $raw = preg_replace('/<br\s*\/?>/iu', "\n", $raw) ?? $raw;
@@ -252,9 +298,21 @@ final class AbmApiParser
             return '';
         }
         if (str_starts_with($filename, 'http://') || str_starts_with($filename, 'https://')) {
-            return $filename;
+            return self::normalizeCoverUrl($filename);
         }
 
         return self::LOGO_BASE_URL . rawurlencode($filename);
+    }
+
+    /** @param array<string, mixed> $parts */
+    private static function buildHttpUrl(array $parts): string
+    {
+        $scheme = strtolower((string) ($parts['scheme'] ?? 'https'));
+        $host = (string) ($parts['host'] ?? '');
+        $path = (string) ($parts['path'] ?? '');
+        $query = isset($parts['query']) ? '?' . (string) $parts['query'] : '';
+        $fragment = isset($parts['fragment']) ? '#' . (string) $parts['fragment'] : '';
+
+        return $scheme . '://' . $host . $path . $query . $fragment;
     }
 }

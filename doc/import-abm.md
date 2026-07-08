@@ -12,6 +12,15 @@ Outil **ponctuel** pour préparer un fichier JSON avant import dans le catalogue
 
 L’API renvoie du texte séparé par `;` (pas du JSON). Le script ne télécharge **pas** les ZIP PDF.
 
+### URLs de couverture (depuis **0.7.15**)
+
+Certaines revues ont un **espace** dans le chemin image (ex. `…/PC Team/pcteam_numerocd01.jpg`). L’export JSON encode ces espaces en **`%20`** (`AbmApiParser::normalizeCoverUrl`) pour que :
+
+- le JSON reste valide ;
+- l’import catalogue et le téléchargement des couvertures fonctionnent sans modifier le code de production.
+
+Regénérez le JSON après mise à jour du script fetch si vous aviez un export antérieur avec des URLs « cassées ».
+
 ## Commande
 
 Depuis la racine du dépôt :

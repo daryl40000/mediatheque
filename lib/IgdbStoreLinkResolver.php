@@ -100,7 +100,7 @@ final class IgdbStoreLinkResolver
 
         return match (GameDigitalStore::normalizeStoreKey($store)) {
             GameDigitalStore::EPIC => str_contains($url, 'store.epicgames.com/p/'),
-            GameDigitalStore::GOG => str_contains($url, 'gog.com/game/'),
+            GameDigitalStore::GOG => (bool) preg_match('~gog\.com/(?:[a-z]{2}/)?game/~i', $url),
             default => false,
         };
     }

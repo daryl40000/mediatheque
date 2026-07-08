@@ -191,15 +191,25 @@ final class GameRowMapper
      */
     private static function hydrateCatalogStoreLinks(array $row): array
     {
-        $oeuvreId = (int) ($row['oeuvre_id'] ?? 0);
-        $row['catalog_store_urls'] = [];
-
-        if ($oeuvreId > 0 && OeuvreStoreLinkRepository::isAvailable()) {
-            $row['catalog_store_urls'] = (new OeuvreStoreLinkRepository())->listVerifiedUrlsForOeuvre($oeuvreId);
-        }
+        $row['catalog_store_urls'] = CatalogGameStoreLinks::urlsForCatalogRow($row);
 
         foreach ($row['catalog_store_urls'] as $store => $url) {
             $row['catalog_store_url_' . $store] = $url;
+        }
+
+        $oeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+        if ($oeuvreId > 0 && OeuvreStoreLinkRepository::isAvailable()) {
+            $links = new OeuvreStoreLinkRepository();
+            foreach (CatalogGameStoreLinks::MANUAL_STORES as $store) {
+                $link = $links->find($oeuvreId, $store);
+                if ($link === null) {
+                    continue;
+                }
+                $slug = trim((string) ($link['store_slug'] ?? ''));
+                if ($slug !== '') {
+                    $row['store_link_slug_' . $store] = $slug;
+                }
+            }
         }
 
         return $row;

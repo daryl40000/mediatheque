@@ -79,4 +79,18 @@ final class GameEditionTest extends TestCase
         $this->assertSame('', $stores[0]['url']);
         $this->assertSame('PlayStation Store', $stores[0]['label']);
     }
+
+    public function testClearStoreUrlRemovesUrlOnly(): void
+    {
+        $json = GameDigitalStore::serializeList([
+            ['store' => GameDigitalStore::GOG, 'url' => 'https://www.gog.com/game/example'],
+        ]);
+
+        $cleared = GameDigitalStore::clearStoreUrl($json, GameDigitalStore::GOG);
+        $stores = GameDigitalStore::parseStoredList($cleared);
+
+        $this->assertCount(1, $stores);
+        $this->assertSame(GameDigitalStore::GOG, $stores[0]['store']);
+        $this->assertSame('', $stores[0]['url']);
+    }
 }

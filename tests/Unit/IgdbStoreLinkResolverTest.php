@@ -43,6 +43,18 @@ final class IgdbStoreLinkResolverTest extends TestCase
         ], GameDigitalStore::EPIC));
     }
 
+    public function testParseGogStoreEntryWithLocalePath(): void
+    {
+        $parsed = IgdbStoreLinkResolver::parseStoreEntry([
+            'name' => 'Diablo',
+            'url' => 'https://www.gog.com/fr/game/diablo',
+        ], GameDigitalStore::GOG);
+
+        $this->assertNotNull($parsed);
+        $this->assertSame('diablo', $parsed['slug']);
+        $this->assertSame('https://www.gog.com/fr/game/diablo', $parsed['url']);
+    }
+
     public function testSlugFromStoreUrlHelpers(): void
     {
         $this->assertSame('hades', EpicCatalogClient::slugFromStoreUrl('https://store.epicgames.com/p/hades'));

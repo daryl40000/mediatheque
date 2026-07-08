@@ -34,10 +34,27 @@ final class CatalogGameStoreLinks
                     $urls[$store] = $url;
                 }
             }
-        } elseif (OeuvreStoreLinkRepository::isAvailable()) {
+        }
+
+        foreach ($gameRow as $key => $value) {
+            if (!is_string($key) || !str_starts_with($key, 'catalog_store_url_')) {
+                continue;
+            }
+            $store = GameDigitalStore::normalizeStoreKey(substr($key, strlen('catalog_store_url_')));
+            $url = trim((string) $value);
+            if ($store !== '' && $url !== '' && !isset($urls[$store])) {
+                $urls[$store] = $url;
+            }
+        }
+
+        if (OeuvreStoreLinkRepository::isAvailable()) {
             $oeuvreId = (int) ($gameRow['oeuvre_id'] ?? 0);
             if ($oeuvreId > 0) {
-                $urls = (new OeuvreStoreLinkRepository())->listVerifiedUrlsForOeuvre($oeuvreId);
+                foreach ((new OeuvreStoreLinkRepository())->listVerifiedUrlsForOeuvre($oeuvreId) as $store => $url) {
+                    if (!isset($urls[$store])) {
+                        $urls[$store] = $url;
+                    }
+                }
             }
         }
 
@@ -60,7 +77,36 @@ final class CatalogGameStoreLinks
             }
         }
 
+        foreach (self::MANUAL_STORES as $store) {
+            if (isset($urls[$store])) {
+                continue;
+            }
+            $slug = trim((string) ($gameRow['store_link_slug_' . $store] ?? ''));
+            if ($slug === '') {
+                continue;
+            }
+            $url = self::urlFromSlug($store, $slug);
+            if ($url !== '') {
+                $urls[$store] = $url;
+            }
+        }
+
         return $urls;
+    }
+
+    public static function urlFromSlug(string $store, string $slug): string
+    {
+        $store = GameDigitalStore::normalizeStoreKey($store);
+        $slug = trim($slug, '/');
+        if ($store === '' || $slug === '') {
+            return '';
+        }
+
+        return match ($store) {
+            GameDigitalStore::GOG => GogCatalogClient::storeUrl($slug),
+            GameDigitalStore::EPIC => EpicCatalogClient::storeUrl($slug),
+            default => '',
+        };
     }
 
     /**
@@ -124,7 +170,8 @@ final class CatalogGameStoreLinks
     }
 
     /**
-     * Retire une URL catalogue erronément enregistrée dans digital_stores (possession).
+     * Retire une URL catalogue erronément enregistrée dans digital_stores,
+     * en conservant la case « je possède ce magasin » si elle était cochée.
      *
      * @param array<string, mixed> $game
      */
@@ -140,23 +187,14 @@ final class CatalogGameStoreLinks
         }
 
         $digitalJson = (string) ($game['digital_stores'] ?? '');
-        foreach (GameDigitalStore::parseStoredList($digitalJson) as $entry) {
-            if (($entry['store'] ?? '') !== $store) {
-                continue;
-            }
-
-            $entryUrl = trim((string) ($entry['url'] ?? ''));
-            if ($entryUrl === '') {
-                return;
-            }
-
-            $merged = GameDigitalStore::removeStore($digitalJson, $store);
-            $isDigital = GameDigitalStore::hasDigitalEdition($merged, !empty($game['is_digital']));
-            $repo->updateCatalogDigitalStores($oeuvreId, $merged, $isDigital);
-            $game['digital_stores'] = $merged;
-
+        $merged = GameDigitalStore::clearStoreUrl($digitalJson, $store);
+        if ($merged === $digitalJson) {
             return;
         }
+
+        $isDigital = GameDigitalStore::hasDigitalEdition($merged, !empty($game['is_digital']));
+        $repo->updateCatalogDigitalStores($oeuvreId, $merged, $isDigital);
+        $game['digital_stores'] = $merged;
     }
 
     /**

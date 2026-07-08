@@ -1989,9 +1989,26 @@ textarea {
 }
 
 .catalog-admin-media-filter__link.is-active {
-    background: var(--accent, #2f6fed);
-    border-color: var(--accent, #2f6fed);
     color: #fff;
+}
+
+.catalog-admin-bulk-toolbar {
+    margin-bottom: 0.75rem;
+}
+
+.catalog-admin-table__select {
+    width: 2.5rem;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.catalog-admin-table__select .collection-select-all {
+    display: inline-flex;
+    margin: 0;
+}
+
+.catalog-admin-bulk-form .collection-toolbar__head {
+    margin-bottom: 0.5rem;
 }
 
 .catalog-game-store-links__row {

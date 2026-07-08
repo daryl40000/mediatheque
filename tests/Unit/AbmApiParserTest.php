@@ -34,7 +34,7 @@ final class AbmApiParserTest extends TestCase
         $this->assertSame(29, $issues[0]['abm_magazine_id']);
         $this->assertFalse($issues[0]['hors_serie']);
         $this->assertSame('033', $issues[0]['numero']);
-        $this->assertSame('http://example.org/cover1.jpg', $issues[0]['cover_url']);
+        $this->assertSame('https://example.org/cover1.jpg', $issues[0]['cover_url']);
 
         $this->assertTrue($issues[1]['hors_serie']);
         $this->assertTrue($issues[1]['is_cd']);
@@ -87,5 +87,34 @@ final class AbmApiParserTest extends TestCase
         $this->assertNull(AbmApiParser::extractYear('sans année'));
         $this->assertSame(33.5, AbmApiParser::guessNumeroOrdre('033', true));
         $this->assertSame(12.0, AbmApiParser::guessNumeroOrdre('12', false));
+    }
+
+    public function testParseIssuesDumpNormalizesCoverUrlWithSpaces(): void
+    {
+        $raw = 'identifiant du numéro ; nom ; id ; CD ; HS ; n° ; fichier ; date ; url<br>'
+            . '99 ; PC Team ; 5 ;  ;  ; CD01 ; pcteam_numerocd01.jpg ; 1996 ; '
+            . 'http://www.abandonware-magazines.org/images_petitescouvertures/PC Team/pcteam_numerocd01.jpg';
+
+        $issues = AbmApiParser::parseIssuesDump($raw);
+
+        $this->assertCount(1, $issues);
+        $this->assertSame(
+            'https://www.abandonware-magazines.org/images_petitescouvertures/PC%20Team/pcteam_numerocd01.jpg',
+            $issues[0]['cover_url']
+        );
+    }
+
+    public function testNormalizeCoverUrlEncodesSpacesAsPercent20(): void
+    {
+        $this->assertSame(
+            'https://www.abandonware-magazines.org/images_petitescouvertures/PC%20Team/pcteam_numerocd01.jpg',
+            AbmApiParser::normalizeCoverUrl(
+                'http://www.abandonware-magazines.org/images_petitescouvertures/PC Team/pcteam_numerocd01.jpg'
+            )
+        );
+        $this->assertSame(
+            'https://example.org/cover1.jpg',
+            AbmApiParser::normalizeCoverUrl('http://example.org/cover1.jpg')
+        );
     }
 }

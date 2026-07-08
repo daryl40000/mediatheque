@@ -103,14 +103,9 @@ final class GameEditionIcons
             return '';
         }
 
-        $catalogUrls = is_array($gameRow['catalog_store_urls'] ?? null) ? $gameRow['catalog_store_urls'] : [];
-        if (isset($catalogUrls[$storeKey]) && trim((string) $catalogUrls[$storeKey]) !== '') {
-            return trim((string) $catalogUrls[$storeKey]);
-        }
-
-        $catalogDirect = trim((string) ($gameRow['catalog_store_url_' . $storeKey] ?? ''));
-        if ($catalogDirect !== '') {
-            return $catalogDirect;
+        $catalogUrl = trim((string) (CatalogGameStoreLinks::urlsForCatalogRow($gameRow)[$storeKey] ?? ''));
+        if ($catalogUrl !== '') {
+            return $catalogUrl;
         }
 
         foreach (GameDigitalStore::parseStoredList((string) ($gameRow['digital_stores'] ?? '')) as $entry) {
@@ -123,25 +118,7 @@ final class GameEditionIcons
             }
         }
 
-        if ($storeKey !== GameDigitalStore::STEAM) {
-            $slug = trim((string) ($gameRow['store_link_slug_' . $storeKey] ?? ''));
-            if ($slug !== '') {
-                return match ($storeKey) {
-                    GameDigitalStore::GOG => GogCatalogClient::storeUrl($slug),
-                    GameDigitalStore::EPIC => EpicCatalogClient::storeUrl($slug),
-                    default => '',
-                };
-            }
-
-            return '';
-        }
-
-        $appid = (int) ($gameRow['library_steam_appid'] ?? $gameRow['steam_appid'] ?? 0);
-        if ($appid <= 0) {
-            return '';
-        }
-
-        return SteamWebApiClient::storeUrl($appid, GameTitle::displayTitle($gameRow));
+        return '';
     }
 
     /** Nom du fichier image dans www/assets/img/game-editions/ (PNG ou WebP). */

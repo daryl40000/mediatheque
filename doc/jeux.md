@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.7.14** · **Date : 2026-07-07**
+**Version : 0.7.15** · **Date : 2026-07-08**
 
 ## Objectif
 
@@ -259,6 +259,7 @@ Deux notions distinctes :
 - Affichage public **« Disponible sur »** sur la fiche catalogue : URLs depuis `oeuvre_store_links`.
 - Icônes de possession sur la fiche bibliothèque : uniquement si le magasin est dans `digital_stores`.
 - Lien cliquable d’une icône : URL catalogue si connue, sinon repli `steam_appid` / slug.
+- Depuis **0.7.15** : résolution unifiée via `CatalogGameStoreLinks::urlsForCatalogRow` ; URLs GOG avec préfixe langue (`/fr/game/`, `/en/game/`) ; slug catalogue si URL absente.
 - Spécification enrichissement automatique : [enrichissement-magasins.md](enrichissement-magasins.md).
 
 ### Recherche et autocomplétion (0.5.4)

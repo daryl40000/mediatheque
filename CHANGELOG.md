@@ -9,6 +9,31 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.15] — 2026-07-08
+
+**Catalogue admin (suppression groupée), liens icônes magasins GOG, import ABM couvertures**
+
+### Ajouté
+
+- **Catalogue admin** (`/catalogue.php`) : cases à cocher et **suppression groupée** des fiches sélectionnées.
+
+### Modifié
+
+- **Import ABM** (`abm-fetch-catalog.php`) : les espaces dans les URLs de couverture sont encodés en **`%20`** dans le JSON exporté (ex. revue « PC Team »).
+
+### Corrigé
+
+- **Icônes magasins** sous la jaquette jeu : liens **GOG** et **Epic** cliquables comme Steam (`GameEditionIcons`, `CatalogGameStoreLinks`, hydratation `catalog_store_urls`) ; prise en charge des URLs GOG avec segment `/fr/game/` ou `/en/game/`.
+- **Possession démat** : retirer un lien catalogue n’efface plus la case « je possède ce magasin » (`GameDigitalStore::clearStoreUrl`).
+- **Catalogue admin** : après une suppression, **conservation de la page** courante (et recul d’une page si la page devient vide).
+- **Catalogue admin** : pastille du filtre média active affichée avec la **couleur du type** choisi (plus la teinte « Magazines » par défaut) ; thème de page aligné sur le filtre.
+
+### Technique
+
+- `CatalogAdmin::deleteOeuvres`, `AbmApiParser::normalizeCoverUrl`, tests `AbmApiParserTest`, `GameEditionIconsLinkTest`, `CatalogGameStoreLinksTest`.
+
+---
+
 ## [0.7.14] — 2026-07-07
 
 **Recherche globale, liens magasins catalogue séparés de la possession, correctifs bibliothèque démat**

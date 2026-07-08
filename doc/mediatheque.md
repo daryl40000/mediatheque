@@ -131,7 +131,15 @@ Voir `.gitignore` :
 
 Points essentiels :
 
-- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.7.14**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.7.15**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+
+### Catalogue admin (0.7.15)
+
+Page **`/catalogue.php`** (administrateur) :
+
+- Filtre par type de média (pastille colorée selon le type actif).
+- **Suppression groupée** : cases à cocher + bouton « Supprimer la sélection ».
+- Après suppression, la **pagination** est conservée (retour page 1 évité).
 
 ### Recherche globale (0.7.14)
 

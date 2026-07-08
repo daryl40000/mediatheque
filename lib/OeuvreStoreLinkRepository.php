@@ -298,15 +298,24 @@ final class OeuvreStoreLinkRepository
         }
 
         $stmt = $this->db->prepare(
-            'SELECT store, store_url FROM oeuvre_store_links
-             WHERE oeuvre_id = ? AND manually_verified = 1 AND TRIM(store_url) != \'\''
+            'SELECT store, store_slug, store_url FROM oeuvre_store_links
+             WHERE oeuvre_id = ? AND manually_verified = 1'
         );
         $stmt->execute([$oeuvreId]);
         $urls = [];
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
             $store = GameDigitalStore::normalizeStoreKey((string) ($row['store'] ?? ''));
+            if ($store === '') {
+                continue;
+            }
+
             $url = SecureUrl::sanitizePosterUrl(trim((string) ($row['store_url'] ?? '')));
-            if ($store !== '' && $url !== '') {
+            if ($url === '') {
+                $slug = trim((string) ($row['store_slug'] ?? ''));
+                $url = CatalogGameStoreLinks::urlFromSlug($store, $slug);
+            }
+
+            if ($url !== '') {
                 $urls[$store] = $url;
             }
         }

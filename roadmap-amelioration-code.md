@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-07-07 (version **0.7.14** — recherche globale, liens magasins catalogue)  
+**Dernière mise à jour :** 2026-07-08 (version **0.7.15** — suppression groupée catalogue, liens GOG/Epic, import ABM couvertures)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif

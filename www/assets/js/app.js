@@ -23,6 +23,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     initCollectionBulkSelection();
+    initCatalogAdminBulkSelection();
     initContentKindFields();
     initCatalogTitleAutocomplete();
     initCatalogAdminCategoryFields();
@@ -164,6 +165,80 @@ function initMobileNav() {
         desktopQuery.addEventListener('change', onViewportChange);
     } else if (typeof desktopQuery.addListener === 'function') {
         desktopQuery.addListener(onViewportChange);
+    }
+}
+
+/**
+ * Cases à cocher sur le catalogue admin : suppression groupée.
+ */
+function initCatalogAdminBulkSelection() {
+    const form = document.getElementById('catalog-bulk-form');
+    if (!form) {
+        return;
+    }
+
+    const checkboxes = document.querySelectorAll('.catalog-oeuvre-cb');
+    const selectAll = document.getElementById('catalog-bulk-select-all');
+    const toolbar = document.getElementById('catalog-bulk-toolbar');
+    const countEl = document.getElementById('catalog-bulk-selected-count');
+    const deselectBtn = document.getElementById('catalog-bulk-deselect-all');
+    const deleteBtn = document.getElementById('catalog-bulk-delete-btn');
+
+    const updateUi = () => {
+        const selected = document.querySelectorAll('.catalog-oeuvre-cb:checked');
+        const n = selected.length;
+        if (countEl) {
+            countEl.textContent = String(n);
+        }
+        if (toolbar) {
+            toolbar.hidden = n === 0;
+        }
+        if (selectAll) {
+            selectAll.checked = n > 0 && n === checkboxes.length;
+            selectAll.indeterminate = n > 0 && n < checkboxes.length;
+        }
+    };
+
+    checkboxes.forEach((cb) => {
+        cb.addEventListener('change', updateUi);
+    });
+
+    if (selectAll) {
+        selectAll.addEventListener('change', () => {
+            const checked = selectAll.checked;
+            checkboxes.forEach((cb) => {
+                cb.checked = checked;
+            });
+            updateUi();
+        });
+    }
+
+    if (deselectBtn) {
+        deselectBtn.addEventListener('click', () => {
+            checkboxes.forEach((cb) => {
+                cb.checked = false;
+            });
+            if (selectAll) {
+                selectAll.checked = false;
+                selectAll.indeterminate = false;
+            }
+            updateUi();
+        });
+    }
+
+    if (deleteBtn) {
+        form.addEventListener('submit', (event) => {
+            const selected = document.querySelectorAll('.catalog-oeuvre-cb:checked').length;
+            if (selected === 0) {
+                event.preventDefault();
+                return;
+            }
+            const message = deleteBtn.getAttribute('data-confirm')
+                || 'Supprimer les fiches sélectionnées du catalogue ?';
+            if (!window.confirm(message)) {
+                event.preventDefault();
+            }
+        });
     }
 }
 

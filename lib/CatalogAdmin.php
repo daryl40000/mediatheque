@@ -474,6 +474,36 @@ final class CatalogAdmin
         return true;
     }
 
+    /**
+     * @param list<int> $oeuvreIds
+     * @return array{deleted: int, errors: list<string>}
+     */
+    public function deleteOeuvres(array $oeuvreIds): array
+    {
+        $deleted = 0;
+        $errors = [];
+
+        foreach ($oeuvreIds as $oeuvreId) {
+            $oeuvreId = (int) $oeuvreId;
+            if ($oeuvreId <= 0) {
+                continue;
+            }
+
+            $result = $this->deleteOeuvre($oeuvreId);
+            if ($result === true) {
+                $deleted++;
+                continue;
+            }
+
+            $errors[] = (string) $result;
+        }
+
+        return [
+            'deleted' => $deleted,
+            'errors' => $errors,
+        ];
+    }
+
     public function sortUrl(
         string $column,
         string $currentSort,
