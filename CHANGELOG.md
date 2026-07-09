@@ -9,6 +9,26 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.16] — 2026-07-09
+
+**Séries BD/magazines (catalogue complet, filtre mémorisé), redirection après ajout catalogue**
+
+### Ajouté
+
+- **Magazines — fiche série** : affichage de **tous les numéros du catalogue** (comme les BD), compteur **« X possédé(s) sur Y »**, synchronisation automatique à l’ouverture de la série.
+- **Séries BD et magazines** : le filtre **Afficher** (Tous / Possédés / Non possédés / Hors-série) est **mémorisé** dans le navigateur pour les visites suivantes.
+
+### Modifié
+
+- **Catalogue admin** : après l’ajout d’une œuvre (film ou jeu), ouverture automatique de la **fiche catalogue** correspondante (`/oeuvre.php` ou `/oeuvre-jeu.php`).
+- **Séries BD** : synchronisation des tomes catalogue manquants à chaque visite de la fiche série (collection).
+
+### Technique
+
+- `MagazineLibraryQuery::countCatalogIssuesForSeries`, `countPossessedIssuesForSeries`, `View::urlWithQuery`, `initSeriesPossessionFilterMemory` (`app.js`).
+
+---
+
 ## [0.7.15] — 2026-07-08
 
 **Catalogue admin (suppression groupée), liens icônes magasins GOG, import ABM couvertures**

@@ -668,6 +668,28 @@ final class View
         return '/oeuvre.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986) . '#catalog-oeuvre-nav';
     }
 
+    /** Ajoute des paramètres GET avant un éventuel fragment (#…). */
+    public static function urlWithQuery(string $url, array $params): string
+    {
+        if ($params === []) {
+            return $url;
+        }
+
+        $query = http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        $hashPos = strpos($url, '#');
+        if ($hashPos === false) {
+            $sep = str_contains($url, '?') ? '&' : '?';
+
+            return $url . $sep . $query;
+        }
+
+        $base = substr($url, 0, $hashPos);
+        $hash = substr($url, $hashPos);
+        $sep = str_contains($base, '?') ? '&' : '?';
+
+        return $base . $sep . $query . $hash;
+    }
+
     /** Page d’administration du catalogue (liste des œuvres). */
     public static function catalogueUrl(
         string $search = '',

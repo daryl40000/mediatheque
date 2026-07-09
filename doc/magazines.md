@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.7.5** · **Date : 2026-06-16**
+**Version : 0.7.16** · **Date : 2026-07-09**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -24,7 +24,9 @@ L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **nu
 Paramètres utiles sur la liste série :
 
 - `statut=collection` ou `statut=wishlist` — collection du foyer ou envies personnelles ;
-- `possession=all|owned|unowned|hors_serie` — filtre **Tous / Possédés / Non possédés / Hors-série** (collection uniquement, **0.4.2**).
+- `possession=all|owned|unowned|hors_serie` — filtre **Tous / Possédés / Non possédés / Hors-série** (collection uniquement, **0.4.2**) ; **mémorisé** dans le navigateur pour les visites suivantes (**0.7.16**).
+
+En-tête de série (collection) : **« X possédé(s) sur Y »** où **Y** est le total des numéros dans le **catalogue** partagé. À l’ouverture de la série, les numéros catalogue absents de votre bibliothèque sont **rattachés automatiquement** comme **non possédés** (**0.7.16**, aligné sur le comportement BD).
 
 ---
 

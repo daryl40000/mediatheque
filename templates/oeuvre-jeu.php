@@ -60,6 +60,9 @@ $completionCount = (int) ($completionCount ?? 0);
         <?php if (!empty($saved)): ?>
             <div class="alert alert-success">Modifications enregistrées.</div>
         <?php endif; ?>
+        <?php if (isset($_GET['added']) && (string) $_GET['added'] === '1'): ?>
+            <div class="alert alert-success">Jeu ajouté au catalogue.</div>
+        <?php endif; ?>
         <?php if (!empty($posterUploaded)): ?>
             <div class="alert alert-success">Jaquette enregistrée.</div>
         <?php endif; ?>

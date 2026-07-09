@@ -673,4 +673,52 @@ final class MagazineLibraryQuery {
             $where[] = 'NOT ' . MagazineCatalogSql::sqlIssuePossessedCondition('b', 'om');
         }
     }
+
+    public function countCatalogIssuesForSeries(int $seriesId): int
+    {
+        if (!MagazineRepository::isAvailable() || $seriesId <= 0) {
+            return 0;
+        }
+
+        $stmt = $this->db->prepare('SELECT COUNT(*) FROM oeuvre_magazine WHERE series_id = ?');
+        $stmt->execute([$seriesId]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    public function countPossessedIssuesForSeries(
+        int $seriesId,
+        int $userId,
+        int $foyerId,
+        ?string $statut = null
+    ): int {
+        if (!MagazineRepository::isAvailable() || $seriesId <= 0) {
+            return 0;
+        }
+
+        $statut = $statut !== null ? LibraryStatut::normalize($statut) : LibraryStatut::COLLECTION;
+        [$statutSql, $statutParams] = $this->libraryStatutFilter($statut, $userId, $foyerId);
+        $params = array_merge([
+            'series_id' => $seriesId,
+            'domain_oeuvre' => MediaDomain::MAGAZINE,
+        ], $statutParams);
+
+        $where = [
+            'om.series_id = :series_id',
+            $statutSql,
+        ];
+        if ($statut !== LibraryStatut::WISHLIST) {
+            $where[] = MagazineCatalogSql::sqlIssuePossessedCondition('b', 'om');
+        }
+
+        $sql = 'SELECT COUNT(DISTINCT b.id)
+                FROM bibliotheque b
+                INNER JOIN oeuvres o ON o.id = b.oeuvre_id AND o.media_domain = :domain_oeuvre
+                INNER JOIN oeuvre_magazine om ON om.oeuvre_id = o.id
+                WHERE ' . implode(' AND ', $where);
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute(MagazineCatalogSql::filterParamsForSql($sql, $params));
+
+        return (int) $stmt->fetchColumn();
+    }
 }

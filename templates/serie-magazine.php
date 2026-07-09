@@ -17,6 +17,8 @@
 /** @var int $totalPages */
 /** @var int $perPage */
 /** @var int $listTotal */
+/** @var int $possessedCount */
+/** @var int $catalogIssueCount */
 /** @var string|null $sortBy */
 /** @var string|null $sortDir */
 ?>
@@ -52,6 +54,10 @@
                         <?php endif; ?>
                         <?php if (trim((string) ($series['issn'] ?? '')) !== ''): ?>
                             · ISSN <?= Moncine\View::escape((string) $series['issn']) ?>
+                        <?php endif; ?>
+                        <?php if (!$isWishlist): ?>
+                            · <?= (int) ($possessedCount ?? 0) ?> possédé<?= (int) ($possessedCount ?? 0) > 1 ? 's' : '' ?>
+                            sur <?= (int) ($catalogIssueCount ?? 0) ?>
                         <?php endif; ?>
                     </p>
                     <?php

@@ -63,6 +63,9 @@ if ($series === null) {
 $repo = new MagazineRepository();
 if (MagazineRepository::isAvailable()) {
     $repo->registerSeriesInLibrary($seriesId, $statut, $userId, $foyerId);
+    if ($statut === LibraryStatut::COLLECTION) {
+        $repo->attachCatalogIssuesToCollection($seriesId, $userId, $foyerId);
+    }
 }
 
 $reindexMessage = '';
@@ -147,4 +150,10 @@ View::render('serie-magazine', [
     'perPage' => $perPage,
     'listTotal' => $listTotal,
     'seriesInLibrary' => $seriesInLibrary,
+    'possessedCount' => MagazineRepository::isAvailable()
+        ? $repo->countPossessedIssuesForSeries($seriesId, $userId, $foyerId, $statut)
+        : 0,
+    'catalogIssueCount' => MagazineRepository::isAvailable()
+        ? $repo->countCatalogIssuesForSeries($seriesId)
+        : 0,
 ]);

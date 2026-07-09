@@ -218,6 +218,20 @@ final class MagazineRepository
         return $this->libraryAttach()->attachCatalogIssuesToCollection($seriesId, $userId, $foyerId);
     }
 
+    public function countCatalogIssuesForSeries(int $seriesId): int
+    {
+        return $this->libraryQuery()->countCatalogIssuesForSeries($seriesId);
+    }
+
+    public function countPossessedIssuesForSeries(
+        int $seriesId,
+        int $userId,
+        int $foyerId,
+        ?string $statut = null
+    ): int {
+        return $this->libraryQuery()->countPossessedIssuesForSeries($seriesId, $userId, $foyerId, $statut);
+    }
+
     /**
      * @return list<array<string, mixed>>
      */

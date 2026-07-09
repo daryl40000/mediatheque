@@ -94,6 +94,9 @@
         <form method="get" action="/serie-bd.php" class="collection-search import-form">
             <input type="hidden" name="series_id" value="<?= $seriesId ?>">
             <input type="hidden" name="statut" value="<?= Moncine\View::escape($statut) ?>">
+            <?php if (!$isWishlist && $possessionFilter !== Moncine\BdRepository::POSSESSION_ALL): ?>
+                <input type="hidden" name="possession" value="<?= Moncine\View::escape($possessionFilter) ?>">
+            <?php endif; ?>
             <?php if (!$isGridView): ?>
                 <input type="hidden" name="view" value="list">
             <?php endif; ?>

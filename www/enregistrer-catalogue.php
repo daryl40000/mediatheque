@@ -12,6 +12,7 @@ use Moncine\Csrf;
 use Moncine\FilmEnricher;
 use Moncine\FilmManualEdit;
 use Moncine\GameRepository;
+use Moncine\MediaDomain;
 use Moncine\MoncineContentKind;
 use Moncine\View;
 
@@ -35,6 +36,18 @@ Csrf::rejectUnlessValid($_POST, $backUrl);
 
 $sep = str_contains($backUrl, '?') ? '&' : '?';
 
+$redirectToNewOeuvre = static function (
+    int $oeuvreId,
+    string $mediaDomain,
+    string $catalogSearch,
+    array $extraParams = []
+): void {
+    $url = View::catalogOeuvreDetailUrl($oeuvreId, $mediaDomain, $catalogSearch);
+    $params = array_merge(['added' => '1'], $extraParams);
+    header('Location: ' . View::urlWithQuery($url, $params));
+    exit;
+};
+
 if (MoncineContentKind::isJeuVideoFormValue($contentKind)) {
     if (!GameRepository::isAvailable()) {
         header('Location: ' . $backUrl . $sep . 'save_error=' . rawurlencode('Module jeux non disponible.'));
@@ -47,8 +60,7 @@ if (MoncineContentKind::isJeuVideoFormValue($contentKind)) {
         exit;
     }
 
-    header('Location: ' . $backUrl . $sep . 'added=1');
-    exit;
+    $redirectToNewOeuvre($oeuvreId, MediaDomain::JEU, $search);
 }
 
 $parsed = FilmManualEdit::parseFromPost($_POST);
@@ -64,7 +76,7 @@ if (!is_int($oeuvreId)) {
 }
 
 if ($withEnrich) {
-    $params = ['added' => '1'];
+    $params = [];
     if (!FilmEnricher::canEnrich()) {
         $params['enrich'] = 'error';
         $params['enrich_msg'] = 'Clé API TMDB manquante. Configurez-la sur la page Importer.';
@@ -76,11 +88,7 @@ if ($withEnrich) {
         $params['enrich_msg'] = $enrichResult['message'];
     }
 
-    $oeuvreUrl = View::oeuvreUrl($oeuvreId, $search);
-    $urlSep = str_contains($oeuvreUrl, '?') ? '&' : '?';
-    header('Location: ' . $oeuvreUrl . $urlSep . http_build_query($params, '', '&', PHP_QUERY_RFC3986));
-    exit;
+    $redirectToNewOeuvre($oeuvreId, MediaDomain::FILM, $search, $params);
 }
 
-header('Location: ' . $backUrl . $sep . 'added=1');
-exit;
+$redirectToNewOeuvre($oeuvreId, MediaDomain::FILM, $search);

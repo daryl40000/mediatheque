@@ -3,6 +3,7 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
+    initSeriesPossessionFilterMemory();
     initCatalogListNavScrollReset();
     initMobileNav();
     initListAnchors();
@@ -55,6 +56,66 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+const SERIES_POSSESSION_FILTERS = new Set(['all', 'owned', 'unowned', 'hors_serie']);
+
+/**
+ * Mémorise le filtre Possédé / Non possédé sur les pages série BD et magazines.
+ */
+function initSeriesPossessionFilterMemory() {
+    const nav = document.querySelector('.magazine-possession-filter');
+    if (!nav) {
+        return;
+    }
+
+    const path = window.location.pathname;
+    let storageKey = null;
+    if (path.endsWith('/serie-magazine.php')) {
+        storageKey = 'mediatheque.seriesPossession.magazine';
+    } else if (path.endsWith('/serie-bd.php')) {
+        storageKey = 'mediatheque.seriesPossession.bd';
+    }
+    if (!storageKey) {
+        return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    const statut = params.get('statut') || 'collection';
+    if (statut === 'wishlist') {
+        return;
+    }
+
+    if (params.has('possession')) {
+        const current = params.get('possession') || 'all';
+        if (SERIES_POSSESSION_FILTERS.has(current)) {
+            localStorage.setItem(storageKey, current);
+        }
+    } else {
+        const saved = localStorage.getItem(storageKey);
+        if (saved && saved !== 'all' && SERIES_POSSESSION_FILTERS.has(saved)) {
+            params.set('possession', saved);
+            window.location.replace(`${path}?${params.toString()}`);
+            return;
+        }
+    }
+
+    nav.addEventListener('click', (event) => {
+        const link = event.target.closest('a[href]');
+        if (!link || !nav.contains(link)) {
+            return;
+        }
+        try {
+            const linkUrl = new URL(link.href, window.location.origin);
+            const linkParams = new URLSearchParams(linkUrl.search);
+            const possession = linkParams.get('possession') || 'all';
+            if (SERIES_POSSESSION_FILTERS.has(possession)) {
+                localStorage.setItem(storageKey, possession);
+            }
+        } catch {
+            // URL invalide : on ignore.
+        }
+    });
+}
 
 /** Décalage sous l’en-tête fixe (aligné sur scroll-margin-top des barres de navigation). */
 const LIST_NAV_SCROLL_OFFSET_PX = 88;

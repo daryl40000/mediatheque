@@ -61,6 +61,9 @@ if ($series === null) {
 $repo = new BdRepository();
 if (BdRepository::isAvailable()) {
     $repo->registerSeriesInLibrary($seriesId, $statut, $userId, $foyerId);
+    if ($statut === LibraryStatut::COLLECTION) {
+        $repo->attachCatalogTomesToCollection($seriesId, $userId, $foyerId);
+    }
 }
 
 $tomes = BdRepository::isAvailable()

@@ -66,7 +66,9 @@ Comme pour les **magazines**, deux champs distincts :
 
 **Hors-série** : case à cocher + badge **HS** sur les cartes. À la **création**, si l’ordre est un entier (ex. `38`) et la case est cochée, l’ordre devient **38.5** (entre 38 et 39). Utile pour les albums dérivés (films Astérix, intégrales, etc.).
 
-Sur la fiche série (`/serie-bd.php`), filtre **Afficher : Hors-série** (collection uniquement).
+Sur la fiche série (`/serie-bd.php`), filtre **Afficher : Tous / Possédés / Non possédés / Hors-série** (collection uniquement). Le dernier choix est **mémorisé** dans le navigateur (**0.7.16**).
+
+En-tête de série (collection) : **« X possédé(s) sur Y »** (tomes possédés / total catalogue). Les tomes catalogue manquants sont **rattachés automatiquement** comme non possédés à chaque visite (**0.7.16**).
 
 ## Limites v0.8.x
 
