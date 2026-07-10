@@ -208,7 +208,8 @@ final class MagazineSubjectRepository
         array $series,
         array $issue,
         int $userParutionYear,
-        int $catalogOeuvreId
+        int $catalogOeuvreId,
+        string $catalogMediaDomain = ''
     ): array|string {
         $prepared = $this->prepareSubjectForIssue(
             $category,
@@ -222,34 +223,35 @@ final class MagazineSubjectRepository
             return $prepared;
         }
 
-        if ($catalogOeuvreId <= 0 || !MagazineGameLink::isAvailable()) {
+        if ($catalogOeuvreId <= 0 || !MagazineSubjectCatalogLink::isAvailable()) {
             return $prepared;
         }
 
-        if (!MagazineGameLink::supportsSubjectCategory((string) ($prepared['category'] ?? ''))) {
-            return 'Cette catégorie de sujet ne peut pas être reliée à un jeu du catalogue.';
+        if (!MagazineSubject::supportsCatalogGameLink((string) ($prepared['category'] ?? ''))) {
+            return 'Cette catégorie de sujet ne peut pas être reliée à une fiche catalogue.';
         }
 
-        $valid = MagazineGameLink::validateCatalogOeuvreId($catalogOeuvreId);
+        $valid = MagazineSubjectCatalogLink::validateCatalogOeuvreId(
+            $catalogOeuvreId,
+            $catalogMediaDomain
+        );
         if ($valid !== true) {
             return $valid;
         }
 
-        $game = (new GameRepository())->findCatalogByOeuvreId($catalogOeuvreId);
-        if ($game === null) {
-            return 'La fiche jeu sélectionnée est introuvable.';
+        $catalog = (new MagazineSubjectCatalogLink())->resolveCatalogRow($catalogOeuvreId);
+        if ($catalog === null) {
+            return 'La fiche catalogue sélectionnée est introuvable.';
         }
 
-        $prepared['label'] = trim((string) ($game['titre'] ?? ''));
+        $prepared['label'] = trim((string) ($catalog['title'] ?? ''));
         if ($prepared['label'] === '') {
-            return 'La fiche jeu sélectionnée est incomplète (titre manquant).';
+            return 'La fiche catalogue sélectionnée est incomplète (titre manquant).';
         }
 
-        if ($prepared['detail'] === '') {
-            $platformShort = GamePlatform::shortLabel((string) ($game['platform'] ?? ''));
-            if ($platformShort !== '') {
-                $prepared['detail'] = $platformShort;
-            }
+        $detailHint = trim((string) ($catalog['detail_hint'] ?? ''));
+        if ($prepared['detail'] === '' && $detailHint !== '') {
+            $prepared['detail'] = $detailHint;
         }
 
         $prepared['catalog_oeuvre_id'] = $catalogOeuvreId;

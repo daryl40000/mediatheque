@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.7.16** · **Date : 2026-07-09**
+**Version : 0.7.17** · **Date : 2026-07-10**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -204,6 +204,7 @@ Classe : `lib/UploadLimits.php` — alerte dans les formulaires si les limites P
 | `lib/MagazineSubjectFts.php` | Index FTS5 du catalogue de sujets |
 | `lib/MagazineFtsQuery.php` | Construction des requêtes MATCH |
 | `templates/_magazine_issue_subjects.php` | Formulaire sujets sur fiche numéro |
+| `templates/_magazine_issue_subjects_strip.php` | Bandeau horizontal de vignettes (sujets reliés, **0.7.17**) |
 | `templates/_magazine_series_tags_field.php` | Badges tags sur fiche série |
 | `templates/_magazine_delete_button.php` | Formulaire suppression (mode fiche) |
 | `templates/_magazine_wishlist_button.php` | Bouton / badge envies |
@@ -222,7 +223,10 @@ Pour retrouver un **test**, une **preview**, un **dossier** ou une **interview**
    - **2 tags ou plus** → menu déroulant à chaque ajout ;
    - **aucun tag** → précision libre optionnelle sur le numéro.
 2. **Fiche numéro**, section **Sujets et tests** : catégorie (**Test**, Preview, Comparatif, Dossier, Interview) + nom ;
-   - **autocomplétion** pendant la saisie : choisissez un sujet déjà existant pour éviter les doublons (ex. « After Life » vs « Afterlife ») ;
+   - **type de média** (jeu, film…) pour lier le sujet à une fiche catalogue (**0.7.17**) ;
+   - **autocomplétion** pendant la saisie : sujets déjà existants **ou** titres du catalogue selon le type choisi ;
+   - si le titre catalogue n’existe pas encore, une **fiche minimale est créée automatiquement** à l’enregistrement (**0.7.17**) ;
+   - les sujets reliés s’affichent en **bandeau horizontal** de couvertures (défilement, bulle test/preview…, lien bibliothèque ou catalogue) (**0.7.17**) ;
    - **année** : menu déroulant sur la fiche numéro (par défaut l’année du numéro, modifiable si le test porte sur une autre année) ;
    - à l’enregistrement, les libellés **proches** (espaces ou ponctuation différents) sont **fusionnés** avec le sujet existant.
 3. **Recherche par sujet** (`/magazines-recherche.php`) : filtre **Test** regroupe aussi les anciennes catégories en base ; autocomplétion sur le nom.
@@ -232,7 +236,9 @@ Affichage type : `Gran Turismo 7 (PC · 2024)`.
 
 Tables : `magazine_subject`, `oeuvre_magazine_subject`, `series.tags` — migrations `034` à `037` ; index FTS — migration `038`.
 
-**Évolution (onglet Jeux, phase M4+)** : lien optionnel d’un sujet test/preview/interview vers une **fiche jeu du catalogue** (`catalog_oeuvre_id`). À l’ajout d’un sujet sur un numéro, l’autocomplétion propose les jeux du catalogue (titre, plateforme, année) en plus des sujets déjà saisis. Les sujets déjà en production restent valides ; voir [ROADMAP.md](../ROADMAP.md) § *Pont Magazines ↔ Jeux vidéo* et [jeux.md](jeux.md).
+**Évolution (onglet Jeux, phase M4+)** : lien optionnel d’un sujet test/preview/interview vers une **fiche catalogue** (`catalog_oeuvre_id`) — **jeu** ou **film** depuis **0.7.17**. À l’ajout d’un sujet sur un numéro, l’autocomplétion propose les titres du catalogue (titre, plateforme ou année selon le média) en plus des sujets déjà saisis. Les sujets déjà en production restent valides ; voir [ROADMAP.md](../ROADMAP.md) § *Pont Magazines ↔ Jeux vidéo*, [pont-magazine-jeu.md](pont-magazine-jeu.md) et [jeux.md](jeux.md).
+
+Classes **0.7.17** : `MagazineSubjectCatalogLink`, API `/rechercher-catalogue-sujet-magazine.php`.
 
 ---
 

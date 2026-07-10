@@ -38,6 +38,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initGameEditionFields();
     initGameRelationFields();
     initGameShelfHoverPreviews();
+    initCollectionGridHoverBubbles();
+    initMagazineSubjectStripHoverBubbles();
     initShareLinkCopy();
     initSteamImportMapping();
     initCatalogOeuvreMerge();
@@ -238,7 +240,7 @@ function initCatalogAdminBulkSelection() {
         return;
     }
 
-    const checkboxes = document.querySelectorAll('.catalog-oeuvre-cb');
+    const checkboxes = form.querySelectorAll('.catalog-oeuvre-cb');
     const selectAll = document.getElementById('catalog-bulk-select-all');
     const toolbar = document.getElementById('catalog-bulk-toolbar');
     const countEl = document.getElementById('catalog-bulk-selected-count');
@@ -246,7 +248,7 @@ function initCatalogAdminBulkSelection() {
     const deleteBtn = document.getElementById('catalog-bulk-delete-btn');
 
     const updateUi = () => {
-        const selected = document.querySelectorAll('.catalog-oeuvre-cb:checked');
+        const selected = form.querySelectorAll('.catalog-oeuvre-cb:checked');
         const n = selected.length;
         if (countEl) {
             countEl.textContent = String(n);
@@ -289,7 +291,7 @@ function initCatalogAdminBulkSelection() {
 
     if (deleteBtn) {
         form.addEventListener('submit', (event) => {
-            const selected = document.querySelectorAll('.catalog-oeuvre-cb:checked').length;
+            const selected = form.querySelectorAll('.catalog-oeuvre-cb:checked').length;
             if (selected === 0) {
                 event.preventDefault();
                 return;
@@ -980,7 +982,7 @@ function initShareLinkCopy() {
 
 /** Autocomplétion des sujets magazines (recherche, liste, fiche numéro). */
 function initMagazineSubjectAutocompleteFields() {
-    const gameLinkCategories = new Set(['test', 'preview', 'interview']);
+    const mediaLinkCategories = new Set(['test', 'preview', 'interview']);
 
     document.querySelectorAll('[data-magazine-subject-autocomplete]').forEach((row) => {
         const input = row.querySelector('input[type="search"], input[type="text"]');
@@ -991,7 +993,10 @@ function initMagazineSubjectAutocompleteFields() {
         const categorySelect = form
             ? form.querySelector('#subject_category, #attach_category')
             : document.getElementById('subject_category');
-        const gameCatalogUrl = form?.getAttribute('data-game-catalog-url') || '';
+        const mediaDomainSelect = form?.querySelector('#attach_catalog_media_domain');
+        const catalogSearchUrl = form?.getAttribute('data-catalog-search-url')
+            || form?.getAttribute('data-game-catalog-url')
+            || '';
         const catalogInput = form?.querySelector('#attach_catalog_oeuvre_id');
         const gameHint = form?.querySelector('#attach_game_catalog_hint');
         const gameHintLabel = form?.querySelector('#attach_game_catalog_label');
@@ -1002,12 +1007,15 @@ function initMagazineSubjectAutocompleteFields() {
         }
 
         let debounceTimer = null;
-        let linkedGameLabel = '';
+        let linkedCatalogLabel = '';
 
-        const supportsGameCatalog = () => (
-            gameCatalogUrl !== ''
+        const selectedMediaDomain = () => (mediaDomainSelect ? mediaDomainSelect.value.trim() : '');
+
+        const supportsMediaCatalog = () => (
+            catalogSearchUrl !== ''
+            && selectedMediaDomain() !== ''
             && categorySelect
-            && gameLinkCategories.has(categorySelect.value)
+            && mediaLinkCategories.has(categorySelect.value)
         );
 
         const closeList = () => {
@@ -1015,8 +1023,8 @@ function initMagazineSubjectAutocompleteFields() {
             list.innerHTML = '';
         };
 
-        const clearGameCatalogLink = () => {
-            linkedGameLabel = '';
+        const clearCatalogLink = () => {
+            linkedCatalogLabel = '';
             if (catalogInput) {
                 catalogInput.value = '';
             }
@@ -1028,8 +1036,8 @@ function initMagazineSubjectAutocompleteFields() {
             }
         };
 
-        const showGameCatalogLink = (label) => {
-            linkedGameLabel = label || '';
+        const showCatalogLink = (label) => {
+            linkedCatalogLabel = label || '';
             if (gameHint && gameHintLabel && label) {
                 gameHintLabel.textContent = label;
                 gameHint.hidden = false;
@@ -1054,16 +1062,16 @@ function initMagazineSubjectAutocompleteFields() {
             yearSelect.value = yearStr;
         };
 
-        const applyGameCatalogSelection = (item) => {
+        const applyMediaCatalogSelection = (item) => {
             input.value = item.titre || item.display_label || '';
-            linkedGameLabel = input.value.trim();
+            linkedCatalogLabel = input.value.trim();
             if (catalogInput) {
                 catalogInput.value = String(item.oeuvre_id || '');
             }
             setParutionYear(item.annee);
 
             const detailField = form ? form.querySelector('#attach_detail') : null;
-            if (detailField && (item.platform_short || item.platform_label)) {
+            if (detailField && item.media_domain === 'jeu' && (item.platform_short || item.platform_label)) {
                 const platformValue = item.platform_short || item.platform_label || '';
                 if (detailField.tagName === 'SELECT') {
                     const option = [...detailField.options].find(
@@ -1077,7 +1085,7 @@ function initMagazineSubjectAutocompleteFields() {
                 }
             }
 
-            showGameCatalogLink(item.display_label || item.titre || '');
+            showCatalogLink(item.display_label || item.titre || '');
             closeList();
             input.focus();
         };
@@ -1110,9 +1118,9 @@ function initMagazineSubjectAutocompleteFields() {
             if (catalogInput) {
                 if (item.catalog_oeuvre_id && item.catalog_oeuvre_id > 0) {
                     catalogInput.value = String(item.catalog_oeuvre_id);
-                    showGameCatalogLink(item.display_label || item.label || '');
+                    showCatalogLink(item.display_label || item.label || '');
                 } else {
-                    clearGameCatalogLink();
+                    clearCatalogLink();
                 }
             }
 
@@ -1129,9 +1137,9 @@ function initMagazineSubjectAutocompleteFields() {
 
             results.forEach((item) => {
                 const li = document.createElement('li');
-                const isGameCatalog = item.source === 'game_catalog';
+                const isMediaCatalog = item.source === 'media_catalog' || item.source === 'game_catalog';
                 li.className = 'catalog-title-autocomplete__option'
-                    + (isGameCatalog ? ' catalog-title-autocomplete__option--game' : '');
+                    + (isMediaCatalog ? ' catalog-title-autocomplete__option--game' : '');
                 li.setAttribute('role', 'option');
 
                 const main = document.createElement('span');
@@ -1140,8 +1148,8 @@ function initMagazineSubjectAutocompleteFields() {
 
                 const meta = document.createElement('span');
                 meta.className = 'hint';
-                if (isGameCatalog) {
-                    meta.textContent = 'Catalogue jeux'
+                if (isMediaCatalog) {
+                    meta.textContent = (item.media_domain_label || 'Catalogue')
                         + (item.in_library ? ' · dans votre bibliothèque' : '');
                 } else {
                     meta.textContent = (item.category_label || '')
@@ -1153,8 +1161,8 @@ function initMagazineSubjectAutocompleteFields() {
 
                 li.addEventListener('mousedown', (event) => {
                     event.preventDefault();
-                    if (isGameCatalog) {
-                        applyGameCatalogSelection(item);
+                    if (isMediaCatalog) {
+                        applyMediaCatalogSelection(item);
                         return;
                     }
                     if (mode === 'fill') {
@@ -1194,9 +1202,13 @@ function initMagazineSubjectAutocompleteFields() {
                 }).then((response) => response.json()),
             ];
 
-            if (supportsGameCatalog()) {
+            if (supportsMediaCatalog()) {
+                const catalogParams = new URLSearchParams({
+                    q,
+                    domain: selectedMediaDomain(),
+                });
                 requests.push(
-                    fetch(gameCatalogUrl + '?' + new URLSearchParams({ q }).toString(), {
+                    fetch(catalogSearchUrl + '?' + catalogParams.toString(), {
                         headers: { Accept: 'application/json' },
                         credentials: 'same-origin',
                     }).then((response) => response.json())
@@ -1206,17 +1218,17 @@ function initMagazineSubjectAutocompleteFields() {
             Promise.all(requests)
                 .then((payloads) => {
                     const subjectResults = Array.isArray(payloads[0]?.results) ? payloads[0].results : [];
-                    const gameResults = payloads.length > 1 && Array.isArray(payloads[1]?.results)
+                    const mediaResults = payloads.length > 1 && Array.isArray(payloads[1]?.results)
                         ? payloads[1].results
                         : [];
-                    renderResults([...gameResults, ...subjectResults]);
+                    renderResults([...mediaResults, ...subjectResults]);
                 })
                 .catch(() => closeList());
         };
 
         input.addEventListener('input', () => {
-            if (catalogInput && linkedGameLabel !== '' && input.value.trim() !== linkedGameLabel.trim()) {
-                clearGameCatalogLink();
+            if (catalogInput && linkedCatalogLabel !== '' && input.value.trim() !== linkedCatalogLabel.trim()) {
+                clearCatalogLink();
             }
             window.clearTimeout(debounceTimer);
             debounceTimer = window.setTimeout(fetchResults, 250);
@@ -1236,16 +1248,23 @@ function initMagazineSubjectAutocompleteFields() {
 
         if (categorySelect && categorySelect.id === 'attach_category') {
             categorySelect.addEventListener('change', () => {
-                if (!supportsGameCatalog()) {
-                    clearGameCatalogLink();
+                if (!supportsMediaCatalog()) {
+                    clearCatalogLink();
                 } else if (input.value.trim().length >= 2) {
                     fetchResults();
                 }
             });
         }
 
+        mediaDomainSelect?.addEventListener('change', () => {
+            clearCatalogLink();
+            if (input.value.trim().length >= 2 && supportsMediaCatalog()) {
+                fetchResults();
+            }
+        });
+
         clearGameBtn?.addEventListener('click', () => {
-            clearGameCatalogLink();
+            clearCatalogLink();
             input.focus();
         });
     });
@@ -1804,6 +1823,125 @@ function initGameShelfHoverPreviews() {
 
         window.addEventListener('scroll', hidePreview, { passive: true });
         window.addEventListener('resize', hidePreview);
+    });
+}
+
+/** Vue vignettes films / jeux : bulle d’infos au survol de l’affiche. */
+function initCollectionGridHoverBubbles() {
+    const margin = 8;
+    const gap = 10;
+
+    document.querySelectorAll('.collection-grid--poster-only .collection-grid__card').forEach((card) => {
+        const bubble = card.querySelector('.collection-grid__hover-bubble');
+        const anchor = card.querySelector('.collection-grid__link');
+        if (!bubble || !anchor) {
+            return;
+        }
+
+        const placeBubble = () => {
+            bubble.style.left = '-9999px';
+            bubble.style.top = '0';
+            bubble.classList.add('is-visible');
+            bubble.setAttribute('aria-hidden', 'false');
+
+            const anchorRect = anchor.getBoundingClientRect();
+            const bubbleWidth = bubble.offsetWidth || 220;
+            const bubbleHeight = bubble.offsetHeight || 120;
+
+            let top = anchorRect.top - bubbleHeight - gap;
+            let left = anchorRect.left + anchorRect.width / 2 - bubbleWidth / 2;
+
+            left = Math.max(margin, Math.min(left, window.innerWidth - bubbleWidth - margin));
+
+            if (top < margin) {
+                top = anchorRect.bottom + gap;
+            }
+
+            bubble.style.left = `${Math.round(left)}px`;
+            bubble.style.top = `${Math.round(top)}px`;
+        };
+
+        const hideBubble = () => {
+            bubble.classList.remove('is-visible');
+            bubble.setAttribute('aria-hidden', 'true');
+            bubble.style.left = '';
+            bubble.style.top = '';
+        };
+
+        card.addEventListener('mouseenter', placeBubble);
+        card.addEventListener('mouseleave', hideBubble);
+        card.addEventListener('focusin', placeBubble);
+        card.addEventListener('focusout', (event) => {
+            if (!card.contains(event.relatedTarget)) {
+                hideBubble();
+            }
+        });
+
+        window.addEventListener('scroll', hideBubble, { passive: true });
+        window.addEventListener('resize', hideBubble);
+    });
+}
+
+/**
+ * Bulles informatives au survol des vignettes sujets / tests (fiche numéro magazine).
+ */
+function initMagazineSubjectStripHoverBubbles() {
+    const margin = 8;
+    const gap = 10;
+
+    document.querySelectorAll('.magazine-subject-strip__card').forEach((card) => {
+        const bubble = card.querySelector('.magazine-subject-strip__bubble');
+        const anchor = card.querySelector('.magazine-subject-strip__link');
+        if (!bubble || !anchor) {
+            return;
+        }
+
+        const placeBubble = () => {
+            bubble.style.left = '-9999px';
+            bubble.style.top = '0';
+            bubble.classList.add('is-visible');
+            bubble.setAttribute('aria-hidden', 'false');
+
+            const anchorRect = anchor.getBoundingClientRect();
+            const bubbleWidth = bubble.offsetWidth || 200;
+            const bubbleHeight = bubble.offsetHeight || 100;
+
+            let top = anchorRect.top - bubbleHeight - gap;
+            let left = anchorRect.left + anchorRect.width / 2 - bubbleWidth / 2;
+
+            left = Math.max(margin, Math.min(left, window.innerWidth - bubbleWidth - margin));
+
+            if (top < margin) {
+                top = anchorRect.bottom + gap;
+            }
+
+            bubble.style.left = `${Math.round(left)}px`;
+            bubble.style.top = `${Math.round(top)}px`;
+        };
+
+        const hideBubble = () => {
+            bubble.classList.remove('is-visible');
+            bubble.setAttribute('aria-hidden', 'true');
+            bubble.style.left = '';
+            bubble.style.top = '';
+        };
+
+        card.addEventListener('mouseenter', placeBubble);
+        card.addEventListener('mouseleave', hideBubble);
+        card.addEventListener('focusin', placeBubble);
+        card.addEventListener('focusout', (event) => {
+            if (!card.contains(event.relatedTarget)) {
+                hideBubble();
+            }
+        });
+
+        const strip = card.closest('.magazine-subject-strip__list');
+        if (strip) {
+            strip.addEventListener('scroll', hideBubble, { passive: true });
+        }
+
+        window.addEventListener('scroll', hideBubble, { passive: true });
+        window.addEventListener('resize', hideBubble);
     });
 }
 

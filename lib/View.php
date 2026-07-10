@@ -88,6 +88,7 @@ final class View
             'ajouter-jeu',
             'modifier-jeu',
             'jeu',
+            'jeu-magazines',
             'film',
             'album-bd',
             'magazine-numero',
@@ -584,6 +585,32 @@ final class View
         string $catalogMedia = ''
     ): string {
         return self::catalogOeuvrePageUrl('/oeuvre-magazine.php', $oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
+    }
+
+    /** Lien cliquable vers une fiche catalogue magazine (bascule d’onglet si besoin). */
+    public static function oeuvreMagazineNavUrl(int $oeuvreId): string
+    {
+        $path = self::oeuvreMagazineUrl($oeuvreId);
+        if (MediaContext::current() === MediaDomain::MAGAZINE) {
+            return $path;
+        }
+
+        return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::MAGAZINE, $path);
+    }
+
+    /** Liste des magazines qui traitent un jeu catalogue. */
+    public static function gameMagazinesUrl(int $oeuvreId, int $bibId = 0): string
+    {
+        if ($oeuvreId <= 0) {
+            return '/jeux.php';
+        }
+
+        $params = ['oeuvre_id' => $oeuvreId];
+        if ($bibId > 0) {
+            $params['id'] = $bibId;
+        }
+
+        return '/jeu-magazines.php?' . http_build_query($params);
     }
 
     /** Fiche catalogue admin — album BD / manga. */
@@ -1251,6 +1278,11 @@ final class View
         }
 
         return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::JEU, $path);
+    }
+
+    public static function magazineSubjectCatalogApiUrl(): string
+    {
+        return '/rechercher-catalogue-sujet-magazine.php';
     }
 
     public static function gameCatalogApiUrl(): string

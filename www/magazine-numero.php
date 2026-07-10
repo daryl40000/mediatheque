@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\MagazineGameLink;
+use Moncine\MagazineSubjectCatalogLink;
 use Moncine\MagazineRepository;
 use Moncine\MagazineSeriesTag;
 use Moncine\MagazineSubject;
@@ -48,6 +49,7 @@ if ($error !== '') {
     $popoverOpen = (string) $_GET['popover'];
 }
 $subjectSaved = isset($_GET['subject']);
+$subjectDetached = isset($_GET['subject_detached']);
 $subjectError = (string) ($_GET['subject_error'] ?? '');
 
 $oeuvreId = (int) ($issue['oeuvre_id'] ?? 0);
@@ -70,7 +72,8 @@ if (MagazineGameLink::isAvailable()) {
     }
 }
 $subjectCategories = MagazineSubject::choices();
-$gameCatalogLinkAvailable = MagazineGameLink::isAvailable();
+$catalogMediaLinkAvailable = MagazineSubjectCatalogLink::isAvailable();
+$catalogMediaDomainChoices = MagazineSubjectCatalogLink::linkableMediaDomainChoices();
 
 View::render('magazine-numero', [
     'pageTitle' => (string) ($issue['titre'] ?? 'Numéro'),
@@ -79,6 +82,7 @@ View::render('magazine-numero', [
     'error' => $error,
     'popoverOpen' => $popoverOpen,
     'subjectSaved' => $subjectSaved,
+    'subjectDetached' => $subjectDetached,
     'subjectError' => $subjectError,
     'issueSubjects' => $issueSubjects,
     'subjectCategories' => $subjectCategories,
@@ -88,7 +92,8 @@ View::render('magazine-numero', [
     'parutionYear' => $parutionYear,
     'defaultSubjectYear' => $defaultSubjectYear,
     'subjectYearChoices' => $subjectYearChoices,
-    'gameCatalogLinkAvailable' => $gameCatalogLinkAvailable,
+    'catalogMediaLinkAvailable' => $catalogMediaLinkAvailable,
+    'catalogMediaDomainChoices' => $catalogMediaDomainChoices,
     'dateLabel' => PublicationType::formatParutionDate(
         (string) ($issue['date_parution'] ?? ''),
         (string) ($issue['publication_type'] ?? '')

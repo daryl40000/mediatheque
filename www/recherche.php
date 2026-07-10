@@ -26,7 +26,7 @@ if (mb_strlen($query) >= 2) {
     $results = (new GlobalSearch())->search($query, $userId, $foyerId, 25);
 }
 
-View::render('recherche.php', [
+View::render('recherche', [
     'pageTitle' => 'Recherche',
     'query' => $query,
     'libraryResults' => $results['library'],

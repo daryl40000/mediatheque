@@ -7,9 +7,10 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
-use Moncine\GameRepository;
 use Moncine\MagazineRepository;
 use Moncine\MagazineGameLink;
+use Moncine\MagazineSubject;
+use Moncine\MagazineSubjectCatalogLink;
 use Moncine\MagazineSubjectRepository;
 use Moncine\MediaDomain;
 use Moncine\MediaDomainGuards;
@@ -50,7 +51,7 @@ $action = (string) ($_POST['action'] ?? 'attach');
 if ($action === 'detach') {
     $subjectId = (int) ($_POST['subject_id'] ?? 0);
     $subjectRepo->detachFromOeuvre($oeuvreId, $subjectId);
-    header('Location: ' . $returnUrl . '&subject=1');
+    header('Location: ' . $returnUrl . '&subject_detached=1');
     exit;
 }
 
@@ -59,25 +60,47 @@ $series = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE) ?
     'tags' => (string) ($issue['series_tags'] ?? ''),
 ];
 
+$category = (string) ($_POST['category'] ?? '');
+$label = trim((string) ($_POST['label'] ?? ''));
+$userDetail = trim((string) ($_POST['detail'] ?? ''));
+$parutionYear = (int) ($_POST['parution_year'] ?? 0);
+$catalogMediaDomain = MediaDomain::normalize((string) ($_POST['catalog_media_domain'] ?? ''));
+$catalogOeuvreId = max(0, (int) ($_POST['catalog_oeuvre_id'] ?? 0));
+$catalogLink = new MagazineSubjectCatalogLink();
+
+if (
+    $catalogOeuvreId <= 0
+    && $catalogMediaDomain !== ''
+    && MagazineSubject::supportsCatalogGameLink($category)
+    && MagazineSubjectCatalogLink::isAvailable()
+) {
+    $resolved = $catalogLink->findOrCreateCatalogOeuvre($catalogMediaDomain, $label, $parutionYear);
+    if (!is_int($resolved)) {
+        header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode($resolved));
+        exit;
+    }
+    $catalogOeuvreId = $resolved;
+}
+
 $prepared = $subjectRepo->prepareSubjectForIssue(
-    (string) ($_POST['category'] ?? ''),
-    trim((string) ($_POST['label'] ?? '')),
-    trim((string) ($_POST['detail'] ?? '')),
+    $category,
+    $label,
+    $userDetail,
     $series,
     $issue,
-    (int) ($_POST['parution_year'] ?? 0)
+    $parutionYear
 );
 
-$catalogOeuvreId = max(0, (int) ($_POST['catalog_oeuvre_id'] ?? 0));
-if ($catalogOeuvreId > 0 && MagazineGameLink::isAvailable()) {
+if ($catalogOeuvreId > 0 && MagazineSubjectCatalogLink::isAvailable()) {
     $prepared = $subjectRepo->prepareSubjectForIssueWithCatalog(
-        (string) ($_POST['category'] ?? ''),
-        trim((string) ($_POST['label'] ?? '')),
-        trim((string) ($_POST['detail'] ?? '')),
+        $category,
+        $label,
+        $userDetail,
         $series,
         $issue,
-        (int) ($_POST['parution_year'] ?? 0),
-        $catalogOeuvreId
+        $parutionYear,
+        $catalogOeuvreId,
+        $catalogMediaDomain
     );
 }
 
@@ -104,14 +127,11 @@ if ($result !== true) {
 }
 
 $subjectId = (int) ($subject['id'] ?? 0);
-if ($subjectId > 0 && MagazineGameLink::isAvailable()) {
-    $linkOeuvreId = $catalogOeuvreId > 0 ? $catalogOeuvreId : null;
-    if ($linkOeuvreId !== null) {
-        $linkResult = (new MagazineGameLink())->setSubjectCatalogLink($subjectId, $linkOeuvreId);
-        if ($linkResult !== true) {
-            header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode((string) $linkResult));
-            exit;
-        }
+if ($subjectId > 0 && $catalogOeuvreId > 0 && MagazineGameLink::isAvailable()) {
+    $linkResult = (new MagazineGameLink())->setSubjectCatalogLink($subjectId, $catalogOeuvreId);
+    if ($linkResult !== true) {
+        header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode((string) $linkResult));
+        exit;
     }
 }
 

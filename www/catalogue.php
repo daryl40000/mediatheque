@@ -124,6 +124,16 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         ) . '#catalog-list-nav');
         exit;
     }
+
+    header('Location: ' . $catalogueRedirectUrl(
+        $search,
+        $sortBy,
+        $sortDir,
+        $page,
+        $mediaDomain,
+        ['delete_error' => 'Action non reconnue.']
+    ) . '#catalog-list-nav');
+    exit;
 }
 
 $totalCount = $admin->countOeuvres($search, $mediaDomain);

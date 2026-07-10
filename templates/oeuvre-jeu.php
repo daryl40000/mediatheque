@@ -156,36 +156,12 @@ $completionCount = (int) ($completionCount ?? 0);
                     </section>
                 <?php endif; ?>
 
-                <?php $catalogMagazineSubjects = $catalogMagazineSubjects ?? []; ?>
-                <?php if (Moncine\CatalogAdmin::canAccess() && $catalogMagazineSubjects !== []): ?>
-                    <section class="game-detail__magazines" aria-labelledby="catalog-game-magazine-heading">
-                        <h2 id="catalog-game-magazine-heading" class="game-detail__section-title">Sujets magazine reliés</h2>
-                        <p class="hint">
-                            Sujets test / preview / interview du catalogue magazines pointant vers cette fiche jeu
-                            (tous numéros du catalogue, pas seulement votre bibliothèque).
-                        </p>
-                        <ul class="magazine-subject-results" role="list">
-                            <?php foreach ($catalogMagazineSubjects as $row): ?>
-                                <?php $subjectId = (int) ($row['subject_id'] ?? 0); ?>
-                                <li class="magazine-subject-results__item" role="listitem">
-                                    <a href="<?= Moncine\View::escape(Moncine\View::magazineSubjectNavUrl($subjectId)) ?>"
-                                       class="magazine-subject-results__link">
-                                        <span class="magazine-tag magazine-tag--subject">
-                                            <?= Moncine\View::escape((string) ($row['category_label'] ?? '')) ?>
-                                        </span>
-                                        <strong><?= Moncine\View::escape((string) ($row['display_label'] ?? '')) ?></strong>
-                                        <span class="hint">
-                                            <?= (int) ($row['issue_count'] ?? 0) ?> numéro<?= (int) ($row['issue_count'] ?? 0) > 1 ? 's' : '' ?> catalogue
-                                        </span>
-                                    </a>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                        <p class="hint">
-                            <a href="/maintenance-magazine-jeux-liens.php">Gérer les liens magazine ↔ jeux</a>
-                        </p>
-                    </section>
-                <?php endif; ?>
+                <?php $magazineIssueCount = (int) ($magazineIssueCount ?? 0); ?>
+                <?php
+                $oeuvreId = (int) ($game['oeuvre_id'] ?? $oeuvreId ?? 0);
+                $bibId = (int) ($libraryBibId ?? 0);
+                require MONCINE_ROOT . '/templates/_game_magazines_link.php';
+                ?>
 
                 <?php if (Moncine\CatalogAdmin::canAccess()): ?>
                 <section class="oeuvre-catalog-page__admin-tools" aria-labelledby="catalog-game-admin-heading">
@@ -215,6 +191,12 @@ $completionCount = (int) ($completionCount ?? 0);
                     $currentOeuvreTitle = (string) ($game['display_titre'] ?? $game['titre'] ?? '');
                     require MONCINE_ROOT . '/templates/_catalog_oeuvre_merge_panel.php';
                     ?>
+
+                    <?php if (Moncine\MagazineGameLink::isAvailable()): ?>
+                        <p class="hint">
+                            <a href="/maintenance-magazine-jeux-liens.php">Gérer les liens magazine ↔ jeux</a>
+                        </p>
+                    <?php endif; ?>
                 </section>
                 <?php endif; ?>
 

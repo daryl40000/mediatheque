@@ -279,11 +279,11 @@ Fonction SQL **`fold_search()`** enregistrée au démarrage (`FrenchSort::fold`)
 
 Exemples : `demon` → *Démon Souls* ; `eldn ring` → *Elden Ring* ; `gran turismo` → *Gran Turismo* ; `GTA` → jeux dont l’acronyme IGDB correspond (**0.5.7**).
 
-### Lien magazine → jeu
+### Lien magazine → catalogue
 
 Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 
-- pointe vers `oeuvres.id` où `media_domain = 'jeu'` ;
+- pointe vers `oeuvres.id` où `media_domain` vaut **`jeu`** ou **`film`** (**0.7.17**) ;
 - utilisée pour les sujets **Test**, **Preview**, **Interview** ;
 - la saisie libre du sujet reste possible (données existantes conservées).
 
@@ -295,7 +295,8 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | `/jeux.php` | Liste « Mes jeux » (tri, recherche, actions de masse saga) |
 | `/sagas-jeux.php` | Sagas jeux (liste avec jaquettes, détail ordonné par année, renommage) |
 | `/jeux-envies.php` | Liste des envies jeux |
-| `/jeu.php?id=` | Fiche jeu (+ section « Dans vos magazines », fichiers attachés) |
+| `/jeu.php?id=` | Fiche jeu (+ bouton **Magazines**, fichiers attachés) |
+| `/jeu-magazines.php?id=` | Numéros de magazines parlant de ce jeu (grille couvertures + tags) — **0.7.17** |
 | `/oeuvre-jeu.php?id=` | Fiche catalogue jeu (consultation tout utilisateur connecté depuis **0.7.12** ; édition / IGDB admin) |
 | `/enrichir-jeux.php` | Enrichissement IGDB par lots + config (POST) |
 | `/enrichir-jeu.php` | Enrichissement IGDB fiche bibliothèque (POST, admin) |
@@ -492,6 +493,11 @@ Quand l’onglet **Jeux** est actif, la page d’accueil (`home-jeu.php`) affich
 - section sujets magazine sur fiche catalogue admin (`/oeuvre-jeu.php`) ;
 - guide homonymes : [pont-magazine-jeu.md](pont-magazine-jeu.md).
 
+**Complété (0.7.17) :**
+
+- bouton **Magazines** sur la fiche jeu → `/jeu-magazines.php` (tous numéros catalogue, pas seulement la bibliothèque) ;
+- lien catalogue étendu au **film** ; création auto de fiche à l’ajout d’un sujet magazine.
+
 ## Liste, tri et modes d’affichage
 
 Sur `/jeux.php` :
@@ -500,7 +506,7 @@ Sur `/jeux.php` :
 - **Recherche texte** : titre, studio, genre, **acronymes** (`alternative_names`) ;
 - **Trois vues** (`CollectionViewMode`) — même principe que Mes films :
   - **Liste** (défaut) ;
-  - **Vignettes** (`?view=grid`) ;
+  - **Vignettes** (`?view=grid`) — mode **affiche seule** avec bulle au survol (**0.7.17**) ;
   - **Bibliothèque** (`?view=shelf`) — tranches verticales (190 px), bord gauche de la jaquette, vignette au survol ; **toute la collection sur une page** (sans pagination).
 
 Styles : classes `.game-shelf-*` ; script `initGameShelfHoverPreviews()` dans `app.js`.

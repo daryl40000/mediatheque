@@ -2,7 +2,7 @@
 
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 
-**Version : 0.7.16**
+**Version : 0.7.17**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -37,7 +37,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. Depuis 
 | **Multi-médias** | ✅ | Onglets Films / BD / Livres / **Musique** / Jeux / Magazines + thème couleur par domaine |
 | **Films** | ✅ Production | Collection, envies, TMDB/OMDB, quiz « Ce soir », prêts, sagas, **vue Bibliothèque** (**0.5.7**), listes imprimables (**0.4.4+**) |
 | **Jeux vidéo** | ✅ Utilisable | Collection, envies, notes, stats, **extensions DLC**, **remakes**, **enrichissement IGDB**, **sagas jeux**, **vue Bibliothèque**, recherche **acronymes**, fichiers attachés, Linux tri-état, **pont magazine ↔ jeux** (**0.6.3**), fiche `/oeuvre-jeu.php`, autocomplétion à l’ajout, **recherche tolérante** (**0.5.7**, [doc/jeux.md](doc/jeux.md)) |
-| **Magazines** | ✅ Complet (M5) | Séries, numéros, PDF, FTS, import/export catalogue ABM, **liste catalogue complète en série** (**0.7.16**), autocomplétion série/numéro, profil public ([doc/magazines.md](doc/magazines.md)) |
+| **Magazines** | ✅ Complet (M5) | Séries, numéros, PDF, FTS, import/export catalogue ABM, sujets en **bandeau vignettes** (**0.7.17**), lien catalogue **jeu/film** (**0.7.17**), profil public ([doc/magazines.md](doc/magazines.md)) |
 | **BD / Manga** | 🔄 En cours (M2) | Collection, envies, partage, profil public, impression, **filtre possession mémorisé** (**0.7.16**) ; import CSV à venir |
 | **Livres** | ⏸️ Placeholder | Onglet + page « bientôt » (`/livres.php`) — **0.7.8** |
 | **Musique** | ⏸️ Placeholder | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles/CD — **0.7.8** |
@@ -71,6 +71,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.17** | Sujets magazine en vignettes, lien catalogue jeu/film, page magazines sur fiche jeu, correctifs suppression catalogue |
 | **0.7.16** | Séries magazines alignées sur BD (catalogue complet), filtre possession mémorisé, redirection fiche après ajout catalogue |
 | **0.7.15** | Suppression groupée catalogue admin, pagination après suppression, filtre média coloré, liens icônes GOG/Epic, import ABM couvertures (%20) |
 | **0.7.14** | Recherche globale (bibliothèque + catalogue), liens magasins catalogue jeux, filtre média admin, possession démat corrigée |

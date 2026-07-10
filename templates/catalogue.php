@@ -69,6 +69,9 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
     <?php if ($deleteError !== ''): ?>
         <p class="alert alert-warning"><?= Moncine\View::escape($deleteError) ?></p>
     <?php endif; ?>
+    <?php if (isset($_GET['csrf_error']) && (string) $_GET['csrf_error'] === '1'): ?>
+        <p class="alert alert-warning"><?= Moncine\View::escape(Moncine\Csrf::REJECT_MESSAGE) ?></p>
+    <?php endif; ?>
 
     <details class="catalog-admin-panel"<?= ($added || $saveError !== '') ? ' open' : '' ?>>
         <summary class="catalog-admin-panel__summary">Ajouter une œuvre au catalogue</summary>
@@ -258,7 +261,7 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
             </p>
 
             <?php if ($totalPages > 1): ?>
-                <div id="catalog-list-nav" class="catalog-list-nav-anchor">
+                <div class="catalog-list-nav-anchor">
                     <?php
                     $paginationIdSuffix = '-top';
                     require MONCINE_ROOT . '/templates/_catalog_admin_pagination.php';
@@ -266,7 +269,7 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                 </div>
             <?php endif; ?>
 
-            <form method="post" action="/catalogue.php#catalog-list-nav" id="catalog-bulk-form"
+            <form method="post" action="/catalogue.php" id="catalog-bulk-form"
                   class="catalog-admin-bulk-form">
                 <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
                 <input type="hidden" name="action" value="delete_oeuvres_bulk">
@@ -293,17 +296,15 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                         Supprimer la sélection
                     </button>
                 </div>
-            </form>
 
             <p class="table-scroll-hint show-mobile-only">Faites glisser le tableau horizontalement pour voir toutes les colonnes.</p>
-            <div id="catalogue-list" class="table-scroll catalogue-list-anchor">
+            <div id="catalog-list-nav" class="table-scroll catalogue-list-anchor">
                 <table class="films-table films-table--sortable catalog-admin-table">
                     <thead>
                         <tr>
                             <th scope="col" class="catalog-admin-table__select">
                                 <label class="collection-select-all" title="Tout sélectionner sur cette page">
                                     <input type="checkbox" id="catalog-bulk-select-all"
-                                           form="catalog-bulk-form"
                                            aria-label="Tout sélectionner sur cette page">
                                 </label>
                             </th>
@@ -320,11 +321,15 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                         <?php foreach ($oeuvres as $oeuvre):
                             $oeuvreId = (int) ($oeuvre['id'] ?? 0);
                             $libraryCount = (int) ($oeuvre['library_count'] ?? 0);
+                            $deleteConfirm = 'Supprimer « ' . (string) ($oeuvre['titre'] ?? '') . ' » du catalogue ?'
+                                . ($libraryCount > 0
+                                    ? "\n\n" . $libraryCount . ' entrée(s) bibliothèque seront aussi supprimées (mes films / mes envies).'
+                                    : '');
+                            $deleteFormId = 'catalog-delete-form-' . $oeuvreId;
                             ?>
                             <tr>
                                 <td class="catalog-admin-table__select">
                                     <input type="checkbox" class="catalog-oeuvre-cb"
-                                           form="catalog-bulk-form"
                                            name="oeuvre_ids[]" value="<?= $oeuvreId ?>"
                                            aria-label="Sélectionner « <?= Moncine\View::escape((string) ($oeuvre['titre'] ?? '')) ?> »">
                                 </td>
@@ -369,37 +374,43 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                                     <?php endif; ?>
                                 </td>
                                 <td class="catalog-admin-table__actions">
-                                    <form method="post" action="/catalogue.php" class="inline-form"
-                                          onsubmit="return confirm(<?= json_encode(
-                                              'Supprimer « ' . (string) ($oeuvre['titre'] ?? '') . ' » du catalogue ?'
-                                              . ($libraryCount > 0
-                                                  ? "\n\n" . $libraryCount . ' entrée(s) bibliothèque seront aussi supprimées (mes films / mes envies).'
-                                                  : '')
-                                          ) ?>);">
-                                        <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
-                                        <input type="hidden" name="action" value="delete_oeuvre">
-                                        <input type="hidden" name="oeuvre_id" value="<?= $oeuvreId ?>">
-                                        <input type="hidden" name="q" value="<?= Moncine\View::escape($search) ?>">
-                                        <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
-                                        <input type="hidden" name="dir" value="<?= Moncine\View::escape($sortDir) ?>">
-                                        <input type="hidden" name="page" value="<?= (int) $page ?>">
-                                        <?php if ($mediaDomain !== ''): ?>
-                                            <input type="hidden" name="media" value="<?= Moncine\View::escape($mediaDomain) ?>">
-                                        <?php endif; ?>
-                                        <button type="submit" class="btn btn-icon btn-danger-text"
-                                                title="Supprimer du catalogue"
-                                                aria-label="Supprimer « <?= Moncine\View::escape((string) ($oeuvre['titre'] ?? '')) ?> » du catalogue">
-                                            <svg class="icon-trash" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                                <path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/>
-                                            </svg>
-                                        </button>
-                                    </form>
+                                    <button type="submit" form="<?= Moncine\View::escape($deleteFormId) ?>"
+                                            class="btn btn-icon btn-danger-text"
+                                            title="Supprimer du catalogue"
+                                            aria-label="Supprimer « <?= Moncine\View::escape((string) ($oeuvre['titre'] ?? '')) ?> » du catalogue"
+                                            onclick="return confirm(<?= json_encode($deleteConfirm, JSON_THROW_ON_ERROR) ?>);">
+                                        <svg class="icon-trash" width="18" height="18" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                                            <path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/>
+                                        </svg>
+                                    </button>
                                 </td>
                             </tr>
                         <?php endforeach; ?>
                     </tbody>
                 </table>
             </div>
+            </form>
+
+            <?php foreach ($oeuvres as $oeuvre):
+                $oeuvreId = (int) ($oeuvre['id'] ?? 0);
+                if ($oeuvreId <= 0) {
+                    continue;
+                }
+                ?>
+                <form method="post" action="/catalogue.php" id="catalog-delete-form-<?= $oeuvreId ?>"
+                      class="catalog-admin-delete-form" hidden>
+                    <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                    <input type="hidden" name="action" value="delete_oeuvre">
+                    <input type="hidden" name="oeuvre_id" value="<?= $oeuvreId ?>">
+                    <input type="hidden" name="q" value="<?= Moncine\View::escape($search) ?>">
+                    <input type="hidden" name="sort" value="<?= Moncine\View::escape($sortBy) ?>">
+                    <input type="hidden" name="dir" value="<?= Moncine\View::escape($sortDir) ?>">
+                    <input type="hidden" name="page" value="<?= (int) $page ?>">
+                    <?php if ($mediaDomain !== ''): ?>
+                        <input type="hidden" name="media" value="<?= Moncine\View::escape($mediaDomain) ?>">
+                    <?php endif; ?>
+                </form>
+            <?php endforeach; ?>
 
             <?php
             $paginationIdSuffix = '-bottom';

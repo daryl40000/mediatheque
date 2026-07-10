@@ -1,6 +1,7 @@
 <?php
 /** @var array<string, mixed>|null $game */
 /** @var list<array<string, mixed>> $magazineCoverage */
+/** @var int $magazineIssueCount */
 /** @var bool $saved */
 /** @var bool $canManageCatalog */
 /** @var int $gameId */
@@ -158,32 +159,11 @@ if ($linuxBadge === '' && !empty($game['linux_not_supported'])) {
                     </section>
                 <?php endif; ?>
 
-                <section class="game-detail__magazines" aria-labelledby="game-magazine-heading">
-                    <h2 id="game-magazine-heading" class="game-detail__section-title">Dans vos magazines</h2>
-                    <?php if ($magazineCoverage === []): ?>
-                        <p class="hint">
-                            Aucun sujet magazine relié pour l’instant.
-                        </p>
-                    <?php else: ?>
-                        <ul class="magazine-subject-results" role="list">
-                            <?php foreach ($magazineCoverage as $row): ?>
-                                <li class="magazine-subject-results__item" role="listitem">
-                                    <a href="<?= Moncine\View::escape(Moncine\View::magazineIssueNavUrl((int) ($row['bib_id'] ?? 0))) ?>"
-                                       class="magazine-subject-results__link">
-                                        <span class="magazine-tag magazine-tag--subject">
-                                            <?= Moncine\View::escape((string) ($row['category_label'] ?? '')) ?>
-                                        </span>
-                                        <strong><?= Moncine\View::escape((string) ($row['display_label'] ?? '')) ?></strong>
-                                        <span class="hint">
-                                            <?= Moncine\View::escape((string) ($row['series_titre'] ?? '')) ?>
-                                            — n°<?= Moncine\View::escape((string) ($row['numero'] ?? '')) ?>
-                                        </span>
-                                    </a>
-                                </li>
-                            <?php endforeach; ?>
-                        </ul>
-                    <?php endif; ?>
-                </section>
+                <?php
+                $magazineIssueCount = (int) ($magazineIssueCount ?? count($magazineCoverage ?? []));
+                $oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
+                require MONCINE_ROOT . '/templates/_game_magazines_link.php';
+                ?>
 
                 <?php if (!empty($showIgdbEnrich)): ?>
                     <?php

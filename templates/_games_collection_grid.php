@@ -46,7 +46,7 @@ $gridSortLink = static function (string $label, string $column) use ($sortBy, $s
     </nav>
 </div>
 
-<ul class="collection-grid collection-grid--games" role="list">
+<ul class="collection-grid collection-grid--games collection-grid--poster-only" role="list">
     <?php foreach ($games as $game):
         $bibId = (int) ($game['id'] ?? 0);
         $posterSrc = Moncine\View::posterSrc($game['poster_url'] ?? null);
@@ -54,6 +54,13 @@ $gridSortLink = static function (string $label, string $column) use ($sortBy, $s
         $annee = (int) ($game['annee'] ?? 0);
         $platformShort = (string) ($game['platform_short'] ?? '');
         $displayTitle = (string) ($game['display_titre'] ?? $game['titre'] ?? '');
+        $ariaLabel = $displayTitle;
+        if ($platformShort !== '') {
+            $ariaLabel .= ' — ' . $platformShort;
+        }
+        if ($annee > 0) {
+            $ariaLabel .= ', ' . $annee;
+        }
         ?>
         <li class="collection-grid__item" role="listitem">
             <article class="collection-grid__card">
@@ -65,67 +72,22 @@ $gridSortLink = static function (string $label, string $column) use ($sortBy, $s
                                aria-label="Sélectionner <?= Moncine\View::escape($displayTitle) ?>">
                     </label>
                 <?php endif; ?>
-                <a href="<?= Moncine\View::escape($gameUrl) ?>" class="collection-grid__link">
+                <a href="<?= Moncine\View::escape($gameUrl) ?>" class="collection-grid__link"
+                   aria-label="<?= Moncine\View::escape($ariaLabel) ?>">
                     <div class="collection-grid__poster-wrap">
                         <?php if ($posterSrc !== ''): ?>
                             <img class="collection-grid__poster" src="<?= $posterSrc ?>"
-                                 alt="Jaquette de <?= Moncine\View::escape($displayTitle) ?>"
+                                 alt=""
                                  width="140" height="210" loading="lazy" decoding="async">
                         <?php else: ?>
                             <span class="collection-grid__poster collection-grid__poster--empty"
                                   aria-hidden="true"></span>
                         <?php endif; ?>
                     </div>
-                    <div class="collection-grid__caption">
-                        <h3 class="collection-grid__title collection-grid__title--game">
-                            <span><?= Moncine\View::escape($displayTitle) ?></span>
-                            <?php if ((string) ($game['linux_badge'] ?? '') !== '' || !empty($game['tested_on_linux']) || !empty($game['linux_not_supported'])): ?>
-                                <span class="collection-grid__linux-badge">
-                                    <?php
-                                    $size = 'sm';
-                                    $plain = true;
-                                    require MONCINE_ROOT . '/templates/_game_linux_badge_if_set.php';
-                                    ?>
-                                </span>
-                            <?php endif; ?>
-                        </h3>
-                        <p class="collection-grid__meta">
-                            <?php if ($platformShort !== ''): ?>
-                                <span class="magazine-tag magazine-tag--game-platform"><?= Moncine\View::escape($platformShort) ?></span>
-                            <?php endif; ?>
-                            <?php if ($annee > 0): ?>
-                                <span class="collection-grid__year"><?= $annee ?></span>
-                            <?php endif; ?>
-                        </p>
-                        <?php
-                        $iconKeys = $game['edition_icon_keys'] ?? Moncine\GameEditionIcons::iconKeys($game);
-                        $supplementalText = Moncine\GameEditionIcons::supplementalText($game);
-                        if ($iconKeys !== [] || $supplementalText !== ''):
-                            ?>
-                            <p class="collection-grid__meta collection-grid__meta--game-editions">
-                                <?php require MONCINE_ROOT . '/templates/_game_edition_icons.php'; ?>
-                            </p>
-                        <?php endif; ?>
-                        <div class="collection-grid__ratings">
-                            <?php
-                            $film = $game;
-                            $showFoyerAverage = true;
-                            $layout = 'stacked';
-                            ob_start();
-                            require MONCINE_ROOT . '/templates/_film_ratings.php';
-                            $ratingsHtml = trim((string) ob_get_clean());
-                            if ($ratingsHtml !== '' && $ratingsHtml !== '—') {
-                                echo $ratingsHtml;
-                            }
-                            ?>
-                        </div>
-                        <?php if (Moncine\GamePlaytime::isAvailable() && (int) ($game['playtime_minutes'] ?? 0) > 0): ?>
-                            <p class="collection-grid__meta collection-grid__meta--playtime">
-                                <?= Moncine\View::escape((string) ($game['playtime_label'] ?? '')) ?>
-                            </p>
-                        <?php endif; ?>
-                    </div>
                 </a>
+                <div class="collection-grid__hover-bubble" aria-hidden="true">
+                    <?php require MONCINE_ROOT . '/templates/_collection_grid_game_caption.php'; ?>
+                </div>
             </article>
         </li>
     <?php endforeach; ?>

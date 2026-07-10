@@ -88,10 +88,10 @@ final class MagazineGameLink
 
         if ($oeuvreId !== null && $oeuvreId > 0) {
             if (!self::supportsSubjectCategory((string) ($subject['category'] ?? ''))) {
-                return 'Cette catégorie de sujet ne peut pas être reliée à un jeu.';
+                return 'Cette catégorie de sujet ne peut pas être reliée à un média du catalogue.';
             }
 
-            $valid = self::validateCatalogOeuvreId($oeuvreId);
+            $valid = MagazineSubjectCatalogLink::validateCatalogOeuvreId($oeuvreId);
             if ($valid !== true) {
                 return $valid;
             }
@@ -117,6 +117,19 @@ final class MagazineGameLink
      */
     public function listMagazineCoverageForGame(int $oeuvreId, int $userId, int $foyerId): array
     {
+        return array_values(array_filter(
+            $this->listIssueCoverageForGame($oeuvreId, $userId, $foyerId),
+            static fn (array $row): bool => !empty($row['in_library']),
+        ));
+    }
+
+    /**
+     * Tous les numéros magazine du catalogue qui traitent ce jeu (bibliothèque ou non).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function listIssueCoverageForGame(int $oeuvreId, int $userId, int $foyerId): array
+    {
         if (!self::isAvailable() || $oeuvreId <= 0) {
             return [];
         }
@@ -124,44 +137,111 @@ final class MagazineGameLink
         $stmt = $this->db->prepare(
             'SELECT ms.id AS subject_id, ms.category, ms.label, ms.detail, ms.parution_year,
                     oms.oeuvre_id AS issue_oeuvre_id,
-                    om.numero, om.date_parution,
-                    s.titre AS series_titre,
+                    om.numero, om.numero_ordre, om.date_parution,
+                    s.titre AS series_titre, s.publication_type,
+                    s.poster_url AS series_poster_url,
+                    o_issue.poster_url,
                     b.id AS bib_id
              FROM magazine_subject ms
              INNER JOIN oeuvre_magazine_subject oms ON oms.subject_id = ms.id
              INNER JOIN oeuvre_magazine om ON om.oeuvre_id = oms.oeuvre_id
+             INNER JOIN oeuvres o_issue ON o_issue.id = om.oeuvre_id AND o_issue.media_domain = :magazine_domain
              INNER JOIN series s ON s.id = om.series_id
-             INNER JOIN bibliotheque b ON b.oeuvre_id = oms.oeuvre_id
-             WHERE ms.catalog_oeuvre_id = :oeuvre_id
+             LEFT JOIN bibliotheque b ON b.oeuvre_id = oms.oeuvre_id
                AND (
                     (b.statut = :collection AND b.foyer_id = :foyer_id)
                     OR (b.statut = :wishlist AND b.user_id = :user_id)
                )
+             WHERE ms.catalog_oeuvre_id = :oeuvre_id
              ORDER BY om.date_parution DESC, s.titre COLLATE FRENCH_NOCASE ASC, om.numero_ordre DESC'
         );
         $stmt->execute([
             'oeuvre_id' => $oeuvreId,
+            'magazine_domain' => MediaDomain::MAGAZINE,
             'collection' => LibraryStatut::COLLECTION,
             'wishlist' => LibraryStatut::WISHLIST,
             'foyer_id' => $foyerId,
             'user_id' => $userId,
         ]);
 
-        $rows = [];
+        $grouped = [];
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-            $row['subject_id'] = (int) ($row['subject_id'] ?? 0);
-            $row['bib_id'] = (int) ($row['bib_id'] ?? 0);
-            $row['parution_year'] = (int) ($row['parution_year'] ?? 0);
-            $row['category_label'] = MagazineSubject::label((string) ($row['category'] ?? ''));
-            $row['display_label'] = MagazineSubject::displayLabel(
-                (string) ($row['label'] ?? ''),
-                (string) ($row['detail'] ?? ''),
-                (int) ($row['parution_year'] ?? 0)
-            );
-            $rows[] = $row;
+            $issueOeuvreId = (int) ($row['issue_oeuvre_id'] ?? 0);
+            if ($issueOeuvreId <= 0) {
+                continue;
+            }
+
+            $categoryLabel = MagazineSubject::label((string) ($row['category'] ?? ''));
+            if (!isset($grouped[$issueOeuvreId])) {
+                $row['subject_id'] = (int) ($row['subject_id'] ?? 0);
+                $row['bib_id'] = (int) ($row['bib_id'] ?? 0);
+                $row['parution_year'] = (int) ($row['parution_year'] ?? 0);
+                $row['category_label'] = $categoryLabel;
+                $row['category_labels'] = $categoryLabel !== '' ? [$categoryLabel] : [];
+                $row['display_label'] = MagazineSubject::displayLabel(
+                    (string) ($row['label'] ?? ''),
+                    (string) ($row['detail'] ?? ''),
+                    (int) ($row['parution_year'] ?? 0)
+                );
+                $grouped[$issueOeuvreId] = $row;
+                continue;
+            }
+
+            if ($categoryLabel !== '' && !in_array($categoryLabel, $grouped[$issueOeuvreId]['category_labels'], true)) {
+                $grouped[$issueOeuvreId]['category_labels'][] = $categoryLabel;
+            }
+
+            if ((int) ($grouped[$issueOeuvreId]['bib_id'] ?? 0) <= 0 && (int) ($row['bib_id'] ?? 0) > 0) {
+                $grouped[$issueOeuvreId]['bib_id'] = (int) $row['bib_id'];
+            }
+        }
+
+        $rows = [];
+        foreach ($grouped as $row) {
+            $rows[] = $this->enrichCoverageRow($row);
         }
 
         return $rows;
+    }
+
+    public function countIssueCoverageForGame(int $oeuvreId, int $userId, int $foyerId): int
+    {
+        return count($this->listIssueCoverageForGame($oeuvreId, $userId, $foyerId));
+    }
+
+    /**
+     * @param array<string, mixed> $row
+     * @return array<string, mixed>
+     */
+    private function enrichCoverageRow(array $row): array
+    {
+        $poster = trim((string) ($row['poster_url'] ?? ''));
+        if ($poster === '') {
+            $poster = trim((string) ($row['series_poster_url'] ?? ''));
+        }
+        $row['poster_src'] = View::posterSrc($poster !== '' ? $poster : null);
+        $bibId = (int) ($row['bib_id'] ?? 0);
+        $issueOeuvreId = (int) ($row['issue_oeuvre_id'] ?? 0);
+        if ($bibId > 0) {
+            $row['in_library'] = true;
+            $row['issue_nav_url'] = View::magazineIssueNavUrl($bibId);
+        } elseif ($issueOeuvreId > 0) {
+            $row['in_library'] = false;
+            $row['issue_nav_url'] = View::oeuvreMagazineNavUrl($issueOeuvreId);
+        } else {
+            $row['in_library'] = false;
+            $row['issue_nav_url'] = '';
+        }
+        $row['date_label'] = PublicationType::formatParutionDate(
+            (string) ($row['date_parution'] ?? ''),
+            (string) ($row['publication_type'] ?? PublicationType::MENSUEL)
+        );
+        if (!isset($row['category_labels']) || !is_array($row['category_labels'])) {
+            $label = (string) ($row['category_label'] ?? '');
+            $row['category_labels'] = $label !== '' ? [$label] : [];
+        }
+
+        return $row;
     }
 
     /**
@@ -211,27 +291,10 @@ final class MagazineGameLink
      */
     public function enrichSubjectRow(array $subject, int $userId, int $foyerId): array
     {
-        $oeuvreId = (int) ($subject['catalog_oeuvre_id'] ?? 0);
-        $subject['catalog_game'] = null;
-        $subject['catalog_game_bib_id'] = 0;
-        $subject['catalog_game_url'] = '';
-
-        if ($oeuvreId <= 0 || !GameRepository::isAvailable()) {
+        if (!MagazineSubjectCatalogLink::isAvailable()) {
             return $subject;
         }
 
-        $game = (new GameRepository())->findCatalogByOeuvreId($oeuvreId);
-        if ($game === null) {
-            return $subject;
-        }
-
-        $subject['catalog_game'] = $game;
-        $bibId = (new GameRepository())->findLibraryBibIdForCatalogOeuvre($oeuvreId, $userId, $foyerId);
-        if ($bibId !== null && $bibId > 0) {
-            $subject['catalog_game_bib_id'] = $bibId;
-            $subject['catalog_game_url'] = View::gameNavUrl($bibId);
-        }
-
-        return $subject;
+        return (new MagazineSubjectCatalogLink())->enrichSubjectRow($subject, $userId, $foyerId);
     }
 }

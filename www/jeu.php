@@ -96,9 +96,10 @@ if (isset($_GET['enrich'])) {
 $attachments = GameAttachmentRepository::isAvailable()
     ? (new GameAttachmentRepository())->listForBibliotheque($bibId)
     : [];
-$magazineCoverage = MagazineGameLink::isAvailable()
-    ? (new MagazineGameLink())->listMagazineCoverageForGame((int) ($game['oeuvre_id'] ?? 0), $userId, $foyerId)
+$magazineIssues = MagazineGameLink::isAvailable()
+    ? (new MagazineGameLink())->listIssueCoverageForGame((int) ($game['oeuvre_id'] ?? 0), $userId, $foyerId)
     : [];
+$magazineIssueCount = count($magazineIssues);
 
 $gameCompletions = [];
 $completionCount = 0;
@@ -222,7 +223,8 @@ if ($franchiseName !== '' && GameFranchiseRepository::isAvailable() && $oeuvreId
 View::render('jeu', [
     'pageTitle' => (string) ($game['display_titre'] ?? $game['titre'] ?? 'Jeu'),
     'game' => $game,
-    'magazineCoverage' => $magazineCoverage,
+    'magazineCoverage' => $magazineIssues,
+    'magazineIssueCount' => $magazineIssueCount,
     'baseGame' => $baseGame,
     'extensions' => $extensions,
     'originalGame' => $originalGame,

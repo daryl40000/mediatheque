@@ -1,6 +1,6 @@
 # Structure de la base de données — Médiathèque
 
-**Version : 0.7.16** · **Moteur :** SQLite (`data/moncine.db`) · **Schéma de référence :** [`sql/schema.sql`](../sql/schema.sql)
+**Version : 0.7.17** · **Moteur :** SQLite (`data/moncine.db`) · **Schéma de référence :** [`sql/schema.sql`](../sql/schema.sql)
 
 Ce document décrit **comment la base est organisée** : quelles tables existent, à quoi elles servent, et comment elles sont reliées entre elles. Il complète la doc fonctionnelle par domaine ([jeux.md](jeux.md), [magazines.md](magazines.md)).
 
@@ -187,7 +187,7 @@ Une ligne par fin enregistrée : `bibliotheque_id`, `user_id`, `completed_at`. V
 | `series_bibliotheque` | Série suivie en collection ou envies (niveau **série**, pas numéro) |
 | `magazine_subject` | Sujet normalisé (test, preview, interview…) |
 | `oeuvre_magazine_subject` | Lien N↔N numéro ↔ sujet |
-| `magazine_subject.catalog_oeuvre_id` | Lien optionnel vers un **jeu** catalogue (pont magazine ↔ jeux) — voir [pont-magazine-jeu.md](pont-magazine-jeu.md) |
+| `magazine_subject.catalog_oeuvre_id` | Lien optionnel vers un **jeu** ou un **film** catalogue (pont magazine ↔ catalogue) — voir [pont-magazine-jeu.md](pont-magazine-jeu.md) |
 
 Recherche plein texte (FTS) : migration **038** — voir [magazines.md](magazines.md).
 

@@ -9,6 +9,34 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.17] — 2026-07-10
+
+**Sujets magazine (vignettes, multi-médias), magazines sur fiche jeu, correctifs catalogue**
+
+### Ajouté
+
+- **Fiche numéro magazine** : sujets reliés en **bandeau horizontal** de couvertures (défilement, bulle test/preview…, lien bibliothèque ou catalogue).
+- **Ajout de sujet** : menu **type de média** (jeu, film) ; **création automatique** d’une fiche catalogue minimale si le titre n’existe pas encore.
+- **Fiche jeu** : bouton **Magazines** → page `/jeu-magazines.php` (grille de couvertures + tags par numéro).
+- **Collections films / jeux** : mode **vignettes seules** avec infos en bulle au survol.
+- **`MagazineSubjectCatalogLink`**, API `/rechercher-catalogue-sujet-magazine.php`.
+
+### Modifié
+
+- Pont magazine ↔ catalogue : lien `catalog_oeuvre_id` utilisable pour un **film** ou un **jeu** (test / preview / interview).
+
+### Corrigé
+
+- **Catalogue admin** : suppression unitaire et **groupée** fonctionnelles (structure HTML des formulaires).
+- **Fiche numéro** : message **« Sujet retiré de ce numéro »** après suppression (plus « Sujet enregistré »).
+- **Recherche globale** : rendu du template `recherche` (plus de double `.php`).
+
+### Technique
+
+- `templates/_magazine_issue_subjects_strip.php`, `_game_magazines_link.php`, `_game_magazine_issues_grid.php`, `jeu-magazines.php`, `initMagazineSubjectStripHoverBubbles`, `initCollectionGridHoverBubbles`.
+
+---
+
 ## [0.7.16] — 2026-07-09
 
 **Séries BD/magazines (catalogue complet, filtre mémorisé), redirection après ajout catalogue**

@@ -1,23 +1,23 @@
-# Pont magazine ↔ jeu vidéo
+# Pont magazine ↔ catalogue (jeu, film)
 
-Relier **optionnellement** un sujet magazine (test, preview, interview) à une **fiche jeu du catalogue** via `magazine_subject.catalog_oeuvre_id`.
+Relier **optionnellement** un sujet magazine (test, preview, interview) à une **fiche du catalogue** (jeu ou film) via `magazine_subject.catalog_oeuvre_id`.
 
 ## Principe
 
 | Élément | Rôle |
 |---------|------|
 | **Libellé sujet** (`label`, `detail`, `parution_year`) | Texte affiché sur les tags et dans les listes — saisie libre, conservée telle quelle |
-| **Lien catalogue** (`catalog_oeuvre_id`) | Pointeur vers `oeuvres.id` où `media_domain = 'jeu'` — croisement, stats, recherche |
+| **Lien catalogue** (`catalog_oeuvre_id`) | Pointeur vers `oeuvres.id` où `media_domain` vaut **`jeu`** ou **`film`** — croisement, stats, recherche |
 | **Tag série** (PS5, PC…) | Contexte de la revue sur le numéro, **pas** l’identité du jeu catalogue |
 
 Un sujet **sans lien** reste parfaitement valide. Le pont enrichit l’expérience ; il ne remplace pas la saisie historique.
 
 ## Parcours utilisateur
 
-1. **À l’ajout** d’un sujet sur un numéro : autocomplétion catalogue jeux (test / preview / interview).
-2. **Fiche sujet** : lien vers la fiche jeu si le jeu est dans votre bibliothèque.
-3. **Fiche jeu** (`/jeu.php`) : section « Dans vos magazines » (numéros de **votre** bibliothèque) — le clic bascule l’onglet Magazines si besoin.
-4. **Fiche catalogue admin** (`/oeuvre-jeu.php`) : sujets reliés (tous numéros du catalogue).
+1. **À l’ajout** d’un sujet sur un numéro : menu **type de média** (jeu, film) + autocomplétion catalogue ; **création automatique** de la fiche si le titre n’existe pas encore (**0.7.17**).
+2. **Fiche sujet** : lien vers la fiche catalogue si le média est dans votre bibliothèque.
+3. **Fiche jeu** (`/jeu.php`) : bouton **Magazines** → page `/jeu-magazines.php` (grille de couvertures + tags par numéro, catalogue complet) (**0.7.17**).
+4. **Fiche catalogue admin** (`/oeuvre-jeu.php`, `/oeuvre.php`) : sujets reliés (tous numéros du catalogue).
 5. **Recherche globale** (`/magazines.php`) : remonte aussi les sujets reliés dont le **titre catalogue** correspond.
 
 ## Rattachement rétroactif (admin)
@@ -68,10 +68,12 @@ Lors d’une fusion (`/maintenance-magazine-sujets.php`), si le sujet conservé 
 
 | Fichier | Rôle |
 |---------|------|
-| `lib/MagazineGameLink.php` | Validation, liaison, affichage croisé |
+| `lib/MagazineSubjectCatalogLink.php` | Recherche, validation, enrichissement, création catalogue (jeu / film) — **0.7.17** |
+| `lib/MagazineGameLink.php` | Validation, liaison, affichage croisé (jeux) |
 | `lib/MagazineGameLinkMaintenance.php` | Outil admin rétroactif |
 | `sql/migrations/039_oeuvre_jeu_magazine_link.sql` | Colonne `catalog_oeuvre_id` |
 | `www/maintenance-magazine-jeux-liens.php` | Interface admin |
-| `www/rechercher-jeux-catalogue.php` | API autocomplétion |
+| `www/rechercher-jeux-catalogue.php` | API autocomplétion jeux (legacy) |
+| `www/rechercher-catalogue-sujet-magazine.php` | API autocomplétion multi-médias — **0.7.17** |
 
 Voir aussi [jeux.md](jeux.md) et [magazines.md](magazines.md).

@@ -232,9 +232,9 @@ if ($library !== null) {
     );
 }
 
-$catalogMagazineSubjects = MagazineGameLink::isAvailable()
-    ? (new MagazineGameLink())->listCatalogSubjectCoverageForGame($oeuvreId)
-    : [];
+$magazineIssueCount = MagazineGameLink::isAvailable()
+    ? (new MagazineGameLink())->countIssueCoverageForGame($oeuvreId, UserContext::currentUserId(), UserContext::currentFoyerId())
+    : 0;
 
 $mergeMessage = '';
 $mergeError = '';
@@ -301,7 +301,7 @@ View::render('oeuvre-jeu', [
     'knownSagas' => GameFranchiseRepository::isAvailable()
         ? (new GameFranchiseRepository())->listKnownSagas()
         : [],
-    'catalogMagazineSubjects' => $catalogMagazineSubjects,
+    'magazineIssueCount' => $magazineIssueCount,
     'gameCompletions' => $gameCompletions,
     'completionCount' => $completionCount,
     'mergeMessage' => $mergeMessage,
