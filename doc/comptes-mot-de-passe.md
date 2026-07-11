@@ -6,8 +6,20 @@
 - **Mon compte** (`/parametres.php`) : modifier le nom, le profil et le mot de passe.
 - **Changement d’e-mail** : mot de passe actuel requis ; lien de confirmation envoyé à la **nouvelle** adresse ; l’**ancienne** adresse reçoit un message d’information (migration `029`).
 - **Supprimer mon compte** (même page, section dédiée) : réservé aux comptes **utilisateur** (pas aux administrateurs). Il faut saisir le **mot de passe actuel** et confirmer. Après suppression, redirection vers la page de connexion.
-- **Mot de passe oublié** (`/mot-de-passe-oublie.php`) : recevoir un lien par e-mail (valable 1 heure).
+- **Connexion** (`/connexion.php`) : adresse e-mail **ou pseudo** (si renseigné sur le compte) + mot de passe.
+- **Mot de passe oublié** (`/mot-de-passe-oublie.php`) : recevoir un lien par e-mail (valable 1 heure) — **uniquement via l’e-mail**, pas le pseudo.
 - Un administrateur peut aussi vous donner un **mot de passe provisoire** ; changez-le ensuite dans Mon compte.
+
+### Connexion par pseudo (**0.7.18**)
+
+| Règle | Détail |
+|-------|--------|
+| **Champ de connexion** | « Adresse e-mail ou pseudo » |
+| **Pseudo requis** | Sans pseudo sur le compte, seul l’e-mail fonctionne |
+| **Unicité** | Deux comptes ne peuvent pas avoir le même pseudo (insensible à la casse) |
+| **Détection e-mail** | Si la saisie contient `@`, elle est traitée comme un e-mail |
+
+Migration : `064_utilisateur_pseudo_login.sql` · classes `LoginIdentifier`, `Auth::login()`.
 
 ### Suppression du compte (détail)
 
@@ -42,7 +54,7 @@ Après mise à jour du paquet :
 php lib/cli/migrate.php
 ```
 
-Cela applique les migrations en attente (ex. `004` mots de passe, `027`–`029` inscription / changement d’e-mail).
+Cela applique les migrations en attente (ex. `004` mots de passe, `027`–`029` inscription / changement d’e-mail, **`064` pseudo connexion**).
 
 ### Sécurité
 

@@ -23,41 +23,41 @@ final class LoginThrottle
 
     private static ?LockoutThrottleStore $store = null;
 
-    public static function isBlocked(string $email): bool
+    public static function isBlocked(string $loginIdentifier): bool
     {
-        $email = self::normalizeEmail($email);
+        $loginIdentifier = self::normalizeLoginIdentifier($loginIdentifier);
 
-        return $email !== '' && self::store()->isBlocked(self::bucketKey($email));
+        return $loginIdentifier !== '' && self::store()->isBlocked(self::bucketKey($loginIdentifier));
     }
 
-    public static function secondsUntilUnblock(string $email): int
+    public static function secondsUntilUnblock(string $loginIdentifier): int
     {
-        $email = self::normalizeEmail($email);
-        if ($email === '') {
+        $loginIdentifier = self::normalizeLoginIdentifier($loginIdentifier);
+        if ($loginIdentifier === '') {
             return 0;
         }
 
-        return self::store()->secondsUntilUnblock(self::bucketKey($email));
+        return self::store()->secondsUntilUnblock(self::bucketKey($loginIdentifier));
     }
 
-    public static function recordFailure(string $email): void
+    public static function recordFailure(string $loginIdentifier): void
     {
-        $email = self::normalizeEmail($email);
-        if ($email === '') {
+        $loginIdentifier = self::normalizeLoginIdentifier($loginIdentifier);
+        if ($loginIdentifier === '') {
             return;
         }
 
-        self::store()->recordAttempt(self::bucketKey($email));
+        self::store()->recordAttempt(self::bucketKey($loginIdentifier));
     }
 
-    public static function clearOnSuccess(string $email): void
+    public static function clearOnSuccess(string $loginIdentifier): void
     {
-        $email = self::normalizeEmail($email);
-        if ($email === '') {
+        $loginIdentifier = self::normalizeLoginIdentifier($loginIdentifier);
+        if ($loginIdentifier === '') {
             return;
         }
 
-        self::store()->clear(self::bucketKey($email));
+        self::store()->clear(self::bucketKey($loginIdentifier));
     }
 
     public static function resetForTests(): void
@@ -80,13 +80,13 @@ final class LoginThrottle
         );
     }
 
-    private static function normalizeEmail(string $email): string
+    private static function normalizeLoginIdentifier(string $loginIdentifier): string
     {
-        return mb_strtolower(trim($email), 'UTF-8');
+        return LoginIdentifier::normalizeForThrottle($loginIdentifier);
     }
 
-    private static function bucketKey(string $email): string
+    private static function bucketKey(string $loginIdentifier): string
     {
-        return hash('sha256', $email . '|' . RequestClientIp::resolve());
+        return hash('sha256', $loginIdentifier . '|' . RequestClientIp::resolve());
     }
 }

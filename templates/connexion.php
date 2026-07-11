@@ -10,7 +10,7 @@
 ?>
 <section class="auth-page">
     <h1>Connexion</h1>
-    <p class="lead">Connectez-vous pour accéder à votre dvdthèque.</p>
+    <p class="lead">Connectez-vous avec votre adresse e-mail ou votre pseudo.</p>
 
     <?php if ($flashRegistered): ?>
         <p class="alert alert-success">
@@ -42,8 +42,9 @@
             <input type="hidden" name="redirect" value="<?= Moncine\View::escape($redirect) ?>">
         <?php endif; ?>
 
-        <label for="login_email">Adresse e-mail</label>
-        <input type="email" name="email" id="login_email" required autocomplete="email" autofocus>
+        <label for="login_identifier">Adresse e-mail ou pseudo</label>
+        <input type="text" name="login" id="login_identifier" required autocomplete="username" autofocus
+               maxlength="<?= Moncine\UserProfile::MAX_PSEUDO_LENGTH + 120 ?>">
 
         <label for="login_password">Mot de passe</label>
         <input type="password" name="password" id="login_password" required autocomplete="current-password"

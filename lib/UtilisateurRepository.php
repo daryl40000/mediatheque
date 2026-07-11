@@ -72,6 +72,81 @@ final class UtilisateurRepository
         return $row !== false ? $row : null;
     }
 
+    /** @return array<string, mixed>|null */
+    public function findByPseudo(string $pseudo, int $excludeUserId = 0): ?array
+    {
+        $lookup = LoginIdentifier::normalizePseudoLookup($pseudo);
+        if ($lookup === '') {
+            return null;
+        }
+
+        $sql = 'SELECT ' . $this->publicSelectColumns() . ' FROM utilisateurs
+                WHERE LOWER(TRIM(pseudo)) = ? AND TRIM(pseudo) != \'\'';
+        $params = [$lookup];
+        if ($excludeUserId > 0) {
+            $sql .= ' AND id != ?';
+            $params[] = $excludeUserId;
+        }
+        $sql .= ' LIMIT 1';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $row = $stmt->fetch();
+
+        return $row !== false ? $row : null;
+    }
+
+    /** @return array<string, mixed>|null Ligne avec password_hash (connexion uniquement). */
+    public function findByPseudoForAuthentication(string $pseudo): ?array
+    {
+        $lookup = LoginIdentifier::normalizePseudoLookup($pseudo);
+        if ($lookup === '') {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT id, nom, email, password_hash, role, actif FROM utilisateurs
+             WHERE LOWER(TRIM(pseudo)) = ? AND TRIM(pseudo) != \'\' LIMIT 1'
+        );
+        $stmt->execute([$lookup]);
+        $row = $stmt->fetch();
+
+        return $row !== false ? $row : null;
+    }
+
+    /** @return array<string, mixed>|null E-mail ou pseudo selon la saisie. */
+    public function findForAuthentication(string $login): ?array
+    {
+        $login = trim($login);
+        if ($login === '') {
+            return null;
+        }
+
+        return LoginIdentifier::isEmailLogin($login)
+            ? $this->findByEmailForAuthentication($login)
+            : $this->findByPseudoForAuthentication($login);
+    }
+
+    /**
+     * Vérifie qu’un pseudo peut être enregistré (vide autorisé ; sinon unique, insensible à la casse).
+     *
+     * @return true|string
+     */
+    public function validatePseudoAvailable(string $pseudo, int $excludeUserId = 0): bool|string
+    {
+        $pseudo = UserProfile::sanitizePseudo($pseudo);
+        if ($pseudo === '') {
+            return true;
+        }
+
+        $existing = $this->findByPseudo($pseudo, $excludeUserId);
+        if ($existing !== null) {
+            return 'Ce pseudo est déjà utilisé.';
+        }
+
+        return true;
+    }
+
     /** @return array<string, mixed>|null Ligne avec password_hash (connexion uniquement). */
     public function findByEmailForAuthentication(string $email): ?array
     {
@@ -125,6 +200,10 @@ final class UtilisateurRepository
         }
         if ($this->findByEmail($email) !== null) {
             return 'Cette adresse e-mail est déjà utilisée.';
+        }
+        $pseudoCheck = $this->validatePseudoAvailable($pseudo);
+        if ($pseudoCheck !== true) {
+            return $pseudoCheck;
         }
         $hash = self::hashPassword($plainPassword);
         if ($hash === null) {
@@ -183,6 +262,10 @@ final class UtilisateurRepository
         }
         if ($this->findByEmail($email) !== null) {
             return 'Cette adresse e-mail est déjà utilisée.';
+        }
+        $pseudoCheck = $this->validatePseudoAvailable($pseudo);
+        if ($pseudoCheck !== true) {
+            return $pseudoCheck;
         }
 
         $this->db->prepare(
@@ -768,6 +851,11 @@ final class UtilisateurRepository
         $identity = UserProfile::validateIdentityFields($nom, $prenom, $pseudo);
         if ($identity !== true) {
             return $identity;
+        }
+
+        $pseudoCheck = $this->validatePseudoAvailable($pseudo, $id);
+        if ($pseudoCheck !== true) {
+            return $pseudoCheck;
         }
 
         $sets = 'nom = ?, prenom = ?, pseudo = ?, ville = ?, searchable = ?';

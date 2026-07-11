@@ -6,6 +6,8 @@ document.addEventListener('DOMContentLoaded', () => {
     initSeriesPossessionFilterMemory();
     initCatalogListNavScrollReset();
     initMobileNav();
+    initDesktopNavMenus();
+    initSummaryInfoTooltips();
     initListAnchors();
 
     document.querySelectorAll('.marquer-vu-today').forEach((btn) => {
@@ -229,6 +231,91 @@ function initMobileNav() {
     } else if (typeof desktopQuery.addListener === 'function') {
         desktopQuery.addListener(onViewportChange);
     }
+}
+
+/**
+ * Menus Paramètres / Gestion (desktop) : fermeture au retrait de la souris.
+ */
+function initDesktopNavMenus() {
+    const nav = document.getElementById('site-nav');
+    if (!nav) {
+        return;
+    }
+
+    const desktopQuery = window.matchMedia('(min-width: 900px)');
+    const menus = nav.querySelectorAll('.site-nav__menu');
+    if (menus.length === 0) {
+        return;
+    }
+
+    const closeTimers = new WeakMap();
+
+    const cancelScheduledClose = (menu) => {
+        const timer = closeTimers.get(menu);
+        if (timer !== undefined) {
+            clearTimeout(timer);
+            closeTimers.delete(menu);
+        }
+    };
+
+    const scheduleClose = (menu) => {
+        if (!desktopQuery.matches) {
+            return;
+        }
+        cancelScheduledClose(menu);
+        closeTimers.set(
+            menu,
+            window.setTimeout(() => {
+                menu.removeAttribute('open');
+                closeTimers.delete(menu);
+            }, 100)
+        );
+    };
+
+    menus.forEach((menu) => {
+        menu.addEventListener('mouseenter', () => {
+            cancelScheduledClose(menu);
+        });
+        menu.addEventListener('mouseleave', () => {
+            scheduleClose(menu);
+        });
+
+        const summary = menu.querySelector('.site-nav__menu-summary');
+        if (summary) {
+            summary.addEventListener('click', () => {
+                if (!desktopQuery.matches) {
+                    return;
+                }
+                menus.forEach((other) => {
+                    if (other !== menu) {
+                        other.removeAttribute('open');
+                    }
+                });
+            });
+        }
+    });
+
+    document.addEventListener('click', (event) => {
+        if (!desktopQuery.matches) {
+            return;
+        }
+        if (event.target.closest('.site-nav__menu')) {
+            return;
+        }
+        menus.forEach((menu) => {
+            menu.removeAttribute('open');
+        });
+    });
+}
+
+/** Empêche l’icône « i » dans un summary d’ouvrir/fermer le panneau. */
+function initSummaryInfoTooltips() {
+    document.querySelectorAll('.catalog-admin-panel__summary .info-tooltip, .section-heading-with-info .info-tooltip').forEach((tip) => {
+        tip.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+        });
+    });
 }
 
 /**

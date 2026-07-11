@@ -1,13 +1,20 @@
-<section>
-    <h1>Importer / exporter</h1>
-    <p class="lead">
-        Deux formats distincts : votre <strong>bibliothèque</strong> (films possédés, envies, support, notes…)
-        et le <strong>catalogue partagé</strong> (métadonnées des œuvres, réservé à l’administrateur).
-        La bibliothèque référence chaque film par son <strong>ID catalogue</strong>.
-    </p>
-    <p class="hint">
-        Moteur d’import serveur : <strong><?= Moncine\View::escape((string) ($importEngineBuild ?? '?')) ?></strong>
-        (si cette date ne change pas après mise à jour du paquet, le code n’est pas déployé).
+<?php
+$csvMaxMo = (int) (MONCINE_CSV_MAX_BYTES / 1024 / 1024);
+?>
+<div class="import-page">
+<section class="import-page__intro">
+    <?php
+    unset($info, $infoHtml, $infoAria, $class, $tag);
+    $title = 'Importer / exporter';
+    $tag = 'h1';
+    $info = 'Deux formats : bibliothèque (films possédés, envies, notes…) et catalogue partagé (métadonnées, admin). '
+        . 'La bibliothèque référence chaque film par son ID catalogue.';
+    $infoAria = 'Formats d’import et export';
+    require MONCINE_ROOT . '/templates/_heading_with_info.php';
+    unset($info, $infoAria, $tag);
+    ?>
+    <p class="import-page__meta">
+        Moteur serveur : <strong><?= Moncine\View::escape((string) ($importEngineBuild ?? '?')) ?></strong>
     </p>
 
     <?php require MONCINE_ROOT . '/templates/_upload_limits_warning.php'; ?>
@@ -15,19 +22,15 @@
     <?php if (!empty($message)): ?>
         <div class="alert alert-success"><?= Moncine\View::escape($message) ?></div>
     <?php endif; ?>
-
     <?php if (!empty($posterZipMessage)): ?>
         <div class="alert alert-success"><?= Moncine\View::escape($posterZipMessage) ?></div>
     <?php endif; ?>
-
     <?php if (!empty($posterRemapMessage)): ?>
         <div class="alert alert-success"><?= Moncine\View::escape($posterRemapMessage) ?></div>
     <?php endif; ?>
-
     <?php if (!empty($enrichMessage)): ?>
         <div class="alert alert-success"><?= Moncine\View::escape($enrichMessage) ?></div>
     <?php endif; ?>
-
     <?php if (!empty($errors)): ?>
         <div class="alert alert-warning">
             <ul>
@@ -38,47 +41,74 @@
         </div>
     <?php endif; ?>
 
+    <?php
+    unset($info, $infoHtml, $infoAria, $class, $tag);
+    $title = 'Importer un fichier';
+    $info = 'CSV ou ODS. Le type est détecté automatiquement (bibliothèque ou catalogue admin). '
+        . 'Taille max. ' . $csvMaxMo . ' Mo.';
+    $infoAria = 'Import CSV ou ODS';
+    require MONCINE_ROOT . '/templates/_heading_with_info.php';
+    unset($info, $infoAria);
+    ?>
+
     <form method="post" enctype="multipart/form-data" class="import-form">
         <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
-        <label for="csv_file">Fichier CSV ou ODS</label>
+        <?php
+        unset($info, $infoHtml, $infoAria);
+        $for = 'csv_file';
+        $label = 'Fichier CSV ou ODS';
+        require MONCINE_ROOT . '/templates/_form_label_info.php';
+        ?>
         <input type="file" name="csv_file" id="csv_file" accept=".csv,.ods,text/csv" required>
 
-        <label class="checkbox">
+        <label class="checkbox checkbox-label--with-info">
             <input type="checkbox" name="replace_all" value="1">
-            Remplacer toute ma bibliothèque avant import (films + envies + historique)
+            <span class="checkbox-label__text">
+                Remplacer toute ma bibliothèque avant import
+                <span class="info-tooltip" tabindex="0" aria-label="Remplacement de la bibliothèque">
+                    <span class="info-tooltip__icon" aria-hidden="true">i</span>
+                    <span class="info-tooltip__popup" role="tooltip">
+                        Supprime films, envies et historique de vision avant d’importer le fichier.
+                    </span>
+                </span>
+            </span>
         </label>
         <?php if (!empty($canManageCatalog)): ?>
-        <label class="checkbox">
+        <label class="checkbox checkbox-label--with-info">
             <input type="checkbox" name="replace_catalog" value="1">
-            <strong>Réinitialiser le catalogue avant import</strong> (migration : conserve les ID du fichier)
+            <span class="checkbox-label__text">
+                <strong>Réinitialiser le catalogue avant import</strong>
+                <span class="info-tooltip" tabindex="0" aria-label="Réinitialisation du catalogue">
+                    <span class="info-tooltip__icon" aria-hidden="true">i</span>
+                    <span class="info-tooltip__popup" role="tooltip">
+                        Migration depuis une autre instance : cochez avec un export « CSV catalogue ».
+                        Supprime toutes les œuvres et recrée les ID du fichier.
+                        Sans cette case, les films existants sont mis à jour sans changer leurs numéros.
+                    </span>
+                </span>
+            </span>
         </label>
-        <p class="hint">
-            À cocher pour une <strong>migration</strong> avec export « CSV catalogue » de l’ancienne instance.
-            Supprime toutes les œuvres et les liens bibliothèque, puis recrée les ID indiqués dans le fichier.
-            Sans cette case, Moncine met à jour les films existants <em>sans changer leurs numéros</em>.
-        </p>
         <?php endif; ?>
-        <p class="hint">
-            Le type de fichier est détecté automatiquement : export <em>bibliothèque</em> (léger)
-            ou export <em>catalogue</em> (admin).
-            Taille max. <?= (int) (MONCINE_CSV_MAX_BYTES / 1024 / 1024) ?> Mo.
-        </p>
 
         <button type="submit" class="btn btn-primary">Importer</button>
     </form>
 </section>
 
 <section class="export-panel">
-    <h2>Exporter ma bibliothèque</h2>
-    <p class="lead">
-        Collection <strong>et</strong> liste d’envies : support, format, saga, ID catalogue, dernière vision…
-        Sans synopsis ni affiche (déjà dans le catalogue partagé).
-    </p>
+    <?php
+    unset($info, $infoHtml, $infoAria, $class, $tag);
+    $title = 'Exporter ma bibliothèque';
+    $info = 'Collection et envies : support, format, saga, ID catalogue, dernière vision… '
+        . 'Sans synopsis ni affiche (déjà dans le catalogue).';
+    $infoAria = 'Export bibliothèque';
+    require MONCINE_ROOT . '/templates/_heading_with_info.php';
+    unset($info, $infoAria);
+    ?>
 
     <?php if ((int) ($libraryCount ?? 0) === 0): ?>
-        <p class="hint">Aucune entrée en bibliothèque.</p>
+        <p class="import-page__meta">Aucune entrée en bibliothèque.</p>
     <?php else: ?>
-        <p class="stats"><?= (int) $libraryCount ?> entrée(s) (films + envies).</p>
+        <p class="import-inline-note"><?= (int) $libraryCount ?> entrée(s) (films + envies).</p>
         <div class="export-actions">
             <form method="post" action="/export.php" class="inline-form">
                 <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
@@ -97,25 +127,29 @@
         </div>
         <details class="import-columns-help">
             <summary>Colonnes export bibliothèque</summary>
-            <p class="hint"><?= Moncine\View::escape(Moncine\LibraryExportSchema::columnLabelsText()) ?></p>
+            <p class="import-columns-help__body"><?= Moncine\View::escape(Moncine\LibraryExportSchema::columnLabelsText()) ?></p>
         </details>
     <?php endif; ?>
 </section>
 
 <?php if (!empty($canManageCatalog)): ?>
 <section class="export-panel">
-    <h2>Exporter le catalogue (administrateur)</h2>
-    <p class="lead">
-        Toutes les œuvres partagées (titre, synopsis, TMDB, affiche…). Importez ce fichier sur une autre instance
-        <strong>avant</strong> les exports bibliothèque des utilisateurs.
-        La colonne <strong>ID catalogue</strong> doit être conservée (mêmes numéros que les fichiers
-        <code>posters/123.jpg</code>).
-    </p>
+    <?php
+    unset($info, $infoHtml, $infoAria, $class, $tag);
+    $title = 'Exporter le catalogue (administrateur)';
+    $infoHtml = 'Toutes les œuvres partagées (titre, synopsis, TMDB, affiche…). '
+        . 'Importez ce fichier sur une autre instance <strong>avant</strong> les exports bibliothèque. '
+        . 'Conservez la colonne <strong>ID catalogue</strong> (mêmes numéros que les fichiers '
+        . '<code>posters/123.jpg</code>).';
+    $infoAria = 'Export catalogue administrateur';
+    require MONCINE_ROOT . '/templates/_heading_with_info.php';
+    unset($infoHtml, $infoAria);
+    ?>
 
     <?php if ((int) ($catalogCount ?? 0) === 0): ?>
-        <p class="hint">Catalogue vide.</p>
+        <p class="import-page__meta">Catalogue vide.</p>
     <?php else: ?>
-        <p class="stats"><?= (int) $catalogCount ?> œuvre(s) au catalogue.</p>
+        <p class="import-inline-note"><?= (int) $catalogCount ?> œuvre(s) au catalogue.</p>
         <div class="export-actions">
             <form method="post" action="/export.php" class="inline-form">
                 <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
@@ -141,19 +175,20 @@
         </div>
         <details class="import-columns-help">
             <summary>Colonnes export catalogue</summary>
-            <p class="hint"><?= Moncine\View::escape(Moncine\CatalogExportSchema::columnLabelsText()) ?></p>
+            <p class="import-columns-help__body"><?= Moncine\View::escape(Moncine\CatalogExportSchema::columnLabelsText()) ?></p>
         </details>
     <?php endif; ?>
 </section>
-<?php endif; ?>
 
-<?php if (!empty($canManageCatalog)): ?>
 <section class="export-panel">
-    <h2>Import catalogue magazines (JSON)</h2>
-    <p class="lead">
-        Alimente le catalogue partagé avec des revues et numéros (export ABM ou autre JSON),
-        <strong>sans</strong> les ajouter automatiquement à votre bibliothèque.
-    </p>
+    <?php
+    unset($info, $infoHtml, $infoAria, $class, $tag);
+    $title = 'Import catalogue magazines (JSON)';
+    $info = 'Alimente le catalogue partagé (revues et numéros, export ABM ou JSON) sans ajout automatique à votre bibliothèque.';
+    $infoAria = 'Import catalogue magazines';
+    require MONCINE_ROOT . '/templates/_heading_with_info.php';
+    unset($info, $infoAria);
+    ?>
     <p>
         <a href="/import-catalogue-magazines.php" class="btn btn-secondary">Ouvrir l’import magazines JSON</a>
     </p>
@@ -161,52 +196,62 @@
 <?php endif; ?>
 
 <section class="enrich-panel">
-    <h2>Enrichir mes films (TMDB)</h2>
-    <p class="lead">
-        <strong>TMDB</strong> complète les fiches du <strong>catalogue</strong> : synopsis, affiche, acteurs…
-        (réservé à l’administrateur sur les fiches individuelles).
-    </p>
+    <?php
+    unset($info, $infoHtml, $infoAria, $class, $tag);
+    $title = 'Enrichir mes films (TMDB)';
+    $infoHtml = 'TMDB complète le <strong>catalogue</strong> : synopsis, affiche, acteurs… '
+        . 'Clé API sur <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org</a>. '
+        . 'Environ ' . (int) $enrichBatchSize . ' œuvre(s) par clic'
+        . ((int) ($enrichPending ?? 0) > 0 ? ' — ' . (int) $enrichPending . ' restante(s).' : '');
+    $infoAria = 'Enrichissement TMDB';
+    require MONCINE_ROOT . '/templates/_heading_with_info.php';
+    unset($infoHtml, $infoAria);
+    ?>
 
     <?php if (!empty($tmdbMessage)): ?>
         <div class="alert alert-success"><?= Moncine\View::escape($tmdbMessage) ?></div>
     <?php endif; ?>
 
-    <p class="hint">
-        Clé API sur
-        <a href="https://www.themoviedb.org/settings/api" target="_blank" rel="noopener">themoviedb.org</a>.
-    </p>
-
     <?php if (!$hasTmdbKey): ?>
         <form method="post" action="/enrichir.php" class="import-form">
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
             <input type="hidden" name="action" value="save_tmdb_key">
-            <label for="tmdb_api_key">Clé API TMDB</label>
+            <?php
+            unset($info, $infoHtml, $infoAria);
+            $for = 'tmdb_api_key';
+            $label = 'Clé API TMDB';
+            require MONCINE_ROOT . '/templates/_form_label_info.php';
+            ?>
             <input type="password" name="tmdb_api_key" id="tmdb_api_key" required autocomplete="off"
                    placeholder="ex. a1b2c3d4e5f6…">
             <button type="submit" class="btn btn-secondary">Enregistrer la clé TMDB</button>
         </form>
     <?php else: ?>
-        <?php if (!empty($tmdbKeyFromEnvironment)): ?>
-            <p class="hint">Clé active via <code>MONCINE_TMDB_API_KEY</code> (serveur).</p>
-        <?php else: ?>
-            <p class="hint">✓ Clé TMDB enregistrée sur le serveur.</p>
-        <?php endif; ?>
+        <p class="import-status import-status--ok">
+            <?php if (!empty($tmdbKeyFromEnvironment)): ?>
+                Clé active via <code>MONCINE_TMDB_API_KEY</code>
+            <?php else: ?>
+                Clé TMDB enregistrée
+            <?php endif; ?>
+        </p>
 
         <?php if (!empty($canManageCatalog)): ?>
         <form method="post" action="/enrichir.php" class="import-form enrich-actions">
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
             <input type="hidden" name="action" value="enrichir">
-            <p class="hint">
-                Environ <?= (int) $enrichBatchSize ?> œuvre(s) par clic
-                <?php if ((int) ($enrichPending ?? 0) > 0): ?>
-                    — <?= (int) $enrichPending ?> restante(s).
-                <?php endif; ?>
-            </p>
             <div class="export-actions">
                 <button type="submit" class="btn btn-accent">Enrichir le catalogue</button>
-                <label class="checkbox">
+                <label class="checkbox checkbox-label--with-info">
                     <input type="checkbox" name="force_all" value="1">
-                    Tout retraiter
+                    <span class="checkbox-label__text">
+                        Tout retraiter
+                        <span class="info-tooltip" tabindex="0" aria-label="Retraiter tout le catalogue">
+                            <span class="info-tooltip__icon" aria-hidden="true">i</span>
+                            <span class="info-tooltip__popup" role="tooltip">
+                                Force l’enrichissement même pour les fiches déjà complétées.
+                            </span>
+                        </span>
+                    </span>
                 </label>
             </div>
         </form>
@@ -219,8 +264,8 @@
         <details class="import-columns-help tmdb-key-manage">
             <summary>Gérer la clé API TMDB</summary>
             <?php if (!empty($tmdbKeyFromEnvironment)): ?>
-                <p class="hint">
-                    Modifiez <code>MONCINE_TMDB_API_KEY</code> dans PHP-FPM (YunoHost), puis rechargez PHP-FPM.
+                <p class="import-page__meta">
+                    Modifiez <code>MONCINE_TMDB_API_KEY</code> dans PHP-FPM, puis rechargez PHP-FPM.
                 </p>
             <?php else: ?>
                 <form method="post" action="/enrichir.php" class="import-form">
@@ -243,14 +288,21 @@
 </section>
 
 <section class="enrich-panel enrich-panel--games">
-    <h2>Enrichir mes jeux (IGDB)</h2>
-    <p class="lead">
-        <strong>IGDB</strong> complète les fiches jeux : jaquette (stockée localement), année,
-        studio, éditeur et genres traduits en français.
-    </p>
+    <?php
+    unset($info, $infoHtml, $infoAria, $class, $tag);
+    $title = 'Enrichir mes jeux (IGDB)';
+    $infoHtml = 'IGDB complète les fiches jeux : jaquette locale, année, studio, éditeur, genres en français. '
+        . 'Application <strong>Confidential</strong> sur '
+        . '<a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noopener">dev.twitch.tv</a>. '
+        . 'Environ ' . (int) $enrichBatchSize . ' jeu(x) par clic'
+        . ((int) ($igdbEnrichPending ?? 0) > 0 ? ' — ' . (int) $igdbEnrichPending . ' restant(s).' : '');
+    $infoAria = 'Enrichissement IGDB';
+    require MONCINE_ROOT . '/templates/_heading_with_info.php';
+    unset($infoHtml, $infoAria);
+    ?>
 
     <?php if (empty($igdbModuleReady)): ?>
-        <p class="hint">Migration IGDB non appliquée — relancez la mise à jour de la base de données.</p>
+        <p class="import-page__meta">Migration IGDB non appliquée — relancez la mise à jour de la base.</p>
     <?php else: ?>
 
     <?php if (!empty($igdbMessage)): ?>
@@ -259,12 +311,6 @@
     <?php if (!empty($igdbEnrichMessage)): ?>
         <div class="alert alert-success"><?= Moncine\View::escape($igdbEnrichMessage) ?></div>
     <?php endif; ?>
-
-    <p class="hint">
-        Créez une application <strong>Confidential</strong> sur
-        <a href="https://dev.twitch.tv/console/apps" target="_blank" rel="noopener">dev.twitch.tv</a>
-        puis copiez le Client ID et le Client Secret.
-    </p>
 
     <?php if (!$hasIgdbCredentials): ?>
         <form method="post" action="/enrichir-jeux.php" class="import-form">
@@ -277,31 +323,43 @@
             <button type="submit" class="btn btn-secondary">Enregistrer les identifiants IGDB</button>
         </form>
     <?php else: ?>
-        <?php if (!empty($igdbCredentialsFromEnvironment)): ?>
-            <p class="hint">Identifiants actifs via <code>MONCINE_IGDB_CLIENT_ID</code> et <code>MONCINE_IGDB_CLIENT_SECRET</code>.</p>
-        <?php else: ?>
-            <p class="hint">✓ Identifiants IGDB enregistrés sur le serveur.</p>
-        <?php endif; ?>
+        <p class="import-status import-status--ok">
+            <?php if (!empty($igdbCredentialsFromEnvironment)): ?>
+                Identifiants actifs via variables d’environnement IGDB
+            <?php else: ?>
+                Identifiants IGDB enregistrés
+            <?php endif; ?>
+        </p>
 
         <?php if (!empty($canManageCatalog)): ?>
         <form method="post" action="/enrichir-jeux.php" class="import-form enrich-actions">
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
             <input type="hidden" name="action" value="enrichir_jeux">
-            <p class="hint">
-                Environ <?= (int) $enrichBatchSize ?> jeu(x) par clic
-                <?php if ((int) ($igdbEnrichPending ?? 0) > 0): ?>
-                    — <?= (int) $igdbEnrichPending ?> restant(s).
-                <?php endif; ?>
-            </p>
             <div class="export-actions">
                 <button type="submit" class="btn btn-accent">Enrichir mes jeux</button>
-                <label class="checkbox">
+                <label class="checkbox checkbox-label--with-info">
                     <input type="checkbox" name="force_all_jeux" value="1">
-                    Tout retraiter
+                    <span class="checkbox-label__text">
+                        Tout retraiter
+                        <span class="info-tooltip" tabindex="0" aria-label="Retraiter tous les jeux">
+                            <span class="info-tooltip__icon" aria-hidden="true">i</span>
+                            <span class="info-tooltip__popup" role="tooltip">
+                                Force l’enrichissement même pour les jeux déjà complétés.
+                            </span>
+                        </span>
+                    </span>
                 </label>
-                <label class="checkbox">
+                <label class="checkbox checkbox-label--with-info">
                     <input type="checkbox" name="keep_poster" value="1" checked>
-                    Garder les jaquettes existantes
+                    <span class="checkbox-label__text">
+                        Garder les jaquettes existantes
+                        <span class="info-tooltip" tabindex="0" aria-label="Conserver les jaquettes">
+                            <span class="info-tooltip__icon" aria-hidden="true">i</span>
+                            <span class="info-tooltip__popup" role="tooltip">
+                                Ne remplace pas une jaquette déjà enregistrée localement.
+                            </span>
+                        </span>
+                    </span>
                 </label>
             </div>
         </form>
@@ -314,9 +372,7 @@
         <details class="import-columns-help tmdb-key-manage">
             <summary>Gérer les identifiants IGDB</summary>
             <?php if (!empty($igdbCredentialsFromEnvironment)): ?>
-                <p class="hint">
-                    Modifiez les variables d’environnement IGDB dans PHP-FPM, puis rechargez PHP-FPM.
-                </p>
+                <p class="import-page__meta">Modifiez les variables IGDB dans PHP-FPM, puis rechargez PHP-FPM.</p>
             <?php else: ?>
                 <form method="post" action="/enrichir-jeux.php" class="import-form">
                     <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
@@ -342,18 +398,20 @@
 
 <?php if (!empty($canManageCatalog)): ?>
 <section class="enrich-panel enrich-panel--store-links" id="liens-magasins-catalogue">
-    <h2>Liens magasins catalogue (GOG / Epic)</h2>
-    <p class="lead">
-        Recherche publique par titre pour proposer des liens vers les pages
-        <strong>GOG</strong> et <strong>Epic Games Store</strong> sur les fiches catalogue jeux.
-        <strong>Epic</strong> bloque souvent les serveurs : le repli passe par <strong>IGDB</strong>
-        (identifiants Twitch sur cette page) quand c’est possible.
-        Les matchs incertains sont à valider dans
-        <a href="/maintenance-catalogue.php">Maintenance catalogue</a>.
-    </p>
+    <?php
+    unset($info, $infoHtml, $infoAria, $class, $tag);
+    $title = 'Liens magasins catalogue (GOG / Epic)';
+    $infoHtml = 'Recherche publique par titre pour des liens GOG et Epic sur les fiches catalogue jeux. '
+        . 'Epic bloque souvent les serveurs : repli via IGDB si possible. '
+        . 'Matchs incertains : <a href="/maintenance-catalogue.php">Maintenance catalogue</a>. '
+        . 'Environ ' . (int) $enrichBatchSize . ' fiche(s) par clic.';
+    $infoAria = 'Liens magasins GOG et Epic';
+    require MONCINE_ROOT . '/templates/_heading_with_info.php';
+    unset($infoHtml, $infoAria);
+    ?>
 
     <?php if (empty($storeLinksModuleReady)): ?>
-        <p class="hint">Migration <code>063_oeuvre_store_links.sql</code> non appliquée.</p>
+        <p class="import-page__meta">Migration <code>063_oeuvre_store_links.sql</code> non appliquée.</p>
     <?php else: ?>
         <?php if (!empty($storeLinksMessage)): ?>
             <div class="alert <?= (isset($_GET['store_links_test']) && $_GET['store_links_test'] !== 'ok') ? 'alert-error' : 'alert-success' ?>">
@@ -365,28 +423,29 @@
         <?php endif; ?>
 
         <?php if ((int) ($storeLinksPendingReview ?? 0) > 0): ?>
-            <p class="hint">
-                <?= (int) $storeLinksPendingReview ?> lien(s) en attente de validation —
-                <a href="/maintenance-catalogue.php">ouvrir la file de relecture</a>.
+            <p class="import-inline-note">
+                <?= (int) $storeLinksPendingReview ?> lien(s) en attente —
+                <a href="/maintenance-catalogue.php">file de relecture</a>.
             </p>
         <?php endif; ?>
 
         <form method="post" action="/enrichir-liens-magasins.php" class="import-form enrich-actions">
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
             <input type="hidden" name="action" value="enrichir_store_links">
-            <p class="hint">Environ <?= (int) $enrichBatchSize ?> fiche(s) catalogue par clic.</p>
             <div class="export-actions">
-                <label class="checkbox">
-                    <input type="checkbox" name="store_gog" value="1" checked>
-                    GOG
-                </label>
-                <label class="checkbox">
-                    <input type="checkbox" name="store_epic" value="1" checked>
-                    Epic Games Store
-                </label>
-                <label class="checkbox">
+                <label class="checkbox"><input type="checkbox" name="store_gog" value="1" checked> GOG</label>
+                <label class="checkbox"><input type="checkbox" name="store_epic" value="1" checked> Epic</label>
+                <label class="checkbox checkbox-label--with-info">
                     <input type="checkbox" name="force_all_store_links" value="1">
-                    Tout retraiter (y compris liens déjà validés)
+                    <span class="checkbox-label__text">
+                        Tout retraiter
+                        <span class="info-tooltip" tabindex="0" aria-label="Retraiter tous les liens magasins">
+                            <span class="info-tooltip__icon" aria-hidden="true">i</span>
+                            <span class="info-tooltip__popup" role="tooltip">
+                                Inclut les liens déjà validés manuellement.
+                            </span>
+                        </span>
+                    </span>
                 </label>
             </div>
             <button type="submit" class="btn btn-accent">Enrichir les liens magasins</button>
@@ -407,14 +466,19 @@
 <?php endif; ?>
 
 <section class="export-panel">
-    <h2>Import bibliothèque Steam</h2>
-    <p class="lead">
-        Récupère vos jeux Steam (GetOwnedGames), les associe à IGDB quand c’est possible,
-        puis les ajoute à <strong>Mes jeux</strong> avec le temps de jeu Steam.
-    </p>
+    <?php
+    unset($info, $infoHtml, $infoAria, $class, $tag);
+    $title = 'Import bibliothèque Steam';
+    $infoHtml = '1. Admin : clé API Steam Web ci-dessous. '
+        . '2. Utilisateur : SteamID64 dans <a href="/parametres.php">Paramètres du compte</a>. '
+        . '3. <strong>Préparer l’import</strong> pour l’aperçu avant validation.';
+    $infoAria = 'Import bibliothèque Steam';
+    require MONCINE_ROOT . '/templates/_heading_with_info.php';
+    unset($infoHtml, $infoAria);
+    ?>
 
     <?php if (empty($steamModuleReady)): ?>
-        <p class="hint">Migration Steam non appliquée — relancez la mise à jour de la base de données.</p>
+        <p class="import-page__meta">Migration Steam non appliquée — relancez la mise à jour de la base.</p>
     <?php else: ?>
 
     <?php if (!empty($steamMessage)): ?>
@@ -424,60 +488,60 @@
         <div class="alert alert-success"><?= Moncine\View::escape($steamImportMessage) ?></div>
     <?php endif; ?>
 
-    <p class="hint">
-        1. L’administrateur enregistre une <strong>clé API Steam Web</strong> ci-dessous.<br>
-        2. Chaque utilisateur renseigne son <strong>SteamID64</strong> dans
-        <a href="/parametres.php">Paramètres du compte</a>.<br>
-        3. Cliquez sur <strong>Préparer l’import</strong> pour voir l’aperçu avant validation.
-    </p>
-
     <?php if (!$hasSteamApiKey): ?>
         <?php if (!empty($canManageCatalog)): ?>
         <form method="post" action="/import-steam-actions.php" class="import-form">
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
             <input type="hidden" name="action" value="save_steam_api_key">
-            <label for="steam_api_key">Clé API Steam Web</label>
+            <?php
+            unset($info, $infoHtml, $infoAria);
+            $for = 'steam_api_key';
+            $label = 'Clé API Steam Web';
+            $infoHtml = 'Obtenez une clé sur '
+                . '<a href="https://steamcommunity.com/dev/apikey" target="_blank" rel="noopener">steamcommunity.com/dev/apikey</a>.';
+            $infoAria = 'Clé API Steam';
+            require MONCINE_ROOT . '/templates/_form_label_info.php';
+            unset($infoHtml, $infoAria);
+            ?>
             <input type="password" name="steam_api_key" id="steam_api_key" required autocomplete="off">
-            <p class="hint">
-                Obtenez une clé sur
-                <a href="https://steamcommunity.com/dev/apikey" target="_blank" rel="noopener">steamcommunity.com/dev/apikey</a>.
-            </p>
             <button type="submit" class="btn btn-secondary">Enregistrer la clé Steam</button>
         </form>
         <?php else: ?>
-        <p class="hint">Clé API Steam manquante — demandez à l’administrateur de la configurer.</p>
+        <p class="import-page__meta">Clé API Steam manquante — contactez l’administrateur.</p>
         <?php endif; ?>
     <?php else: ?>
-        <?php if (!empty($steamKeyFromEnvironment)): ?>
-            <p class="hint">Clé active via <code>MONCINE_STEAM_API_KEY</code>.</p>
-        <?php else: ?>
-            <p class="hint">✓ Clé API Steam enregistrée sur le serveur.</p>
-        <?php endif; ?>
+        <p class="import-status import-status--ok">
+            <?php if (!empty($steamKeyFromEnvironment)): ?>
+                Clé active via <code>MONCINE_STEAM_API_KEY</code>
+            <?php else: ?>
+                Clé API Steam enregistrée
+            <?php endif; ?>
+        </p>
 
         <?php if (!empty($hasUserSteamId)): ?>
-            <p class="hint">✓ SteamID64 renseigné dans <a href="/parametres.php">Paramètres du compte</a>.</p>
+            <p class="import-status import-status--ok">SteamID64 renseigné (<a href="/parametres.php">Paramètres</a>)</p>
         <?php else: ?>
             <p class="alert alert-warning">
-                SteamID64 manquant — renseignez-le dans
-                <a href="/parametres.php">Paramètres du compte</a> avant de tester ou d’importer.
+                SteamID64 manquant — <a href="/parametres.php">Paramètres du compte</a>.
             </p>
         <?php endif; ?>
 
-        <form method="post" action="/import-steam-actions.php" class="import-form inline-form">
-            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
-            <input type="hidden" name="action" value="test_steam_api">
-            <button type="submit" class="btn btn-secondary btn-sm"<?= empty($hasUserSteamId) ? ' disabled' : '' ?>>
-                Tester la connexion Steam
-            </button>
-        </form>
-
-        <form method="post" action="/import-steam-actions.php" class="import-form">
-            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
-            <input type="hidden" name="action" value="prepare_steam_import">
-            <button type="submit" class="btn btn-accent"<?= empty($canPrepareSteamImport) ? ' disabled' : '' ?>>
-                Préparer l’import Steam
-            </button>
-        </form>
+        <div class="export-actions">
+            <form method="post" action="/import-steam-actions.php" class="inline-form">
+                <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                <input type="hidden" name="action" value="test_steam_api">
+                <button type="submit" class="btn btn-secondary btn-sm"<?= empty($hasUserSteamId) ? ' disabled' : '' ?>>
+                    Tester Steam
+                </button>
+            </form>
+            <form method="post" action="/import-steam-actions.php" class="inline-form">
+                <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                <input type="hidden" name="action" value="prepare_steam_import">
+                <button type="submit" class="btn btn-accent"<?= empty($canPrepareSteamImport) ? ' disabled' : '' ?>>
+                    Préparer l’import Steam
+                </button>
+            </form>
+        </div>
 
         <?php if (!empty($canManageCatalog)): ?>
         <details class="catalog-admin-panel">
@@ -498,7 +562,7 @@
                     <button type="submit" class="btn btn-secondary btn-sm">Supprimer</button>
                 </form>
                 <?php else: ?>
-                <p class="hint">Clé fournie par la variable d’environnement — non modifiable depuis cette page.</p>
+                <p class="import-page__meta">Clé fournie par variable d’environnement — non modifiable ici.</p>
                 <?php endif; ?>
             </div>
         </details>
@@ -508,29 +572,35 @@
 </section>
 
 <section class="export-panel">
-    <h2>Affiches locales</h2>
-    <p class="lead">
-        Les affiches sont stockées par <strong>ID catalogue</strong> dans le dossier
-        <code>posters/</code> à côté de <code>moncine.db</code>
-        (fichiers <code>123.jpg</code> = œuvre n°123). Importez le catalogue CSV <strong>avant</strong> le ZIP.
-    </p>
+    <?php
+    unset($info, $infoHtml, $infoAria, $class, $tag);
+    $title = 'Affiches locales';
+    $infoHtml = 'Stockage par <strong>ID catalogue</strong> dans <code>posters/</code> '
+        . '(ex. <code>123.jpg</code> = œuvre n°123). Importez le catalogue CSV <strong>avant</strong> le ZIP.';
+    $infoAria = 'Affiches locales';
+    require MONCINE_ROOT . '/templates/_heading_with_info.php';
+    unset($infoHtml, $infoAria);
+    ?>
     <p>
         <a href="/ranger-affiches.php" class="btn btn-secondary">Télécharger depuis TMDB (par lots)</a>
     </p>
 
     <?php if (!empty($canManageCatalog)): ?>
-        <h3>Importer une archive ZIP</h3>
-        <p class="hint">
-            Format attendu : même archive que « ZIP affiches locales » (dossier <code>posters/</code>
-            ou fichiers <code>123.jpg</code> à la racine). Taille max. archive :
-            <strong><?= Moncine\View::escape(Moncine\UploadLimits::maxPostersZipBytesLabel()) ?></strong>
-            ; chaque image dans le ZIP :
-            <strong><?= Moncine\View::escape(Moncine\UploadLimits::maxPosterBytesLabel()) ?></strong> max.
-            Limites PHP actuelles :
-            post_max_size = <strong><?= Moncine\View::escape(Moncine\UploadLimits::postMaxSizeLabel()) ?></strong>,
-            upload_max_filesize = <strong><?= Moncine\View::escape(Moncine\UploadLimits::uploadMaxFilesizeLabel()) ?></strong>.
-            Vous pouvez aussi copier le dossier <code>posters/</code> en SSH à côté de <code>moncine.db</code>.
-        </p>
+        <?php
+        unset($info, $infoHtml, $infoAria, $class, $tag);
+        $title = 'Importer une archive ZIP';
+        $tag = 'h3';
+        $infoHtml = 'Archive « ZIP affiches locales » : dossier <code>posters/</code> ou fichiers '
+            . '<code>123.jpg</code> à la racine. Max. archive : '
+            . '<strong>' . Moncine\View::escape(Moncine\UploadLimits::maxPostersZipBytesLabel()) . '</strong> ; '
+            . 'chaque image : <strong>' . Moncine\View::escape(Moncine\UploadLimits::maxPosterBytesLabel()) . '</strong>. '
+            . 'Limites PHP : post <strong>' . Moncine\View::escape(Moncine\UploadLimits::postMaxSizeLabel()) . '</strong>, '
+            . 'upload <strong>' . Moncine\View::escape(Moncine\UploadLimits::uploadMaxFilesizeLabel()) . '</strong>. '
+            . 'Ou copie SSH du dossier <code>posters/</code> à côté de <code>moncine.db</code>.';
+        $infoAria = 'Import ZIP affiches';
+        require MONCINE_ROOT . '/templates/_heading_with_info.php';
+        unset($infoHtml, $infoAria, $tag);
+        ?>
         <form method="post" enctype="multipart/form-data" class="import-form">
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
             <input type="hidden" name="action" value="import_posters_zip">
@@ -539,13 +609,16 @@
             <button type="submit" class="btn btn-primary">Importer le ZIP</button>
         </form>
 
-        <h3>Recaler les affiches (après import)</h3>
-        <p class="hint">
-            Si les affiches ont été importées avec de <strong>mauvais numéros</strong> (catalogue importé sans
-            conserver les ID), envoyez l’<strong>export catalogue de l’ancienne instance</strong> (avec colonne
-            ID catalogue). Moncine associe chaque ancien numéro au film actuel via titre + réalisateur, puis
-            renomme les fichiers dans <code>posters/</code>.
-        </p>
+        <?php
+        unset($info, $infoHtml, $infoAria, $class, $tag);
+        $title = 'Recaler les affiches';
+        $tag = 'h3';
+        $info = 'Si les numéros de fichiers ne correspondent plus au catalogue, envoyez l’export catalogue '
+            . 'de l’ancienne instance (avec ID). Moncine associe via titre + réalisateur puis renomme les fichiers.';
+        $infoAria = 'Recalage des affiches';
+        require MONCINE_ROOT . '/templates/_heading_with_info.php';
+        unset($info, $infoAria, $tag);
+        ?>
         <form method="post" enctype="multipart/form-data" class="import-form">
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
             <input type="hidden" name="action" value="remap_posters">
@@ -554,6 +627,7 @@
             <button type="submit" class="btn btn-secondary">Recaler les affiches</button>
         </form>
     <?php else: ?>
-        <p class="hint">L’import ZIP est réservé à l’administrateur (après import du catalogue).</p>
+        <p class="import-page__meta">L’import ZIP est réservé à l’administrateur.</p>
     <?php endif; ?>
 </section>
+</div>

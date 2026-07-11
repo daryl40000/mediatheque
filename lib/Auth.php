@@ -116,19 +116,22 @@ final class Auth
         return UserRole::isAdmin((string) ($user['role'] ?? ''));
     }
 
-    public static function login(string $email, string $password): bool|string
+    public static function login(string $login, string $password): bool|string
     {
-        $email = mb_strtolower(trim($email), 'UTF-8');
-        if (LoginThrottle::isBlocked($email)) {
-            $minutes = (int) ceil(LoginThrottle::secondsUntilUnblock($email) / 60);
+        $throttleKey = LoginIdentifier::normalizeForThrottle($login);
+        if ($throttleKey === '') {
+            return 'Identifiants incorrects.';
+        }
+        if (LoginThrottle::isBlocked($throttleKey)) {
+            $minutes = (int) ceil(LoginThrottle::secondsUntilUnblock($throttleKey) / 60);
 
             return 'Trop de tentatives. Réessayez dans environ ' . max(1, $minutes) . ' minute(s).';
         }
 
         $repo = new UtilisateurRepository();
-        $user = $repo->findByEmailForAuthentication($email);
+        $user = $repo->findForAuthentication($login);
         if ($user === null || (int) ($user['actif'] ?? 0) !== 1 || !UtilisateurRepository::verifyPassword($user, $password)) {
-            LoginThrottle::recordFailure($email);
+            LoginThrottle::recordFailure($throttleKey);
 
             return 'Identifiants incorrects.';
         }
@@ -139,7 +142,7 @@ final class Auth
         $_SESSION[self::SESSION_USER_ID] = (int) $user['id'];
         $repo->updateLastLogin((int) $user['id']);
         $repo->upgradePasswordHashIfNeeded((int) $user['id'], (string) ($user['password_hash'] ?? ''), $password);
-        LoginThrottle::clearOnSuccess($email);
+        LoginThrottle::clearOnSuccess($throttleKey);
 
         return true;
     }

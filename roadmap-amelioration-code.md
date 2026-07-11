@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-07-10 (version **0.7.17** — sujets magazine vignettes, pont catalogue multi-médias, page magazines jeu)  
+**Dernière mise à jour :** 2026-07-11 (version **0.7.18** — connexion pseudo, UI Compte/Import compacte)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif

@@ -67,6 +67,11 @@ final class RegistrationService
             return $identity;
         }
 
+        $pseudoCheck = $this->users->validatePseudoAvailable(UserProfile::sanitizePseudo($pseudo));
+        if ($pseudoCheck !== true) {
+            return $pseudoCheck;
+        }
+
         if ($this->users->findByEmail($email) !== null || $this->requests->hasActiveRequestForEmail($email)) {
             return true;
         }

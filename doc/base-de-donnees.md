@@ -1,6 +1,6 @@
 # Structure de la base de données — Médiathèque
 
-**Version : 0.7.17** · **Moteur :** SQLite (`data/moncine.db`) · **Schéma de référence :** [`sql/schema.sql`](../sql/schema.sql)
+**Version : 0.7.18** · **Moteur :** SQLite (`data/moncine.db`) · **Schéma de référence :** [`sql/schema.sql`](../sql/schema.sql)
 
 Ce document décrit **comment la base est organisée** : quelles tables existent, à quoi elles servent, et comment elles sont reliées entre elles. Il complète la doc fonctionnelle par domaine ([jeux.md](jeux.md), [magazines.md](magazines.md)).
 
@@ -197,7 +197,7 @@ Recherche plein texte (FTS) : migration **038** — voir [magazines.md](magazine
 
 | Table | Rôle |
 |-------|------|
-| `utilisateurs` | Comptes, rôles (`admin` / `user`), profil |
+| `utilisateurs` | Comptes, rôles (`admin` / `user`), profil, **pseudo** (connexion optionnelle, **0.7.18**) |
 | `foyers` | Groupes familiaux / amis |
 | `group_members`, `group_invitations` | Appartenance et invitations au foyer |
 | `friendships` | Relations entre utilisateurs |
@@ -263,7 +263,7 @@ Créées / gérées par `lib/SchemaMigrator.php`.
 - **Collection foyer :** une seule entrée `collection` par couple `(foyer_id, oeuvre_id)`.
 - **Envies utilisateur :** une seule wishlist par couple `(user_id, oeuvre_id)`.
 - **EAN catalogue :** un code EAN ne peut être attaché qu’à une seule œuvre.
-- **Jeux :** index sur `platform`, `studio`, `genre`, extensions et remakes.
+- **Comptes :** index unique sur le **pseudo** (insensible à la casse, valeurs non nulles) — migration **064** (**0.7.18**).
 
 Liste complète : voir [`sql/schema.sql`](../sql/schema.sql).
 
@@ -299,6 +299,7 @@ Liste complète : voir [`sql/schema.sql`](../sql/schema.sql).
 | 058 | `058_steam_import.sql` | Import Steam : `game_steam_stats`, `steam_appid`, `utilisateurs.steam_id` |
 | 061 | `061_game_manual_playtime.sql` | Temps de jeu manuel (`bibliotheque.manual_playtime_minutes`) |
 | 063 | `063_oeuvre_store_links.sql` | Liens catalogue GOG / Epic (`oeuvre_store_links`) |
+| 064 | `064_utilisateur_pseudo_login.sql` | Index unique pseudo connexion (`utilisateurs.pseudo`) — **0.7.18** |
 
 Migration transversale multi-médias : **030** (`media_domain` sur `oeuvres`).
 

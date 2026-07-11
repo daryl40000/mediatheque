@@ -36,7 +36,7 @@ $error = '';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     Csrf::rejectUnlessValid($_POST, '/connexion.php');
     $result = Auth::login(
-        (string) ($_POST['email'] ?? ''),
+        (string) ($_POST['login'] ?? $_POST['email'] ?? ''),
         (string) ($_POST['password'] ?? '')
     );
     if ($result === true) {

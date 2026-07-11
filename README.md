@@ -2,7 +2,7 @@
 
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 
-**Version : 0.7.17**
+**Version : 0.7.18**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -71,6 +71,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.18** | Connexion par pseudo, pages Compte/Import compactes (bulles « i »), menu navigation |
 | **0.7.17** | Sujets magazine en vignettes, lien catalogue jeu/film, page magazines sur fiche jeu, correctifs suppression catalogue |
 | **0.7.16** | Séries magazines alignées sur BD (catalogue complet), filtre possession mémorisé, redirection fiche après ajout catalogue |
 | **0.7.15** | Suppression groupée catalogue admin, pagination après suppression, filtre média coloré, liens icônes GOG/Epic, import ABM couvertures (%20) |

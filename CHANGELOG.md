@@ -9,6 +9,29 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.18] — 2026-07-11
+
+**Connexion par pseudo, pages Compte/Import compactes, menu navigation**
+
+### Ajouté
+
+- **Connexion** : identifiant **e-mail ou pseudo** (si renseigné sur le compte) — `LoginIdentifier`, migration `064_utilisateur_pseudo_login.sql`.
+- **Unicité du pseudo** (insensible à la casse) à la création, inscription et modification du profil.
+- **Bulles d’aide** (icône « i ») : partials `_form_label_info.php`, `_heading_with_info.php` ; pages **Compte** et **Importer / exporter** allégées.
+
+### Modifié
+
+- **`/parametres.php`** : textes d’aide déplacés dans les bulles ; formulaire plus compact.
+- **`/import.php`** : mêmes bulles sur les titres de section et options avancées.
+- **Menu Paramètres / Gestion** (desktop) : fermeture automatique au retrait de la souris (`initDesktopNavMenus`).
+
+### Technique
+
+- Tests : `LoginIdentifierTest`, `AuthLoginIdentifierTest`.
+- `ROADMAP.md` synchronisée (**0.7.18**).
+
+---
+
 ## [0.7.17] — 2026-07-10
 
 **Sujets magazine (vignettes, multi-médias), magazines sur fiche jeu, correctifs catalogue**

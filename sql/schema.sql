@@ -67,6 +67,10 @@ CREATE TABLE IF NOT EXISTS utilisateurs (
 CREATE UNIQUE INDEX IF NOT EXISTS idx_utilisateurs_email
     ON utilisateurs(email) WHERE email != '';
 
+CREATE UNIQUE INDEX IF NOT EXISTS idx_utilisateurs_pseudo_login
+    ON utilisateurs(LOWER(TRIM(pseudo)))
+    WHERE TRIM(pseudo) != '';
+
 CREATE INDEX IF NOT EXISTS idx_utilisateurs_foyer ON utilisateurs(foyer_id);
 
 CREATE TABLE IF NOT EXISTS password_reset_tokens (

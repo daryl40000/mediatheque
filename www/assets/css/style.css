@@ -1880,12 +1880,12 @@ textarea {
 
     .site-nav__submenu {
         position: absolute;
-        top: calc(100% + 0.2rem);
+        top: 100%;
         right: 0;
         z-index: 200;
         min-width: 11rem;
         margin: 0;
-        padding: 0.35rem 0;
+        padding: 0.55rem 0 0.35rem;
         border: 1px solid var(--border);
         border-left: 1px solid var(--border);
         border-radius: 8px;
@@ -3002,6 +3002,65 @@ a.support-link:hover {
     margin-top: 0;
 }
 
+.import-page__intro {
+    margin-bottom: 0;
+}
+
+.import-page__intro + .export-panel {
+    margin-top: 2rem;
+}
+
+.import-page__meta {
+    margin: 0.35rem 0 1rem;
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.45;
+}
+
+.import-inline-note {
+    margin: 0 0 0.75rem;
+    font-size: 0.9rem;
+    color: var(--muted);
+}
+
+.import-status {
+    margin: 0.5rem 0 0.75rem;
+    font-size: 0.88rem;
+    color: var(--muted);
+}
+
+.import-status--ok {
+    color: var(--text);
+}
+
+.section-heading-with-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    margin: 0 0 0.75rem;
+}
+
+.section-heading-with-info__text {
+    line-height: 1.3;
+}
+
+.import-page .info-tooltip__popup a {
+    color: var(--accent);
+}
+
+.import-columns-help {
+    margin-top: 0.75rem;
+}
+
+.import-columns-help__body {
+    margin: 0.5rem 0 0;
+    font-size: 0.85rem;
+    color: var(--muted);
+    line-height: 1.45;
+    white-space: pre-wrap;
+}
+
 .enrich-actions {
     margin-top: 1rem;
 }
@@ -3386,6 +3445,47 @@ body.page-wide .container--wide:has(> .game-detail-page) {
 .stat-card__value--duration {
     font-variant-numeric: tabular-nums;
     letter-spacing: 0.02em;
+}
+
+.account-page .account-meta {
+    margin: 0.75rem 0 0;
+    font-size: 0.88rem;
+    color: var(--muted);
+}
+
+.form-label-with-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.35rem;
+}
+
+.form-label-with-info__text {
+    line-height: 1.35;
+}
+
+.checkbox-label--with-info {
+    align-items: flex-start;
+}
+
+.checkbox-label--with-info .checkbox-label__text {
+    display: inline-flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+    line-height: 1.4;
+}
+
+.account-form .info-tooltip__popup a {
+    color: var(--accent);
+}
+
+.catalog-admin-panel__summary--with-info {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    flex-wrap: wrap;
 }
 
 .stat-card__label {
