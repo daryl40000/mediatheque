@@ -21,8 +21,6 @@ use Moncine\ImportPostersZip;
 use Moncine\PosterIdRemap;
 use Moncine\SteamConfig;
 use Moncine\SteamLibraryImporter;
-use Moncine\StoreLinkEnricher;
-use Moncine\OeuvreStoreLinkRepository;
 use Moncine\TmdbConfig;
 use Moncine\UploadLimits;
 use Moncine\UserContext;
@@ -139,31 +137,6 @@ if (isset($_GET['igdb_enrich_done'])) {
         $igdbEnrichMessage .= ' Il reste ' . $remaining . ' jeu(x) à traiter — relancez le bouton.';
     } else {
         $igdbEnrichMessage .= ' Enrichissement terminé pour tous vos jeux.';
-    }
-}
-
-$storeLinksMessage = '';
-$storeLinksEnrichMessage = '';
-if (isset($_GET['store_links_test'])) {
-    $msg = (string) ($_GET['store_links_test_msg'] ?? '');
-    $storeLinksMessage = ($_GET['store_links_test'] === 'ok' ? '✓ ' : '✗ ') . $msg;
-}
-if (isset($_GET['store_links_done'])) {
-    $processed = (int) ($_GET['store_links_processed'] ?? 0);
-    $linked = (int) ($_GET['store_links_linked'] ?? 0);
-    $pending = (int) ($_GET['store_links_pending'] ?? 0);
-    $skipped = (int) ($_GET['store_links_skipped'] ?? 0);
-    $storeLinksEnrichMessage = sprintf(
-        'Liens magasins : %d fiche(s) traitée(s), %d liée(s) automatiquement, %d à revoir, %d ignorée(s).',
-        $processed,
-        $linked,
-        $pending,
-        $skipped
-    );
-    if (!empty($_SESSION['store_links_enrich_errors'])) {
-        $errors = array_merge($errors, $_SESSION['store_links_enrich_errors']);
-        unset($_SESSION['store_links_enrich_errors']);
-        $storeLinksEnrichMessage .= ' Détail des erreurs ci-dessous.';
     }
 }
 
@@ -353,10 +326,6 @@ $userSteamId = $steamModuleReady
     : '';
 $hasUserSteamId = SteamConfig::isValidSteamId($userSteamId);
 $canPrepareSteamImport = SteamLibraryImporter::canImport() && $hasUserSteamId;
-$storeLinksModuleReady = StoreLinkEnricher::isAvailable();
-$storeLinksPendingReview = $storeLinksModuleReady
-    ? (new OeuvreStoreLinkRepository())->countPendingReview()
-    : 0;
 
 View::render('import', [
     'pageTitle' => 'Importer',
@@ -390,8 +359,4 @@ View::render('import', [
     'phpPostMaxSize' => UploadLimits::postMaxSizeLabel(),
     'phpUploadMaxSize' => UploadLimits::uploadMaxFilesizeLabel(),
     'importEngineBuild' => MONCINE_IMPORT_ENGINE_BUILD,
-    'storeLinksModuleReady' => $storeLinksModuleReady,
-    'storeLinksMessage' => $storeLinksMessage,
-    'storeLinksEnrichMessage' => $storeLinksEnrichMessage,
-    'storeLinksPendingReview' => $storeLinksPendingReview,
 ]);

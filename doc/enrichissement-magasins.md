@@ -1,11 +1,11 @@
-# Enrichissement des liens magasins (GOG + Epic)
+# Liens magasins catalogue (GOG + Epic)
 
-**Statut :** ✅ **Implémenté (v1 catalogue GOG / Epic)** — migration `063`, enrichissement batch, relecture admin.
-**Version cible (indicatif) :** 0.7.14+ (polish M4 jeux)  
-**Dernière mise à jour :** 2026-07-07
+**Statut :** ✅ **Saisie manuelle uniquement** — migration `063`, panneau admin sur `/oeuvre-jeu.php`.  
+**Retiré (0.7.19+)** : enrichissement automatique GOG/Epic (API publiques peu fiables).  
+**Dernière mise à jour :** 2026-07-11
 
-> Guide d’implémentation pour **Médiathèque** (PHP natif, SQLite, namespace `Moncine\`).  
-> **Pas de Laravel**, pas d’OAuth utilisateur, pas de bibliothèque personnelle : uniquement des **API publiques** pour proposer des liens vers les pages GOG et Epic Games Store sur les fiches **catalogue** jeux.
+> Les URLs GOG / Epic / Steam se renseignent **à la main** sur la fiche catalogue jeu (admin).  
+> Ce document conserve l’historique de la spec d’enrichissement automatique (non maintenu).
 
 ---
 
@@ -61,7 +61,10 @@ Les trois convergent dans `digital_stores` et les icônes `GameEditionIcons`.
 ### GOG — recherche catalogue
 
 ```
-GET https://catalog.gog.com/v1/catalog?productSearch={query}&limit=10
+GET https://catalog.gog.com/v1/catalog?query={query}&limit=10&locale=en-US
+```
+
+(`productSearch` est obsolète — GOG l’ignore et renvoie un catalogue générique. Éviter les « : » dans la requête ; le client tronque le sous-titre automatiquement.)
 ```
 
 (Repli éventuel sur l’ancienne `https://api.gog.com/products?search=` si indisponible.)

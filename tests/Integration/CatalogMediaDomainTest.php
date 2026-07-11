@@ -8,6 +8,7 @@ use Moncine\CatalogAdmin;
 use Moncine\CatalogExportSchema;
 use Moncine\GameRepository;
 use Moncine\ImportRunner;
+use Moncine\MediaContext;
 use Moncine\MediaDomain;
 use Moncine\OeuvreRepository;
 use Moncine\SchemaMigrator;
@@ -96,6 +97,29 @@ final class CatalogMediaDomainTest extends MoncineTestCase
 
         $this->assertContains('Film Catalogue Admin', $titles);
         $this->assertContains('Jeu Catalogue Admin', $titles);
+    }
+
+    public function testCatalogAdminDeletesGameWhileFilmTabActive(): void
+    {
+        if (!GameRepository::isAvailable()) {
+            $this->markTestSkipped('Table oeuvre_jeu absente.');
+        }
+
+        $gameId = (new OeuvreRepository())->insert([
+            'titre' => 'Jeu à supprimer',
+            'realisateur' => '',
+            'media_domain' => MediaDomain::JEU,
+        ]);
+        \Moncine\Database::getInstance()->prepare(
+            'INSERT INTO oeuvre_jeu (oeuvre_id, studio, editeur, genre, platform, is_digital)
+             VALUES (?, ?, ?, ?, ?, ?)'
+        )->execute([$gameId, 'Studio', '', 'Action', 'pc', 0]);
+
+        MediaContext::set(MediaDomain::FILM);
+
+        $result = (new CatalogAdmin())->deleteOeuvre($gameId);
+        $this->assertTrue($result === true);
+        $this->assertNull((new OeuvreRepository())->findByIdForAdmin($gameId));
     }
 
     /**

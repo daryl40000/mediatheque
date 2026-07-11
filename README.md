@@ -2,7 +2,7 @@
 
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 
-**Version : 0.7.18**
+**Version : 0.7.19**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -23,7 +23,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. Depuis 
 | [doc/pont-magazine-jeu.md](doc/pont-magazine-jeu.md) | Pont magazine ↔ jeux : lien catalogue, homonymes, admin |
 | [doc/import-musique.md](doc/import-musique.md) | **Spécification** import musique (vinyles, CD — phase M8) |
 | [doc/import-gog.md](doc/import-gog.md) | **Spécification** import bibliothèque GOG (à implémenter) |
-| [doc/enrichissement-magasins.md](doc/enrichissement-magasins.md) | **Spécification** liens magasins GOG/Epic sur le catalogue (API publiques) |
+| [doc/enrichissement-magasins.md](doc/enrichissement-magasins.md) | Liens magasins GOG/Epic sur le catalogue (saisie manuelle admin) |
 | [ROADMAP.md](ROADMAP.md) | Plan détaillé M0 → M7 |
 | [roadmap-amelioration-code.md](roadmap-amelioration-code.md) | Roadmap qualité / refactor code (phases A–F) |
 | [CHANGELOG.md](CHANGELOG.md) | Journal des versions (Médiathèque + historique Monciné) |
@@ -71,6 +71,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.19** | Correctif suppression jeu catalogue admin, retrait enrichissement auto GOG/Epic (saisie manuelle conservée) |
 | **0.7.18** | Connexion par pseudo, pages Compte/Import compactes (bulles « i »), menu navigation |
 | **0.7.17** | Sujets magazine en vignettes, lien catalogue jeu/film, page magazines sur fiche jeu, correctifs suppression catalogue |
 | **0.7.16** | Séries magazines alignées sur BD (catalogue complet), filtre possession mémorisé, redirection fiche après ajout catalogue |

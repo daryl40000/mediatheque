@@ -9,6 +9,29 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.19] — 2026-07-11
+
+**Correctif suppression jeu catalogue, retrait enrichissement GOG/Epic**
+
+### Corrigé
+
+- **Catalogue admin** : suppression d’une fiche **jeu** (tous onglets confondus) — `CatalogAdmin::deleteOeuvre()` utilise `findByIdForAdmin()` au lieu de `findById()` filtré par l’onglet actif.
+
+### Retiré
+
+- **Enrichissement automatique** des liens magasins GOG/Epic (page Importer, maintenance, API catalogue).
+- Fichiers associés : `StoreLinkEnricher`, clients recherche GOG/Epic, file de relecture admin.
+
+### Conservé
+
+- **Saisie manuelle** des liens Steam / GOG / Epic sur `/oeuvre-jeu.php` (table `oeuvre_store_links`).
+
+### Technique
+
+- Test : `CatalogMediaDomainTest::testCatalogAdminDeletesGameWhileFilmTabActive`.
+
+---
+
 ## [0.7.18] — 2026-07-11
 
 **Connexion par pseudo, pages Compte/Import compactes, menu navigation**

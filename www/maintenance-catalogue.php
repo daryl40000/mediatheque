@@ -14,7 +14,6 @@ use Moncine\CatalogMaintenance;
 use Moncine\Csrf;
 use Moncine\DatabaseBackupRateLimit;
 use Moncine\DatabaseBackupService;
-use Moncine\OeuvreStoreLinkRepository;
 use Moncine\View;
 
 CatalogAdmin::denyUnlessAccess();
@@ -39,15 +38,6 @@ $dbBackupErrors = [
 $dbBackupErrorKey = isset($_GET['db_backup_error']) ? (string) $_GET['db_backup_error'] : '';
 if ($dbBackupErrorKey !== '' && isset($dbBackupErrors[$dbBackupErrorKey])) {
     $error = $dbBackupErrors[$dbBackupErrorKey];
-}
-if (isset($_GET['store_link_verified'])) {
-    $message = 'Lien magasin validé et synchronisé sur la fiche catalogue.';
-}
-if (isset($_GET['store_link_rejected'])) {
-    $message = 'Lien magasin proposé ignoré.';
-}
-if (isset($_GET['store_link_error'])) {
-    $error = 'Action sur le lien magasin impossible.';
 }
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -141,7 +131,4 @@ View::render('maintenance-catalogue', [
     'error' => $error,
     'dbBackupSqliteOk' => $dbBackupSqliteOk,
     'dbBackupMaxMb' => (int) floor(MONCINE_DB_BACKUP_MAX_BYTES / (1024 * 1024)),
-    'storeLinksPendingReview' => OeuvreStoreLinkRepository::isAvailable()
-        ? (new OeuvreStoreLinkRepository())->listPendingReview(50)
-        : [],
 ]);

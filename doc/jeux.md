@@ -260,7 +260,7 @@ Deux notions distinctes :
 - Icônes de possession sur la fiche bibliothèque : uniquement si le magasin est dans `digital_stores`.
 - Lien cliquable d’une icône : URL catalogue si connue, sinon repli `steam_appid` / slug.
 - Depuis **0.7.15** : résolution unifiée via `CatalogGameStoreLinks::urlsForCatalogRow` ; URLs GOG avec préfixe langue (`/fr/game/`, `/en/game/`) ; slug catalogue si URL absente.
-- Spécification enrichissement automatique : [enrichissement-magasins.md](enrichissement-magasins.md).
+- Doc historique (enrichissement auto retiré) : [enrichissement-magasins.md](enrichissement-magasins.md).
 
 ### Recherche et autocomplétion (0.5.4)
 
@@ -523,7 +523,7 @@ Résumé : OAuth GOG (approche A) → bibliothèque + temps de jeu (partiel) →
 
 ## Enrichissement liens magasins GOG / Epic (à venir)
 
-Cahier des charges (non implémenté) : [enrichissement-magasins.md](enrichissement-magasins.md).
+Doc historique (enrichissement auto retiré) : [enrichissement-magasins.md](enrichissement-magasins.md).
 
 Résumé : APIs **publiques** (sans compte utilisateur) → recherche par **titre** → score de confiance → validation admin si doute → URL stockée dans **`oeuvre_store_links`** (catalogue, **0.7.14**) → section **« Disponible sur »** et liens icônes. Complémentaire de l’import bibliothèque GOG et de l’import Steam.
 

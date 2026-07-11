@@ -453,7 +453,7 @@ final class CatalogAdmin
             return 'Œuvre invalide.';
         }
 
-        if ($this->oeuvres->findById($oeuvreId) === null) {
+        if ($this->oeuvres->findByIdForAdmin($oeuvreId) === null) {
             return 'Œuvre introuvable ou déjà supprimée.';
         }
 
