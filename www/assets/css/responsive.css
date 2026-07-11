@@ -35,6 +35,35 @@ body.is-nav-open {
     overflow: hidden;
 }
 
+@media (max-width: 899px) {
+    /* iOS : empêche le scroll de la page sans bloquer le panneau menu (position: fixed + JS). */
+    body.is-nav-open {
+        position: fixed;
+        width: 100%;
+        left: 0;
+        right: 0;
+    }
+
+    .site-nav.is-mobile-nav-panel {
+        position: fixed;
+        z-index: 110;
+        top: var(--mobile-nav-panel-top, 0);
+        left: 0;
+        right: 0;
+        bottom: 0;
+        width: 100%;
+        margin: 0;
+        padding: 0.35rem max(1rem, var(--safe-left)) calc(0.75rem + var(--safe-bottom)) max(1rem, var(--safe-right));
+        background: var(--surface);
+        border-top: 1px solid var(--border);
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+    }
+}
+
 @media (min-width: 900px) {
     body.is-nav-open {
         overflow: visible;
@@ -167,6 +196,18 @@ video {
 
 .site-header.is-nav-open .site-nav {
     display: flex;
+}
+
+@media (max-width: 899px) {
+    .site-header.is-nav-open .site-nav:not(.is-mobile-nav-panel) {
+        /* Fallback avant mesure JS : flex item scrollable. */
+        min-height: 0;
+        max-height: calc(100dvh - 11rem);
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+        overscroll-behavior: contain;
+        touch-action: pan-y;
+    }
 }
 
 .site-nav__menu {

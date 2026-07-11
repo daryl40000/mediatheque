@@ -9,6 +9,21 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.20] — 2026-07-11
+
+**Correctif défilement menu mobile (smartphone / iOS)**
+
+### Corrigé
+
+- **Menu navigation mobile** : impossible de faire défiler les entrées du menu sur petit écran — panneau fixe sous l’en-tête avec scroll interne, verrouillage du scroll de la page (dont iOS via `position: fixed` + `touchmove`).
+
+### Technique
+
+- CSS : `.site-nav.is-mobile-nav-panel`, `body.is-nav-open` (mobile), fallback flex scrollable.
+- JS : `initMobileNav()` — sauvegarde/restauration `scrollY`, `syncMobileNavPanel()`, recalcul au `resize`.
+
+---
+
 ## [0.7.19] — 2026-07-11
 
 **Correctif suppression jeu catalogue, retrait enrichissement GOG/Epic**

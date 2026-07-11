@@ -180,18 +180,88 @@ function initMobileNav() {
         return;
     }
 
+    const mobileQuery = window.matchMedia('(max-width: 899px)');
+    let savedScrollY = 0;
+    /** @type {((event: TouchEvent) => void) | null} */
+    let touchMoveBlocker = null;
+
+    const usesMobilePanel = () => mobileQuery.matches;
+
+    const enableTouchScrollLock = () => {
+        if (touchMoveBlocker !== null) {
+            return;
+        }
+        touchMoveBlocker = (event) => {
+            if (!header.classList.contains('is-nav-open')) {
+                return;
+            }
+            if (nav.contains(event.target)) {
+                return;
+            }
+            event.preventDefault();
+        };
+        document.addEventListener('touchmove', touchMoveBlocker, { passive: false });
+    };
+
+    const disableTouchScrollLock = () => {
+        if (touchMoveBlocker === null) {
+            return;
+        }
+        document.removeEventListener('touchmove', touchMoveBlocker);
+        touchMoveBlocker = null;
+    };
+
+    const syncMobileNavPanel = () => {
+        if (!usesMobilePanel() || !header.classList.contains('is-nav-open')) {
+            return;
+        }
+
+        nav.classList.remove('is-mobile-nav-panel');
+        nav.style.removeProperty('--mobile-nav-panel-top');
+
+        window.requestAnimationFrame(() => {
+            if (!header.classList.contains('is-nav-open')) {
+                return;
+            }
+            const top = Math.max(0, Math.round(nav.getBoundingClientRect().top));
+            nav.style.setProperty('--mobile-nav-panel-top', `${top}px`);
+            nav.classList.add('is-mobile-nav-panel');
+        });
+    };
+
+    const unlockBodyScroll = () => {
+        const scrollY = savedScrollY;
+        document.body.classList.remove('is-nav-open');
+        document.body.style.removeProperty('top');
+        savedScrollY = 0;
+        window.scrollTo(0, scrollY);
+    };
+
     const closeNav = () => {
         header.classList.remove('is-nav-open');
-        document.body.classList.remove('is-nav-open');
+        nav.classList.remove('is-mobile-nav-panel');
+        nav.style.removeProperty('--mobile-nav-panel-top');
+        disableTouchScrollLock();
+        unlockBodyScroll();
         toggle.setAttribute('aria-expanded', 'false');
         toggle.setAttribute('aria-label', 'Ouvrir le menu');
     };
 
     const openNav = () => {
+        if (usesMobilePanel()) {
+            savedScrollY = window.scrollY;
+            document.body.style.top = `-${savedScrollY}px`;
+        }
+
         header.classList.add('is-nav-open');
         document.body.classList.add('is-nav-open');
         toggle.setAttribute('aria-expanded', 'true');
         toggle.setAttribute('aria-label', 'Fermer le menu');
+
+        if (usesMobilePanel()) {
+            enableTouchScrollLock();
+            syncMobileNavPanel();
+        }
     };
 
     toggle.addEventListener('click', () => {
@@ -220,10 +290,18 @@ function initMobileNav() {
         }
     });
 
+    window.addEventListener('resize', () => {
+        if (header.classList.contains('is-nav-open') && usesMobilePanel()) {
+            syncMobileNavPanel();
+        }
+    });
+
     const desktopQuery = window.matchMedia('(min-width: 900px)');
     const onViewportChange = (event) => {
         if (event.matches) {
             closeNav();
+        } else if (header.classList.contains('is-nav-open')) {
+            syncMobileNavPanel();
         }
     };
     if (typeof desktopQuery.addEventListener === 'function') {
