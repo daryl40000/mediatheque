@@ -2,7 +2,7 @@
 
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 
-**Version : 0.7.20**
+**Version : 0.7.21**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -71,6 +71,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.21** | Icône raccourci Android (favicon racine + manifeste PWA), correctif CSRF uploads magazine/jeu |
 | **0.7.20** | Correctif défilement menu navigation sur smartphone (panneau mobile scrollable, iOS) |
 | **0.7.19** | Correctif suppression jeu catalogue admin, retrait enrichissement auto GOG/Epic (saisie manuelle conservée) |
 | **0.7.18** | Connexion par pseudo, pages Compte/Import compactes (bulles « i »), menu navigation |

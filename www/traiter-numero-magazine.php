@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\Csrf;
 use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
 use Moncine\FormCheckbox;
@@ -27,6 +28,7 @@ MediaDomainGuards::ensureMagazineContext();
 
 $bibId = (int) ($_POST['bib_id'] ?? 0);
 $returnUrl = View::magazineIssueUrl($bibId);
+Csrf::rejectUnlessValid($_POST, $returnUrl);
 UploadLimits::guardPostWithFiles($_POST, $returnUrl, [
     'pdf_file' => 'PDF',
     'cover_file' => 'Couverture',

@@ -9,6 +9,22 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.21] — 2026-07-13
+
+**Correctif icône raccourci Android, validation CSRF uploads**
+
+### Corrigé
+
+- **Raccourci écran d’accueil (Android)** : ancien logo Monciné — `www/favicon.ico` aligné sur le logo Médiathèque, manifeste PWA (`manifest.webmanifest`), partial `_head_icons.php`.
+- **Sécurité CSRF** : validation du jeton sur `traiter-numero-magazine.php`, `enregistrer-numero-magazine.php`, `enregistrer-fichier-jeu.php` (uploads PDF/couverture magazine, fichiers joints jeu).
+
+### Technique
+
+- Icônes PWA 192 / 512 px ; type MIME `.webmanifest` dans `.htaccess`.
+- Paramètre `?v=` sur les liens favicon (invalidation cache à chaque release).
+
+---
+
 ## [0.7.20] — 2026-07-11
 
 **Correctif défilement menu mobile (smartphone / iOS)**

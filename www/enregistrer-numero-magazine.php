@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\Csrf;
 use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
 use Moncine\MediaDomainGuards;
@@ -29,6 +30,8 @@ $statut = LibraryStatut::normalize((string) ($_POST['statut'] ?? LibraryStatut::
 $returnUrl = $seriesId > 0
     ? '/ajouter-numero-magazine.php?series_id=' . $seriesId . '&statut=' . rawurlencode($statut)
     : '/magazines.php';
+
+Csrf::rejectUnlessValid($_POST, $returnUrl);
 
 UploadLimits::guardPostWithFiles($_POST, $returnUrl, [
     'pdf_file' => 'PDF',

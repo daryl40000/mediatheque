@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.7.20** (2026-07-11)  
+**Version actuelle : 0.7.21** (2026-07-13)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -13,7 +13,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 ---
 
-## Où en est-on ? (synthèse 0.7.20)
+## Où en est-on ? (synthèse 0.7.21)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
@@ -23,7 +23,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 | **BD / Manga** | 🔄 **En cours (M2)** | **0.7.2** → **0.7.16** | Collection, envies, partage, profil public, impression ; **import CSV** à faire |
 | **Livres** | ⏳ Placeholder (M3) | **0.7.8** | Onglet + page « bientôt » (`/livres.php`) |
 | **Musique** | ⏳ Placeholder (M8) | **0.7.8** | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles et CD physiques |
-| **Transversal** | 🔄 Partiel | **0.7.12**–**0.7.20** | Recherche globale, catalogue admin, profil → fiches catalogue, partage visiteur, connexion pseudo, UI Compte/Import, menu mobile |
+| **Transversal** | 🔄 Partiel | **0.7.12**–**0.7.21** | Recherche globale, catalogue admin, profil → fiches catalogue, partage visiteur, connexion pseudo, UI Compte/Import, menu mobile, PWA |
 
 ### Phases (suivi)
 
@@ -47,6 +47,11 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ### 🔜 **0.8.0** — clôture M2 BD (import CSV)
 
 - Import catalogue BD depuis CSV ; stabilisation M2 avant M3 Livres.
+
+### ✅ **0.7.21** — icône raccourci Android, CSRF uploads (2026-07-13)
+
+- **Android** : favicon racine + manifeste PWA pour le raccourci écran d’accueil.
+- **CSRF** : uploads magazine (PDF, couverture) et fichiers joints jeu.
 
 ### ✅ **0.7.20** — correctif défilement menu mobile (2026-07-11)
 
@@ -621,4 +626,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.7.20** — 2026-07-11 (correctif défilement menu mobile).*
+*Dernière mise à jour : **0.7.21** — 2026-07-13 (icône raccourci Android, CSRF uploads).*

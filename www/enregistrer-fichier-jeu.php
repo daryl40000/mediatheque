@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\Csrf;
 use Moncine\GameAttachmentRepository;
 use Moncine\MediaDomainGuards;
 use Moncine\UploadLimits;
@@ -22,6 +23,8 @@ MediaDomainGuards::ensureGameContext();
 
 $bibId = (int) ($_POST['game_id'] ?? 0);
 $returnUrl = View::gameUrl($bibId);
+
+Csrf::rejectUnlessValid($_POST, $returnUrl);
 
 UploadLimits::guardPostWithFiles($_POST, $returnUrl, [
     'attachment_file' => 'Fichier joint',

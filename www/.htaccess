@@ -3,6 +3,11 @@
     Require all granted
 </IfModule>
 
+# PWA : type MIME pour le manifeste (Chrome Android)
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
+</IfModule>
+
 # Affiches : stockage dans MONCINE_DATA/posters/ — servies par poster.php si absentes de www/posters/
 <IfModule mod_rewrite.c>
     RewriteEngine On

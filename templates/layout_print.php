@@ -15,7 +15,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?= Moncine\View::escape($pageTitle) ?> — <?= Moncine\View::escape(MONCINE_APP_NAME) ?></title>
-    <link rel="icon" href="/assets/img/favicon.ico" sizes="any">
+    <?php require MONCINE_ROOT . '/templates/_head_icons.php'; ?>
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="stylesheet" href="/assets/css/print.css">
 </head>

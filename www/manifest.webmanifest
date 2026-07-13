@@ -1,0 +1,23 @@
+{
+    "name": "Médiathèque",
+    "short_name": "Médiathèque",
+    "description": "Gestion de films, BD, jeux, magazines et plus.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#0f0f12",
+    "theme_color": "#0f0f12",
+    "icons": [
+        {
+            "src": "/assets/img/icon-192.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/img/logo.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ]
+}
