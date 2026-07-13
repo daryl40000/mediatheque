@@ -20,6 +20,21 @@ final class MagazineSearchSql {
         $orParts = [];
         $params = [];
 
+        // Si l’utilisateur tape juste un numéro (ex. "20"), on veut filtrer sur le n°,
+        // sans « bruit » (ex. années 2023/2024 dans l’index FTS ou la date ISO).
+        if (preg_match('/^\d+$/', $searchQuery) === 1) {
+            $orParts[] = 'LOWER(TRIM(om.numero)) = LOWER(:search_g_numero_exact)';
+            $params['search_g_numero_exact'] = $searchQuery;
+
+            $asNumber = (int) $searchQuery;
+            if ($asNumber > 0) {
+                $orParts[] = 'CAST(om.numero_ordre AS INTEGER) = :search_g_numero_ordre_int';
+                $params['search_g_numero_ordre_int'] = $asNumber;
+            }
+
+            return ['(' . implode(' OR ', $orParts) . ')', $params];
+        }
+
         $parsed = PublicationType::parseParutionDateFilter($searchQuery);
         if ($parsed !== null) {
             $orParts[] = "CAST(strftime('%Y', om.date_parution) AS INTEGER) = :search_g_year";
@@ -46,11 +61,9 @@ final class MagazineSearchSql {
             $likeParts = [
                 'LOWER(om.numero) LIKE LOWER(:search_g_numero) ESCAPE \'\\\'',
                 'LOWER(COALESCE(om.sommaire, \'\')) LIKE LOWER(:search_g_sommaire) ESCAPE \'\\\'',
-                'LOWER(COALESCE(om.date_parution, \'\')) LIKE LOWER(:search_g_date_raw) ESCAPE \'\\\'',
             ];
             $params['search_g_numero'] = $fragment;
             $params['search_g_sommaire'] = $fragment;
-            $params['search_g_date_raw'] = $fragment;
 
             if (MagazineRepository::pdfTextPreviewColumnExists()) {
                 $likeParts[] = 'LOWER(COALESCE(om.pdf_text_preview, \'\')) LIKE LOWER(:search_g_pdf) ESCAPE \'\\\'';

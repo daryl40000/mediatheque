@@ -101,6 +101,25 @@ final class MagazinePdfService {
 
         return true;
     }
+
+    /** Retire le PDF rattaché à un numéro (fichier, entrée stored_objects, tag pdf). */
+    public function detachPdf(int $oeuvreId): bool|string
+    {
+        if ($oeuvreId <= 0) {
+            return 'Numéro invalide.';
+        }
+
+        $stmt = $this->db->prepare('SELECT stored_object_id FROM oeuvre_magazine WHERE oeuvre_id = ? LIMIT 1');
+        $stmt->execute([$oeuvreId]);
+        if ((int) ($stmt->fetchColumn() ?: 0) <= 0) {
+            return 'Aucun PDF à retirer.';
+        }
+
+        $this->removeStoredPdfForOeuvre($oeuvreId);
+
+        return true;
+    }
+
     public function syncSupportTagsForOeuvre(int $oeuvreId, ?bool $hasPaper = null): void
     {
         if ($oeuvreId <= 0) {

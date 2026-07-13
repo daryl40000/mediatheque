@@ -140,6 +140,24 @@ if ($action === 'pdf_only') {
     exit;
 }
 
+if ($action === 'remove_pdf') {
+    if ($oeuvreId <= 0) {
+        header('Location: ' . $returnUrl . '&error=' . rawurlencode('Numéro invalide.'));
+        exit;
+    }
+
+    $pdfResult = $repo->detachPdf($oeuvreId);
+    if ($pdfResult !== true) {
+        header('Location: ' . $returnUrl . '&error=' . rawurlencode((string) $pdfResult) . '&pdf=1');
+        exit;
+    }
+
+    header('Location: ' . View::magazineIssueUrl(
+        $repo->resolveIssueBibIdForRedirect($oeuvreId, $userId, $foyerId, $bibId)
+    ) . '&pdf_removed=1');
+    exit;
+}
+
 $data = [
     'numero' => (string) ($_POST['numero'] ?? $issue['numero'] ?? ''),
     'numero_ordre' => (float) ($_POST['numero_ordre'] ?? $issue['numero_ordre'] ?? 0),

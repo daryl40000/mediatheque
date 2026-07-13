@@ -73,6 +73,9 @@
                 <?php endif; ?>
             </div>
         <?php endif; ?>
+        <?php if (isset($_GET['pdf_removed'])): ?>
+            <div class="alert alert-success">Le PDF a été retiré de ce numéro.</div>
+        <?php endif; ?>
         <?php if ($error !== ''): ?>
             <div class="alert alert-warning"><?= Moncine\View::escape($error) ?></div>
         <?php endif; ?>

@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-07-13 (version **0.7.21** — icône PWA Android, CSRF uploads)  
+**Dernière mise à jour :** 2026-07-13 (version **0.7.22** — magazines : retrait PDF numéro)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif

@@ -16,6 +16,12 @@ final class FrenchSort
     /** @var bool */
     private static bool $registered = false;
 
+    /** @internal Tests PHPUnit */
+    public static function resetRegistrationForTests(): void
+    {
+        self::$registered = false;
+    }
+
     public static function registerCollation(PDO $pdo): void
     {
         if (self::$registered || !method_exists($pdo, 'sqliteCreateCollation')) {

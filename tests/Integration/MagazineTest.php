@@ -622,4 +622,55 @@ final class MagazineTest extends MoncineTestCase
         $this->assertNotNull($issue);
         $this->assertSame(1, (int) ($issue['est_hors_serie'] ?? 0));
     }
+
+    public function testDetachPdfRemovesFileAndSupportTag(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'PDF Detach Test',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+
+        $bibId = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '99',
+            'numero_ordre' => 99,
+            'date_parution' => '2024-09-01',
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+        $this->assertTrue($repo->updateIssue($bibId, ['support_papier' => true], $userId, $foyerId));
+
+        $issue = $repo->findIssueByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($issue);
+        $oeuvreId = (int) ($issue['oeuvre_id'] ?? 0);
+        $this->assertGreaterThan(0, $oeuvreId);
+
+        $tmpPdf = tempnam(sys_get_temp_dir(), 'magpdf_');
+        $this->assertNotFalse($tmpPdf);
+        file_put_contents($tmpPdf, "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n");
+        $pdfSize = (int) filesize($tmpPdf);
+
+        $attachResult = $repo->attachPdf($oeuvreId, $tmpPdf, 'test-numero.pdf', $pdfSize);
+        @unlink($tmpPdf);
+        $this->assertSame(true, $attachResult);
+
+        $issue = $repo->findIssueByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($issue);
+        $this->assertGreaterThan(0, (int) ($issue['stored_object_id'] ?? 0));
+        $this->assertTrue(MagazineSupport::hasPdf((string) ($issue['support_physique'] ?? '')));
+        $this->assertTrue(MagazineSupport::hasPaper((string) ($issue['support_physique'] ?? '')));
+
+        $this->assertSame(true, $repo->detachPdf($oeuvreId));
+
+        $issue = $repo->findIssueByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($issue);
+        $this->assertSame(0, (int) ($issue['stored_object_id'] ?? 0));
+        $this->assertFalse(MagazineSupport::hasPdf((string) ($issue['support_physique'] ?? '')));
+        $this->assertTrue(MagazineSupport::hasPaper((string) ($issue['support_physique'] ?? '')));
+
+        $this->assertSame('Aucun PDF à retirer.', $repo->detachPdf($oeuvreId));
+    }
 }

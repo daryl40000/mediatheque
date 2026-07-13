@@ -12,6 +12,7 @@ use Moncine\CatalogAdmin;
 use Moncine\Database;
 use Moncine\MediaContext;
 use Moncine\MediaDomain;
+use Moncine\UserContext;
 use Moncine\UserRole;
 use Moncine\UtilisateurRepository;
 use PHPUnit\Framework\TestCase;
@@ -45,6 +46,7 @@ abstract class MoncineTestCase extends TestCase
     protected function resetDatabase(): void
     {
         Database::resetInstance();
+        UserContext::resetCacheForTests();
         $dbFile = MONCINE_DB_FILE;
         if (is_file($dbFile)) {
             unlink($dbFile);

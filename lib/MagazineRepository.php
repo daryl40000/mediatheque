@@ -465,6 +465,11 @@ final class MagazineRepository
         return $this->pdfService()->attachPdf($oeuvreId, $tmpPath, $originalName, $fileSize);
     }
 
+    public function detachPdf(int $oeuvreId): bool|string
+    {
+        return $this->pdfService()->detachPdf($oeuvreId);
+    }
+
     public function syncSupportTagsForOeuvre(int $oeuvreId, ?bool $hasPaper = null): void
     {
         $this->pdfService()->syncSupportTagsForOeuvre($oeuvreId, $hasPaper);

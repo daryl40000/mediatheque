@@ -9,6 +9,21 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.22] — 2026-07-13
+
+**Magazines : retirer un PDF d’un numéro**
+
+### Ajouté
+
+- **Fiche numéro magazine** : bouton **Retirer le PDF** (le numéro reste en collection) + option de remplacement.
+
+### Corrigé
+
+- **Tests** : réinitialisation correcte des fonctions SQLite (collation `FRENCH_NOCASE`, fonction `fold_search`) et du cache foyer en PHPUnit.
+- **Recherche numéros (série)** : une requête numérique (ex. `20`) cible bien le **numéro**, sans bruit sur les dates.
+
+---
+
 ## [0.7.21] — 2026-07-13
 
 **Correctif icône raccourci Android, validation CSRF uploads**

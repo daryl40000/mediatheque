@@ -35,6 +35,10 @@ final class Database
     public static function resetInstance(): void
     {
         self::$pdo = null;
+        // Les fonctions SQLite et collations sont enregistrées par connexion (PDO).
+        // Les tests recréent une base à chaque setUp(), donc on doit réautoriser l'enregistrement.
+        FrenchSort::resetRegistrationForTests();
+        SearchMatch::resetSqlRegistrationForTests();
     }
 
     private static function connect(): PDO

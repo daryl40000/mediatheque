@@ -13,6 +13,7 @@ $bibId = (int) ($bibId ?? 0);
 $seriesId = (int) ($seriesId ?? 0);
 $issue = $issue ?? [];
 $pdfUrl = trim((string) ($pdfUrl ?? ''));
+$hasPdf = $pdfUrl !== '';
 $popoverOpen = (string) ($popoverOpen ?? '');
 $error = (string) ($error ?? '');
 ?>
@@ -75,28 +76,48 @@ $error = (string) ($error ?? '');
     </div>
 
     <div class="game-action-popover-anchor" data-detail-action-anchor="pdf">
-        <?php if ($pdfUrl !== ''): ?>
-            <a href="<?= Moncine\View::escape($pdfUrl) ?>"
-               class="btn btn-icon btn-secondary btn-sm"
-               title="Lire le PDF" aria-label="Lire le PDF"
-               target="_blank" rel="noopener">
-                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2 5 5h-5V4zM8 13h8v2H8v-2zm0 4h8v2H8v-2z"/>
-                </svg>
-            </a>
-        <?php else: ?>
-            <button type="button" class="btn btn-icon btn-secondary btn-sm" data-detail-action="pdf"
-                    title="Importer / lire le PDF" aria-label="Importer ou lire le PDF"
-                    aria-expanded="<?= $popoverOpen === 'pdf' ? 'true' : 'false' ?>"
-                    aria-controls="magazine-popover-pdf">
-                <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                    <path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2 5 5h-5V4zM8 13h8v2H8v-2zm0 4h8v2H8v-2z"/>
-                </svg>
-            </button>
-            <div class="game-action-popover" id="magazine-popover-pdf" data-detail-popover="pdf" role="dialog"
-                 aria-label="PDF du numéro" hidden>
-                <div class="game-action-popover__panel">
-                    <p class="game-action-popover__title">PDF du numéro</p>
+        <button type="button" class="btn btn-icon btn-secondary btn-sm" data-detail-action="pdf"
+                title="<?= $hasPdf ? 'Gérer le PDF' : 'Importer le PDF' ?>"
+                aria-label="<?= $hasPdf ? 'Gérer le PDF du numéro' : 'Importer ou lire le PDF' ?>"
+                aria-expanded="<?= $popoverOpen === 'pdf' ? 'true' : 'false' ?>"
+                aria-controls="magazine-popover-pdf">
+            <svg width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                <path fill="currentColor" d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8l-6-6zm-1 2 5 5h-5V4zM8 13h8v2H8v-2zm0 4h8v2H8v-2z"/>
+            </svg>
+        </button>
+        <div class="game-action-popover" id="magazine-popover-pdf" data-detail-popover="pdf" role="dialog"
+             aria-label="PDF du numéro" hidden>
+            <div class="game-action-popover__panel">
+                <p class="game-action-popover__title">PDF du numéro</p>
+                <?php if ($error !== '' && $popoverOpen === 'pdf'): ?>
+                    <div class="alert alert-warning"><?= Moncine\View::escape($error) ?></div>
+                <?php endif; ?>
+
+                <?php if ($hasPdf): ?>
+                    <p class="magazine-pdf-popover__actions">
+                        <a href="<?= Moncine\View::escape($pdfUrl) ?>"
+                           class="btn btn-primary btn-sm"
+                           target="_blank" rel="noopener">
+                            Lire le PDF
+                        </a>
+                    </p>
+                    <p class="hint">Remplacez le fichier ou retirez-le de votre bibliothèque (le numéro reste en collection).</p>
+                    <form method="post" action="/traiter-numero-magazine.php" enctype="multipart/form-data" class="import-form magazine-pdf-popover__replace">
+                        <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                        <input type="hidden" name="bib_id" value="<?= $bibId ?>">
+                        <input type="hidden" name="action" value="pdf_only">
+                        <label for="popover_replace_pdf">Remplacer par un autre PDF</label>
+                        <input type="file" name="pdf_file" id="popover_replace_pdf" accept="application/pdf,.pdf" required>
+                        <button type="submit" class="btn btn-secondary btn-sm">Remplacer le PDF</button>
+                    </form>
+                    <form method="post" action="/traiter-numero-magazine.php" class="magazine-pdf-popover__remove"
+                          onsubmit="return confirm('Retirer le PDF de ce numéro ? Le fichier sera supprimé du serveur.');">
+                        <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                        <input type="hidden" name="bib_id" value="<?= $bibId ?>">
+                        <input type="hidden" name="action" value="remove_pdf">
+                        <button type="submit" class="btn btn-danger-text btn-sm">Retirer le PDF</button>
+                    </form>
+                <?php else: ?>
                     <p class="hint">Aucun PDF pour l’instant. Importez un fichier ci-dessous.</p>
                     <form method="post" action="/traiter-numero-magazine.php" enctype="multipart/form-data" class="import-form">
                         <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
@@ -106,8 +127,8 @@ $error = (string) ($error ?? '');
                         <input type="file" name="pdf_file" id="popover_upload_pdf" accept="application/pdf,.pdf" required>
                         <button type="submit" class="btn btn-primary">Importer le PDF</button>
                     </form>
-                </div>
+                <?php endif; ?>
             </div>
-        <?php endif; ?>
+        </div>
     </div>
 </div>

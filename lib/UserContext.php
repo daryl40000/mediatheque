@@ -39,18 +39,26 @@ final class UserContext
             return 0;
         }
 
-        static $cache = [];
-        if (isset($cache[$userId])) {
-            return $cache[$userId];
+        if (isset(self::$foyerCache[$userId])) {
+            return self::$foyerCache[$userId];
         }
 
         $foyerId = (new FoyerRepository())->currentFoyerIdForUser($userId);
         if ($foyerId <= 0 && FoyerRepository::tableExists(Database::getInstance())) {
             $foyerId = (new FoyerRepository())->ensurePersonalFoyerForUser($userId);
         }
-        $cache[$userId] = $foyerId;
+        self::$foyerCache[$userId] = $foyerId;
 
         return $foyerId;
+    }
+
+    /** @var array<int, int> */
+    private static array $foyerCache = [];
+
+    /** @internal Tests PHPUnit */
+    public static function resetCacheForTests(): void
+    {
+        self::$foyerCache = [];
     }
 
     public static function canManageCatalog(): bool

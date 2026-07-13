@@ -5972,6 +5972,22 @@ td .game-linux-badge--plain {
     font-size: 0.9rem;
 }
 
+.magazine-pdf-popover__actions {
+    margin: 0 0 0.75rem;
+}
+
+.magazine-pdf-popover__replace {
+    margin: 0 0 0.85rem;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+}
+
+.magazine-pdf-popover__remove {
+    margin: 0;
+    padding-top: 0.75rem;
+    border-top: 1px solid var(--border);
+}
+
 .magazine-issues-search.collection-search {
     max-width: none;
 }

@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.7.17** · **Date : 2026-07-10**
+**Version : 0.7.22** · **Date : 2026-07-13**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -108,6 +108,15 @@ Vous pouvez importer un PDF depuis la fiche ouverte depuis **Mes envies**. Aprè
 1. le numéro devient **possédé** (tag PDF) ;
 2. il est **retiré des envies** automatiquement ;
 3. la fiche s’ouvre sur l’entrée **collection** (redirection corrigée en **0.2.5**).
+
+### Retirer un PDF d’un numéro (**0.7.22**)
+
+Sur la **fiche numéro** (`/magazine-numero.php?id=…`) :
+
+1. Cliquez sur l’icône **PDF**.
+2. Cliquez sur **Retirer le PDF** (confirmation).
+
+Le fichier est supprimé du serveur et l’icône PDF disparaît. Le numéro reste dans votre collection (si vous aviez aussi le support **Papier**, il reste possédé).
 
 ### Après l’import (traitement différé)
 
