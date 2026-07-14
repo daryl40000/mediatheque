@@ -48,10 +48,13 @@ $mediaCssVars = implode('; ', [
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="stylesheet" href="/assets/css/responsive.css">
 </head>
-<body class="media-domain--<?= Moncine\View::escape($mediaDomain) ?><?= !empty($wideLayout) ? ' page-wide' : '' ?>"
+<body class="media-domain--<?= Moncine\View::escape($mediaDomain) ?><?= !empty($wideLayout) ? ' page-wide' : '' ?><?= !empty($bodyExtraClass) ? ' ' . Moncine\View::escape((string) $bodyExtraClass) : '' ?>"
       data-media-domain="<?= Moncine\View::escape($mediaDomain) ?>"
       style="<?= Moncine\View::escape($mediaCssVars) ?>">
     <?php require MONCINE_ROOT . '/templates/_media_domain_tabs.php'; ?>
+    <?php if (!empty($showMagazineCategoryRail)): ?>
+        <?php require MONCINE_ROOT . '/templates/_magazine_series_category_filter.php'; ?>
+    <?php endif; ?>
     <header class="site-header" id="site-header">
         <div class="container site-header__inner">
             <div class="site-header__brand">

@@ -13,6 +13,7 @@ final class MagazineSubject
     public const PREVIEW = 'preview';
     public const COMPARATIF = 'comparatif';
     public const DOSSIER = 'dossier';
+    public const SOLUCE = 'soluce';
     public const INTERVIEW = 'interview';
 
     /** Anciennes catégories fusionnées dans {@see TEST}. */
@@ -47,7 +48,24 @@ final class MagazineSubject
             self::PREVIEW => 'Preview',
             self::COMPARATIF => 'Comparatif',
             self::DOSSIER => 'Dossier',
+            self::SOLUCE => 'Soluce',
             self::INTERVIEW => 'Interview',
+        ];
+    }
+
+    /**
+     * Catégories pouvant être reliées à une fiche catalogue (jeu, film…).
+     *
+     * @return list<string>
+     */
+    public static function catalogLinkCategories(): array
+    {
+        return [
+            self::TEST,
+            self::PREVIEW,
+            self::INTERVIEW,
+            self::DOSSIER,
+            self::SOLUCE,
         ];
     }
 
@@ -77,6 +95,8 @@ final class MagazineSubject
             'aperçu' => self::PREVIEW,
             'entretien' => self::INTERVIEW,
             'entretiens' => self::INTERVIEW,
+            'solution' => self::SOLUCE,
+            'solutions' => self::SOLUCE,
         ];
 
         if (isset(self::choices()[$raw])) {
@@ -93,12 +113,12 @@ final class MagazineSubject
         return self::choices()[$category] ?? self::choices()[self::TEST];
     }
 
-    /** Sujets pouvant être reliés à une fiche jeu du catalogue (pont M4/M5). */
+    /** Sujets pouvant être reliés à une fiche catalogue (jeu, film…). */
     public static function supportsCatalogGameLink(string $category): bool
     {
         $category = self::normalizeCategory($category);
 
-        return in_array($category, [self::TEST, self::PREVIEW, self::INTERVIEW], true);
+        return in_array($category, self::catalogLinkCategories(), true);
     }
 
     /**

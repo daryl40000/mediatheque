@@ -11,6 +11,7 @@ use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
 use Moncine\MediaDomain;
 use Moncine\MediaDomainGuards;
+use Moncine\MagazineSeriesCategory;
 use Moncine\PublicationType;
 use Moncine\SeriesRepository;
 use Moncine\UserContext;
@@ -47,4 +48,5 @@ View::render('modifier-serie-magazine', [
     'seriesInLibrary' => $seriesInLibrary,
     'libraryStatut' => $libraryStatut,
     'libraryIssueCount' => $libraryIssueCount,
+    'knownCategories' => MagazineSeriesCategory::suggestionLabels(),
 ]);

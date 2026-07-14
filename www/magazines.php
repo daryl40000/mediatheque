@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\CatalogAdmin;
 use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
+use Moncine\MagazineSeriesCategory;
 use Moncine\MagazineSubjectRepository;
 use Moncine\MediaDomainGuards;
 use Moncine\UserContext;
@@ -69,6 +70,9 @@ if ($query !== '' && MagazineSubjectRepository::isAvailable()) {
     );
 }
 
+$categoryFilterChoices = MagazineSeriesCategory::filterChoicesForSeriesList($seriesList);
+$showCategoryRail = $categoryFilterChoices !== [];
+
 View::render('magazines', [
     'pageTitle' => \Moncine\MediaContext::navLabels()['collection'],
     'seriesList' => $seriesList,
@@ -80,4 +84,7 @@ View::render('magazines', [
     'contentIssues' => $contentIssues,
     'moduleError' => '',
     'canManageCatalog' => CatalogAdmin::canAccess(),
+    'categoryFilterChoices' => $categoryFilterChoices,
+    'showMagazineCategoryRail' => $showCategoryRail,
+    'bodyExtraClass' => $showCategoryRail ? 'has-magazine-category-rail' : '',
 ]);

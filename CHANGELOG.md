@@ -9,6 +9,24 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.23] — 2026-07-14
+
+**Magazines : catégories de série, soluce et liens catalogue**
+
+### Ajouté
+
+- **Catégorie Soluce** : nouveau type de sujet magazine (walkthrough / solution de jeu).
+- **Catégories de série magazine** : Jeux vidéo, Cinéma, Figurines, Divers (badges + autocomplétion sur la fiche série).
+- Affichage automatique des catégories sur la fiche série, les numéros et la liste « Mes magazines ».
+- **Mes magazines** : filtres par catégorie dans la marge gauche (clic pour afficher / masquer les revues).
+
+### Corrigé
+
+- **Lien sujet ↔ œuvre catalogue** : fonctionne aussi pour la catégorie **Dossier** (comme test, preview, interview).
+- **Filtres catégories** : compteurs fiables (lecture directe en base) ; rail fixe hors de la grille (6 colonnes conservées).
+
+---
+
 ## [0.7.22] — 2026-07-13
 
 **Magazines : retirer un PDF d’un numéro**

@@ -70,6 +70,7 @@ $subjectYearChoices = $subjectYearChoices ?? Moncine\MagazineSubject::subjectYea
         <form method="post" action="/traiter-sujets-numero-magazine.php" class="magazine-subject-form import-form"
               <?php if ($catalogMediaLinkAvailable): ?>
               data-catalog-search-url="<?= Moncine\View::escape(Moncine\View::magazineSubjectCatalogApiUrl()) ?>"
+              data-catalog-link-categories="<?= Moncine\View::escape(implode(',', Moncine\MagazineSubject::catalogLinkCategories())) ?>"
               <?php endif; ?>>
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
             <input type="hidden" name="bib_id" value="<?= $bibId ?>">
@@ -93,7 +94,8 @@ $subjectYearChoices = $subjectYearChoices ?? Moncine\MagazineSubject::subjectYea
                     <?php endforeach; ?>
                 </select>
                 <p class="hint" id="attach_catalog_media_help">
-                    Pour un <strong>test</strong>, une <strong>preview</strong> ou une <strong>interview</strong>,
+                    Pour un <strong>test</strong>, une <strong>preview</strong>, un <strong>dossier</strong>,
+                    une <strong>soluce</strong> ou une <strong>interview</strong>,
                     choisissez le type de média puis son titre. S’il n’existe pas encore au catalogue,
                     sa fiche sera créée automatiquement.
                 </p>

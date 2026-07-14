@@ -72,6 +72,7 @@
                             <?php endforeach; ?>
                         </p>
                     <?php endif; ?>
+                    <?php require MONCINE_ROOT . '/templates/_magazine_series_categories_display.php'; ?>
                     <?php if (trim((string) ($series['notes'] ?? '')) !== ''): ?>
                         <p class="hint"><?= nl2br(Moncine\View::escape((string) $series['notes'])) ?></p>
                     <?php endif; ?>
@@ -274,6 +275,7 @@
                                     <span class="magazine-tag magazine-tag--none">Non possédé</span>
                                 <?php endif; ?>
                             </p>
+                            <?php require MONCINE_ROOT . '/templates/_magazine_series_categories_display.php'; ?>
                             <div class="magazine-issue-card__actions">
                                 <a href="<?= Moncine\View::escape($issueUrl) ?>" class="btn btn-secondary btn-sm">Fiche</a>
                                 <?php if ($pdfUrl !== ''): ?>

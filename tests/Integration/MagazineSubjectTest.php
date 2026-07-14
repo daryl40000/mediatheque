@@ -10,6 +10,7 @@ use Moncine\LibraryStatut;
 use Moncine\MagazineGameLink;
 use Moncine\MagazineRepository;
 use Moncine\MagazineSubject;
+use Moncine\MagazineSubjectCatalogLink;
 use Moncine\MagazineSubjectRepository;
 use Moncine\MediaContext;
 use Moncine\MediaDomain;
@@ -287,5 +288,69 @@ final class MagazineSubjectTest extends MoncineTestCase
         MediaContext::set(MediaDomain::JEU);
         $coverage = (new MagazineGameLink())->listMagazineCoverageForGame($catalogOeuvreId, $userId, $foyerId);
         $this->assertCount(1, $coverage);
+    }
+
+    public function testDossierAndSoluceSupportCatalogLink(): void
+    {
+        if (!MagazineSubjectCatalogLink::isAvailable()) {
+            $this->markTestSkipped('Pont magazine ↔ catalogue non disponible.');
+        }
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $gameRepo = new GameRepository();
+        $bibId = $gameRepo->createWithLibrary([
+            'titre' => 'Dossier Link Game',
+            'annee' => 2022,
+            'platform' => GamePlatform::PC,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+        $game = $gameRepo->findByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($game);
+        $catalogOeuvreId = (int) ($game['oeuvre_id'] ?? 0);
+
+        MediaContext::set(MediaDomain::MAGAZINE);
+        $magRepo = new MagazineRepository();
+        $subjectRepo = new MagazineSubjectRepository();
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Dossier Soluce Test',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+        $issueBibId = $magRepo->createIssueWithLibrary($seriesId, [
+            'numero' => '88',
+            'numero_ordre' => 88,
+            'date_parution' => '2024-06-01',
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $issue = $magRepo->findIssueByBibId((int) $issueBibId, $userId, $foyerId);
+        $series = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE);
+        $this->assertNotNull($issue);
+        $this->assertNotNull($series);
+
+        foreach ([MagazineSubject::DOSSIER, MagazineSubject::SOLUCE] as $category) {
+            $prepared = $subjectRepo->prepareSubjectForIssueWithCatalog(
+                $category,
+                'Saisie libre',
+                '',
+                $series,
+                $issue,
+                2024,
+                $catalogOeuvreId
+            );
+            $this->assertIsArray($prepared, 'Catégorie ' . $category);
+            $this->assertSame('Dossier Link Game', $prepared['label']);
+            $this->assertSame($catalogOeuvreId, (int) ($prepared['catalog_oeuvre_id'] ?? 0));
+
+            $subject = $subjectRepo->findOrCreate(
+                (string) $prepared['category'],
+                (string) $prepared['label'],
+                (string) $prepared['detail'],
+                (int) $prepared['parution_year']
+            );
+            $this->assertNotNull($subject);
+            $subjectId = (int) ($subject['id'] ?? 0);
+            $this->assertTrue($subjectRepo->attachToOeuvre((int) $issue['oeuvre_id'], $subjectId) === true);
+            $this->assertSame(true, (new MagazineGameLink())->setSubjectCatalogLink($subjectId, $catalogOeuvreId));
+        }
     }
 }

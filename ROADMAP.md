@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.7.22** (2026-07-13)  
+**Version actuelle : 0.7.23** (2026-07-14)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -13,7 +13,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 ---
 
-## Où en est-on ? (synthèse 0.7.22)
+## Où en est-on ? (synthèse 0.7.23)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
@@ -23,7 +23,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 | **BD / Manga** | 🔄 **En cours (M2)** | **0.7.2** → **0.7.16** | Collection, envies, partage, profil public, impression ; **import CSV** à faire |
 | **Livres** | ⏳ Placeholder (M3) | **0.7.8** | Onglet + page « bientôt » (`/livres.php`) |
 | **Musique** | ⏳ Placeholder (M8) | **0.7.8** | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles et CD physiques |
-| **Transversal** | 🔄 Partiel | **0.7.12**–**0.7.22** | Recherche globale, catalogue admin, profil → fiches catalogue, partage visiteur, connexion pseudo, UI Compte/Import, menu mobile, PWA |
+| **Transversal** | 🔄 Partiel | **0.7.12**–**0.7.23** | Recherche globale, catalogue admin, profil → fiches catalogue, partage visiteur, connexion pseudo, UI Compte/Import, menu mobile, PWA |
 
 ### Phases (suivi)
 
@@ -47,6 +47,11 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ### 🔜 **0.8.0** — clôture M2 BD (import CSV)
 
 - Import catalogue BD depuis CSV ; stabilisation M2 avant M3 Livres.
+
+### ✅ **0.7.23** — magazines : catégories de série, soluce, liens catalogue (2026-07-14)
+
+- **Catégories de série** (Jeux vidéo, Cinéma, Figurines, Divers) + **filtre latéral** sur Mes magazines.
+- **Catégorie Soluce** ; lien catalogue pour les sujets **Dossier**.
 
 ### ✅ **0.7.22** — magazines : retrait PDF numéro (2026-07-13)
 
@@ -630,4 +635,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.7.22** — 2026-07-13 (magazines : retrait PDF numéro).*
+*Dernière mise à jour : **0.7.23** — 2026-07-14 (magazines : catégories de série, soluce).*

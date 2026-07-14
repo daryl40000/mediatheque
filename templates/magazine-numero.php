@@ -102,6 +102,10 @@
                             <span class="magazine-tag magazine-tag--none">Non possédé</span>
                         <?php endif; ?>
                     </p>
+                    <?php
+                    $seriesCategories = Moncine\MagazineSeriesCategory::parseList((string) ($issue['series_categories'] ?? ''));
+                    require MONCINE_ROOT . '/templates/_magazine_series_categories_display.php';
+                    ?>
                 </header>
 
                 <?php if (($issue['statut'] ?? '') === Moncine\LibraryStatut::COLLECTION && !Moncine\MagazineSupport::isPossessed($issue)): ?>

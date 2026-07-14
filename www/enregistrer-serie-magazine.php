@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\Csrf;
 use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
+use Moncine\MagazineSeriesCategory;
 use Moncine\MagazineSeriesTag;
 use Moncine\MediaDomain;
 use Moncine\MediaDomainGuards;
@@ -84,6 +85,7 @@ $result = (new SeriesRepository())->create([
     'date_fin' => (string) ($_POST['date_fin'] ?? ''),
     'notes' => (string) ($_POST['notes'] ?? ''),
     'tags' => MagazineSeriesTag::normalizeFromPost($_POST['tags'] ?? ''),
+    'categories' => MagazineSeriesCategory::normalizeFromPost($_POST['categories'] ?? ''),
 ], MediaDomain::MAGAZINE);
 
 if (!is_int($result)) {

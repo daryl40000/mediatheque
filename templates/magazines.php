@@ -7,8 +7,10 @@
 /** @var string $moduleError */
 /** @var list<array<string, mixed>> $contentSubjects */
 /** @var list<array<string, mixed>> $contentIssues */
+/** @var list<array{key: string, label: string, count: int}> $categoryFilterChoices */
 $contentSubjects = $contentSubjects ?? [];
 $contentIssues = $contentIssues ?? [];
+$categoryFilterChoices = $categoryFilterChoices ?? [];
 $hasContentSearch = trim($query) !== '';
 /** @var bool $canManageCatalog */
 $canManageCatalog = $canManageCatalog ?? false;
@@ -138,15 +140,26 @@ $canManageCatalog = $canManageCatalog ?? false;
         <h2 class="magazine-global-results__series-heading">
             <?= $hasContentSearch ? 'Séries correspondantes' : 'Vos séries' ?>
         </h2>
-        <p class="stats"><?= (int) $totalCount ?> série(s)<?= $hasContentSearch ? ' correspondante(s)' : ' en collection' ?>.</p>
-        <div class="magazine-series-grid">
+        <p class="stats" data-magazine-series-stats
+           data-stats-label="<?= $hasContentSearch ? ' correspondante(s)' : ' en collection' ?>."
+           data-stats-label-single="<?= $hasContentSearch ? ' correspondante' : ' en collection' ?>."
+           data-stats-visible=" série(s) affichée(s)."
+           data-stats-visible-single=" série affichée.">
+            <?= (int) $totalCount ?> série(s)<?= $hasContentSearch ? ' correspondante(s)' : ' en collection' ?>.
+        </p>
+        <p class="hint magazine-category-rail__empty" data-magazine-category-empty hidden>
+            Aucune revue ne correspond aux catégories sélectionnées.
+        </p>
+        <div class="magazine-series-grid" data-magazine-series-grid>
             <?php foreach ($seriesList as $series): ?>
                 <?php
                 $seriesId = (int) ($series['id'] ?? 0);
                 $posterSrc = Moncine\View::seriesPosterSrc($series);
+                $seriesCategoryKeys = Moncine\MagazineSeriesCategory::filterKeysForSeries($series);
                 ?>
                 <a href="<?= Moncine\View::escape(Moncine\View::magazineSeriesUrl($seriesId)) ?>"
-                   class="magazine-series-card">
+                   class="magazine-series-card"
+                   data-series-categories="<?= Moncine\View::escape(implode(',', $seriesCategoryKeys)) ?>">
                     <?php if ($posterSrc !== ''): ?>
                         <img src="<?= $posterSrc ?>" alt="" class="magazine-series-card__cover" loading="lazy">
                     <?php else: ?>
@@ -161,6 +174,7 @@ $canManageCatalog = $canManageCatalog ?? false;
                         <?php if (trim((string) ($series['editeur'] ?? '')) !== ''): ?>
                             <p class="hint"><?= Moncine\View::escape((string) $series['editeur']) ?></p>
                         <?php endif; ?>
+                        <?php require MONCINE_ROOT . '/templates/_magazine_series_categories_display.php'; ?>
                     </div>
                 </a>
             <?php endforeach; ?>

@@ -3,7 +3,7 @@ declare(strict_types=1);
 namespace Moncine;
 final class MagazineCatalogSql {
     public static function selectCatalogIssueRow(): string {
-        return 'o.id AS oeuvre_id, o.titre, o.poster_url, om.series_id, om.numero, om.numero_ordre, om.date_parution, om.sommaire, om.pages, om.est_hors_serie, om.stored_object_id, s.titre AS series_titre, s.publication_type, s.editeur, s.issn, s.poster_url AS series_poster_url, s.tags AS series_tags';
+        return 'o.id AS oeuvre_id, o.titre, o.poster_url, om.series_id, om.numero, om.numero_ordre, om.date_parution, om.sommaire, om.pages, om.est_hors_serie, om.stored_object_id, s.titre AS series_titre, s.publication_type, s.editeur, s.issn, s.poster_url AS series_poster_url, s.tags AS series_tags, s.categories AS series_categories';
     }
     public static function filterParamsForSql(string $sql, array $params): array {
         if (!preg_match_all('/:([a-zA-Z_][a-zA-Z0-9_]*)/', $sql, $m)) return [];

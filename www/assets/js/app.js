@@ -33,6 +33,7 @@ document.addEventListener('DOMContentLoaded', () => {
     initCatalogGameTitleAutocomplete();
     initMagazineSubjectAutocompleteFields();
     initMagazineSeriesTagsField();
+    initMagazineSeriesCategoryFilter();
     initMagazineSeriesCatalogAutocomplete();
     initMagazineIssueCatalogAutocomplete();
     initTagsBadgeFields();
@@ -1147,14 +1148,18 @@ function initShareLinkCopy() {
 
 /** Autocomplétion des sujets magazines (recherche, liste, fiche numéro). */
 function initMagazineSubjectAutocompleteFields() {
-    const mediaLinkCategories = new Set(['test', 'preview', 'interview']);
-
     document.querySelectorAll('[data-magazine-subject-autocomplete]').forEach((row) => {
         const input = row.querySelector('input[type="search"], input[type="text"]');
         const list = row.querySelector('[role="listbox"]');
         const searchUrl = row.getAttribute('data-search-url') || '/rechercher-sujets-magazine.php';
         const mode = row.getAttribute('data-magazine-subject-autocomplete') || 'navigate';
         const form = row.closest('form');
+        const mediaLinkCategories = new Set(
+            (form?.getAttribute('data-catalog-link-categories') || 'test,preview,interview,dossier,soluce')
+                .split(',')
+                .map((value) => value.trim())
+                .filter(Boolean)
+        );
         const categorySelect = form
             ? form.querySelector('#subject_category, #attach_category')
             : document.getElementById('subject_category');
@@ -1538,6 +1543,107 @@ function initMagazineSeriesTagsField() {
         }
         root.setAttribute('data-tags-badge-field', '');
         root.setAttribute('data-tags-input-name', 'tags[]');
+    });
+}
+
+/** Mes magazines : filtre latéral par catégorie de série. */
+function initMagazineSeriesCategoryFilter() {
+    const grid = document.querySelector('[data-magazine-series-grid]');
+    const stats = document.querySelector('[data-magazine-series-stats]');
+    const emptyHint = document.querySelector('[data-magazine-category-empty]');
+    const cards = grid ? [...grid.querySelectorAll('.magazine-series-card')] : [];
+
+    document.querySelectorAll('[data-magazine-category-filter]').forEach((filterRoot) => {
+        const filterButtons = [...filterRoot.querySelectorAll('[data-category-filter]')];
+
+        if (filterButtons.length === 0 || cards.length === 0) {
+            return;
+        }
+
+        const allButton = filterButtons.find((btn) => (btn.getAttribute('data-category-filter') || '') === '');
+
+        const activeCategoryKeys = () => filterButtons
+            .filter((btn) => {
+                const key = btn.getAttribute('data-category-filter') || '';
+                return key !== '' && btn.classList.contains('is-active');
+            })
+            .map((btn) => btn.getAttribute('data-category-filter') || '');
+
+        const cardCategoryKeys = (card) => (card.getAttribute('data-series-categories') || '')
+            .split(',')
+            .map((value) => value.trim())
+            .filter(Boolean);
+
+        const syncAllButton = () => {
+            if (!allButton) {
+                return;
+            }
+            const hasActiveCategories = activeCategoryKeys().length > 0;
+            allButton.classList.toggle('is-active', !hasActiveCategories);
+            allButton.setAttribute('aria-pressed', hasActiveCategories ? 'false' : 'true');
+        };
+
+        const applyFilter = () => {
+            const activeKeys = activeCategoryKeys();
+            let visibleCount = 0;
+
+            cards.forEach((card) => {
+                const keys = cardCategoryKeys(card);
+                const visible = activeKeys.length === 0
+                    || activeKeys.some((activeKey) => keys.includes(activeKey));
+                card.classList.toggle('is-filter-hidden', !visible);
+                card.hidden = !visible;
+                if (visible) {
+                    visibleCount += 1;
+                }
+            });
+
+            if (stats) {
+                const labelPlural = stats.dataset.statsLabel || ' en collection.';
+                const labelSingle = stats.dataset.statsLabelSingle || ' en collection.';
+                const visiblePlural = stats.dataset.statsVisible || ' série(s) affichée(s).';
+                const visibleSingle = stats.dataset.statsVisibleSingle || ' série affichée.';
+                if (activeKeys.length === 0) {
+                    const suffix = cards.length > 1 ? labelPlural : labelSingle;
+                    stats.textContent = `${cards.length} série${cards.length > 1 ? 's' : ''}${suffix}`;
+                } else {
+                    const suffix = visibleCount > 1 ? visiblePlural : visibleSingle;
+                    stats.textContent = `${visibleCount}${suffix}`;
+                }
+            }
+
+            if (emptyHint) {
+                emptyHint.hidden = visibleCount > 0;
+            }
+        };
+
+        filterButtons.forEach((button) => {
+            button.addEventListener('click', () => {
+                const key = button.getAttribute('data-category-filter') || '';
+
+                if (key === '') {
+                    filterButtons.forEach((btn) => {
+                        if ((btn.getAttribute('data-category-filter') || '') !== '') {
+                            btn.classList.remove('is-active');
+                            btn.setAttribute('aria-pressed', 'false');
+                        }
+                    });
+                    button.classList.add('is-active');
+                    button.setAttribute('aria-pressed', 'true');
+                    applyFilter();
+                    return;
+                }
+
+                const willActivate = !button.classList.contains('is-active');
+                button.classList.toggle('is-active', willActivate);
+                button.setAttribute('aria-pressed', willActivate ? 'true' : 'false');
+                syncAllButton();
+                applyFilter();
+            });
+        });
+
+        syncAllButton();
+        applyFilter();
     });
 }
 

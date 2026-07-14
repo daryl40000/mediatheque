@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\CatalogAdmin;
 use Moncine\MediaDomainGuards;
+use Moncine\MagazineSeriesCategory;
 use Moncine\MagazineRepository;
 use Moncine\PublicationType;
 use Moncine\View;
@@ -31,6 +32,7 @@ View::render('ajouter-serie-magazine', [
         'titre' => trim((string) ($_GET['titre'] ?? '')),
         'publication_type' => 'mensuel',
         'tags' => '',
+        'categories' => '',
         'editeur' => '',
         'issn' => '',
         'langue' => 'fr',
@@ -40,4 +42,5 @@ View::render('ajouter-serie-magazine', [
         'notes' => '',
     ],
     'error' => (string) ($_GET['error'] ?? ''),
+    'knownCategories' => MagazineSeriesCategory::suggestionLabels(),
 ]);

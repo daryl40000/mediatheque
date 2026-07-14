@@ -417,6 +417,7 @@ CREATE TABLE IF NOT EXISTS series (
     date_fin TEXT DEFAULT NULL,
     notes TEXT DEFAULT '',
     tags TEXT NOT NULL DEFAULT '',
+    categories TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT NULL
 );

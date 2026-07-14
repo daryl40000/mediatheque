@@ -27,6 +27,97 @@ final class SeriesRepository
         return $stmt !== false && $stmt->fetchColumn() !== false;
     }
 
+    public static function categoriesColumnExists(): bool
+    {
+        if (!self::tableExists()) {
+            return false;
+        }
+
+        $stmt = Database::getInstance()->query('PRAGMA table_info(series)');
+        if ($stmt === false) {
+            return false;
+        }
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (($row['name'] ?? '') === 'categories') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * Catégories déjà utilisées sur des séries magazine (pour autocomplétion).
+     *
+     * @return list<string>
+     */
+    public function listKnownCategoryLabels(int $limit = 40): array
+    {
+        if (!self::tableExists() || !self::categoriesColumnExists()) {
+            return [];
+        }
+
+        $limit = max(1, min(80, $limit));
+        $stmt = $this->db->prepare(
+            'SELECT categories FROM series
+             WHERE media_domain = ?
+               AND TRIM(categories) != \'\'
+             ORDER BY titre COLLATE FRENCH_NOCASE
+             LIMIT ' . $limit
+        );
+        $stmt->execute([MediaDomain::MAGAZINE]);
+
+        $labels = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            foreach (MagazineSeriesCategory::parseList((string) ($row['categories'] ?? '')) as $label) {
+                $key = mb_strtolower($label);
+                if (!isset($labels[$key])) {
+                    $labels[$key] = $label;
+                }
+            }
+        }
+
+        return array_values($labels);
+    }
+
+    /**
+     * Catégories brutes par identifiant série (contourne les limites de SELECT s.* + GROUP BY).
+     *
+     * @param list<int> $seriesIds
+     * @return array<int, string>
+     */
+    public function categoriesBySeriesIds(array $seriesIds): array
+    {
+        if (!self::categoriesColumnExists()) {
+            return [];
+        }
+
+        $seriesIds = array_values(array_unique(array_filter(
+            array_map(static fn (mixed $id): int => (int) $id, $seriesIds),
+            static fn (int $id): bool => $id > 0
+        )));
+        if ($seriesIds === []) {
+            return [];
+        }
+
+        $placeholders = implode(',', array_fill(0, count($seriesIds), '?'));
+        $stmt = $this->db->prepare(
+            'SELECT id, categories FROM series WHERE id IN (' . $placeholders . ')'
+        );
+        $stmt->execute($seriesIds);
+
+        $map = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $id = (int) ($row['id'] ?? 0);
+            if ($id > 0) {
+                $map[$id] = (string) ($row['categories'] ?? '');
+            }
+        }
+
+        return $map;
+    }
+
     public function findById(int $id, ?string $mediaDomain = null): ?array
     {
         if ($id <= 0 || !self::tableExists()) {
@@ -108,12 +199,17 @@ final class SeriesRepository
         }
 
         $publicationType = PublicationType::normalize((string) ($data['publication_type'] ?? ''));
+        $categoriesSql = self::categoriesColumnExists() ? ', categories' : '';
+        $categoriesValue = self::categoriesColumnExists() ? ', ?' : '';
+        $categoriesParam = self::categoriesColumnExists()
+            ? [MagazineSeriesCategory::normalizeInput((string) ($data['categories'] ?? ''))]
+            : [];
 
         $this->db->prepare(
             'INSERT INTO series (
                 media_domain, titre, publication_type, poster_url, editeur, issn,
-                langue, pays, date_debut, date_fin, notes, tags, created_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime(\'now\'))'
+                langue, pays, date_debut, date_fin, notes, tags' . $categoriesSql . ', created_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . $categoriesValue . ', datetime(\'now\'))'
         )->execute([
             $domain,
             $titre,
@@ -127,6 +223,7 @@ final class SeriesRepository
             self::nullableDate((string) ($data['date_fin'] ?? '')),
             trim((string) ($data['notes'] ?? '')),
             MagazineSeriesTag::normalizeInput((string) ($data['tags'] ?? '')),
+            ...$categoriesParam,
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -152,6 +249,38 @@ final class SeriesRepository
         $duplicate = $this->findByTitre($titre, $domain);
         if ($duplicate !== null && (int) ($duplicate['id'] ?? 0) !== $id) {
             return 'Une autre série porte déjà ce titre.';
+        }
+
+        $categoriesValue = array_key_exists('categories', $data)
+            ? MagazineSeriesCategory::normalizeInput((string) $data['categories'])
+            : (string) ($series['categories'] ?? '');
+
+        if (self::categoriesColumnExists()) {
+            $this->db->prepare(
+                'UPDATE series SET
+                    titre = ?, publication_type = ?, poster_url = ?, editeur = ?, issn = ?,
+                    langue = ?, pays = ?, date_debut = ?, date_fin = ?, notes = ?, tags = ?, categories = ?,
+                    updated_at = datetime(\'now\')
+                 WHERE id = ?'
+            )->execute([
+                $titre,
+                PublicationType::normalize((string) ($data['publication_type'] ?? $series['publication_type'] ?? '')),
+                trim((string) ($data['poster_url'] ?? $series['poster_url'] ?? '')),
+                trim((string) ($data['editeur'] ?? $series['editeur'] ?? '')),
+                trim((string) ($data['issn'] ?? $series['issn'] ?? '')),
+                trim((string) ($data['langue'] ?? $series['langue'] ?? '')),
+                trim((string) ($data['pays'] ?? $series['pays'] ?? '')),
+                self::nullableDate((string) ($data['date_debut'] ?? $series['date_debut'] ?? '')),
+                self::nullableDate((string) ($data['date_fin'] ?? $series['date_fin'] ?? '')),
+                trim((string) ($data['notes'] ?? $series['notes'] ?? '')),
+                array_key_exists('tags', $data)
+                    ? MagazineSeriesTag::normalizeInput((string) $data['tags'])
+                    : (string) ($series['tags'] ?? ''),
+                $categoriesValue,
+                $id,
+            ]);
+
+            return true;
         }
 
         $this->db->prepare(

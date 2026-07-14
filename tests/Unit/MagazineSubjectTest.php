@@ -25,7 +25,10 @@ final class MagazineSubjectTest extends TestCase
         $this->assertTrue(MagazineSubject::supportsCatalogGameLink(MagazineSubject::TEST));
         $this->assertTrue(MagazineSubject::supportsCatalogGameLink(MagazineSubject::PREVIEW));
         $this->assertTrue(MagazineSubject::supportsCatalogGameLink(MagazineSubject::INTERVIEW));
-        $this->assertFalse(MagazineSubject::supportsCatalogGameLink(MagazineSubject::DOSSIER));
+        $this->assertTrue(MagazineSubject::supportsCatalogGameLink(MagazineSubject::DOSSIER));
+        $this->assertTrue(MagazineSubject::supportsCatalogGameLink(MagazineSubject::SOLUCE));
+        $this->assertSame(MagazineSubject::SOLUCE, MagazineSubject::normalizeCategory('solution'));
+        $this->assertFalse(MagazineSubject::supportsCatalogGameLink(MagazineSubject::COMPARATIF));
         $this->assertSame(
             'Peugeot 308 III (2024)',
             MagazineSubject::displayLabel('Peugeot 308 III', '', 2024)

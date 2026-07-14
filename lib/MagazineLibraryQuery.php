@@ -181,6 +181,19 @@ final class MagazineLibraryQuery {
         $stmt->execute(MagazineCatalogSql::filterParamsForSql($sql, $params));
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
+        if ($rows !== [] && SeriesRepository::categoriesColumnExists()) {
+            $categoriesById = (new SeriesRepository())->categoriesBySeriesIds(
+                array_values(array_map(static fn (array $row): int => (int) ($row['id'] ?? 0), $rows))
+            );
+            foreach ($rows as &$row) {
+                $seriesId = (int) ($row['id'] ?? 0);
+                if ($seriesId > 0) {
+                    $row['categories'] = (string) ($categoriesById[$seriesId] ?? ($row['categories'] ?? ''));
+                }
+            }
+            unset($row);
+        }
+
         foreach ($rows as &$row) {
             $row = SeriesPoster::enrichSeries($row);
         }
@@ -459,7 +472,7 @@ final class MagazineLibraryQuery {
                     om.series_id, om.numero, om.numero_ordre, om.date_parution, om.sommaire,
                     om.pages, om.est_hors_serie, om.stored_object_id,
                     s.titre AS series_titre, s.publication_type, s.editeur, s.issn, s.poster_url AS series_poster_url,
-                    s.tags AS series_tags,
+                    s.tags AS series_tags, s.categories AS series_categories,
                     (SELECT COUNT(*) FROM bibliotheque bw
                      WHERE bw.oeuvre_id = o.id
                        AND bw.statut = :wishlist_check
