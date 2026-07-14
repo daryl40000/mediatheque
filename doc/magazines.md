@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.7.23** · **Date : 2026-07-14**
+**Version : 0.7.24** · **Date : 2026-07-14**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -232,6 +232,7 @@ Pour retrouver un **test**, une **preview**, un **dossier** ou une **interview**
    - **2 tags ou plus** → menu déroulant à chaque ajout ;
    - **aucun tag** → précision libre optionnelle sur le numéro.
    - **Catégories de la série** (**0.7.23**) : thème de la revue (Jeux vidéo, Cinéma, Figurines, Divers…) — badges sur la fiche série et tous les numéros ; **filtre latéral** sur Mes magazines.
+   - **Tuiles épurées** (**0.7.24**) : sur Mes magazines, **couverture seule** + infos au survol (comme films/jeux) ; sur la fiche série, **n° + PDF** sous la couverture, le reste au survol.
 2. **Fiche numéro**, section **Sujets et tests** : catégorie (**Test**, Preview, Comparatif, Dossier, **Soluce**, Interview) + nom ;
    - **type de média** (jeu, film…) pour lier le sujet à une fiche catalogue (**0.7.17**) ;
    - **autocomplétion** pendant la saisie : sujets déjà existants **ou** titres du catalogue selon le type choisi ;

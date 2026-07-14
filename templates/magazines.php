@@ -93,37 +93,16 @@ $canManageCatalog = $canManageCatalog ?? false;
         <?php if ($contentIssues !== []): ?>
             <section class="magazine-global-results" aria-labelledby="magazine-global-issues-heading">
                 <h2 id="magazine-global-issues-heading">Numéros trouvés</h2>
-                <div class="magazine-issues-grid magazine-global-results__issues">
+                <div class="magazine-issues-grid magazine-issues-grid--compact magazine-global-results__issues">
                     <?php foreach ($contentIssues as $issue): ?>
                         <?php
-                        $bibId = (int) ($issue['bib_id'] ?? 0);
-                        $issueUrl = Moncine\View::magazineIssueUrl($bibId);
-                        $poster = trim((string) ($issue['poster_url'] ?? ''));
-                        $posterSrc = Moncine\View::posterSrc($poster !== '' ? $poster : null);
+                        $row = $issue;
+                        $series = null;
+                        $showSeriesTitleInBubble = true;
+                        $showFooter = false;
+                        $isWishlist = false;
+                        require MONCINE_ROOT . '/templates/_magazine_issue_grid_card.php';
                         ?>
-                        <article class="magazine-issue-card">
-                            <a href="<?= Moncine\View::escape($issueUrl) ?>" class="magazine-issue-card__cover-link">
-                                <?php if ($posterSrc !== ''): ?>
-                                    <img src="<?= $posterSrc ?>" alt="" class="magazine-issue-card__cover" loading="lazy">
-                                <?php else: ?>
-                                    <div class="magazine-issue-card__cover magazine-issue-card__cover--empty" aria-hidden="true"></div>
-                                <?php endif; ?>
-                            </a>
-                            <div class="magazine-issue-card__body">
-                                <p class="hint"><?= Moncine\View::escape((string) ($issue['series_titre'] ?? '')) ?></p>
-                                <h3 class="magazine-issue-card__title">
-                                    <a href="<?= Moncine\View::escape($issueUrl) ?>">
-                                        <?= Moncine\View::escape((string) ($issue['numero'] ?? '')) ?>
-                                    </a>
-                                </h3>
-                                <p class="magazine-issue-card__meta hint">
-                                    <?= Moncine\View::escape(Moncine\PublicationType::formatParutionDate(
-                                        (string) ($issue['date_parution'] ?? ''),
-                                        (string) ($issue['publication_type'] ?? '')
-                                    )) ?>
-                                </p>
-                            </div>
-                        </article>
                     <?php endforeach; ?>
                 </div>
             </section>
@@ -150,33 +129,34 @@ $canManageCatalog = $canManageCatalog ?? false;
         <p class="hint magazine-category-rail__empty" data-magazine-category-empty hidden>
             Aucune revue ne correspond aux catégories sélectionnées.
         </p>
-        <div class="magazine-series-grid" data-magazine-series-grid>
+        <div class="magazine-series-grid magazine-series-grid--poster-only" data-magazine-series-grid>
             <?php foreach ($seriesList as $series): ?>
                 <?php
                 $seriesId = (int) ($series['id'] ?? 0);
                 $posterSrc = Moncine\View::seriesPosterSrc($series);
                 $seriesCategoryKeys = Moncine\MagazineSeriesCategory::filterKeysForSeries($series);
+                $seriesTitle = (string) ($series['titre'] ?? '');
+                $ariaLabel = $seriesTitle;
+                $issueCount = (int) ($series['issue_count'] ?? 0);
+                if ($issueCount > 0) {
+                    $ariaLabel .= ', ' . $issueCount . ' numéro' . ($issueCount > 1 ? 's' : '') . ' possédé' . ($issueCount > 1 ? 's' : '');
+                }
                 ?>
-                <a href="<?= Moncine\View::escape(Moncine\View::magazineSeriesUrl($seriesId)) ?>"
-                   class="magazine-series-card"
-                   data-series-categories="<?= Moncine\View::escape(implode(',', $seriesCategoryKeys)) ?>">
-                    <?php if ($posterSrc !== ''): ?>
-                        <img src="<?= $posterSrc ?>" alt="" class="magazine-series-card__cover" loading="lazy">
-                    <?php else: ?>
-                        <div class="magazine-series-card__cover magazine-series-card__cover--empty" aria-hidden="true"></div>
-                    <?php endif; ?>
-                    <div class="magazine-series-card__body">
-                        <h2 class="magazine-series-card__title"><?= Moncine\View::escape((string) ($series['titre'] ?? '')) ?></h2>
-                        <p class="hint">
-                            <?= Moncine\View::escape(Moncine\PublicationType::label((string) ($series['publication_type'] ?? ''))) ?>
-                            · <?= (int) ($series['issue_count'] ?? 0) ?> numéro(s) possédé(s)<?= (int) ($series['issue_count'] ?? 0) === 0 ? ' — ajoutez le premier' : '' ?>
-                        </p>
-                        <?php if (trim((string) ($series['editeur'] ?? '')) !== ''): ?>
-                            <p class="hint"><?= Moncine\View::escape((string) $series['editeur']) ?></p>
+                <article class="magazine-series-card"
+                         data-series-categories="<?= Moncine\View::escape(implode(',', $seriesCategoryKeys)) ?>">
+                    <a href="<?= Moncine\View::escape(Moncine\View::magazineSeriesUrl($seriesId)) ?>"
+                       class="magazine-series-card__link"
+                       aria-label="<?= Moncine\View::escape($ariaLabel) ?>">
+                        <?php if ($posterSrc !== ''): ?>
+                            <img src="<?= $posterSrc ?>" alt="" class="magazine-series-card__cover" loading="lazy">
+                        <?php else: ?>
+                            <div class="magazine-series-card__cover magazine-series-card__cover--empty" aria-hidden="true"></div>
                         <?php endif; ?>
-                        <?php require MONCINE_ROOT . '/templates/_magazine_series_categories_display.php'; ?>
+                    </a>
+                    <div class="collection-grid__hover-bubble" aria-hidden="true">
+                        <?php require MONCINE_ROOT . '/templates/_magazine_series_grid_caption.php'; ?>
                     </div>
-                </a>
+                </article>
             <?php endforeach; ?>
         </div>
     <?php elseif ($hasContentSearch && $totalCount === 0 && ($contentSubjects !== [] || $contentIssues !== [])): ?>

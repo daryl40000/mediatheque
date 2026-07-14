@@ -9,6 +9,22 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.24] — 2026-07-14
+
+**Magazines : tuiles épurées et correctifs filtres**
+
+### Modifié
+
+- **Mes magazines** : tuiles séries en **couverture seule** (comme films/jeux) ; infos au **survol**.
+- **Fiche série** : tuiles numéros compactes — couverture, **numéro + PDF** sur une ligne ; le reste au survol.
+
+### Corrigé
+
+- **Catégories affichées** : chaque série montre ses propres tags (plus de duplication « Jeux vidéo » sur toutes les tuiles).
+- **Filtre latéral par catégorie** : masquage effectif des séries après sélection d’un tag.
+
+---
+
 ## [0.7.23] — 2026-07-14
 
 **Magazines : catégories de série, soluce et liens catalogue**

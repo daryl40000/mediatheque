@@ -1592,7 +1592,11 @@ function initMagazineSeriesCategoryFilter() {
                 const visible = activeKeys.length === 0
                     || activeKeys.some((activeKey) => keys.includes(activeKey));
                 card.classList.toggle('is-filter-hidden', !visible);
-                card.hidden = !visible;
+                if (visible) {
+                    card.removeAttribute('hidden');
+                } else {
+                    card.setAttribute('hidden', '');
+                }
                 if (visible) {
                     visibleCount += 1;
                 }
@@ -2097,59 +2101,86 @@ function initGameShelfHoverPreviews() {
     });
 }
 
-/** Vue vignettes films / jeux : bulle d’infos au survol de l’affiche. */
-function initCollectionGridHoverBubbles() {
+/** Attache une bulle d’infos flottante à une tuile (films, jeux, magazines…). */
+function attachGridHoverBubble(card, bubble, anchor) {
+    if (!bubble || !anchor) {
+        return;
+    }
+
     const margin = 8;
     const gap = 10;
 
-    document.querySelectorAll('.collection-grid--poster-only .collection-grid__card').forEach((card) => {
-        const bubble = card.querySelector('.collection-grid__hover-bubble');
-        const anchor = card.querySelector('.collection-grid__link');
-        if (!bubble || !anchor) {
-            return;
+    const placeBubble = () => {
+        bubble.style.left = '-9999px';
+        bubble.style.top = '0';
+        bubble.classList.add('is-visible');
+        bubble.setAttribute('aria-hidden', 'false');
+
+        const anchorRect = anchor.getBoundingClientRect();
+        const bubbleWidth = bubble.offsetWidth || 220;
+        const bubbleHeight = bubble.offsetHeight || 120;
+
+        let top = anchorRect.top - bubbleHeight - gap;
+        let left = anchorRect.left + anchorRect.width / 2 - bubbleWidth / 2;
+
+        left = Math.max(margin, Math.min(left, window.innerWidth - bubbleWidth - margin));
+
+        if (top < margin) {
+            top = anchorRect.bottom + gap;
         }
 
-        const placeBubble = () => {
-            bubble.style.left = '-9999px';
-            bubble.style.top = '0';
-            bubble.classList.add('is-visible');
-            bubble.setAttribute('aria-hidden', 'false');
+        bubble.style.left = `${Math.round(left)}px`;
+        bubble.style.top = `${Math.round(top)}px`;
+    };
 
-            const anchorRect = anchor.getBoundingClientRect();
-            const bubbleWidth = bubble.offsetWidth || 220;
-            const bubbleHeight = bubble.offsetHeight || 120;
+    const hideBubble = () => {
+        bubble.classList.remove('is-visible');
+        bubble.setAttribute('aria-hidden', 'true');
+        bubble.style.left = '';
+        bubble.style.top = '';
+    };
 
-            let top = anchorRect.top - bubbleHeight - gap;
-            let left = anchorRect.left + anchorRect.width / 2 - bubbleWidth / 2;
+    card.addEventListener('mouseenter', placeBubble);
+    card.addEventListener('mouseleave', hideBubble);
+    card.addEventListener('focusin', placeBubble);
+    card.addEventListener('focusout', (event) => {
+        if (!card.contains(event.relatedTarget)) {
+            hideBubble();
+        }
+    });
 
-            left = Math.max(margin, Math.min(left, window.innerWidth - bubbleWidth - margin));
+    window.addEventListener('scroll', hideBubble, { passive: true });
+    window.addEventListener('resize', hideBubble);
+}
 
-            if (top < margin) {
-                top = anchorRect.bottom + gap;
-            }
+/** Vue vignettes films / jeux / magazines : bulle d’infos au survol de l’affiche. */
+function initCollectionGridHoverBubbles() {
+    const bubbleTargets = [
+        {
+            cardSelector: '.collection-grid--poster-only .collection-grid__card',
+            bubbleSelector: '.collection-grid__hover-bubble',
+            anchorSelector: '.collection-grid__link',
+        },
+        {
+            cardSelector: '.magazine-series-grid--poster-only .magazine-series-card',
+            bubbleSelector: '.collection-grid__hover-bubble',
+            anchorSelector: '.magazine-series-card__link',
+        },
+        {
+            cardSelector: '.magazine-issues-grid--compact .magazine-issue-card',
+            bubbleSelector: '.collection-grid__hover-bubble',
+            anchorSelector: '.magazine-issue-card__cover-link',
+        },
+    ];
 
-            bubble.style.left = `${Math.round(left)}px`;
-            bubble.style.top = `${Math.round(top)}px`;
-        };
-
-        const hideBubble = () => {
-            bubble.classList.remove('is-visible');
-            bubble.setAttribute('aria-hidden', 'true');
-            bubble.style.left = '';
-            bubble.style.top = '';
-        };
-
-        card.addEventListener('mouseenter', placeBubble);
-        card.addEventListener('mouseleave', hideBubble);
-        card.addEventListener('focusin', placeBubble);
-        card.addEventListener('focusout', (event) => {
-            if (!card.contains(event.relatedTarget)) {
-                hideBubble();
-            }
+    bubbleTargets.forEach(({ cardSelector, bubbleSelector, anchorSelector }) => {
+        document.querySelectorAll(cardSelector).forEach((card) => {
+            attachGridHoverBubble(
+                card,
+                card.querySelector(bubbleSelector),
+                card.querySelector(anchorSelector)
+            );
         });
-
-        window.addEventListener('scroll', hideBubble, { passive: true });
-        window.addEventListener('resize', hideBubble);
     });
 }
 

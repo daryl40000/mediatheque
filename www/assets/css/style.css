@@ -4464,6 +4464,106 @@ a.collection-grid__link.social-profile-grid__card,
     margin-top: 0.5rem;
 }
 
+.magazine-issues-grid--compact {
+    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+    gap: 1rem 0.85rem;
+}
+
+.magazine-issues-grid--compact .magazine-issue-card {
+    position: relative;
+    border: none;
+    background: transparent;
+    overflow: visible;
+}
+
+.magazine-issues-grid--compact .magazine-issue-card__cover-link {
+    border: 1px solid var(--border);
+    border-radius: 10px 10px 0 0;
+    overflow: hidden;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.magazine-issues-grid--compact .magazine-issue-card:not(:has(.magazine-issue-card__footer)) .magazine-issue-card__cover-link {
+    border-radius: 10px;
+}
+
+.magazine-issues-grid--compact .magazine-issue-card__cover-link:hover {
+    border-color: var(--media-accent, var(--accent));
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
+.magazine-issues-grid--compact .magazine-issue-card__cover-link .magazine-cover {
+    border: none;
+    border-radius: 0;
+}
+
+.magazine-issue-card__footer {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem;
+    min-height: 1.65rem;
+    padding: 0.2rem 0.4rem;
+    border: 1px solid var(--border);
+    border-top: none;
+    border-radius: 0 0 10px 10px;
+    background: var(--card, var(--bg));
+}
+
+.magazine-issue-card__num {
+    font-size: 0.78rem;
+    font-weight: 600;
+    line-height: 1.25;
+    color: inherit;
+    text-decoration: none;
+    min-width: 0;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.magazine-issue-card__num:hover {
+    color: var(--media-accent, var(--accent));
+}
+
+.magazine-issue-card__footer .magazine-issue-card__pdf {
+    flex-shrink: 0;
+    margin: 0;
+    padding: 0.08rem 0.28rem;
+    font-size: 0.62rem;
+    line-height: 1.25;
+    font-weight: 600;
+    min-height: 0;
+    border-radius: 4px;
+    letter-spacing: 0.02em;
+}
+
+.magazine-issues-grid--compact .collection-grid__hover-bubble.is-visible {
+    pointer-events: auto;
+}
+
+.magazine-grid-caption__tags {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem;
+    align-items: center;
+}
+
+.magazine-grid-caption__series {
+    font-weight: 600;
+}
+
+.collection-grid__hover-bubble .magazine-series-categories-display {
+    margin: 0;
+    padding: 0 0.65rem 0.35rem;
+}
+
+.collection-grid__hover-bubble .magazine-grid-caption__actions {
+    padding: 0 0.65rem 0.65rem;
+}
+
 .magazine-issue-card {
     display: flex;
     flex-direction: column;
@@ -6066,20 +6166,20 @@ td .game-linux-badge--plain {
 }
 
 @media (max-width: 1100px) {
-    .magazine-issues-grid {
+    .magazine-issues-grid:not(.magazine-issues-grid--compact) {
         grid-template-columns: repeat(6, minmax(0, 1fr));
     }
 }
 
 @media (max-width: 800px) {
-    .magazine-issues-grid {
+    .magazine-issues-grid:not(.magazine-issues-grid--compact) {
         grid-template-columns: repeat(4, minmax(0, 1fr));
         gap: 0.85rem;
     }
 }
 
 @media (max-width: 520px) {
-    .magazine-issues-grid {
+    .magazine-issues-grid:not(.magazine-issues-grid--compact) {
         grid-template-columns: repeat(2, minmax(0, 1fr));
     }
 }
@@ -6165,6 +6265,36 @@ td .game-linux-badge--plain {
     margin-top: 1rem;
 }
 
+.magazine-series-grid--poster-only {
+    grid-template-columns: repeat(auto-fill, minmax(7.5rem, 1fr));
+    gap: 1rem 0.85rem;
+}
+
+.magazine-series-grid--poster-only .magazine-series-card {
+    position: relative;
+    margin: 0;
+    border: none;
+    background: transparent;
+    overflow: visible;
+}
+
+.magazine-series-grid--poster-only .magazine-series-card__link {
+    display: block;
+    color: inherit;
+    text-decoration: none;
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: hidden;
+    background: var(--card, var(--bg));
+    transition: box-shadow 0.15s ease, transform 0.15s ease, border-color 0.15s ease;
+}
+
+.magazine-series-grid--poster-only .magazine-series-card__link:hover {
+    border-color: var(--media-accent, var(--accent));
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+    transform: translateY(-2px);
+}
+
 /* Rail de catégories : marge gauche de l’écran (hors colonne centrale des magazines). */
 body.has-magazine-category-rail .magazine-category-rail {
     position: fixed;
@@ -6240,8 +6370,24 @@ body.has-magazine-category-rail .magazine-category-rail {
     background: var(--surface, #1a1a1f);
 }
 
+.magazine-series-grid--poster-only .magazine-series-card {
+    display: block;
+    border: none;
+    border-radius: 0;
+    background: transparent;
+}
+
+.magazine-series-grid--poster-only .magazine-series-card.is-filter-hidden,
+.magazine-series-grid--poster-only .magazine-series-card[hidden] {
+    display: none !important;
+}
+
 .magazine-series-card:hover {
     border-color: var(--media-accent, var(--accent));
+}
+
+.magazine-series-grid--poster-only .magazine-series-card:hover {
+    border-color: transparent;
 }
 
 .magazine-series-card__cover {
