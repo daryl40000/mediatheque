@@ -4645,7 +4645,9 @@ a.collection-grid__link.social-profile-grid__card,
 }
 
 .magazine-tag {
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.2rem;
     font-size: 0.7rem;
     font-weight: 600;
     line-height: 1.2;
@@ -5715,19 +5717,28 @@ td .game-linux-badge--plain {
 }
 
 .magazine-series-tags-field__remove {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
     border: none;
     background: transparent;
     color: inherit;
     cursor: pointer;
-    padding: 0 0.1rem;
+    min-width: 1.35rem;
+    min-height: 1.35rem;
+    padding: 0;
+    margin: 0;
     line-height: 1;
-    font-size: 1.1rem;
-    opacity: 0.8;
+    font-size: 1.05rem;
+    opacity: 0.85;
+    border-radius: 4px;
 }
 
 .magazine-series-tags-field__remove:hover,
 .magazine-series-tags-field__remove:focus-visible {
     opacity: 1;
+    background: rgba(255, 255, 255, 0.12);
 }
 
 .magazine-subjects-section {

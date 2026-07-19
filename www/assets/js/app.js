@@ -3,12 +3,20 @@
  */
 
 document.addEventListener('DOMContentLoaded', () => {
-    initSeriesPossessionFilterMemory();
-    initCatalogListNavScrollReset();
-    initMobileNav();
-    initDesktopNavMenus();
-    initSummaryInfoTooltips();
-    initListAnchors();
+    const runInit = (label, fn) => {
+        try {
+            fn();
+        } catch (error) {
+            console.error('[mediatheque] Échec init ' + label + ':', error);
+        }
+    };
+
+    runInit('seriesPossessionFilterMemory', initSeriesPossessionFilterMemory);
+    runInit('catalogListNavScrollReset', initCatalogListNavScrollReset);
+    runInit('mobileNav', initMobileNav);
+    runInit('desktopNavMenus', initDesktopNavMenus);
+    runInit('summaryInfoTooltips', initSummaryInfoTooltips);
+    runInit('listAnchors', initListAnchors);
 
     document.querySelectorAll('.marquer-vu-today').forEach((btn) => {
         btn.addEventListener('click', () => {
@@ -25,30 +33,30 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 
-    initCollectionBulkSelection();
-    initCatalogAdminBulkSelection();
-    initContentKindFields();
-    initCatalogTitleAutocomplete();
-    initCatalogAdminCategoryFields();
-    initCatalogGameTitleAutocomplete();
-    initMagazineSubjectAutocompleteFields();
-    initMagazineSeriesTagsField();
-    initMagazineSeriesCategoryFilter();
-    initMagazineSeriesCatalogAutocomplete();
-    initMagazineIssueCatalogAutocomplete();
-    initTagsBadgeFields();
-    initGamePlatformFields();
-    initGameEditionFields();
-    initGameRelationFields();
-    initGameShelfHoverPreviews();
-    initCollectionGridHoverBubbles();
-    initMagazineSubjectStripHoverBubbles();
-    initShareLinkCopy();
-    initSteamImportMapping();
-    initCatalogOeuvreMerge();
-    initGameLibraryEditForms();
-    initGameDetailQuickActions();
-    initGlobalSearch();
+    runInit('collectionBulkSelection', initCollectionBulkSelection);
+    runInit('catalogAdminBulkSelection', initCatalogAdminBulkSelection);
+    runInit('contentKindFields', initContentKindFields);
+    runInit('catalogTitleAutocomplete', initCatalogTitleAutocomplete);
+    runInit('catalogAdminCategoryFields', initCatalogAdminCategoryFields);
+    runInit('catalogGameTitleAutocomplete', initCatalogGameTitleAutocomplete);
+    runInit('magazineSubjectAutocompleteFields', initMagazineSubjectAutocompleteFields);
+    runInit('magazineSeriesTagsField', initMagazineSeriesTagsField);
+    runInit('magazineSeriesCategoryFilter', initMagazineSeriesCategoryFilter);
+    runInit('magazineSeriesCatalogAutocomplete', initMagazineSeriesCatalogAutocomplete);
+    runInit('magazineIssueCatalogAutocomplete', initMagazineIssueCatalogAutocomplete);
+    runInit('tagsBadgeFields', initTagsBadgeFields);
+    runInit('gamePlatformFields', initGamePlatformFields);
+    runInit('gameEditionFields', initGameEditionFields);
+    runInit('gameRelationFields', initGameRelationFields);
+    runInit('gameShelfHoverPreviews', initGameShelfHoverPreviews);
+    runInit('collectionGridHoverBubbles', initCollectionGridHoverBubbles);
+    runInit('magazineSubjectStripHoverBubbles', initMagazineSubjectStripHoverBubbles);
+    runInit('shareLinkCopy', initShareLinkCopy);
+    runInit('steamImportMapping', initSteamImportMapping);
+    runInit('catalogOeuvreMerge', initCatalogOeuvreMerge);
+    runInit('gameLibraryEditForms', initGameLibraryEditForms);
+    runInit('gameDetailQuickActions', initGameDetailQuickActions);
+    runInit('globalSearch', initGlobalSearch);
 
     const params = new URLSearchParams(window.location.search);
     if (params.get('vu') === '1') {
@@ -1056,7 +1064,8 @@ function initGameCatalogAutocompleteRoot(root) {
             ? item.platform_list
             : (item.platform ? [item.platform] : []);
         if (form && platformKeys.length > 0) {
-            setGameCatalogPlatformState(form, platformKeys, { catalogLinked: true });
+            // Nouveau choix catalogue → on repart d’exemplaire vide (pas les cases déjà cochées).
+            setGameCatalogPlatformState(form, platformKeys, { catalogLinked: true, resetOwned: true });
             fillFieldById(fieldMap.platform, platformKeys[0] ?? item.platform ?? '');
         }
 
@@ -1445,16 +1454,30 @@ function initMagazineSubjectAutocompleteFields() {
  */
 function initTagsBadgeFields() {
     document.querySelectorAll('[data-tags-badge-field]').forEach((root) => {
+        // Évite d’attacher deux fois les écouteurs si la fonction est rappelée.
+        if (root.dataset.tagsBadgeReady === '1') {
+            return;
+        }
+
         const list = root.querySelector('.magazine-series-tags-field__list');
         const input = root.querySelector('.magazine-series-tags-field__input');
         const addBtn = root.querySelector('.magazine-series-tags-field__add-btn');
         const inputName = root.getAttribute('data-tags-input-name') || 'tags[]';
-        if (!list || !input || !addBtn) {
+        if (!list) {
             return;
         }
 
+        root.dataset.tagsBadgeReady = '1';
+
+        const escapeAttrSelector = (value) => {
+            if (typeof CSS !== 'undefined' && typeof CSS.escape === 'function') {
+                return CSS.escape(value);
+            }
+            return String(value).replace(/\\/g, '\\\\').replace(/"/g, '\\"');
+        };
+
         const collectKeys = () => new Set(
-            [...list.querySelectorAll(`input[name="${CSS.escape(inputName)}"]`)]
+            [...list.querySelectorAll(`input[name="${escapeAttrSelector(inputName)}"]`)]
                 .map((field) => field.value.trim().toLowerCase())
                 .filter(Boolean)
         );
@@ -1504,6 +1527,9 @@ function initTagsBadgeFields() {
         };
 
         const addFromInput = () => {
+            if (!input) {
+                return;
+            }
             const raw = input.value.trim();
             if (raw === '') {
                 return;
@@ -1514,21 +1540,40 @@ function initTagsBadgeFields() {
             input.focus();
         };
 
-        addBtn.addEventListener('click', addFromInput);
+        // Retrait d’un badge : écoute sur le bloc entier (pas seulement la liste),
+        // pour que la croix marche même si la structure HTML varie un peu.
+        root.addEventListener('click', (event) => {
+            const target = event.target instanceof Element
+                ? event.target
+                : (event.target && event.target.parentElement);
+            if (!target) {
+                return;
+            }
+
+            const removeBtn = target.closest('.magazine-series-tags-field__remove');
+            if (!removeBtn || !root.contains(removeBtn)) {
+                return;
+            }
+
+            event.preventDefault();
+            event.stopPropagation();
+            removeBtn.closest('.magazine-series-tags-field__item')?.remove();
+        });
+
+        if (!input || !addBtn) {
+            return;
+        }
+
+        addBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            addFromInput();
+        });
 
         input.addEventListener('keydown', (event) => {
             if (event.key === 'Enter') {
                 event.preventDefault();
                 addFromInput();
             }
-        });
-
-        list.addEventListener('click', (event) => {
-            const removeBtn = event.target.closest('.magazine-series-tags-field__remove');
-            if (!removeBtn) {
-                return;
-            }
-            removeBtn.closest('.magazine-series-tags-field__item')?.remove();
         });
     });
 }
@@ -1668,6 +1713,9 @@ function getGameFormPlatformKeys(form) {
 /** État plateformes catalogue / exemplaire (lien catalogue ou saisie manuelle). */
 function setGameCatalogPlatformState(form, platformKeys, options = {}) {
     const catalogLinked = Boolean(options.catalogLinked);
+    // resetOwned = true uniquement quand on choisit un NOUVEAU jeu au catalogue.
+    // Sinon on garde les cases déjà cochées (PHP / saisie utilisateur).
+    const resetOwned = Boolean(options.resetOwned);
     const catalogEditOnly = form.dataset.catalogEditOnly === '1';
     const keys = new Set((platformKeys || []).filter(Boolean));
     const canManageCatalog = form.dataset.canManageCatalog === '1';
@@ -1728,7 +1776,7 @@ function setGameCatalogPlatformState(form, platformKeys, options = {}) {
     form.dataset.catalogPlatformKeys = catalogLinked ? [...keys].join(',') : '';
     form.dataset.catalogPlatformLinked = catalogLinked ? '1' : '0';
 
-    if (ownedRoot && catalogLinked) {
+    if (ownedRoot && catalogLinked && resetOwned) {
         ownedRoot.querySelectorAll('input[type="checkbox"]').forEach((checkbox) => {
             checkbox.checked = false;
         });

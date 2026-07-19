@@ -8,8 +8,13 @@ use Moncine\BibliothequeRepository;
 use Moncine\CatalogMaintenance;
 use Moncine\Database;
 use Moncine\FoyerRepository;
+use Moncine\GamePlatform;
+use Moncine\GameRepository;
 use Moncine\HistoriqueRepository;
+use Moncine\MagazineGameLink;
 use Moncine\MagazineRepository;
+use Moncine\MagazineSubject;
+use Moncine\MagazineSubjectRepository;
 use Moncine\MediaContext;
 use Moncine\MediaDomain;
 use Moncine\OeuvreRepository;
@@ -49,6 +54,109 @@ final class CatalogMaintenanceTest extends MoncineTestCase
         $history = (new HistoriqueRepository())->findViewingsByFilm((int) $entry['id']);
         $this->assertCount(1, $history);
         $this->assertSame(8, (int) ($history[0]['note'] ?? 0));
+    }
+
+    public function testMergeOeuvresReassignsMagazineSubjectCatalogLinks(): void
+    {
+        (new SchemaMigrator(Database::getInstance()))->runPendingMigrations();
+        if (!MagazineSubjectRepository::isAvailable() || !MagazineGameLink::catalogColumnExists()) {
+            $this->markTestSkipped('Liens sujets magazine ↔ catalogue non disponibles.');
+        }
+
+        $adminId = $this->loginAsAdmin();
+        MediaContext::set(MediaDomain::JEU);
+
+        $gameRepo = new GameRepository();
+        $keepId = $gameRepo->createCatalogOnly([
+            'titre' => 'Jeu fusion keep subjects',
+            'annee' => 2020,
+            'platform' => GamePlatform::PC,
+        ]);
+        $removeId = $gameRepo->createCatalogOnly([
+            'titre' => 'Jeu fusion remove subjects',
+            'annee' => 2020,
+            'platform' => GamePlatform::PC,
+        ]);
+        $this->assertIsInt($keepId);
+        $this->assertIsInt($removeId);
+
+        MediaContext::set(MediaDomain::MAGAZINE);
+        $subjectRepo = new MagazineSubjectRepository();
+        $subject = $subjectRepo->findOrCreate(
+            MagazineSubject::TEST,
+            'Sujet lié au jeu fusionné',
+            'PC',
+            2020
+        );
+        $this->assertNotNull($subject);
+        $subjectId = (int) ($subject['id'] ?? 0);
+
+        $linkResult = (new MagazineGameLink())->setSubjectCatalogLink($subjectId, $removeId);
+        $this->assertTrue($linkResult === true);
+
+        $linkedBefore = $subjectRepo->findById($subjectId);
+        $this->assertNotNull($linkedBefore);
+        $this->assertSame($removeId, (int) ($linkedBefore['catalog_oeuvre_id'] ?? 0));
+
+        $result = (new CatalogMaintenance())->mergeOeuvres($keepId, $removeId, $adminId);
+        $this->assertTrue($result === true);
+        $this->assertNull((new OeuvreRepository())->findById($removeId));
+
+        $linkedAfter = $subjectRepo->findById($subjectId);
+        $this->assertNotNull($linkedAfter);
+        $this->assertSame(
+            $keepId,
+            (int) ($linkedAfter['catalog_oeuvre_id'] ?? 0),
+            'Le lien sujet magazine doit pointer vers la fiche conservée.'
+        );
+    }
+
+    public function testMergeMagazineIssuesTransfersSubjectAttachments(): void
+    {
+        (new SchemaMigrator(Database::getInstance()))->runPendingMigrations();
+        if (!MagazineSubjectRepository::isAvailable()) {
+            $this->markTestSkipped('Sujets magazines non disponibles.');
+        }
+
+        $adminId = $this->loginAsAdmin();
+        MediaContext::set(MediaDomain::MAGAZINE);
+
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Série fusion sujets',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $magRepo = new MagazineRepository();
+        $keepId = $magRepo->createCatalogIssue($seriesId, ['numero' => 'keep-subj']);
+        $removeId = $magRepo->createCatalogIssue($seriesId, ['numero' => 'remove-subj']);
+        $this->assertIsInt($keepId);
+        $this->assertIsInt($removeId);
+
+        $subjectRepo = new MagazineSubjectRepository();
+        $subject = $subjectRepo->findOrCreate(
+            MagazineSubject::PREVIEW,
+            'Aperçu uniquement sur la fiche supprimée',
+            '',
+            2021
+        );
+        $this->assertNotNull($subject);
+        $subjectId = (int) ($subject['id'] ?? 0);
+        $this->assertTrue($subjectRepo->attachToOeuvre($removeId, $subjectId) === true);
+
+        $result = (new CatalogMaintenance())->mergeOeuvres($keepId, $removeId, $adminId);
+        $this->assertTrue($result === true);
+
+        $subjectsOnKeep = $subjectRepo->listForOeuvre($keepId);
+        $subjectIds = array_map(
+            static fn (array $row): int => (int) ($row['id'] ?? 0),
+            $subjectsOnKeep
+        );
+        $this->assertContains(
+            $subjectId,
+            $subjectIds,
+            'Les sujets du numéro fusionné doivent être repris sur la fiche conservée.'
+        );
     }
 
     public function testMergeOeuvresRejectsDifferentMediaDomains(): void

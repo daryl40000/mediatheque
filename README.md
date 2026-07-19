@@ -2,7 +2,7 @@
 
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 
-**Version : 0.7.24**
+**Version : 0.7.25**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -71,6 +71,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.25** | Fusion catalogue : autocomplétion jeux, conservation des liens sujets magazines, correctifs tags |
 | **0.7.24** | Magazines : tuiles épurées (survol), correctifs tags et filtre catégories |
 | **0.7.23** | Magazines : catégories de série (filtre latéral), catégorie soluce, lien catalogue dossier |
 | **0.7.22** | Magazines : retirer un PDF d’un numéro (et remplacement), correctifs tests + recherche numéro |

@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-07-14 (version **0.7.24** — magazines : tuiles épurées, filtres)  
+**Dernière mise à jour :** 2026-07-19 (version **0.7.25** — fusion catalogue, liens sujets magazines)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif

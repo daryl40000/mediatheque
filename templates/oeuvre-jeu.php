@@ -187,8 +187,11 @@ $completionCount = (int) ($completionCount ?? 0);
                     ?>
 
                     <?php
+                    // Domaine « jeu » obligatoire : sinon le panneau de fusion
+                    // cherche dans le catalogue films (pas d’autocomplétion).
                     $currentOeuvreId = $oeuvreId;
                     $currentOeuvreTitle = (string) ($game['display_titre'] ?? $game['titre'] ?? '');
+                    $mediaDomain = Moncine\MediaDomain::JEU;
                     require MONCINE_ROOT . '/templates/_catalog_oeuvre_merge_panel.php';
                     ?>
 

@@ -85,9 +85,13 @@ $mediaLabel = Moncine\MediaDomain::label($mediaDomain);
             <label for="catalog_merge_search_<?= $currentOeuvreId ?>">Autre fiche à fusionner</label>
             <div class="catalog-title-autocomplete" data-catalog-merge-autocomplete>
                 <input type="search" id="catalog_merge_search_<?= $currentOeuvreId ?>"
+                       class="catalog-title-autocomplete__input"
                        data-catalog-merge-search autocomplete="off"
-                       placeholder="Rechercher par titre…" required>
-                <div class="catalog-title-autocomplete__list" data-catalog-merge-list hidden role="listbox"></div>
+                       placeholder="Rechercher par titre…" required
+                       aria-autocomplete="list"
+                       aria-controls="catalog_merge_suggestions_<?= $currentOeuvreId ?>">
+                <ul class="catalog-title-autocomplete__list" id="catalog_merge_suggestions_<?= $currentOeuvreId ?>"
+                    data-catalog-merge-list hidden role="listbox"></ul>
             </div>
             <p class="hint catalog-oeuvre-merge-form__selected" data-catalog-merge-hint hidden></p>
 

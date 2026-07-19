@@ -19,7 +19,7 @@ $knownGenres = $knownGenres ?? [];
             } ?>
             <li class="magazine-series-tags-field__item" role="listitem">
                 <span class="magazine-tag magazine-tag--game-genre">
-                    <?= Moncine\View::escape($tag) ?>
+                    <span class="magazine-series-tags-field__text"><?= Moncine\View::escape($tag) ?></span>
                     <button type="button"
                             class="magazine-series-tags-field__remove"
                             title="Retirer ce genre"

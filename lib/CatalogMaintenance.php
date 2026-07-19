@@ -436,6 +436,9 @@ final class CatalogMaintenance
             if (OeuvreStoreLinkRepository::isAvailable()) {
                 (new OeuvreStoreLinkRepository())->reassignOnOeuvreMerge($keepId, $removeId);
             }
+            if (MagazineSubjectRepository::isAvailable()) {
+                (new MagazineSubjectRepository())->reassignOnOeuvreMerge($keepId, $removeId);
+            }
             $this->transferSteamAppIdOnMerge($keepId, $removeId);
             (new PosterStorage())->deleteLocalForOeuvre($removeId);
             if (!$this->oeuvres->deleteById($removeId)) {

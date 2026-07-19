@@ -350,6 +350,37 @@ final class MagazineSubjectRepository
     }
 
     /**
+     * Après fusion catalogue : conserver les liens sujets magazines de la fiche supprimée.
+     *
+     * - sujet → fiche catalogue (catalog_oeuvre_id) : réaffectés vers keep
+     * - numéro magazine → sujets (oeuvre_magazine_subject) : copiés vers keep
+     */
+    public function reassignOnOeuvreMerge(int $keepOeuvreId, int $removeOeuvreId): void
+    {
+        if (!self::tableExists() || $keepOeuvreId <= 0 || $removeOeuvreId <= 0 || $keepOeuvreId === $removeOeuvreId) {
+            return;
+        }
+
+        // Pont sujet magazine → fiche catalogue (jeu/film…).
+        // Sans cela, ON DELETE SET NULL efface le lien à la suppression de removeId.
+        if (MagazineGameLink::catalogColumnExists()) {
+            $this->db->prepare(
+                'UPDATE magazine_subject SET catalog_oeuvre_id = ? WHERE catalog_oeuvre_id = ?'
+            )->execute([$keepOeuvreId, $removeOeuvreId]);
+        }
+
+        // Numéro magazine → sujets : transférer avant le CASCADE sur removeId.
+        $this->db->prepare(
+            'INSERT OR IGNORE INTO oeuvre_magazine_subject (oeuvre_id, subject_id)
+             SELECT ?, subject_id FROM oeuvre_magazine_subject WHERE oeuvre_id = ?'
+        )->execute([$keepOeuvreId, $removeOeuvreId]);
+
+        $this->db->prepare(
+            'DELETE FROM oeuvre_magazine_subject WHERE oeuvre_id = ?'
+        )->execute([$removeOeuvreId]);
+    }
+
+    /**
      * @return array{issue_count: int, series_count: int}
      */
     public function countInLibrary(int $subjectId, int $userId, int $foyerId): array

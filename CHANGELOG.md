@@ -9,6 +9,24 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.25] — 2026-07-19
+
+**Catalogue : fusion jeux et liens sujets magazines**
+
+### Corrigé
+
+- **Fusion fiche jeu** : autocomplétion du champ « autre fiche » (recherche dans le catalogue jeux, plus dans les films).
+- **Fusion catalogue** : les liens **sujet magazine → fiche** de la fiche supprimée sont repris sur la fiche conservée (plus de perte via `ON DELETE SET NULL`).
+- **Fusion numéros magazine** : les sujets rattachés au numéro fusionné sont transférés vers la fiche conservée.
+- **Badges genres / tags** : croix de retrait plus fiable ; initialisation JS isolée (une erreur n’empêche plus les autres modules).
+- **Ajout jeu depuis le catalogue** : sélection d’une fiche catalogue réinitialise correctement les plateformes « mon exemplaire ».
+
+### Technique
+
+- Graine d’install : catalogue `install_seed/moncine-catalogue-2026-07-19.csv`.
+
+---
+
 ## [0.7.24] — 2026-07-14
 
 **Magazines : tuiles épurées et correctifs filtres**
