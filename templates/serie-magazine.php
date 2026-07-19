@@ -83,6 +83,10 @@
                    class="btn btn-accent">Ajouter un numéro</a>
                 <a href="/modifier-serie-magazine.php?series_id=<?= $seriesId ?>"
                    class="btn btn-secondary">Modifier la série</a>
+                <?php if ((int) ($catalogIssueCount ?? 0) > 0 || $totalAllIssues > 0): ?>
+                    <a href="<?= Moncine\View::escape(Moncine\View::magazineSeriesStatsUrl($seriesId, $statut)) ?>"
+                       class="btn btn-secondary">Statistiques</a>
+                <?php endif; ?>
                 <?php if ($totalAllIssues > 0 || $hasSearch): ?>
                     <a href="<?= Moncine\View::escape(Moncine\View::magazineSeriesPrintUrl(
                         $seriesId,

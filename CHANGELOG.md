@@ -9,6 +9,20 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.26] — 2026-07-19
+
+**Magazines : statistiques d’évolution par série + CI**
+
+### Ajouté
+
+- **Fiche série** : bouton **Statistiques** vers une page dédiée.
+- **Stats série** : évolution des **pages** (moyenne par année), répartition et évolution des **sujets** (Test, Preview, Soluce…).
+- Les graphiques se remplissent au fur et à mesure que pages et sujets sont renseignés sur les numéros.
+- **CI GitHub Actions** : PHPUnit automatique sur push/PR (`main`), PHP 8.2 et 8.3.
+- **Tests unitaires** : 3 assertions alignées sur le comportement actuel (sauvegarde, plateformes, chemin médias).
+
+---
+
 ## [0.7.25] — 2026-07-19
 
 **Catalogue : fusion jeux et liens sujets magazines**

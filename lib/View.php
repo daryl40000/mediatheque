@@ -934,6 +934,22 @@ final class View
         return '/imprimer-serie-magazine.php?' . http_build_query($params);
     }
 
+    /** Page statistiques d’évolution d’une série magazine. */
+    public static function magazineSeriesStatsUrl(int $seriesId, string $statut = LibraryStatut::COLLECTION): string
+    {
+        if ($seriesId <= 0) {
+            return '/magazines.php';
+        }
+
+        $params = ['series_id' => $seriesId];
+        $statut = LibraryStatut::normalize($statut);
+        if ($statut !== LibraryStatut::COLLECTION) {
+            $params['statut'] = $statut;
+        }
+
+        return '/stats-serie-magazine.php?' . http_build_query($params);
+    }
+
     public static function magazineIssueUrl(int $bibId): string
     {
         return $bibId > 0 ? '/magazine-numero.php?id=' . $bibId : '/magazines.php';

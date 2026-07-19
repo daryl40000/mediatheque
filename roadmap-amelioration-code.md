@@ -1,11 +1,21 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-07-19 (version **0.7.25** — fusion catalogue, liens sujets magazines)  
+**Dernière mise à jour :** 2026-07-19 (version **0.7.26** — stats séries magazines + CI)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif
 
 Améliorer la maintenabilité du projet (objectif indicatif : passer d'un code **8.5/10** à **9.5/10**) par des **petits chantiers isolés**, testables, sans big bang.
+
+## Filet de sécurité (CI)
+
+| Élément | Statut |
+|---------|--------|
+| GitHub Actions — PHPUnit sur push/PR `main` | ✅ [`.github/workflows/tests.yml`](.github/workflows/tests.yml) |
+| Matrice PHP | 8.2 + 8.3 |
+| PHPStan / analyse statique | ⏳ À faire (prochaine étape qualité) |
+
+---
 
 ## Principes directeurs
 

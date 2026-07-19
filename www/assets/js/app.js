@@ -2219,6 +2219,12 @@ function initCollectionGridHoverBubbles() {
             bubbleSelector: '.collection-grid__hover-bubble',
             anchorSelector: '.magazine-issue-card__cover-link',
         },
+        {
+            // Page « magazines qui parlent de ce jeu » : date de parution au survol.
+            cardSelector: '.magazine-issues-grid--game-coverage .magazine-issue-card',
+            bubbleSelector: '.collection-grid__hover-bubble',
+            anchorSelector: '.magazine-issue-card__cover-link',
+        },
     ];
 
     bubbleTargets.forEach(({ cardSelector, bubbleSelector, anchorSelector }) => {

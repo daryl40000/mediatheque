@@ -1,8 +1,9 @@
 # Médiathèque
 
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
+[![Tests](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml/badge.svg)](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml)
 
-**Version : 0.7.25**
+**Version : 0.7.26**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -350,6 +351,24 @@ Voir aussi la section [Installation et utilisation](#installation-et-utilisation
 composer test
 # ou
 ./vendor/bin/phpunit
+```
+
+### Intégration continue (CI)
+
+À chaque **push** ou **pull request** sur `main`, GitHub Actions lance automatiquement PHPUnit :
+
+- **Unit** (PHP 8.2 et 8.3) — tests rapides, isolés
+- **Integration** (PHP 8.2 et 8.3) — tests avec base SQLite temporaire
+
+Workflow : [`.github/workflows/tests.yml`](.github/workflows/tests.yml)  
+Badge : statut visible en haut de ce README et dans l’onglet **Actions** du dépôt.
+
+En local, avant d’ouvrir une PR :
+
+```bash
+composer test
+# ou seulement les unitaires :
+./vendor/bin/phpunit --testsuite unit
 ```
 
 ---

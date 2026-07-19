@@ -35,14 +35,20 @@ if ($magazineCoverageRows === []) {
             $categoryLabels = [(string) $row['category_label']];
         }
         $inLibrary = !empty($row['in_library']);
+        // Date de parution déjà formatée (ex. « juin 2024 ») côté MagazineGameLink.
+        $dateLabel = trim((string) ($row['date_label'] ?? ''));
+        $hoverLabel = $issueTitle;
+        if ($dateLabel !== '') {
+            $hoverLabel = trim($issueTitle . ($issueTitle !== '' ? ' — ' : '') . $dateLabel);
+        }
         ?>
         <article class="magazine-issue-card magazine-issue-card--coverage-tags<?= $inLibrary ? '' : ' magazine-issue-card--unowned' ?>"
                  role="listitem">
             <?php if ($navUrl !== ''): ?>
                 <a href="<?= Moncine\View::escape($navUrl) ?>"
                    class="magazine-issue-card__cover-link"
-                   title="<?= Moncine\View::escape($issueTitle) ?>"
-                   aria-label="<?= Moncine\View::escape($issueTitle) ?>">
+                   title="<?= Moncine\View::escape($hoverLabel) ?>"
+                   aria-label="<?= Moncine\View::escape($hoverLabel) ?>">
             <?php else: ?>
                 <span class="magazine-issue-card__cover-link magazine-issue-card__cover-link--static">
             <?php endif; ?>
@@ -66,6 +72,18 @@ if ($magazineCoverageRows === []) {
                     <?php foreach ($categoryLabels as $categoryLabel): ?>
                         <span class="magazine-tag magazine-tag--subject"><?= Moncine\View::escape((string) $categoryLabel) ?></span>
                     <?php endforeach; ?>
+                </div>
+            <?php endif; ?>
+
+            <?php // Bulle au survol : mois et année de parution du numéro. ?>
+            <?php if ($dateLabel !== ''): ?>
+                <div class="collection-grid__hover-bubble" aria-hidden="true">
+                    <div class="collection-grid__caption">
+                        <?php if ($issueTitle !== ''): ?>
+                            <strong class="magazine-issue-card__bubble-title"><?= Moncine\View::escape($issueTitle) ?></strong>
+                        <?php endif; ?>
+                        <span class="collection-grid__meta"><?= Moncine\View::escape($dateLabel) ?></span>
+                    </div>
                 </div>
             <?php endif; ?>
         </article>

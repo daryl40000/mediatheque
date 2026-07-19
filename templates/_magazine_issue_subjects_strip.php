@@ -59,6 +59,13 @@ if (($issueSubjects ?? []) === []) {
                         </span>
                     <?php endif; ?>
 
+                    <?php // Tag de catégorie toujours visible sous l’affiche (Test, Soluce, Preview…). ?>
+                    <?php if ($categoryLabel !== ''): ?>
+                        <div class="magazine-subject-strip__tags">
+                            <span class="magazine-tag magazine-tag--subject"><?= Moncine\View::escape($categoryLabel) ?></span>
+                        </div>
+                    <?php endif; ?>
+
                     <form method="post"
                           action="/traiter-sujets-numero-magazine.php"
                           class="magazine-subject-strip__detach"
@@ -79,9 +86,6 @@ if (($issueSubjects ?? []) === []) {
 
                     <div class="magazine-subject-strip__bubble collection-grid__hover-bubble" aria-hidden="true">
                         <div class="collection-grid__caption">
-                            <?php if ($categoryLabel !== ''): ?>
-                                <span class="magazine-tag magazine-tag--subject"><?= Moncine\View::escape($categoryLabel) ?></span>
-                            <?php endif; ?>
                             <strong class="magazine-subject-strip__bubble-title"><?= Moncine\View::escape($displayLabel) ?></strong>
                             <?php if ($mediaSubtitle !== ''): ?>
                                 <span class="hint magazine-subject-strip__bubble-meta"><?= Moncine\View::escape($mediaSubtitle) ?></span>

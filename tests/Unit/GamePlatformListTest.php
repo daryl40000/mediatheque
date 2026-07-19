@@ -13,8 +13,9 @@ final class GamePlatformListTest extends TestCase
     public function testParseAndSerializeList(): void
     {
         $keys = GamePlatformList::parseList('ps5, pc;ps4');
-        $this->assertSame([GamePlatform::PC, GamePlatform::PS4, GamePlatform::PS5], $keys);
-        $this->assertSame('pc,ps4,ps5', GamePlatformList::serializeList($keys));
+        // Ordre = ordre canonique des plateformes (PC, PS5, PS4…), pas l’ordre de saisie.
+        $this->assertSame([GamePlatform::PC, GamePlatform::PS5, GamePlatform::PS4], $keys);
+        $this->assertSame('pc,ps5,ps4', GamePlatformList::serializeList($keys));
     }
 
     public function testCatalogKeysFromRowPrefersPlatformsColumn(): void

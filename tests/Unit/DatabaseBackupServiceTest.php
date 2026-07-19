@@ -14,7 +14,8 @@ final class DatabaseBackupServiceTest extends MoncineTestCase
     public function testValidateBackupRejectsNonSqliteFile(): void
     {
         $path = MONCINE_DATA . '/not-a-db.bin';
-        file_put_contents($path, 'not sqlite content');
+        // Fichier assez grand pour passer le seuil de taille, mais pas un en-tête SQLite.
+        file_put_contents($path, str_repeat('not sqlite content ', 20));
 
         $result = (new DatabaseBackupService())->validateBackupFile($path);
         $this->assertIsString($result);
