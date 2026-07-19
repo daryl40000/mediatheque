@@ -9,6 +9,21 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.27] — 2026-07-19
+
+**CI verte : correctifs foyer, domaines média et tests**
+
+### Corrigé
+
+- **Création de compte** : foyer personnel créé et rattaché correctement (tests d’intégration foyer / amitiés).
+- **Groupes famille** : un foyer solo n’est plus traité comme un groupe ; acceptation d’invitation quitte le foyer perso.
+- **Domaine média en CLI** : `MediaContext` respecte la session PHPUnit (filtre collection par domaine).
+- **Import CSV** : normalisation des tirets typographiques dans les en-têtes.
+- **Index e-mail** : migration 066 — index sans `datetime('now')` non déterministe.
+- **CI** : actions `checkout` / `cache` en v5 ; tests d’intégration alignés (fusion catalogue, notes ressenti, genres jeux).
+
+---
+
 ## [0.7.26] — 2026-07-19
 
 **Magazines : statistiques d’évolution par série + CI**

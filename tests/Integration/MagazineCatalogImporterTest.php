@@ -11,10 +11,10 @@ use Moncine\MediaContext;
 use Moncine\MediaDomain;
 use Moncine\PublicationType;
 use Moncine\SeriesRepository;
+use Moncine\Tests\Support\MoncineTestCase;
 use Moncine\UserContext;
-use PHPUnit\Framework\TestCase;
 
-final class MagazineCatalogImporterTest extends TestCase
+final class MagazineCatalogImporterTest extends MoncineTestCase
 {
     protected function setUp(): void
     {
@@ -108,6 +108,7 @@ final class MagazineCatalogImporterTest extends TestCase
             $this->markTestSkipped('Module magazines indisponible.');
         }
 
+        $this->loginAsAdmin();
         $userId = UserContext::currentUserId();
         $foyerId = UserContext::currentFoyerId();
         $repo = new MagazineRepository();

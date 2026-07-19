@@ -120,6 +120,14 @@ final class GameListFilter
         );
     }
 
+    public static function forPlatformKind(string $platformKind): self
+    {
+        return new self(
+            platformKind: self::normalizePlatformKind($platformKind),
+            extensions: self::EXTENSIONS_EXCLUDE,
+        );
+    }
+
     public static function forExtensionsOnly(): self
     {
         return new self(extensions: self::EXTENSIONS_ONLY);

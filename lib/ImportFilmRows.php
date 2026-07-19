@@ -220,8 +220,8 @@ final class ImportFilmRows
         $label = self::stripHeaderWrapping($label);
         $label = mb_strtolower(trim($label), 'UTF-8');
         $label = str_replace(
-            ['é', 'è', 'ê', 'ë', 'à', 'â', 'ù', 'û', 'ô', 'î', 'ï', 'ç'],
-            ['e', 'e', 'e', 'e', 'a', 'a', 'u', 'u', 'o', 'i', 'i', 'c'],
+            ['é', 'è', 'ê', 'ë', 'à', 'â', 'ù', 'û', 'ô', 'î', 'ï', 'ç', '—', '–', '-', '_'],
+            ['e', 'e', 'e', 'e', 'a', 'a', 'u', 'u', 'o', 'i', 'i', 'c', ' ', ' ', ' ', ' '],
             $label
         );
 

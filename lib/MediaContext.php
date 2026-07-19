@@ -24,10 +24,7 @@ final class MediaContext
 
     public static function current(): string
     {
-        if (PHP_SAPI === 'cli') {
-            return MediaDomain::FILM;
-        }
-
+        // En CLI (PHPUnit), respecter la session si elle est active — sinon défaut film.
         if (session_status() !== PHP_SESSION_ACTIVE) {
             return MediaDomain::FILM;
         }

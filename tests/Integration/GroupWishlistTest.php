@@ -82,6 +82,9 @@ final class GroupWishlistTest extends MoncineTestCase
         $this->assertSame(1, (int) ($rows[0]['vote_count'] ?? 0));
         $this->assertFalse((bool) ($rows[0]['in_my_wishlist'] ?? true));
 
+        Auth::logout();
+        $this->startSession();
+        Auth::login('bobw@test.local', 'TestPass123!');
         $bobEntry = $films->addFromCatalogOeuvre($oeuvreId, LibraryStatut::WISHLIST);
         $this->assertIsInt($bobEntry);
 

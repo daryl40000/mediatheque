@@ -54,11 +54,14 @@ final class MediaDomainTest extends MoncineTestCase
         $bibliotheque->insert($userId, $foyerId, $bdOeuvreId, ['statut' => 'collection']);
 
         MediaContext::set(MediaDomain::FILM);
-        $titles = array_column($films->findAll(), 'titre');
-        $this->assertContains('Visible En Film', $titles);
-        $this->assertNotContains('Caché En BD', $titles);
+        $titlesFilm = array_column($films->findAll(), 'titre');
+        $this->assertContains('Visible En Film', $titlesFilm);
+        $this->assertNotContains('Caché En BD', $titlesFilm);
 
+        // Même liste « collection » : filtrée par le domaine actif (ici BD).
         MediaContext::set(MediaDomain::BD);
-        $this->assertSame([], $films->findAll());
+        $titlesBd = array_column($films->findAll(), 'titre');
+        $this->assertContains('Caché En BD', $titlesBd);
+        $this->assertNotContains('Visible En Film', $titlesBd);
     }
 }

@@ -527,7 +527,7 @@ final class GameRepositoryTest extends MoncineTestCase
 
         $originalBibId = $repo->createWithLibrary([
             'titre' => 'Resident Evil Original Test',
-            'platform' => GamePlatform::PLAYSTATION,
+            'platform' => GamePlatform::PS5,
             'genre' => 'Horreur',
             'annee' => 1996,
         ], LibraryStatut::COLLECTION, $userId, $foyerId);
@@ -538,7 +538,7 @@ final class GameRepositoryTest extends MoncineTestCase
 
         $remakeBibId = $repo->createWithLibrary([
             'titre' => 'Resident Evil Remake Test',
-            'platform' => GamePlatform::GAMECUBE,
+            'platform' => GamePlatform::SWITCH,
             'genre' => 'Horreur',
             'annee' => 2002,
             'is_remake' => true,
@@ -723,7 +723,7 @@ final class GameRepositoryTest extends MoncineTestCase
             'titre',
             'asc',
             '',
-            new GameListFilter(platformKind: 'console')
+            GameListFilter::forPlatformKind('console')
         );
         $titles = array_map(static fn (array $row): string => (string) ($row['titre'] ?? ''), $consoleGames);
         $this->assertContains('Switch Filter Test', $titles);

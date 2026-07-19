@@ -101,6 +101,7 @@ final class MagazineFtsTest extends MoncineTestCase
             'numero_ordre' => 99,
             'sommaire' => 'Comparatif cartes graphiques RTX',
             'date_parution' => '2024-08-01',
+            'support_papier' => true,
         ], LibraryStatut::COLLECTION, $userId, $foyerId);
         $this->assertIsInt($bibId);
 

@@ -328,6 +328,12 @@ final class GameLibraryQuery
                 $key = mb_strtolower($tag);
                 if (!isset($known[$key])) {
                     $known[$key] = $tag;
+                    continue;
+                }
+                // Préférer une forme avec majuscules (ex. FPS plutôt que fps).
+                $current = $known[$key];
+                if ($current === mb_strtolower($current) && $tag !== mb_strtolower($tag)) {
+                    $known[$key] = $tag;
                 }
             }
         }

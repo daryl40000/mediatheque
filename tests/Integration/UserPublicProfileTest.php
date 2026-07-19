@@ -71,7 +71,10 @@ final class UserPublicProfileTest extends MoncineTestCase
 
         $history = $profile->listViewingHistory($aliceId);
         $this->assertCount(1, $history);
-        $this->assertSame(8, (int) ($history[0]['note'] ?? 0));
+        $this->assertSame(
+            \Moncine\RessentiNote::scoreFromLegacyTen(8),
+            (int) ($history[0]['note'] ?? 0)
+        );
         $this->assertNotSame('', (string) ($history[0]['date_vue'] ?? ''));
     }
 

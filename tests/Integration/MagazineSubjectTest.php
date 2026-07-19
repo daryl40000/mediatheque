@@ -172,7 +172,7 @@ final class MagazineSubjectTest extends MoncineTestCase
         $this->assertContains('Sujet Auto Legacy', $testLabels);
         $this->assertNotContains('Sujet Preview Seul', $testLabels);
 
-        $previewResults = $repo->searchCatalog('Legacy', MagazineSubject::PREVIEW, 50);
+        $previewResults = $repo->searchCatalog('Preview Seul', MagazineSubject::PREVIEW, 50);
         $previewLabels = array_map(
             static fn (array $row): string => (string) ($row['label'] ?? ''),
             $previewResults

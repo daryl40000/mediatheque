@@ -125,8 +125,7 @@ CREATE TABLE IF NOT EXISTS email_change_requests (
 );
 
 CREATE UNIQUE INDEX IF NOT EXISTS idx_email_change_user_pending
-    ON email_change_requests(user_id)
-    WHERE expires_at > datetime('now');
+    ON email_change_requests(user_id);
 
 CREATE INDEX IF NOT EXISTS idx_email_change_token
     ON email_change_requests(token_hash);

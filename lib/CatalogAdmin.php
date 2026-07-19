@@ -403,7 +403,10 @@ final class CatalogAdmin
                 return;
             }
 
-            $fields = array_keys($payload);
+            $fields = array_values(array_filter(
+                array_keys($payload),
+                static fn (string $field): bool => $field !== 'media_domain'
+            ));
             $this->oeuvres->update($oeuvreId, $payload, $fields);
             $this->oeuvres->updateMediaDomain($oeuvreId, $mediaDomain);
             $this->cachePosterIfRemote($oeuvreId, (string) ($payload['poster_url'] ?? $existing['poster_url'] ?? ''));
@@ -414,7 +417,10 @@ final class CatalogAdmin
 
         $duplicate = $this->oeuvres->findByTitreRealisateurAndDomain($titre, $realisateur, $mediaDomain);
         if ($duplicate !== null) {
-            $fields = array_keys($payload);
+            $fields = array_values(array_filter(
+                array_keys($payload),
+                static fn (string $field): bool => $field !== 'media_domain'
+            ));
             $dupId = (int) $duplicate['id'];
             $this->oeuvres->update($dupId, $payload, $fields);
             $this->oeuvres->updateMediaDomain($dupId, $mediaDomain);

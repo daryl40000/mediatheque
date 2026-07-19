@@ -179,10 +179,12 @@ final class FoyerTest extends MoncineTestCase
         $this->assertIsInt($userId);
 
         $foyerRepo = new FoyerRepository();
-        $this->assertSame(0, $foyerRepo->currentFoyerIdForUser($userId));
+        // create() garantit déjà un foyer personnel.
+        $existingFoyerId = $foyerRepo->currentFoyerIdForUser($userId);
+        $this->assertGreaterThan(0, $existingFoyerId);
 
         $foyerId = $foyerRepo->ensurePersonalFoyerForUser($userId);
-        $this->assertGreaterThan(0, $foyerId);
+        $this->assertSame($existingFoyerId, $foyerId);
         $this->assertSame($foyerId, $foyerRepo->currentFoyerIdForUser($userId));
 
         $oeuvreId = $this->seedCatalogOeuvre('Film solo foyer');

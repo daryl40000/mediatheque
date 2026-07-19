@@ -29,8 +29,10 @@ final class CatalogMaintenanceTest extends MoncineTestCase
     public function testMergeOeuvresReassignsBibliothequeAndDeletesDuplicate(): void
     {
         $adminId = $this->loginAsAdmin();
+        // Titres distincts : l’import catalogue normalise (trim) le titre, donc un espace
+        // final ne créerait pas un second enregistrement.
         $keepId = $this->seedCatalogOeuvre('Film Alpha', 'Réalisateur A');
-        $removeId = $this->seedCatalogOeuvre('Film Alpha ', 'Réalisateur A');
+        $removeId = $this->seedCatalogOeuvre('Film Alpha Doublon', 'Réalisateur A');
 
         $foyerId = (new FoyerRepository())->currentFoyerIdForUser($adminId);
         $bib = new BibliothequeRepository();
@@ -40,7 +42,8 @@ final class CatalogMaintenanceTest extends MoncineTestCase
             'format_image' => '1080p',
         ]);
 
-        (new HistoriqueRepository())->recordViewing($removeEntryId, '2024-01-15', 8);
+        // Note ressenti 1–5 (ex. 4 = « très bien ») ; l’ancienne échelle /10 est convertie à l’enregistrement.
+        (new HistoriqueRepository())->recordViewing($removeEntryId, '2024-01-15', 4);
 
         $result = (new CatalogMaintenance())->mergeOeuvres($keepId, $removeId, $adminId);
         $this->assertTrue($result === true);
@@ -53,7 +56,7 @@ final class CatalogMaintenanceTest extends MoncineTestCase
 
         $history = (new HistoriqueRepository())->findViewingsByFilm((int) $entry['id']);
         $this->assertCount(1, $history);
-        $this->assertSame(8, (int) ($history[0]['note'] ?? 0));
+        $this->assertSame(4, (int) ($history[0]['note'] ?? 0));
     }
 
     public function testMergeOeuvresReassignsMagazineSubjectCatalogLinks(): void

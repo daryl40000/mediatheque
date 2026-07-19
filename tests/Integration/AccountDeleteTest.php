@@ -100,7 +100,8 @@ final class AccountDeleteTest extends MoncineTestCase
         );
         $this->assertIsInt($userId);
 
-        $foyerId = (new FoyerRepository())->createDefaultForUser($userId);
+        // create() crée déjà le foyer personnel ; ensure est idempotent.
+        $foyerId = (new FoyerRepository())->ensurePersonalFoyerForUser($userId);
         $this->assertGreaterThan(0, $foyerId);
 
         $countStmt = $db->prepare('SELECT COUNT(*) FROM group_members WHERE user_id = ?');

@@ -227,7 +227,21 @@ final class UtilisateurRepository
             $foyerId > 0 ? $foyerId : null,
         ]);
 
-        return (int) $this->db->lastInsertId();
+        $userId = (int) $this->db->lastInsertId();
+        if ($userId > 0 && FoyerRepository::tableExists($this->db)) {
+            if ($foyerId > 0) {
+                // Rattacher aussi à group_members (sinon le foyer « social » ignore le membre).
+                $assigned = (new FoyerRepository())->assignUser($userId, $foyerId);
+                if ($assigned !== true) {
+                    return is_string($assigned) ? $assigned : 'Impossible de rattacher le foyer.';
+                }
+            } else {
+                // Compte sans foyer fourni : créer « Mon foyer » (comme createWithPasswordHash).
+                (new FoyerRepository())->ensurePersonalFoyerForUser($userId);
+            }
+        }
+
+        return $userId;
     }
 
     /**
