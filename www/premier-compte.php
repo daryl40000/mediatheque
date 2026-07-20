@@ -9,6 +9,9 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\Auth;
 use Moncine\Csrf;
+use Moncine\Exception\NotFoundException;
+use Moncine\Exception\RepositoryException;
+use Moncine\Exception\ValidationException;
 use Moncine\UtilisateurRepository;
 use Moncine\View;
 
@@ -26,17 +29,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($password !== $confirm) {
         $error = 'Les deux mots de passe ne correspondent pas.';
     } else {
-    $result = (new UtilisateurRepository())->createFirstAdmin(
-        (string) ($_POST['nom'] ?? ''),
-        (string) ($_POST['email'] ?? ''),
-        (string) ($_POST['password'] ?? '')
-    );
-    if (is_int($result)) {
-        Auth::login((string) ($_POST['email'] ?? ''), (string) ($_POST['password'] ?? ''));
-        header('Location: /?setup=1');
-        exit;
-    }
-    $error = (string) $result;
+        try {
+            (new UtilisateurRepository())->createFirstAdmin(
+                (string) ($_POST['nom'] ?? ''),
+                (string) ($_POST['email'] ?? ''),
+                (string) ($_POST['password'] ?? '')
+            );
+            Auth::login((string) ($_POST['email'] ?? ''), (string) ($_POST['password'] ?? ''));
+            header('Location: /?setup=1');
+            exit;
+        } catch (ValidationException | NotFoundException | RepositoryException $e) {
+            $error = $e->getMessage();
+        }
     }
 }
 

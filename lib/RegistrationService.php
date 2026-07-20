@@ -7,6 +7,9 @@ declare(strict_types=1);
 
 namespace Moncine;
 
+use Moncine\Exception\ValidationException;
+use Moncine\Validator\UserAccountValidator;
+
 final class RegistrationService
 {
     private RegistrationSettings $settings;
@@ -46,16 +49,24 @@ final class RegistrationService
             return 'L’inscription publique est désactivée.';
         }
 
-        $email = mb_strtolower(trim($email), 'UTF-8');
-        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return 'Adresse e-mail invalide.';
+        // Phase F : mêmes contrôles e-mail / mot de passe que la création admin.
+        $normalizedEmail = null;
+        $emailCheck = UserAccountValidator::checkEmail($email, $normalizedEmail);
+        if ($emailCheck !== true) {
+            return (string) $emailCheck;
         }
+        $email = (string) $normalizedEmail;
 
         if (RegistrationThrottle::isBlocked($email)) {
             return 'Trop de tentatives. Réessayez dans quelques minutes.';
         }
 
         RegistrationThrottle::recordAttempt($email);
+
+        $passwordCheck = UserAccountValidator::checkPasswordLength($plainPassword);
+        if ($passwordCheck !== true) {
+            return (string) $passwordCheck;
+        }
 
         $hash = UtilisateurRepository::hashPassword($plainPassword);
         if ($hash === null) {
@@ -265,20 +276,20 @@ final class RegistrationService
             return 'Demande invalide ou expirée. Refaites une inscription si besoin.';
         }
 
-        $userId = $this->users->createWithPasswordHash(
-            (string) ($request['nom'] ?? ''),
-            (string) ($request['email'] ?? ''),
-            $passwordHash,
-            UserRole::USER,
-            (string) ($request['prenom'] ?? ''),
-            (string) ($request['pseudo'] ?? '')
-        );
-
-        if (!is_int($userId)) {
-            return $userId;
+        // createWithPasswordHash lance ValidationException : on convertit en message
+        // pour garder l’API inscription (outcome / approve) inchangée côté pages.
+        try {
+            return $this->users->createWithPasswordHash(
+                (string) ($request['nom'] ?? ''),
+                (string) ($request['email'] ?? ''),
+                $passwordHash,
+                UserRole::USER,
+                (string) ($request['prenom'] ?? ''),
+                (string) ($request['pseudo'] ?? '')
+            );
+        } catch (ValidationException $e) {
+            return $e->getMessage();
         }
-
-        return $userId;
     }
 
     /** @param array<string, mixed> $request */

@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Moncine\Tests\Integration;
 
 use Moncine\Auth;
+use Moncine\Exception\ValidationException;
 use Moncine\UserRole;
 use Moncine\UtilisateurRepository;
 use Moncine\Tests\Support\MoncineTestCase;
@@ -62,8 +63,9 @@ final class AuthLoginIdentifierTest extends MoncineTestCase
         $repo = new UtilisateurRepository();
         $this->assertIsInt($repo->create('One', 'one-pseudo@test.local', 'TestPass123!', UserRole::USER, 0, '', 'UniqueNick'));
 
-        $second = $repo->create('Two', 'two-pseudo@test.local', 'TestPass123!', UserRole::USER, 0, '', 'uniquenick');
-        $this->assertSame('Ce pseudo est déjà utilisé.', $second);
+        $this->expectException(ValidationException::class);
+        $this->expectExceptionMessage('Ce pseudo est déjà utilisé.');
+        $repo->create('Two', 'two-pseudo@test.local', 'TestPass123!', UserRole::USER, 0, '', 'uniquenick');
     }
 
     public function testEmptyPseudoDoesNotAllowPseudoLogin(): void

@@ -7,6 +7,10 @@ declare(strict_types=1);
 
 namespace Moncine;
 
+use Moncine\Exception\NotFoundException;
+use Moncine\Exception\RepositoryException;
+use Moncine\Exception\ValidationException;
+use Moncine\Validator\UserAccountValidator;
 use PDO;
 
 final class UtilisateurRepository
@@ -176,6 +180,12 @@ final class UtilisateurRepository
         )->fetchAll();
     }
 
+    /**
+     * Crée un compte utilisateur.
+     *
+     * @throws ValidationException champs invalides / doublon e-mail ou pseudo
+     * @throws NotFoundException foyer demandé introuvable
+     */
     public function create(
         string $nom,
         string $email,
@@ -184,34 +194,34 @@ final class UtilisateurRepository
         int $foyerId = 0,
         string $prenom = '',
         string $pseudo = ''
-    ): int|string {
+    ): int {
         $nom = trim($nom);
         $prenom = trim($prenom);
         $pseudo = UserProfile::sanitizePseudo($pseudo);
-        $email = mb_strtolower(trim($email), 'UTF-8');
+        // Phase F : e-mail via Validator commun (mêmes messages qu’avant).
+        $email = UserAccountValidator::requireEmail($email);
         $role = UserRole::normalize($role);
 
         $identity = UserProfile::validateIdentityFields($nom, $prenom, $pseudo);
         if ($identity !== true) {
-            return $identity;
-        }
-        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return 'Adresse e-mail invalide.';
+            throw new ValidationException($identity);
         }
         if ($this->findByEmail($email) !== null) {
-            return 'Cette adresse e-mail est déjà utilisée.';
+            throw new ValidationException('Cette adresse e-mail est déjà utilisée.');
         }
         $pseudoCheck = $this->validatePseudoAvailable($pseudo);
         if ($pseudoCheck !== true) {
-            return $pseudoCheck;
+            throw new ValidationException($pseudoCheck);
         }
+        UserAccountValidator::requirePasswordLength($plainPassword);
         $hash = self::hashPassword($plainPassword);
         if ($hash === null) {
-            return self::passwordValidationMessage();
+            // Filet de sécurité si hashPassword change de règles.
+            throw new ValidationException(self::passwordValidationMessage());
         }
 
         if ($foyerId > 0 && (new FoyerRepository())->findById($foyerId) === null) {
-            return 'Foyer introuvable.';
+            throw new NotFoundException('Foyer introuvable.');
         }
 
         $this->db->prepare(
@@ -233,7 +243,9 @@ final class UtilisateurRepository
                 // Rattacher aussi à group_members (sinon le foyer « social » ignore le membre).
                 $assigned = (new FoyerRepository())->assignUser($userId, $foyerId);
                 if ($assigned !== true) {
-                    return is_string($assigned) ? $assigned : 'Impossible de rattacher le foyer.';
+                    throw new ValidationException(
+                        is_string($assigned) ? $assigned : 'Impossible de rattacher le foyer.'
+                    );
                 }
             } else {
                 // Compte sans foyer fourni : créer « Mon foyer » (comme createWithPasswordHash).
@@ -247,7 +259,7 @@ final class UtilisateurRepository
     /**
      * Crée un compte avec un hash déjà calculé (inscription confirmée par e-mail).
      *
-     * @return int|string
+     * @throws ValidationException
      */
     public function createWithPasswordHash(
         string $nom,
@@ -256,30 +268,27 @@ final class UtilisateurRepository
         string $role = UserRole::USER,
         string $prenom = '',
         string $pseudo = ''
-    ): int|string {
+    ): int {
         $nom = trim($nom);
         $prenom = trim($prenom);
         $pseudo = UserProfile::sanitizePseudo($pseudo);
-        $email = mb_strtolower(trim($email), 'UTF-8');
+        $email = UserAccountValidator::requireEmail($email);
         $role = UserRole::normalize($role);
         $passwordHash = trim($passwordHash);
 
         $identity = UserProfile::validateIdentityFields($nom, $prenom, $pseudo);
         if ($identity !== true) {
-            return $identity;
-        }
-        if ($email === '' || !filter_var($email, FILTER_VALIDATE_EMAIL)) {
-            return 'Adresse e-mail invalide.';
+            throw new ValidationException($identity);
         }
         if ($passwordHash === '') {
-            return 'Mot de passe invalide.';
+            throw new ValidationException('Mot de passe invalide.');
         }
         if ($this->findByEmail($email) !== null) {
-            return 'Cette adresse e-mail est déjà utilisée.';
+            throw new ValidationException('Cette adresse e-mail est déjà utilisée.');
         }
         $pseudoCheck = $this->validatePseudoAvailable($pseudo);
         if ($pseudoCheck !== true) {
-            return $pseudoCheck;
+            throw new ValidationException($pseudoCheck);
         }
 
         $this->db->prepare(
@@ -305,24 +314,22 @@ final class UtilisateurRepository
     /**
      * Premier compte administrateur (installation).
      *
-     * @return int|string ID utilisateur ou message d’erreur
+     * @throws ValidationException compte déjà présent ou champs invalides
+     * @throws RepositoryException échec technique (transaction / base)
      */
-    public function createFirstAdmin(string $nom, string $email, string $plainPassword): int|string
+    public function createFirstAdmin(string $nom, string $email, string $plainPassword): int
     {
         $this->db->beginTransaction();
         try {
             if ($this->countWithPassword() > 0) {
                 $this->db->rollBack();
 
-                return 'Un compte administrateur existe déjà. Utilisez la page de connexion.';
+                throw new ValidationException(
+                    'Un compte administrateur existe déjà. Utilisez la page de connexion.'
+                );
             }
 
             $result = $this->create($nom, $email, $plainPassword, UserRole::ADMIN);
-            if (!is_int($result)) {
-                $this->db->rollBack();
-
-                return $result;
-            }
 
             if (FoyerRepository::tableExists($this->db)) {
                 (new FoyerRepository())->createDefaultForUser($result);
@@ -331,13 +338,19 @@ final class UtilisateurRepository
             $this->db->commit();
 
             return $result;
+        } catch (ValidationException | NotFoundException $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+
+            throw $e;
         } catch (\Throwable $e) {
             if ($this->db->inTransaction()) {
                 $this->db->rollBack();
             }
 
             error_log('Moncine createFirstAdmin failed: ' . $e->getMessage());
-            return 'Création du compte impossible.';
+            throw new RepositoryException('Création du compte impossible.', 0, $e);
         }
     }
 

@@ -9,6 +9,18 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.30] — 2026-07-20
+
+**Qualité code : Phase E (exceptions) + Phase F (Validator)**
+
+### Technique
+
+- **Phase E** : `NotFoundException` / `RepositoryException` ; création de compte (`create`, `createWithPasswordHash`, `createFirstAdmin`) via exceptions ; pages `utilisateurs.php` et `premier-compte.php` adaptées.
+- **Phase F** : `Validator` fluide + `UserAccountValidator` (e-mail / mot de passe) sur inscription et création admin ; messages utilisateur inchangés.
+- Tests : `UtilisateurCreateExceptionTest`, `ValidatorTest`.
+
+---
+
 ## [0.7.29] — 2026-07-20
 
 **Qualité code : Phase D — tests et baseline couverture**

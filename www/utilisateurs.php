@@ -9,6 +9,8 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\Auth;
 use Moncine\Csrf;
+use Moncine\Exception\NotFoundException;
+use Moncine\Exception\ValidationException;
 use Moncine\FoyerRepository;
 use Moncine\RegistrationService;
 use Moncine\RegistrationSettings;
@@ -31,19 +33,20 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         (new RegistrationSettings())->setMode((string) ($_POST['registration_mode'] ?? ''));
         $success = 'Réglage d’inscription enregistré.';
     } elseif ($action === 'create') {
-        $result = $repo->create(
-            (string) ($_POST['nom'] ?? ''),
-            (string) ($_POST['email'] ?? ''),
-            (string) ($_POST['password'] ?? ''),
-            (string) ($_POST['role'] ?? UserRole::USER),
-            0,
-            (string) ($_POST['prenom'] ?? ''),
-            (string) ($_POST['pseudo'] ?? '')
-        );
-        if (is_int($result)) {
+        // Phase E : create() lance une exception au lieu de renvoyer un message texte.
+        try {
+            $repo->create(
+                (string) ($_POST['nom'] ?? ''),
+                (string) ($_POST['email'] ?? ''),
+                (string) ($_POST['password'] ?? ''),
+                (string) ($_POST['role'] ?? UserRole::USER),
+                0,
+                (string) ($_POST['prenom'] ?? ''),
+                (string) ($_POST['pseudo'] ?? '')
+            );
             $success = 'Compte créé. L’utilisateur pourra rejoindre un groupe famille via Mes groupes.';
-        } else {
-            $error = (string) $result;
+        } catch (ValidationException | NotFoundException $e) {
+            $error = $e->getMessage();
         }
     } elseif ($action === 'toggle') {
         $userId = (int) ($_POST['user_id'] ?? 0);

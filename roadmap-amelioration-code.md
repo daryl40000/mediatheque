@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-07-20 (version **0.7.29** — Phase D : tests + baseline couverture CI)  
+**Dernière mise à jour :** 2026-07-20 (version **0.7.30** — Phase E exceptions + Phase F Validator)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif
@@ -381,9 +381,9 @@ if (!is_int($result)) {
 
 #### 1. Créer `lib/Exception/` (pour le **nouveau** code)
 
-- `ValidationException` — erreurs utilisateur (message affichable)
-- `NotFoundException` — ressource absente
-- `RepositoryException` — erreur technique base / transaction
+- `ValidationException` — erreurs utilisateur (message affichable) — ✅ déjà utilisé par `FilmBulkActionService`
+- `NotFoundException` — ressource absente — ✅
+- `RepositoryException` — erreur technique base / transaction — ✅
 
 #### 2. Utiliser les exceptions dans les **nouveaux services** (Phase A)
 
@@ -391,7 +391,8 @@ Les services lancent `ValidationException` ; le contrôleur `www/*.php` catch et
 
 #### 3. Migrer les repositories **un par un**, avec adaptation des pages appelantes
 
-Exemple pilote : `UtilisateurRepository::create()` — uniquement quand `RegistrationService` et les pages admin sont prêts.
+**Pilote livré :** `UtilisateurRepository::create()` / `createWithPasswordHash()` / `createFirstAdmin()`  
+→ pages `utilisateurs.php`, `premier-compte.php` ; `RegistrationService` convertit encore l’exception en message pour l’API inscription.
 
 ### Ce qu'il ne faut **pas** faire (encore)
 
@@ -399,9 +400,13 @@ Exemple pilote : `UtilisateurRepository::create()` — uniquement quand `Registr
 
 ### Critères de fin (Phase E — par pilote)
 
-- [ ] Un repository + ses pages appelantes migrés
-- [ ] Comportement utilisateur identique (même message, même redirection)
-- [ ] Pas de handler global sans stratégie complète
+- [x] Un repository + ses pages appelantes migrés (`UtilisateurRepository` création)
+- [x] Comportement utilisateur identique (mêmes messages, affichage erreur sur place)
+- [x] Pas de handler global sans stratégie complète
+
+### Suite possible
+
+Migrer d’autres méthodes `int|string` (ex. `deleteOwnAccount`, actions foyer) **une par une**.
 
 ---
 
@@ -411,18 +416,20 @@ Exemple pilote : `UtilisateurRepository::create()` — uniquement quand `Registr
 
 Validation dispersée dans les repositories. Un helper commun aide, mais **après** la Phase E sur un cas pilote.
 
-### Pilote recommandé
+### Pilote livré
 
-`UtilisateurRepository` / inscription (`RegistrationService`).
-
-### Fichier cible : `lib/Validator/Validator.php`
-
-Chaînage `required()`, `email()`, `minLength()`, `orThrow()` — voir implémentation type dans l'historique git de ce document.
+- `lib/Validator/Validator.php` — chaînage `required()`, `email()`, `minLength()`, `maxLength()`, `byteLengthBetween()`, `orThrow()`, `result()`
+- `lib/Validator/UserAccountValidator.php` — e-mail + longueur mot de passe (messages inchangés)
+- Utilisé par : `UtilisateurRepository::create` / `createWithPasswordHash`, `RegistrationService::submitRequest`
 
 ### Critères de fin (Phase F)
 
-- [ ] Validator utilisé sur **un** flux complet (inscription ou création utilisateur admin)
-- [ ] Messages d'erreur inchangés côté utilisateur
+- [x] Validator utilisé sur **un** flux complet (inscription + création utilisateur admin)
+- [x] Messages d'erreur inchangés côté utilisateur
+
+### Suite possible
+
+Étendre le Validator à d’autres formulaires (profil, reset mot de passe) **un par un**.
 
 ---
 
@@ -485,7 +492,7 @@ Chaînage `required()`, `email()`, `minLength()`, `orThrow()` — voir implémen
 - [x] **Phase B** — Pilote 4 : `CatalogFilmRepository` (**~529** lignes ; extractions `FilmCatalogSql`, `FilmPosterService`, `FilmPersonQuery`, `FilmLibraryQuery`, `FilmCatalogSaga`, `FilmLibraryMutations`, `FilmCatalogEnrichment`, `FilmCatalogImport`, `FilmCatalogUpdater`, `FilmLibraryAttach`, `FilmCatalogCreator`)
 - [x] **Phase C** — `SqlNamedParams` + trait ; BD / magazines / sujets migrés ; `SortColumnHelper`
 - [x] **Phase D** — 126 fichiers de tests ; cartographie extractions ; job CI couverture (pcov)
-- [ ] **Phase E** — Pilote exceptions (1 repository + pages)
-- [ ] **Phase F** — Pilote Validator (inscription / utilisateur)
+- [x] **Phase E** — Pilote exceptions : `UtilisateurRepository` création + pages admin / premier compte
+- [x] **Phase F** — Pilote Validator (`Validator` + `UserAccountValidator` sur inscription / create)
 - [ ] **Dette** — `FilmRepositoryLegacy` traité
 - [ ] **Dette** — `View.php` scindé (au moins URLs BD / magazine / jeu)
