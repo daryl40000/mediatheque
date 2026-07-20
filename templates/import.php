@@ -109,7 +109,26 @@ $csvMaxMo = (int) (MONCINE_CSV_MAX_BYTES / 1024 / 1024);
     <?php if ((int) ($libraryCount ?? 0) === 0): ?>
         <p class="import-page__meta">Aucune entrée en bibliothèque.</p>
     <?php else: ?>
-        <p class="import-inline-note"><?= (int) $libraryCount ?> entrée(s) (films + envies).</p>
+        <p class="import-inline-note">
+            <?= (int) $libraryCount ?> entrée(s) au total
+            <?php
+            $domainParts = [];
+            foreach (($libraryCountByDomain ?? []) as $domainKey => $domainTotal) {
+                if ((int) $domainTotal <= 0) {
+                    continue;
+                }
+                $domainParts[] = Moncine\MediaDomain::label((string) $domainKey) . ' : ' . (int) $domainTotal;
+            }
+            if ($domainParts !== []) {
+                echo ' — ' . Moncine\View::escape(implode(' · ', $domainParts));
+            }
+            ?>
+            (collection + envies, tous médias).
+        </p>
+        <p class="import-inline-note">
+            Le fichier CSV contient <strong>tous</strong> les médias de votre bibliothèque
+            (pas seulement l’onglet actif). Vérifiez le décompte ci-dessus avant d’exporter.
+        </p>
         <div class="export-actions">
             <form method="post" action="/export.php" class="inline-form">
                 <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>

@@ -60,61 +60,16 @@ final class ImportRunner
      */
     public function importLibrarySheet(array $dataRows, array $header): array
     {
-        $map = ImportFilmRows::mapHeaders($header, LibraryExportSchema::COLUMN_ALIASES);
-        if (!isset($map['oeuvre_id']) && !isset($map['titre'])) {
-            return [
-                'imported' => 0,
-                'vues' => 0,
-                'errors' => ['Colonne « ID catalogue » ou « Titre » requise.'],
-            ];
-        }
+        $result = (new LibraryBulkImporter())->importSheet($dataRows, $header);
 
-        $imported = 0;
-        $vues = 0;
-        $errors = [];
-        $line = 1;
-
-        foreach ($dataRows as $row) {
-            $line++;
-            if (ImportFilmRows::isEmptyRow($row)) {
-                continue;
-            }
-            try {
-                $parsed = ImportLibraryRows::rowToLibrary($row, $map);
-                if ((int) ($parsed['oeuvre_id'] ?? 0) <= 0 && trim((string) ($parsed['titre'] ?? '')) === '') {
-                    continue;
-                }
-
-                $vuRaw = (string) ($parsed['_vu'] ?? '');
-                $noteRaw = (string) ($parsed['_note'] ?? '');
-                $importColumns = (array) ($parsed['_import_columns'] ?? array_keys($map));
-                unset($parsed['_vu'], $parsed['_note'], $parsed['_import_columns']);
-                if ((int) ($parsed['oeuvre_id'] ?? 0) > 0) {
-                    unset($parsed['bibliotheque_id']);
-                }
-
-                $this->films->upsertLibraryFromExport($parsed, $importColumns);
-                $imported++;
-
-                $film = $this->resolveLibraryFilmAfterImport($parsed);
-                if ($film === null) {
-                    continue;
-                }
-
-                $filmId = (int) $film['id'];
-                $dateVue = ImportCsv::parseVueDate($vuRaw);
-                if ($dateVue !== null) {
-                    $note = ImportCsv::parseNote($noteRaw);
-                    if ($this->historique->recordViewing($filmId, $dateVue, $note)) {
-                        $vues++;
-                    }
-                }
-            } catch (\Throwable $e) {
-                $errors[] = 'Ligne ' . $line . ' : ' . $e->getMessage();
-            }
-        }
-
-        return ['imported' => $imported, 'vues' => $vues, 'errors' => $errors];
+        return [
+            'imported' => (int) ($result['imported'] ?? 0),
+            'vues' => (int) ($result['vues'] ?? 0),
+            'errors' => (array) ($result['errors'] ?? []),
+            'added' => (int) ($result['added'] ?? 0),
+            'updated' => (int) ($result['updated'] ?? 0),
+            'error_total' => (int) ($result['error_total'] ?? 0),
+        ];
     }
 
     /**

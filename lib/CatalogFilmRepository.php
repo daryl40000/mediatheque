@@ -190,6 +190,14 @@ final class CatalogFilmRepository
         return $this->libraryQuery()->countLibraryEntries();
     }
 
+    /**
+     * @return array<string, int>
+     */
+    public function countLibraryEntriesByDomain(): array
+    {
+        return $this->libraryQuery()->countLibraryEntriesByDomain();
+    }
+
     /** Même liste collection, ordre aléatoire. */
     public function findAllRandomOrder(): array
     {

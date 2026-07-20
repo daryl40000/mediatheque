@@ -82,10 +82,26 @@ final class ImportLibraryRows
         return max(0, (int) $raw);
     }
 
-    /** Normalise le support selon le domaine (films vs BD, etc.). */
+    /** Normalise le support selon le domaine (films vs BD vs magazines). */
     private static function normalizeSupportForImport(string $value, string $mediaDomain): string
     {
         $domain = $mediaDomain !== '' ? MediaDomain::normalize($mediaDomain) : '';
+        if ($domain === MediaDomain::MAGAZINE) {
+            $value = trim($value);
+            if ($value === '') {
+                return '';
+            }
+            $tags = MagazineSupport::parseTags($value);
+            if ($tags === []) {
+                return '';
+            }
+
+            return MagazineSupport::formatTagsForStorage(
+                in_array(MagazineSupport::TAG_PAPIER, $tags, true),
+                in_array(MagazineSupport::TAG_PDF, $tags, true)
+            );
+        }
+
         if ($domain === MediaDomain::BD) {
             return BdPhysicalSupport::normalize($value);
         }
@@ -95,7 +111,20 @@ final class ImportLibraryRows
             return $film;
         }
 
-        // Ancien export sans colonne Domaine : accepter aussi un support BD.
-        return BdPhysicalSupport::normalize($value);
+        // Ancien export sans colonne Domaine : accepter aussi un support BD / magazine.
+        $bd = BdPhysicalSupport::normalize($value);
+        if ($bd !== '') {
+            return $bd;
+        }
+
+        $magTags = MagazineSupport::parseTags($value);
+        if ($magTags !== []) {
+            return MagazineSupport::formatTagsForStorage(
+                in_array(MagazineSupport::TAG_PAPIER, $magTags, true),
+                in_array(MagazineSupport::TAG_PDF, $magTags, true)
+            );
+        }
+
+        return '';
     }
 }

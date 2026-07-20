@@ -9,6 +9,23 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.33] — 2026-07-20
+
+**Import bibliothèque : fiabilité (doublons) + magazines**
+
+### Corrigé
+
+- **Doublons UNIQUE** à l’import bibliothèque : reprise propre après conflit SQLite (SAVEPOINT), mise à jour au lieu d’échec en cascade.
+- **Magazines** : enregistrement des séries (`series_bibliotheque`) ; possession respectée (support vide = non possédé ; plus de « papier » inventé).
+- Import/export du support magazines (Papier / PDF) et stats claires (ajoutés / mis à jour).
+
+### Technique
+
+- Nouvel importateur optimisé `LibraryBulkImporter` (préchargement, transaction, limite de temps).
+- Tests : doublons wishlist, magazines possédés vs non possédés, rattachement série.
+
+---
+
 ## [0.7.32] — 2026-07-20
 
 **BD : import CSV + import/export bibliothèque multi-médias**

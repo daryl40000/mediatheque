@@ -23,6 +23,18 @@ final class ExportLibrary
         return (new CatalogFilmRepository())->countLibraryEntries();
     }
 
+    /**
+     * @return array<string, int>
+     */
+    public function libraryEntryCountByDomain(): array
+    {
+        if (!$this->films->usesCatalogModel()) {
+            return [MediaDomain::FILM => $this->films->count()];
+        }
+
+        return (new CatalogFilmRepository())->countLibraryEntriesByDomain();
+    }
+
     public function sendCsvDownload(): void
     {
         $rows = [LibraryExportSchema::headers()];

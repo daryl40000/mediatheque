@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\CatalogAdmin;
 use Moncine\Csrf;
 use Moncine\ExportCatalog;
+use Moncine\ExportLibrary;
 use Moncine\FilmEnricher;
 use Moncine\FilmRepository;
 use Moncine\GameEnricher;
@@ -18,6 +19,7 @@ use Moncine\IgdbConfig;
 use Moncine\ImportCsv;
 use Moncine\ImportOds;
 use Moncine\ImportPostersZip;
+use Moncine\MediaDomain;
 use Moncine\PosterIdRemap;
 use Moncine\SteamConfig;
 use Moncine\SteamLibraryImporter;
@@ -279,6 +281,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 (new FilmRepository())->deleteAll();
             }
 
+            @set_time_limit(600);
+
             $ext = strtolower(pathinfo((string) ($_FILES['csv_file']['name'] ?? ''), PATHINFO_EXTENSION));
             if ($ext === 'ods') {
                 $result = (new ImportOds())->importFromPath($tmp, $replaceCatalog);
@@ -286,11 +290,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 $result = (new ImportCsv())->importFromPath($tmp, MONCINE_CSV_DELIMITER, $replaceCatalog);
             }
 
-            $message = sprintf(
-                '%d entrée(s) importée(s) ou mise(s) à jour. %d vision(s) enregistrée(s) dans l’historique.',
-                $result['imported'],
-                $result['vues']
-            );
+            $added = (int) ($result['added'] ?? 0);
+            $updated = (int) ($result['updated'] ?? 0);
+            if ($added > 0 || $updated > 0) {
+                $message = sprintf(
+                    '%d nouvelle(s) entrée(s) ajoutée(s), %d déjà présente(s) mise(s) à jour. %d vision(s) enregistrée(s).',
+                    $added,
+                    $updated,
+                    (int) ($result['vues'] ?? 0)
+                );
+            } else {
+                $message = sprintf(
+                    '%d entrée(s) importée(s) ou mise(s) à jour. %d vision(s) enregistrée(s) dans l’historique.',
+                    $result['imported'],
+                    $result['vues']
+                );
+            }
             if (!empty($result['format_label'])) {
                 $message .= ' Format détecté : ' . $result['format_label'] . '.';
             }
@@ -309,6 +324,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 $repo = new FilmRepository();
 $filmCount = $repo->count();
 $libraryCount = $repo->usesCatalogModel() ? $repo->countLibraryEntries() : $filmCount;
+$libraryCountByDomain = $repo->usesCatalogModel()
+    ? (new ExportLibrary())->libraryEntryCountByDomain()
+    : [MediaDomain::FILM => $filmCount];
 $catalogCount = CatalogAdmin::canAccess() ? (new ExportCatalog())->catalogEntryCount() : 0;
 $enrichPending = (new FilmEnricher())->countPending();
 $hasTmdbKey = TmdbConfig::hasApiKey();
@@ -337,6 +355,7 @@ View::render('import', [
     'enrichMessage' => $enrichMessage,
     'filmCount' => $filmCount,
     'libraryCount' => $libraryCount,
+    'libraryCountByDomain' => $libraryCountByDomain,
     'catalogCount' => $catalogCount,
     'canManageCatalog' => CatalogAdmin::canAccess(),
     'enrichPending' => $enrichPending,

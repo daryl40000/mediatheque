@@ -147,6 +147,7 @@ final class FilmLibraryQuery
         [$userWhere, $params] = CatalogSchema::libraryFilter($this->foyerId(), $this->userId(), null);
 
         // Pas de filtre MediaContext : un seul fichier couvre toute la médiathèque.
+        // Tri par titre (pas par domaine) pour ne pas regrouper toutes les BD en tête de fichier.
         $stmt = $this->db->prepare(
             'SELECT ' . CatalogSchema::selectFilmRow() . ',
                 o.media_domain,
@@ -158,14 +159,44 @@ final class FilmLibraryQuery
                  ORDER BY h.date_vue DESC, h.id DESC LIMIT 1) AS derniere_note
              FROM ' . CatalogSchema::JOIN . '
              WHERE ' . $userWhere . '
-             ORDER BY o.media_domain COLLATE FRENCH_NOCASE,
-                      b.statut COLLATE FRENCH_NOCASE,
-                      o.titre COLLATE FRENCH_NOCASE'
+             ORDER BY o.titre COLLATE FRENCH_NOCASE,
+                      o.media_domain COLLATE FRENCH_NOCASE,
+                      b.statut COLLATE FRENCH_NOCASE'
         );
         $params['history_user_id'] = $this->userId();
         $stmt->execute($params);
 
-        return $stmt->fetchAll();
+        return $stmt->fetchAll() ?: [];
+    }
+
+    /**
+     * Nombre d’entrées bibliothèque par domaine média (pour l’écran d’export).
+     *
+     * @return array<string, int> ex. ['film' => 120, 'bd' => 40]
+     */
+    public function countLibraryEntriesByDomain(): array
+    {
+        [$userWhere, $params] = CatalogSchema::libraryFilter($this->foyerId(), $this->userId(), null);
+
+        if (!CatalogSchema::hasMediaDomainColumn()) {
+            return [MediaDomain::FILM => $this->countLibraryEntries()];
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT o.media_domain AS domain, COUNT(*) AS total
+             FROM ' . CatalogSchema::JOIN . '
+             WHERE ' . $userWhere . '
+             GROUP BY o.media_domain'
+        );
+        $stmt->execute($params);
+
+        $counts = [];
+        foreach ($stmt->fetchAll() ?: [] as $row) {
+            $domain = MediaDomain::normalize((string) ($row['domain'] ?? MediaDomain::FILM));
+            $counts[$domain] = (int) ($row['total'] ?? 0);
+        }
+
+        return $counts;
     }
 
     public function countLibraryEntries(): int

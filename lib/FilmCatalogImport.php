@@ -120,6 +120,7 @@ final class FilmCatalogImport
         $details = $this->libraryPayloadFromImport($data, $statut);
 
         if ($domain === MediaDomain::BD && BdRepository::isAvailable()) {
+            $this->ensureBdExtensionRow($oeuvreId, $oeuvre);
             $result = (new BdRepository())->addFromCatalogOeuvre(
                 $oeuvreId,
                 $statut,
@@ -128,7 +129,12 @@ final class FilmCatalogImport
                 $details
             );
             if (!is_int($result)) {
-                throw new \RuntimeException((string) $result);
+                $message = (string) $result;
+                // Déjà présent : succès silencieux pour l’import (idempotent).
+                if (str_contains($message, 'déjà')) {
+                    return;
+                }
+                throw new \RuntimeException($message);
             }
 
             // Compléter les champs bibliothèque (support, etc.) après le rattachement BD.
@@ -192,6 +198,40 @@ final class FilmCatalogImport
                 $bdRepo->registerSeriesInLibrary($seriesId, $statut, $this->userId(), $this->foyerId());
             }
         }
+    }
+
+    /**
+     * Crée une ligne oeuvre_bd minimale si l’œuvre est marquée BD sans extension
+     * (ex. import catalogue sans colonnes BD).
+     *
+     * @param array<string, mixed> $oeuvre
+     */
+    private function ensureBdExtensionRow(int $oeuvreId, array $oeuvre): void
+    {
+        if ($oeuvreId <= 0 || !BdRepository::isAvailable()) {
+            return;
+        }
+
+        $bdRepo = new BdRepository();
+        if ($bdRepo->findCatalogByOeuvreId($oeuvreId) !== null) {
+            return;
+        }
+
+        $db = Database::getInstance();
+        $db->prepare(
+            'INSERT OR IGNORE INTO oeuvre_bd (
+                oeuvre_id, series_id, kind, tome_numero, tome_ordre, tome_label,
+                est_hors_serie, scenariste, dessinateur, editeur, genre
+             ) VALUES (?, NULL, ?, 0, 0, ?, 0, ?, ?, ?, ?)'
+        )->execute([
+            $oeuvreId,
+            BdKind::BD,
+            trim((string) ($oeuvre['titre'] ?? '')),
+            trim((string) ($oeuvre['realisateur'] ?? '')),
+            '',
+            '',
+            '',
+        ]);
     }
 
     /**

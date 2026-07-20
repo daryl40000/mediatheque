@@ -163,7 +163,7 @@ final class LibraryExportSchema
         'oeuvre_id' => (int) ($film['oeuvre_id'] ?? 0) > 0 ? (string) (int) $film['oeuvre_id'] : '',
         'bibliotheque_id' => (int) ($film['id'] ?? 0) > 0 ? (string) (int) $film['id'] : '',
         'media_domain' => MediaDomain::normalize((string) ($film['media_domain'] ?? MediaDomain::FILM)),
-        'support_physique' => SupportPhysique::label((string) ($film['support_physique'] ?? '')),
+        'support_physique' => self::supportLabelForExport($film),
         'vu' => CollectionExportSchema::formatVueDateForExport((string) ($film['derniere_vue'] ?? '')),
         'note' => $note !== null && $note !== '' ? (string) $note : '',
         'saga' => trim((string) ($film['saga'] ?? '')),
@@ -182,8 +182,36 @@ final class LibraryExportSchema
     return $row;
   }
 
-  public static function columnLabelsText(): string
-  {
-    return implode(', ', self::headers());
-  }
+    public static function columnLabelsText(): string
+    {
+        return implode(', ', self::headers());
+    }
+
+    /**
+     * @param array<string, mixed> $film
+     */
+    private static function supportLabelForExport(array $film): string
+    {
+        $raw = (string) ($film['support_physique'] ?? '');
+        $domain = MediaDomain::normalize((string) ($film['media_domain'] ?? MediaDomain::FILM));
+        if ($domain === MediaDomain::BD) {
+            $label = BdPhysicalSupport::label($raw);
+
+            return $label !== '' ? $label : $raw;
+        }
+
+        if ($domain === MediaDomain::MAGAZINE) {
+            // Vide = non possédé. Ne pas écrire « Non possédé » (sinon réimport ambigu).
+            $tags = MagazineSupport::tagsForIssue($film);
+            if ($tags === []) {
+                return '';
+            }
+
+            return MagazineSupport::possessionStatusLabel($film);
+        }
+
+        $label = SupportPhysique::label($raw);
+
+        return $label !== '' ? $label : $raw;
+    }
 }
