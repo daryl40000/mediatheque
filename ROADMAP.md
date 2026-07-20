@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.7.31** (2026-07-20)  
+**Version actuelle : 0.7.32** (2026-07-20)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -13,17 +13,17 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 ---
 
-## Où en est-on ? (synthèse 0.7.31)
+## Où en est-on ? (synthèse 0.7.32)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
 | **Films** | ✅ Production | 0.4.4+ → **0.7.6** | Complet (TMDB, sagas, quiz, partage, **ressentis**) |
 | **Jeux** | ✅ Utilisable | 0.5.0 → **0.7.17** | Complet (IGDB, sagas, Steam, prêts, magasins catalogue, `/jeu-magazines.php`) |
 | **Magazines** | ✅ Complet (M5) | 0.2.x → **0.7.17** | ABM, PDF, FTS, sujets vignettes, pont catalogue **jeu/film** |
-| **BD / Manga** | 🔄 **En cours (M2)** | **0.7.2** → **0.7.16** | Collection, envies, partage, profil public, impression ; **import CSV** à faire |
+| **BD / Manga** | 🔄 **En cours (M2)** | **0.7.2** → import CSV prêt | Collection, envies, partage, profil, impression, **import CSV** ; clôture → **0.8.0** |
 | **Livres** | ⏳ Placeholder (M3) | **0.7.8** | Onglet + page « bientôt » (`/livres.php`) |
 | **Musique** | ⏳ Placeholder (M8) | **0.7.8** | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles et CD physiques |
-| **Transversal** | 🔄 Partiel | **0.7.12**–**0.7.31** | Recherche globale, catalogue admin, profil → fiches catalogue, partage visiteur, connexion pseudo, UI Compte/Import, menu mobile, PWA, CI |
+| **Transversal** | 🔄 Partiel | **0.7.12**–**0.7.32** | Recherche globale, catalogue admin, import/export multi-médias, profil → fiches, partage, connexion pseudo, UI Compte/Import, menu mobile, PWA, CI |
 
 ### Phases (suivi)
 
@@ -34,7 +34,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 | **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.7.17** | Import GOG (voir M4) |
 | **M5** Magazines | ✅ **Livré** | **0.7.17** | Maintenance ; polish ponctuel |
 | **Pont** Magazines ↔ Catalogue | ✅ Livré | **0.7.17** | Jeu (0.6.3) + **film** (0.7.17) |
-| **M2** BD / Manga | 🔄 **En cours** | **0.7.2**–**0.7.16** | Import CSV ; clôture M2 → **0.8.0** |
+| **M2** BD / Manga | 🔄 **Import CSV prêt** | **0.7.2**–**0.7.16** + import | Tag **0.8.0** après validation |
 | **M3** Livres | ⏳ À faire | 0.8.x (indicatif) | Après M2 stabilisée |
 | **M8** Musique (vinyles, CD) | ⏳ À faire | 0.8.x+ (indicatif) | **Après M3** |
 | **M6** Transversal | 🔄 **Partiel** | 0.7.14+ | Stats, import/export par domaine → **0.9.0** |
@@ -44,9 +44,15 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 ## Prochaines étapes (par priorité)
 
-### 🔜 **0.8.0** — clôture M2 BD (import CSV)
+### 🔜 **0.8.0** — clôture M2 BD
 
-- Import catalogue BD depuis CSV ; stabilisation M2 avant M3 Livres.
+- Import CSV catalogue livré en **0.7.32** — valider en usage réel puis tagger **0.8.0**.
+- Ensuite : **M3 Livres**.
+
+### ✅ **0.7.32** — BD import CSV + bibliothèque multi-médias (2026-07-20)
+
+- Import catalogue BD CSV admin ; retrait série de la bibliothèque.
+- Import/export bibliothèque tous médias ; extensions BD dans le catalogue admin.
 
 ### ✅ **0.7.31** — qualité code : dette Legacy + View URLs (2026-07-20)
 
@@ -497,7 +503,7 @@ Relier optionnellement un sujet magazine à une fiche **jeu ou film** catalogue 
 **Documentation :** [doc/bd.md](doc/bd.md)  
 **Version visée (clôture) :** 0.8.0 (indicatif)
 
-### Livré (0.7.2 → **0.7.16**)
+### Livré (0.7.2 → **0.7.16** + import CSV)
 
 | Tâche | Version |
 |-------|---------|
@@ -508,14 +514,16 @@ Relier optionnellement un sujet magazine à une fiche **jeu ou film** catalogue 
 | Ressentis (comme films/jeux) | **0.7.6** |
 | Découpage `BdRepository` (phase B qualité code) | **0.7.8** |
 | Filtre possession mémorisé (aligné magazines) | **0.7.16** |
+| **Import CSV catalogue** (`BdCatalogImporter`, `/import-catalogue-bd.php`) | **livré (0.7.32)** — tag **0.8.0** après validation terrain |
 
 ### Reste à faire
 
 | Tâche | Détail |
 |-------|--------|
-| Import CSV | `doc/import-bd.md` — **seul bloc restant pour clôturer M2** |
+| Tag / release **0.8.0** | Clôture M2 officielle après validation terrain de l’import CSV |
+| Export CSV BD (optionnel) | Aller-retour export/import |
 
-**Critère de sortie :** onglet BD utilisable sans API externe — **quasi atteint** ; import CSV pour clôturer.
+**Critère de sortie :** onglet BD utilisable sans API externe — **atteint** avec l’import CSV.
 
 ---
 
@@ -667,4 +675,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.7.31** — 2026-07-20 (qualité code : dette Legacy + View URLs).*
+*Dernière mise à jour : **0.7.32** — 2026-07-20 (BD import CSV + bibliothèque multi-médias).*

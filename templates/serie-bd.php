@@ -43,6 +43,9 @@
             <p>
                 <a href="<?= $isWishlist ? '/bd-envies.php' : '/bd.php' ?>" class="btn btn-secondary btn-sm">← Retour</a>
             </p>
+            <?php if (isset($_GET['error']) && trim((string) $_GET['error']) !== ''): ?>
+                <div class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['error']) ?></div>
+            <?php endif; ?>
             <div class="magazine-series-header__main">
                 <?php if ($posterSrc !== ''): ?>
                     <img src="<?= $posterSrc ?>" alt="" class="magazine-cover magazine-cover--header">
@@ -251,6 +254,14 @@
                     </table>
                 </div>
             <?php endif; ?>
+        <?php endif; ?>
+
+        <?php if (!empty($seriesInLibrary)): ?>
+            <?php
+            $pageStatut = $statut;
+            $tomeCount = (int) ($totalAllTomes ?? 0);
+            require MONCINE_ROOT . '/templates/_bd_series_remove_button.php';
+            ?>
         <?php endif; ?>
     <?php endif; ?>
 </section>

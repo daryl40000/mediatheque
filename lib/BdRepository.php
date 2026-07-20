@@ -28,6 +28,8 @@ final class BdRepository
 
     private ?BdLibraryAttach $libraryAttachCache = null;
 
+    private ?BdLibraryMutations $libraryMutationsCache = null;
+
     private ?BdPosterService $posterServiceCache = null;
 
     public function __construct()
@@ -66,6 +68,11 @@ final class BdRepository
     private function libraryAttach(): BdLibraryAttach
     {
         return $this->libraryAttachCache ??= new BdLibraryAttach($this->db, $this->libraryQuery());
+    }
+
+    private function libraryMutations(): BdLibraryMutations
+    {
+        return $this->libraryMutationsCache ??= new BdLibraryMutations($this->db, $this->libraryAttach());
     }
 
     private function posterService(): BdPosterService
@@ -132,6 +139,16 @@ final class BdRepository
     public function isSeriesInLibrary(int $seriesId, string $statut, int $userId, int $foyerId): bool
     {
         return $this->libraryAttach()->isSeriesInLibrary($seriesId, $statut, $userId, $foyerId);
+    }
+
+    /**
+     * Retire la série (et ses tomes) de la collection ou des envies — pas du catalogue.
+     *
+     * @return array{removed_tomes: int}|string
+     */
+    public function removeSeriesFromLibrary(int $seriesId, string $statut, int $userId, int $foyerId): array|string
+    {
+        return $this->libraryMutations()->removeSeriesFromLibrary($seriesId, $statut, $userId, $foyerId);
     }
 
     /**
@@ -402,6 +419,39 @@ final class BdRepository
         int $foyerId
     ): int|string {
         return $this->catalogCreator()->createWithLibrary($data, $statut, $userId, $foyerId);
+    }
+
+    /**
+     * Tome catalogue sans bibliothèque (import CSV admin).
+     *
+     * @param array<string, mixed> $data
+     * @return int|string oeuvre_id ou message
+     */
+    public function createCatalogOnly(array $data): int|string
+    {
+        return $this->catalogCreator()->createCatalogOnly($data);
+    }
+
+    /**
+     * Trouve un tome déjà présent (même série, numéro et flag hors-série).
+     */
+    public function findCatalogTomeId(int $seriesId, int $tomeNumero, bool $horsSerie): ?int
+    {
+        if ($seriesId <= 0 || !self::isAvailable()) {
+            return null;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT oeuvre_id FROM oeuvre_bd
+             WHERE series_id = ?
+               AND tome_numero = ?
+               AND est_hors_serie = ?
+             LIMIT 1'
+        );
+        $stmt->execute([$seriesId, $tomeNumero, $horsSerie ? 1 : 0]);
+        $id = $stmt->fetchColumn();
+
+        return $id !== false ? (int) $id : null;
     }
 
     /**

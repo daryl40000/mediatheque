@@ -63,4 +63,18 @@ $posterSrc = Moncine\View::seriesPosterSrc($series);
 
         <button type="submit" class="btn btn-primary">Enregistrer</button>
     </form>
+
+    <?php
+    $pageStatut = Moncine\LibraryStatut::COLLECTION;
+    $tomeCount = 0;
+    if (Moncine\BdRepository::isAvailable()) {
+        $tomeCount = (new Moncine\BdRepository())->countTomesForSeries(
+            $seriesId,
+            Moncine\UserContext::currentUserId(),
+            Moncine\UserContext::currentFoyerId(),
+            Moncine\LibraryStatut::COLLECTION
+        );
+    }
+    require MONCINE_ROOT . '/templates/_bd_series_remove_button.php';
+    ?>
 </section>

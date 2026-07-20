@@ -9,6 +9,28 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.32] — 2026-07-20
+
+**BD : import CSV + import/export bibliothèque multi-médias**
+
+### Ajouté
+
+- **Import catalogue BD** (`/import-catalogue-bd.php`, `BdCatalogImporter`, [doc/import-bd.md](doc/import-bd.md)) : CSV admin (séries + tomes), option d’ajout à la bibliothèque.
+- **Retrait d’une série BD** de la bibliothèque (catalogue conservé), comme pour les magazines.
+- **Extensions BD** dans l’export/import catalogue admin (série, tome, auteurs…).
+
+### Modifié
+
+- **Export / import bibliothèque** : tous les domaines média (films, BD, jeux, magazines) ; colonne Domaine média ; rattachement BD/jeux/magazines correct (séries incluses).
+- Recherche d’œuvre à l’import par **ID absolu** (indépendant de l’onglet actif) ; repli sur le titre si l’ID est obsolète.
+
+### Technique
+
+- `SeriesRepository::createWithId` pour conserver les ID série à la migration.
+- Tests : `BdCatalogImporter*`, import bibliothèque BD, import catalogue BD.
+
+---
+
 ## [0.7.31] — 2026-07-20
 
 **Qualité code : dette Legacy + découpage View (URLs)**

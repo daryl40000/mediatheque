@@ -21,6 +21,7 @@ final class LibraryExportSchema
   public const COLUMNS = [
     'oeuvre_id' => 'ID catalogue',
     'bibliotheque_id' => 'ID bibliothèque',
+    'media_domain' => 'Domaine média',
     'titre' => 'Titre',
     'realisateur' => 'Réalisateur',
     'statut' => 'Statut',
@@ -52,6 +53,15 @@ final class LibraryExportSchema
       'id bibliothèque',
       'film_id',
       'id film',
+    ],
+    'media_domain' => [
+      'domaine media',
+      'domaine média',
+      'media_domain',
+      'media domain',
+      'type media',
+      'type média',
+      'domaine',
     ],
     'titre' => ['titre', 'title', 'nom', 'film'],
     'realisateur' => ['realisateur', 'director', 'auteur'],
@@ -152,6 +162,7 @@ final class LibraryExportSchema
       $row[] = match ($key) {
         'oeuvre_id' => (int) ($film['oeuvre_id'] ?? 0) > 0 ? (string) (int) $film['oeuvre_id'] : '',
         'bibliotheque_id' => (int) ($film['id'] ?? 0) > 0 ? (string) (int) $film['id'] : '',
+        'media_domain' => MediaDomain::normalize((string) ($film['media_domain'] ?? MediaDomain::FILM)),
         'support_physique' => SupportPhysique::label((string) ($film['support_physique'] ?? '')),
         'vu' => CollectionExportSchema::formatVueDateForExport((string) ($film['derniere_vue'] ?? '')),
         'note' => $note !== null && $note !== '' ? (string) $note : '',

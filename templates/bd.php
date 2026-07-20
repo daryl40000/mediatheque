@@ -30,6 +30,15 @@
         <div class="alert alert-warning"><?= Moncine\View::escape($moduleError) ?></div>
     <?php endif; ?>
 
+    <?php if (isset($_GET['series_removed'])): ?>
+        <div class="alert alert-success">
+            La série a été retirée de vos BD.
+            <?php if (isset($_GET['removed_tomes']) && (int) $_GET['removed_tomes'] > 0): ?>
+                <?= (int) $_GET['removed_tomes'] ?> tome(s) ont aussi été retirés de votre bibliothèque.
+            <?php endif; ?>
+        </div>
+    <?php endif; ?>
+
     <form method="get" action="/bd.php" class="collection-search import-form">
         <label for="bd_q">Rechercher une série</label>
         <div class="collection-search__row">

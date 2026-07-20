@@ -7,8 +7,9 @@ $csvMaxMo = (int) (MONCINE_CSV_MAX_BYTES / 1024 / 1024);
     unset($info, $infoHtml, $infoAria, $class, $tag);
     $title = 'Importer / exporter';
     $tag = 'h1';
-    $info = 'Deux formats : bibliothèque (films possédés, envies, notes…) et catalogue partagé (métadonnées, admin). '
-        . 'La bibliothèque référence chaque film par son ID catalogue.';
+    $info = 'Deux formats : bibliothèque (tous médias — films, BD, jeux, magazines… : possession, envies, notes) '
+        . 'et catalogue partagé (métadonnées, admin). '
+        . 'La bibliothèque référence chaque œuvre par son ID catalogue.';
     $infoAria = 'Formats d’import et export';
     require MONCINE_ROOT . '/templates/_heading_with_info.php';
     unset($info, $infoAria, $tag);
@@ -98,7 +99,7 @@ $csvMaxMo = (int) (MONCINE_CSV_MAX_BYTES / 1024 / 1024);
     <?php
     unset($info, $infoHtml, $infoAria, $class, $tag);
     $title = 'Exporter ma bibliothèque';
-    $info = 'Collection et envies : support, format, saga, ID catalogue, dernière vision… '
+    $info = 'Collection et envies de tous les médias : support, format, saga, domaine, ID catalogue, dernière vision… '
         . 'Sans synopsis ni affiche (déjà dans le catalogue).';
     $infoAria = 'Export bibliothèque';
     require MONCINE_ROOT . '/templates/_heading_with_info.php';

@@ -43,21 +43,31 @@ final class FilmCatalogImport
 
         // Migration : l’export contient des ID bibliothèque de l’ancienne instance — on privilégie l’ID catalogue.
         if ($oeuvreId > 0) {
-            $oeuvre = $this->oeuvres->findById($oeuvreId);
+            // ID absolu (tous domaines) : ne pas filtrer par l’onglet Films/BD/Jeux actif.
+            $oeuvre = $this->oeuvres->findByIdForAdmin($oeuvreId);
             if ($oeuvre === null) {
-                throw new \RuntimeException(
-                    'ID catalogue ' . $oeuvreId . ' introuvable. Importez d’abord le catalogue (admin).'
-                );
+                // Repli : catalogue réimporté avec de nouveaux numéros, mais titre encore présent.
+                $oeuvre = $this->findOeuvreByTitreFromImport($data);
+                if ($oeuvre === null) {
+                    throw new \RuntimeException(
+                        'ID catalogue ' . $oeuvreId . ' introuvable. '
+                        . 'Réimportez d’abord le CSV catalogue admin (avec les mêmes ID), '
+                        . 'en cochant « Réinitialiser le catalogue avant import », '
+                        . 'puis réessayez l’import bibliothèque.'
+                    );
+                }
+                $oeuvreId = (int) $oeuvre['id'];
             }
+
             $library = $this->bibliotheque->findByOeuvreId($oeuvreId, $this->userId(), $this->foyerId());
             if ($library !== null) {
                 $this->applyLibraryImportUpdate((int) $library['id'], $data, $importedColumns, $statut);
+                $this->ensureDomainLibraryLinks($oeuvre, $statut);
 
                 return;
             }
 
-            $payload = $this->libraryPayloadFromImport($data, $statut);
-            $this->bibliotheque->insert($this->userId(), $this->foyerId(), $oeuvreId, $payload);
+            $this->attachNewLibraryEntry($oeuvreId, $oeuvre, $data, $statut);
 
             return;
         }
@@ -79,27 +89,141 @@ final class FilmCatalogImport
             throw new \RuntimeException('ID catalogue ou titre obligatoire.');
         }
 
-        $realisateur = trim((string) ($data['realisateur'] ?? ''));
-        $oeuvre = $this->oeuvres->findByTitreAndRealisateur($titre, $realisateur);
+        $oeuvre = $this->findOeuvreByTitreFromImport($data);
         if ($oeuvre === null) {
             throw new \RuntimeException(
                 'Aucune œuvre « ' . $titre . ' » au catalogue. Utilisez l’ID catalogue ou importez le catalogue.'
             );
         }
 
-        $library = $this->bibliotheque->findByOeuvreId((int) $oeuvre['id'], $this->userId(), $this->foyerId());
+        $resolvedId = (int) $oeuvre['id'];
+        $library = $this->bibliotheque->findByOeuvreId($resolvedId, $this->userId(), $this->foyerId());
         if ($library !== null) {
             $this->applyLibraryImportUpdate((int) $library['id'], $data, $importedColumns, $statut);
+            $this->ensureDomainLibraryLinks($oeuvre, $statut);
 
             return;
         }
 
-        $this->bibliotheque->insert(
-            $this->userId(),
-            $this->foyerId(),
-            (int) $oeuvre['id'],
-            $this->libraryPayloadFromImport($data, $statut)
-        );
+        $this->attachNewLibraryEntry($resolvedId, $oeuvre, $data, $statut);
+    }
+
+    /**
+     * Ajoute une entrée bibliothèque selon le domaine (BD → série + tome, etc.).
+     *
+     * @param array<string, mixed> $oeuvre
+     * @param array<string, mixed> $data
+     */
+    private function attachNewLibraryEntry(int $oeuvreId, array $oeuvre, array $data, string $statut): void
+    {
+        $domain = MediaDomain::normalize((string) ($oeuvre['media_domain'] ?? MediaDomain::FILM));
+        $details = $this->libraryPayloadFromImport($data, $statut);
+
+        if ($domain === MediaDomain::BD && BdRepository::isAvailable()) {
+            $result = (new BdRepository())->addFromCatalogOeuvre(
+                $oeuvreId,
+                $statut,
+                $this->userId(),
+                $this->foyerId(),
+                $details
+            );
+            if (!is_int($result)) {
+                throw new \RuntimeException((string) $result);
+            }
+
+            // Compléter les champs bibliothèque (support, etc.) après le rattachement BD.
+            $this->bibliotheque->update($result, $details);
+
+            return;
+        }
+
+        if ($domain === MediaDomain::JEU && GameRepository::isAvailable()) {
+            $result = (new GameRepository())->addFromCatalogOeuvre(
+                $oeuvreId,
+                $statut,
+                $this->userId(),
+                $this->foyerId(),
+                $details
+            );
+            if (!is_int($result)) {
+                throw new \RuntimeException((string) $result);
+            }
+            $this->bibliotheque->update($result, $details);
+
+            return;
+        }
+
+        if ($domain === MediaDomain::MAGAZINE && MagazineRepository::isAvailable()) {
+            $result = (new MagazineRepository())->addFromCatalogOeuvre(
+                $oeuvreId,
+                $statut,
+                $this->userId(),
+                $this->foyerId()
+            );
+            if (!is_int($result)) {
+                throw new \RuntimeException((string) $result);
+            }
+            $this->bibliotheque->update($result, $details);
+
+            return;
+        }
+
+        $this->bibliotheque->insert($this->userId(), $this->foyerId(), $oeuvreId, $details);
+    }
+
+    /**
+     * Pour une entrée déjà présente : s’assure que les liens série (BD / magazine) existent.
+     *
+     * @param array<string, mixed> $oeuvre
+     */
+    private function ensureDomainLibraryLinks(array $oeuvre, string $statut): void
+    {
+        $domain = MediaDomain::normalize((string) ($oeuvre['media_domain'] ?? MediaDomain::FILM));
+        $oeuvreId = (int) ($oeuvre['id'] ?? 0);
+        if ($oeuvreId <= 0) {
+            return;
+        }
+
+        if ($domain === MediaDomain::BD && BdRepository::isAvailable()) {
+            $bdRepo = new BdRepository();
+            $catalog = $bdRepo->findCatalogByOeuvreId($oeuvreId);
+            $seriesId = (int) ($catalog['series_id'] ?? 0);
+            if ($seriesId > 0) {
+                $bdRepo->registerSeriesInLibrary($seriesId, $statut, $this->userId(), $this->foyerId());
+            }
+        }
+    }
+
+    /**
+     * Rapprochement par titre (+ réalisateur) dans le domaine média de la ligne, sinon l’onglet actif.
+     *
+     * @param array<string, mixed> $data
+     * @return array<string, mixed>|null
+     */
+    private function findOeuvreByTitreFromImport(array $data): ?array
+    {
+        $titre = trim((string) ($data['titre'] ?? ''));
+        if ($titre === '') {
+            return null;
+        }
+
+        $realisateur = trim((string) ($data['realisateur'] ?? ''));
+        $domain = trim((string) ($data['media_domain'] ?? ''));
+        if ($domain !== '') {
+            return $this->oeuvres->findByTitreRealisateurAndDomain(
+                $titre,
+                $realisateur,
+                MediaDomain::normalize($domain)
+            );
+        }
+
+        // Essayer d’abord le domaine actif, puis sans filtre (tous médias).
+        $found = $this->oeuvres->findByTitreAndRealisateur($titre, $realisateur);
+        if ($found !== null) {
+            return $found;
+        }
+
+        return $this->oeuvres->findByTitreRealisateurAnyDomain($titre, $realisateur);
     }
 
     /**

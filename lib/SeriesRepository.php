@@ -230,6 +230,70 @@ final class SeriesRepository
     }
 
     /**
+     * Création avec ID explicite (migration catalogue / conservation des numéros).
+     *
+     * @param array<string, mixed> $data
+     * @return int|string ID ou message d’erreur
+     */
+    public function createWithId(int $id, array $data, ?string $mediaDomain = null): int|string
+    {
+        if ($id <= 0) {
+            return 'ID série invalide.';
+        }
+        if (!self::tableExists()) {
+            return 'Module séries non disponible (migration 031 manquante).';
+        }
+
+        $exists = $this->db->prepare('SELECT 1 FROM series WHERE id = ? LIMIT 1');
+        $exists->execute([$id]);
+        if ($exists->fetchColumn()) {
+            return $id;
+        }
+
+        $titre = trim((string) ($data['titre'] ?? ''));
+        if ($titre === '') {
+            return 'Le titre de la série est obligatoire.';
+        }
+
+        $domain = MediaDomain::normalize($mediaDomain ?? MediaContext::current());
+        $publicationType = PublicationType::normalize((string) ($data['publication_type'] ?? ''));
+        $categoriesSql = self::categoriesColumnExists() ? ', categories' : '';
+        $categoriesValue = self::categoriesColumnExists() ? ', ?' : '';
+        $categoriesParam = self::categoriesColumnExists()
+            ? [MagazineSeriesCategory::normalizeInput((string) ($data['categories'] ?? ''))]
+            : [];
+
+        $this->db->prepare(
+            'INSERT INTO series (
+                id, media_domain, titre, publication_type, poster_url, editeur, issn,
+                langue, pays, date_debut, date_fin, notes, tags' . $categoriesSql . ', created_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . $categoriesValue . ', datetime(\'now\'))'
+        )->execute([
+            $id,
+            $domain,
+            $titre,
+            $publicationType,
+            trim((string) ($data['poster_url'] ?? '')),
+            trim((string) ($data['editeur'] ?? '')),
+            trim((string) ($data['issn'] ?? '')),
+            trim((string) ($data['langue'] ?? '')),
+            trim((string) ($data['pays'] ?? '')),
+            self::nullableDate((string) ($data['date_debut'] ?? '')),
+            self::nullableDate((string) ($data['date_fin'] ?? '')),
+            trim((string) ($data['notes'] ?? '')),
+            MagazineSeriesTag::normalizeInput((string) ($data['tags'] ?? '')),
+            ...$categoriesParam,
+        ]);
+
+        $max = (int) $this->db->query('SELECT COALESCE(MAX(id), 0) FROM series')->fetchColumn();
+        $this->db->exec(
+            "INSERT OR REPLACE INTO sqlite_sequence (name, seq) VALUES ('series', " . max(0, $max) . ')'
+        );
+
+        return $id;
+    }
+
+    /**
      * @param array<string, mixed> $data
      * @return true|string
      */

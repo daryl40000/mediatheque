@@ -97,6 +97,45 @@ final class CatalogImportTest extends MoncineTestCase
         $this->assertTrue(CatalogAdmin::canAccess());
     }
 
+    public function testAdminCanImportBdCatalogRowWithSeries(): void
+    {
+        $this->loginAsAdmin();
+        (new \Moncine\SchemaMigrator(\Moncine\Database::getInstance()))->runPendingMigrations();
+        if (!\Moncine\BdRepository::isAvailable()) {
+            $this->markTestSkipped('Module BD indisponible.');
+        }
+
+        $header = CatalogExportSchema::headers();
+        $row = $this->catalogRowFromHeader($header, [
+            'ID catalogue' => '9101',
+            'Titre' => 'Tome Catalogue BD',
+            'Réalisateur' => 'Scénariste BD',
+            'Domaine média' => 'bd',
+            'BD — ID série' => '501',
+            'BD — titre série' => 'Série Catalogue Import',
+            'BD — tome n°' => '2',
+            'BD — scénariste' => 'Scénariste BD',
+            'BD — dessinateur' => 'Dessinateur BD',
+        ]);
+
+        $result = (new ImportRunner())->importCatalogSheet([$row], $header);
+        $this->assertSame(1, $result['imported'], implode('; ', $result['errors']));
+        $this->assertSame([], $result['errors']);
+
+        $oeuvre = (new OeuvreRepository())->findByIdForAdmin(9101);
+        $this->assertNotNull($oeuvre);
+        $this->assertSame('bd', $oeuvre['media_domain']);
+
+        $catalog = (new \Moncine\BdRepository())->findCatalogByOeuvreId(9101);
+        $this->assertNotNull($catalog);
+        $this->assertSame(501, (int) $catalog['series_id']);
+        $this->assertSame(2, (int) $catalog['tome_numero']);
+
+        $series = (new \Moncine\SeriesRepository())->findById(501, \Moncine\MediaDomain::BD);
+        $this->assertNotNull($series);
+        $this->assertSame('Série Catalogue Import', $series['titre']);
+    }
+
     /**
      * @param list<string> $header
      * @param array<string, string> $valuesByLabel

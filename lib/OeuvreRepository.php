@@ -72,6 +72,18 @@ final class OeuvreRepository
         return $row ?: null;
     }
 
+    /** Recherche titre + réalisateur sans filtre d’onglet (import multi-médias). */
+    public function findByTitreRealisateurAnyDomain(string $titre, string $realisateur): ?array
+    {
+        $stmt = $this->db->prepare(
+            'SELECT * FROM oeuvres WHERE titre = ? AND realisateur = ? ORDER BY id ASC LIMIT 1'
+        );
+        $stmt->execute([$titre, $realisateur]);
+        $row = $stmt->fetch();
+
+        return $row ?: null;
+    }
+
     public function updateMediaDomain(int $id, string $mediaDomain): void
     {
         if ($id <= 0 || !CatalogSchema::hasMediaDomainColumn()) {
@@ -331,12 +343,19 @@ final class OeuvreRepository
         $magTable = Database::getInstance()->query(
             "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'oeuvre_magazine' LIMIT 1"
         )->fetchColumn();
+        $bdTable = Database::getInstance()->query(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'oeuvre_bd' LIMIT 1"
+        )->fetchColumn();
 
         if ($gameTable) {
             $joins .= ' LEFT JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id';
         }
         if ($magTable) {
             $joins .= ' LEFT JOIN oeuvre_magazine om ON om.oeuvre_id = o.id';
+        }
+        if ($bdTable) {
+            $joins .= ' LEFT JOIN oeuvre_bd ob ON ob.oeuvre_id = o.id'
+                . ' LEFT JOIN series s_bd ON s_bd.id = ob.series_id';
         }
 
         $select = 'o.*';
@@ -354,6 +373,13 @@ final class OeuvreRepository
                 . ' om.numero_ordre AS mag_numero_ordre, om.date_parution AS mag_date_parution,'
                 . ' om.sommaire AS mag_sommaire, om.pages AS mag_pages,'
                 . ' om.est_hors_serie AS mag_est_hors_serie';
+        }
+        if ($bdTable) {
+            $select .= ', ob.series_id AS bd_series_id, s_bd.titre AS bd_series_titre,'
+                . ' ob.kind AS bd_kind, ob.tome_numero AS bd_tome_numero, ob.tome_ordre AS bd_tome_ordre,'
+                . ' ob.tome_label AS bd_tome_label, ob.est_hors_serie AS bd_est_hors_serie,'
+                . ' ob.scenariste AS bd_scenariste, ob.dessinateur AS bd_dessinateur,'
+                . ' ob.editeur AS bd_editeur, ob.genre AS bd_genre';
         }
 
         $stmt = $this->db->query(

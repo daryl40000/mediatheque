@@ -390,4 +390,32 @@ final class BdRepositoryTest extends MoncineTestCase
         $duplicateError = $repo->validateTomeNumeroForSeries($seriesId, 0, false);
         $this->assertSame('Un autre tome avec ce numéro existe déjà pour cette série.', $duplicateError);
     }
+
+    public function testRemoveSeriesFromLibraryKeepsCatalog(): void
+    {
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new BdRepository();
+        $seriesId = $this->createTestSeries('Série Retrait Test ' . uniqid());
+
+        $bibId = $repo->createTomeWithLibrary($seriesId, [
+            'tome_numero' => 1,
+            'titre' => 'Premier tome',
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+
+        $tome = $repo->findByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($tome);
+        $oeuvreId = (int) ($tome['oeuvre_id'] ?? 0);
+        $this->assertGreaterThan(0, $oeuvreId);
+        $this->assertTrue($repo->isSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId));
+
+        $result = $repo->removeSeriesFromLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsArray($result);
+        $this->assertSame(1, $result['removed_tomes']);
+        $this->assertFalse($repo->isSeriesInLibrary($seriesId, LibraryStatut::COLLECTION, $userId, $foyerId));
+        $this->assertNull($repo->findByBibId($bibId, $userId, $foyerId));
+        // Catalogue intact
+        $this->assertSame($oeuvreId, $repo->findCatalogTomeId($seriesId, 1, false));
+    }
 }

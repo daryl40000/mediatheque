@@ -160,6 +160,7 @@ $mediaCssVars = implode('; ', [
                         '/demandes-inscription.php',
                         '/maintenance-catalogue.php',
                         '/import-catalogue-magazines.php',
+                        '/import-catalogue-bd.php',
                         '/maintenance-medias.php',
                         '/maintenance-magazine-sujets.php',
                         '/maintenance-magazine-jeux-liens.php',
@@ -185,6 +186,7 @@ $mediaCssVars = implode('; ', [
                             <a href="/maintenance-catalogue.php" class="site-nav__admin"<?= $currentPath === '/maintenance-catalogue.php' ? ' aria-current="page"' : '' ?>>Maintenance</a>
                             <a href="/import.php#liens-magasins-catalogue" class="site-nav__admin">Liens magasins GOG/Epic</a>
                             <a href="/import-catalogue-magazines.php" class="site-nav__admin"<?= $currentPath === '/import-catalogue-magazines.php' ? ' aria-current="page"' : '' ?>>Import magazines</a>
+                            <a href="/import-catalogue-bd.php" class="site-nav__admin"<?= $currentPath === '/import-catalogue-bd.php' ? ' aria-current="page"' : '' ?>>Import BD</a>
                             <a href="/maintenance-magazine-sujets.php" class="site-nav__admin"<?= $currentPath === '/maintenance-magazine-sujets.php' ? ' aria-current="page"' : '' ?>>Sujets magazines</a>
                             <a href="/maintenance-magazine-jeux-liens.php" class="site-nav__admin"<?= $currentPath === '/maintenance-magazine-jeux-liens.php' ? ' aria-current="page"' : '' ?>>Liens magazine ↔ jeux</a>
                             <a href="/maintenance-medias.php" class="site-nav__admin"<?= $currentPath === '/maintenance-medias.php' ? ' aria-current="page"' : '' ?>>Médias</a>

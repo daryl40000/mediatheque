@@ -136,12 +136,20 @@ final class FilmLibraryQuery
         return $stmt->fetchAll();
     }
 
+    /**
+     * Export bibliothèque : tous les domaines média (films, BD, jeux, magazines…).
+     * L’import migration doit pouvoir restaurer l’ensemble de la collection.
+     *
+     * @return list<array<string, mixed>>
+     */
     public function findAllLibraryForExport(): array
     {
         [$userWhere, $params] = CatalogSchema::libraryFilter($this->foyerId(), $this->userId(), null);
 
+        // Pas de filtre MediaContext : un seul fichier couvre toute la médiathèque.
         $stmt = $this->db->prepare(
             'SELECT ' . CatalogSchema::selectFilmRow() . ',
+                o.media_domain,
                 (SELECT h.date_vue FROM historique h
                  WHERE h.film_id = b.id AND h.user_id = :history_user_id
                  ORDER BY h.date_vue DESC, h.id DESC LIMIT 1) AS derniere_vue,
@@ -149,8 +157,10 @@ final class FilmLibraryQuery
                  WHERE h.film_id = b.id AND h.user_id = :history_user_id
                  ORDER BY h.date_vue DESC, h.id DESC LIMIT 1) AS derniere_note
              FROM ' . CatalogSchema::JOIN . '
-             WHERE ' . $userWhere . CatalogSchema::sqlMediaDomainAnd('o', $params) . '
-             ORDER BY b.statut COLLATE FRENCH_NOCASE, o.titre COLLATE FRENCH_NOCASE'
+             WHERE ' . $userWhere . '
+             ORDER BY o.media_domain COLLATE FRENCH_NOCASE,
+                      b.statut COLLATE FRENCH_NOCASE,
+                      o.titre COLLATE FRENCH_NOCASE'
         );
         $params['history_user_id'] = $this->userId();
         $stmt->execute($params);

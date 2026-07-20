@@ -85,6 +85,58 @@ final class BdCatalogCreator
     }
 
     /**
+     * Crée un tome catalogue uniquement (sans bibliothèque utilisateur).
+     *
+     * @param array<string, mixed> $data
+     * @return int|string oeuvre_id ou message d’erreur
+     */
+    public function createCatalogOnly(array $data): int|string
+    {
+        if (!BdRepository::isAvailable()) {
+            return 'Module BD non disponible.';
+        }
+
+        $resolved = self::resolveTitleAndSeries($data);
+        if (is_string($resolved)) {
+            return $resolved;
+        }
+        [$titre, $seriesId] = $resolved;
+
+        $series = (new SeriesRepository())->findById($seriesId, MediaDomain::BD);
+        if ($series === null) {
+            return 'Série introuvable.';
+        }
+
+        $kind = trim((string) ($data['kind'] ?? '')) !== ''
+            ? BdKind::normalize((string) $data['kind'])
+            : BdSeriesMetadata::kindFromSeries($series);
+
+        $this->db->beginTransaction();
+        try {
+            $oeuvreId = (new OeuvreRepository())->insert([
+                'titre' => $titre,
+                'realisateur' => '',
+                'annee' => max(0, (int) ($data['annee'] ?? 0)),
+                'synopsis' => trim((string) ($data['synopsis'] ?? '')),
+                'poster_url' => SecureUrl::sanitizePosterUrl((string) ($data['poster_url'] ?? '')),
+                'media_domain' => MediaDomain::BD,
+            ]);
+
+            $this->catalogWriter->insertCatalogBdRow($oeuvreId, $data, $seriesId, $kind);
+            $this->db->commit();
+
+            return $oeuvreId;
+        } catch (\Throwable $e) {
+            if ($this->db->inTransaction()) {
+                $this->db->rollBack();
+            }
+            error_log('BdCatalogCreator::createCatalogOnly: ' . $e->getMessage());
+
+            return 'Impossible d’enregistrer le tome catalogue.';
+        }
+    }
+
+    /**
      * @param array<string, mixed> $data
      * @return array{0: string, 1: int}|string
      */
