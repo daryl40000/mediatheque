@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-07-20 (version **0.7.28** — Phase B catalogue films + Phase C SQL commun)  
+**Dernière mise à jour :** 2026-07-20 (version **0.7.29** — Phase D : tests + baseline couverture CI)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif
@@ -13,6 +13,7 @@ Améliorer la maintenabilité du projet (objectif indicatif : passer d'un code *
 |---------|--------|
 | GitHub Actions — PHPUnit sur push/PR `main` | ✅ [`.github/workflows/tests.yml`](.github/workflows/tests.yml) |
 | Matrice PHP | 8.2 + 8.3 |
+| Couverture (pcov) | ✅ Job `Coverage baseline` + artefact `coverage-baseline.txt` |
 | PHPStan / analyse statique | ⏳ À faire (prochaine étape qualité) |
 
 ---
@@ -56,7 +57,7 @@ Fichiers les plus volumineux à surveiller :
 **Corrections par rapport à une ancienne version de ce document :**
 
 - `www/import.php` fait **~300 lignes**, pas des milliers. L'import lourd est plutôt dans `MagazineCatalogImporter.php`, `CatalogDomainExtensions.php`, scripts CLI.
-- Le dépôt compte **~122 fichiers de tests** PHPUnit — bonne base, à étendre de façon ciblée.
+- Le dépôt compte **~126 fichiers de tests** PHPUnit — bonne base, à étendre de façon ciblée.
 
 ---
 
@@ -307,7 +308,7 @@ Moins de copier-coller, sans architecture rigide inadaptée aux JOIN multi-table
 
 ### Pourquoi ?
 
-~97 fichiers de tests : bonne base, mais les refactorings doivent être **verrouillés** par des tests sur les zones touchées.
+Bonne base de tests, mais les refactorings doivent être **verrouillés** par des tests sur les zones touchées.
 
 ### Actions concrètes
 
@@ -331,17 +332,36 @@ public function testAssignSagaRequiresSagaName(): void
 
 #### 3. Objectifs réalistes
 
-| Métrique | Actuel | Cible |
-|----------|--------|-------|
-| Fichiers de tests | ~97 | **120+** après phases A–C |
-| Couverture globale | non mesurée | mesurer d'abord (`phpunit --coverage-text`), viser **+10 points** par chantier |
+| Métrique | Baseline (2026-07-20) | Cible suivante |
+|----------|----------------------|----------------|
+| Fichiers de tests | **126** (74 unit + 52 intégration) | +10 par chantier majeur |
+| Couverture `lib/` | **à lire dans le job CI** `Coverage baseline` (pcov) | **+10 points** par chantier |
+
+**Mesure locale :** `sudo apt install php8.3-pcov` puis `composer test:coverage`.  
+Sans pcov/xdebug, PHPUnit refuse `--coverage-text`.
 
 **Éviter** de viser 70 % de couverture globale sans baseline : peu actionnable.
 
+### Cartographie extractions → tests (Phase A / B / C)
+
+| Extraction | Tests (au moins un) |
+|------------|---------------------|
+| `FilmBulkActionService` | `tests/Unit/FilmBulkActionServiceTest.php`, `tests/Integration/FilmBulkActionServiceTest.php` |
+| Jeux (`GameCatalog*`, `GameLibrary*`, …) | `GameRepositoryTest`, `GameCatalogUpdaterTest`, `GameCatalogEnrichmentTest` |
+| BD (`BdCatalog*`, `BdLibrary*`, …) | `tests/Integration/Bd*`, `BdTomeOrdreTest` |
+| Magazines (`MagazineCatalog*`, …) | `MagazineCatalogImporterTest`, `MagazineCatalogExporterTest` |
+| Films Phase B (`FilmCatalogSql`, `FilmPosterService`, …) | `FilmCatalogSqlTest`, `FilmLibraryQueryTest`, `FilmSagaCatalogTest`, `CatalogImport*` |
+| `SqlNamedParams` / `SortColumnHelper` | `SqlNamedParamsTest`, `SortColumnHelperTest` |
+
 ### Critères de fin (Phase D)
 
-- [ ] Chaque extraction de Phase A ou B a au moins un test unitaire ou d'intégration
-- [ ] Baseline de couverture documentée dans ce fichier
+- [x] Chaque extraction de Phase A ou B a au moins un test unitaire ou d’intégration
+- [x] Baseline documentée (fichiers de tests + procédure / job CI couverture)
+- [x] Job CI `Coverage baseline` (PHP 8.3 + pcov, artefact `coverage-baseline.txt`)
+
+### Bénéfice attendu
+
+Régressions détectées tôt ; pourcentage de couverture suivi après chaque push sur `main`.
 
 ---
 
@@ -464,7 +484,7 @@ Chaînage `required()`, `email()`, `minLength()`, `orThrow()` — voir implémen
 - [x] **Phase B** — Pilote 3 : `MagazineRepository` (**481** lignes ; extractions `MagazineCatalogSql`, `MagazineSearchSql`, `MagazineNumeroOrdre`, `MagazineLibraryQuery`, `MagazineCatalogValidator`, `MagazineCatalogWriter`, `MagazineCatalogCreator`, `MagazineCatalogUpdater`, `MagazineLibraryAttach`, `MagazineLibraryMutations`, `MagazinePdfService`)
 - [x] **Phase B** — Pilote 4 : `CatalogFilmRepository` (**~529** lignes ; extractions `FilmCatalogSql`, `FilmPosterService`, `FilmPersonQuery`, `FilmLibraryQuery`, `FilmCatalogSaga`, `FilmLibraryMutations`, `FilmCatalogEnrichment`, `FilmCatalogImport`, `FilmCatalogUpdater`, `FilmLibraryAttach`, `FilmCatalogCreator`)
 - [x] **Phase C** — `SqlNamedParams` + trait ; BD / magazines / sujets migrés ; `SortColumnHelper`
-- [ ] **Phase D** — Baseline couverture documentée ; 120+ fichiers de tests
+- [x] **Phase D** — 126 fichiers de tests ; cartographie extractions ; job CI couverture (pcov)
 - [ ] **Phase E** — Pilote exceptions (1 repository + pages)
 - [ ] **Phase F** — Pilote Validator (inscription / utilisateur)
 - [ ] **Dette** — `FilmRepositoryLegacy` traité

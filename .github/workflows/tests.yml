@@ -72,3 +72,34 @@ jobs:
         run: ./vendor/bin/phpunit --testsuite integration
         env:
           COMPOSER_PROCESS_TIMEOUT: 0
+
+  coverage:
+    name: Coverage baseline (PHP 8.3)
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3, dom, xml, ctype, tokenizer
+          coverage: pcov
+          tools: composer:v2
+          ini-values: memory_limit=512M
+      - uses: actions/cache@v5
+        with:
+          path: vendor
+          key: composer-${{ runner.os }}-php8.3-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-php8.3-
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - name: PHPUnit coverage (text)
+        run: ./vendor/bin/phpunit --coverage-text --colors=never | tee coverage-baseline.txt
+        env:
+          COMPOSER_PROCESS_TIMEOUT: 0
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-baseline
+          path: coverage-baseline.txt
+          retention-days: 30

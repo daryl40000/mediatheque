@@ -9,6 +9,18 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.29] — 2026-07-20
+
+**Qualité code : Phase D — tests et baseline couverture**
+
+### Technique
+
+- Tests ciblés sur les extractions Phase B/C : `FilmCatalogSqlTest`, `FilmLibraryQueryTest`, `SortColumnHelperTest` (**126** fichiers de tests).
+- CI : job **Coverage baseline** (PHP 8.3 + pcov, artefact `coverage-baseline.txt`).
+- Roadmap qualité : cartographie extractions → tests ; critères Phase D cochés.
+
+---
+
 ## [0.7.28] — 2026-07-20
 
 **Qualité code : catalogue films découpé + SQL commun**
