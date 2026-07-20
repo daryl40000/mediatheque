@@ -130,16 +130,8 @@ final class BdCatalogSql
      */
     public static function filterParamsForSql(string $sql, array $params): array
     {
-        if (!preg_match_all('/:([a-zA-Z_][a-zA-Z0-9_]*)/', $sql, $matches)) {
-            return [];
-        }
-
-        $filtered = [];
-        foreach (array_unique($matches[1]) as $name) {
-            if (array_key_exists($name, $params)) {
-                $filtered[$name] = $params[$name];
-            }
-        }
+        /** @var array<string, int|string> $filtered */
+        $filtered = \Moncine\Repository\SqlNamedParams::filter($sql, $params);
 
         return $filtered;
     }

@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-07-19 (version **0.7.27** — CI PHPUnit verte)  
+**Dernière mise à jour :** 2026-07-20 (version **0.7.28** — Phase B catalogue films + Phase C SQL commun)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif
@@ -44,19 +44,19 @@ Fichiers les plus volumineux à surveiller :
 
 | Fichier | Lignes (approx.) | Priorité découpage |
 |---------|------------------|-------------------|
-| `lib/MagazineRepository.php` | **481** (était ~2 354) | Fait (pilote 3) |
-| `lib/CatalogFilmRepository.php` | ~2 170 | Haute |
-| `lib/BdRepository.php` | **514** | Fait (pilote 2) |
-| `lib/GameRepository.php` | **539** | Fait (pilote 1) |
-| `lib/View.php` | ~1 300 | Moyenne (URLs par domaine) |
+| `lib/CatalogFilmRepository.php` | **~529** (était ~2 197) | Fait (pilote 4) |
+| `lib/BdRepository.php` | **~525** | Fait (pilote 2) |
+| `lib/GameRepository.php` | **~701** | Fait (pilote 1) — surveiller re-gonflement |
+| `lib/MagazineRepository.php` | **~500** | Fait (pilote 3) |
+| `lib/View.php` | ~1 500 | Moyenne (URLs par domaine) |
 | `lib/FilmRepositoryLegacy.php` | ~1 290 | Dette — fusion ou suppression |
 | `lib/UserPublicProfileService.php` | ~1 170 | Moyenne |
-| `lib/UtilisateurRepository.php` | ~890 | Moyenne |
+| `lib/UtilisateurRepository.php` | ~1 000 | Moyenne |
 
 **Corrections par rapport à une ancienne version de ce document :**
 
 - `www/import.php` fait **~300 lignes**, pas des milliers. L'import lourd est plutôt dans `MagazineCatalogImporter.php`, `CatalogDomainExtensions.php`, scripts CLI.
-- Le dépôt compte **~97 fichiers de tests** PHPUnit — bonne base, à étendre de façon ciblée.
+- Le dépôt compte **~122 fichiers de tests** PHPUnit — bonne base, à étendre de façon ciblée.
 
 ---
 
@@ -186,10 +186,10 @@ Préférer :
 
 ### Ordre de découpage suggéré
 
-1. **`GameRepository.php`** — **fait** (**539** lignes)
-2. **`BdRepository.php`** — **fait** (**514** lignes)
-3. **`MagazineRepository.php`** — **fait** (**481** lignes ; extractions SQL, query, catalogue, bibliothèque, PDF)
-4. **`CatalogFilmRepository.php`** (~2 170 lignes) — prochain pilote suggéré
+1. **`GameRepository.php`** — **fait** (**~701** lignes)
+2. **`BdRepository.php`** — **fait** (**~525** lignes)
+3. **`MagazineRepository.php`** — **fait** (**~500** lignes)
+4. **`CatalogFilmRepository.php`** — **fait** (**~529** lignes ; était ~2 197)
 
 ### Exemple d'extractions pour un repository
 
@@ -214,6 +214,8 @@ Préférer :
 - [x] Extractions pilote BD : `BdCatalogSql`, `BdCatalogWriter`, `BdTomeOrdre`, `BdLibraryQuery`, `BdCatalogUpdater`, `BdCatalogCreator`, `BdLibraryAttach`, `BdPosterService`
 - [x] Repository pilote 3 < **800 lignes** — `MagazineRepository` : **481** lignes (était ~2 354)
 - [x] Extractions pilote magazines : `MagazineCatalogSql`, `MagazineSearchSql`, `MagazineNumeroOrdre`, `MagazineLibraryQuery`, `MagazineCatalogValidator`, `MagazineCatalogWriter`, `MagazineCatalogCreator`, `MagazineCatalogUpdater`, `MagazineLibraryAttach`, `MagazineLibraryMutations`, `MagazinePdfService`
+- [x] Repository pilote 4 < **800 lignes** — `CatalogFilmRepository` : **~529** lignes (était ~2 197)
+- [x] Extractions pilote films : `FilmCatalogSql`, `FilmPosterService`, `FilmPersonQuery`, `FilmLibraryQuery`, `FilmCatalogSaga`, `FilmLibraryMutations`, `FilmCatalogEnrichment`, `FilmCatalogImport`, `FilmCatalogUpdater`, `FilmLibraryAttach`, `FilmCatalogCreator`
 - [ ] Aucune régression sur les tests d'intégration du domaine (échecs préexistants en suite complète BD/magazines ; isolés OK)
 - [ ] Une page liste + une page fiche testées manuellement
 
@@ -290,9 +292,10 @@ Helper pour ajouter `ORDER BY … LIMIT … OFFSET …` de façon uniforme.
 
 ### Critères de fin (Phase C)
 
-- [ ] `filterParamsForSql` en un seul endroit
-- [ ] Au moins 2 repositories migrés sur le trait
-- [ ] Tests existants verts
+- [x] `filterParamsForSql` en un seul endroit (`Repository\SqlNamedParams`)
+- [x] Au moins 2 repositories migrés (`BdCatalogSql`, `MagazineCatalogSql`, `MagazineSubjectRepository` via trait)
+- [x] Helper tri : `Repository\SortColumnHelper` (+ usage dans `FilmCatalogSql`)
+- [x] Tests unitaires `SqlNamedParamsTest` verts
 
 ### Bénéfice attendu
 
@@ -449,7 +452,7 @@ Chaînage `required()`, `email()`, `minLength()`, `orThrow()` — voir implémen
 
 - Migration globale `int|string` → exceptions (Phase E complète)
 - Validator partout (Phase F)
-- Découpage de `CatalogFilmRepository` (Phase B — prochain gros morceau)
+- Découpage de `View.php` / retrait de `FilmRepositoryLegacy` (dette transversale)
 
 ---
 
@@ -459,7 +462,8 @@ Chaînage `required()`, `email()`, `minLength()`, `orThrow()` — voir implémen
 - [x] **Phase B** — Pilote 1 : `GameRepository` (**539** lignes ; extractions `GameLibraryQuery`, `GameCatalogUpdater`, `GameCatalogCreator`, `GameLibraryAttach`, `GamePosterService`)
 - [x] **Phase B** — Pilote 2 : `BdRepository` (**514** lignes ; extractions `BdCatalogSql`, `BdLibraryQuery`, `BdCatalogWriter`, `BdTomeOrdre`, `BdCatalogUpdater`, `BdCatalogCreator`, `BdLibraryAttach`, `BdPosterService`)
 - [x] **Phase B** — Pilote 3 : `MagazineRepository` (**481** lignes ; extractions `MagazineCatalogSql`, `MagazineSearchSql`, `MagazineNumeroOrdre`, `MagazineLibraryQuery`, `MagazineCatalogValidator`, `MagazineCatalogWriter`, `MagazineCatalogCreator`, `MagazineCatalogUpdater`, `MagazineLibraryAttach`, `MagazineLibraryMutations`, `MagazinePdfService`)
-- [ ] **Phase C** — `SqlNamedParamsTrait` + 2 repositories migrés
+- [x] **Phase B** — Pilote 4 : `CatalogFilmRepository` (**~529** lignes ; extractions `FilmCatalogSql`, `FilmPosterService`, `FilmPersonQuery`, `FilmLibraryQuery`, `FilmCatalogSaga`, `FilmLibraryMutations`, `FilmCatalogEnrichment`, `FilmCatalogImport`, `FilmCatalogUpdater`, `FilmLibraryAttach`, `FilmCatalogCreator`)
+- [x] **Phase C** — `SqlNamedParams` + trait ; BD / magazines / sujets migrés ; `SortColumnHelper`
 - [ ] **Phase D** — Baseline couverture documentée ; 120+ fichiers de tests
 - [ ] **Phase E** — Pilote exceptions (1 repository + pages)
 - [ ] **Phase F** — Pilote Validator (inscription / utilisateur)

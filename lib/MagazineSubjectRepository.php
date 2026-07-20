@@ -7,10 +7,13 @@ declare(strict_types=1);
 
 namespace Moncine;
 
+use Moncine\Repository\SqlNamedParamsTrait;
 use PDO;
 
 final class MagazineSubjectRepository
 {
+    use SqlNamedParamsTrait;
+
     public const ISSUES_PER_PAGE = 48;
 
     private PDO $db;
@@ -555,25 +558,5 @@ final class MagazineSubjectRepository
                 'user_id' => $userId,
             ],
         ];
-    }
-
-    /**
-     * @param array<string, int|string> $params
-     * @return array<string, int|string>
-     */
-    private function filterParamsForSql(string $sql, array $params): array
-    {
-        if (!preg_match_all('/:([a-zA-Z_][a-zA-Z0-9_]*)/', $sql, $matches)) {
-            return [];
-        }
-
-        $filtered = [];
-        foreach (array_unique($matches[1]) as $name) {
-            if (array_key_exists($name, $params)) {
-                $filtered[$name] = $params[$name];
-            }
-        }
-
-        return $filtered;
     }
 }

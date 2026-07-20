@@ -3,7 +3,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 [![Tests](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml/badge.svg)](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml)
 
-**Version : 0.7.27**
+**Version : 0.7.28**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -72,6 +72,9 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.28** | Qualité code : découpage catalogue films (Phase B) + SQL commun (Phase C) |
+| **0.7.27** | CI PHPUnit verte : correctifs foyer, domaines média et tests |
+| **0.7.26** | Magazines : stats d’évolution par série + CI GitHub Actions |
 | **0.7.25** | Fusion catalogue : autocomplétion jeux, conservation des liens sujets magazines, correctifs tags |
 | **0.7.24** | Magazines : tuiles épurées (survol), correctifs tags et filtre catégories |
 | **0.7.23** | Magazines : catégories de série (filtre latéral), catégorie soluce, lien catalogue dossier |

@@ -9,6 +9,18 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.28] — 2026-07-20
+
+**Qualité code : catalogue films découpé + SQL commun**
+
+### Technique
+
+- **Phase B** : `CatalogFilmRepository` allégé (~529 lignes, était ~2 200) — extractions `FilmLibraryQuery`, `FilmCatalogSaga`, `FilmCatalogImport`, `FilmCatalogEnrichment`, etc. (même modèle que jeux / BD / magazines).
+- **Phase C** : helper unique `Repository\SqlNamedParams` (+ trait) pour filtrer les paramètres SQL nommés ; `SortColumnHelper` ; migration BD / magazines / sujets.
+- Tests unitaires `SqlNamedParamsTest` ; suite films / catalogue inchangée côté API publique.
+
+---
+
 ## [0.7.27] — 2026-07-19
 
 **CI verte : correctifs foyer, domaines média et tests**
