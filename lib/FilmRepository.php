@@ -4,6 +4,8 @@
  *
  * Délègue à CatalogFilmRepository (schéma actuel : oeuvres + bibliotheque)
  * ou FilmRepositoryLegacy si une très ancienne base n’a pas encore été migrée.
+ *
+ * Les helpers d’affichage (durée, support…) sont dans FilmPresentation.
  */
 
 declare(strict_types=1);
@@ -439,42 +441,42 @@ final class FilmRepository
     /** @param array<string, mixed> $post */
     public static function parseBulkFilmIds(array $post): array
     {
-        return FilmRepositoryLegacy::parseBulkFilmIds($post);
+        return FilmPresentation::parseBulkFilmIds($post);
     }
 
     public static function formatSagaOrdre(int $ordre): string
     {
-        return FilmRepositoryLegacy::formatSagaOrdre($ordre);
+        return FilmPresentation::formatSagaOrdre($ordre);
     }
 
     public static function formatSupport(?string $key): string
     {
-        return FilmRepositoryLegacy::formatSupport($key);
+        return FilmPresentation::formatSupport($key);
     }
 
     public static function formatNationalite(?string $nationalite): string
     {
-        return FilmRepositoryLegacy::formatNationalite($nationalite);
+        return FilmPresentation::formatNationalite($nationalite);
     }
 
     /** @param array<string, mixed> $film */
     public static function rolesForPerson(array $film, string $query): array
     {
-        return FilmRepositoryLegacy::rolesForPerson($film, $query);
+        return FilmPresentation::rolesForPerson($film, $query);
     }
 
     public static function formatAnnee(int $annee): string
     {
-        return FilmRepositoryLegacy::formatAnnee($annee);
+        return FilmPresentation::formatAnnee($annee);
     }
 
     public static function formatDuree(int $minutes): string
     {
-        return FilmRepositoryLegacy::formatDuree($minutes);
+        return FilmPresentation::formatDuree($minutes);
     }
 
     public static function splitStyles(string $styles): array
     {
-        return FilmRepositoryLegacy::splitStyles($styles);
+        return FilmPresentation::splitStyles($styles);
     }
 }

@@ -384,11 +384,7 @@ final class View
     /** Page de choix ou formulaire d’ajout de jeu. */
     public static function addGameChoiceUrl(int $oeuvreId = 0): string
     {
-        if ($oeuvreId > 0) {
-            return '/ajouter-jeu.php?oeuvre_id=' . $oeuvreId;
-        }
-
-        return '/ajouter-jeu.php';
+        return GameUrls::addGameChoiceUrl($oeuvreId);
     }
 
     /**
@@ -572,7 +568,7 @@ final class View
         int $catalogPage = 1,
         string $catalogMedia = ''
     ): string {
-        return self::catalogOeuvrePageUrl('/oeuvre-jeu.php', $oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
+        return GameUrls::oeuvreJeuUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
     }
 
     /** Fiche catalogue admin — numéro de magazine. */
@@ -584,33 +580,19 @@ final class View
         int $catalogPage = 1,
         string $catalogMedia = ''
     ): string {
-        return self::catalogOeuvrePageUrl('/oeuvre-magazine.php', $oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
+        return MagazineUrls::oeuvreMagazineUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
     }
 
     /** Lien cliquable vers une fiche catalogue magazine (bascule d’onglet si besoin). */
     public static function oeuvreMagazineNavUrl(int $oeuvreId): string
     {
-        $path = self::oeuvreMagazineUrl($oeuvreId);
-        if (MediaContext::current() === MediaDomain::MAGAZINE) {
-            return $path;
-        }
-
-        return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::MAGAZINE, $path);
+        return MagazineUrls::oeuvreMagazineNavUrl($oeuvreId);
     }
 
     /** Liste des magazines qui traitent un jeu catalogue. */
     public static function gameMagazinesUrl(int $oeuvreId, int $bibId = 0): string
     {
-        if ($oeuvreId <= 0) {
-            return '/jeux.php';
-        }
-
-        $params = ['oeuvre_id' => $oeuvreId];
-        if ($bibId > 0) {
-            $params['id'] = $bibId;
-        }
-
-        return '/jeu-magazines.php?' . http_build_query($params);
+        return GameUrls::gameMagazinesUrl($oeuvreId, $bibId);
     }
 
     /** Fiche catalogue admin — album BD / manga. */
@@ -622,42 +604,7 @@ final class View
         int $catalogPage = 1,
         string $catalogMedia = ''
     ): string {
-        return self::catalogOeuvrePageUrl('/oeuvre-bd.php', $oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
-    }
-
-    private static function catalogOeuvrePageUrl(
-        string $path,
-        int $oeuvreId,
-        string $catalogSearch,
-        string $catalogSort,
-        string $catalogDir,
-        int $catalogPage,
-        string $catalogMedia = ''
-    ): string {
-        if ($oeuvreId <= 0) {
-            return self::catalogueUrl($catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
-        }
-
-        $params = ['id' => (string) $oeuvreId];
-        $catalogSearch = trim($catalogSearch);
-        if ($catalogSearch !== '') {
-            $params['catalog_q'] = $catalogSearch;
-        }
-        if ($catalogSort !== '' && $catalogSort !== 'titre') {
-            $params['catalog_sort'] = $catalogSort;
-        }
-        if (strtolower($catalogDir) === 'desc') {
-            $params['catalog_dir'] = 'desc';
-        }
-        if ($catalogPage > 1) {
-            $params['catalog_page'] = (string) $catalogPage;
-        }
-        $catalogMedia = MediaDomain::normalizeCatalogFilter($catalogMedia);
-        if ($catalogMedia !== '') {
-            $params['catalog_media'] = $catalogMedia;
-        }
-
-        return $path . '?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986) . '#catalog-oeuvre-nav';
+        return BdUrls::oeuvreBdUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
     }
 
     /** Fiche d’une œuvre dans le catalogue partagé. */
@@ -669,30 +616,15 @@ final class View
         int $catalogPage = 1,
         string $catalogMedia = ''
     ): string {
-        if ($oeuvreId <= 0) {
-            return self::catalogueUrl($catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
-        }
-
-        $params = ['id' => (string) $oeuvreId];
-        $catalogSearch = trim($catalogSearch);
-        if ($catalogSearch !== '') {
-            $params['catalog_q'] = $catalogSearch;
-        }
-        if ($catalogSort !== '' && $catalogSort !== 'titre') {
-            $params['catalog_sort'] = $catalogSort;
-        }
-        if (strtolower($catalogDir) === 'desc') {
-            $params['catalog_dir'] = 'desc';
-        }
-        if ($catalogPage > 1) {
-            $params['catalog_page'] = (string) $catalogPage;
-        }
-        $catalogMedia = MediaDomain::normalizeCatalogFilter($catalogMedia);
-        if ($catalogMedia !== '') {
-            $params['catalog_media'] = $catalogMedia;
-        }
-
-        return '/oeuvre.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986) . '#catalog-oeuvre-nav';
+        return CatalogPageUrls::catalogOeuvrePageUrl(
+            '/oeuvre.php',
+            $oeuvreId,
+            $catalogSearch,
+            $catalogSort,
+            $catalogDir,
+            $catalogPage,
+            $catalogMedia
+        );
     }
 
     /** Ajoute des paramètres GET avant un éventuel fragment (#…). */
@@ -832,17 +764,7 @@ final class View
 
     public static function gameFranchiseUrl(string $franchiseName, string $viewMode = ''): string
     {
-        $franchiseName = trim($franchiseName);
-        $params = [];
-        if ($franchiseName !== '') {
-            $params['franchise'] = $franchiseName;
-        }
-        $viewParam = CollectionViewMode::queryValue($viewMode);
-        if ($viewParam !== null) {
-            $params['view'] = $viewParam;
-        }
-
-        return $params === [] ? '/sagas-jeux.php' : '/sagas-jeux.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return GameUrls::gameFranchiseUrl($franchiseName, $viewMode);
     }
 
     public static function supportFilterUrl(string $supportKey): string
@@ -866,13 +788,7 @@ final class View
 
     public static function magazinesUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string
     {
-        $params = array_filter([
-            'q' => trim($query),
-            'sort' => $sort,
-            'dir' => $dir,
-        ], static fn (string $v): bool => $v !== '');
-
-        return $params === [] ? '/magazines.php' : '/magazines.php?' . http_build_query($params);
+        return MagazineUrls::magazinesUrl($query, $sort, $dir);
     }
 
     public static function magazineSeriesUrl(
@@ -881,27 +797,7 @@ final class View
         string $dir = 'desc',
         array $queryExtra = []
     ): string {
-        if ($seriesId <= 0) {
-            return '/magazines.php';
-        }
-
-        $params = [
-            'series_id' => $seriesId,
-            'sort' => $sort,
-            'dir' => $dir,
-        ];
-
-        foreach ($queryExtra as $key => $value) {
-            if (!is_string($key) || $key === '') {
-                continue;
-            }
-            $value = is_string($value) ? trim($value) : (string) $value;
-            if ($value !== '') {
-                $params[$key] = $value;
-            }
-        }
-
-        return '/serie-magazine.php?' . http_build_query($params);
+        return MagazineUrls::magazineSeriesUrl($seriesId, $sort, $dir, $queryExtra);
     }
 
     /** Liste imprimable / PDF d’une série (mêmes filtres que la page série). */
@@ -911,87 +807,45 @@ final class View
         string $dir = 'desc',
         array $queryExtra = []
     ): string {
-        if ($seriesId <= 0) {
-            return '/magazines.php';
-        }
-
-        $params = [
-            'series_id' => $seriesId,
-            'sort' => $sort,
-            'dir' => $dir,
-        ];
-
-        foreach ($queryExtra as $key => $value) {
-            if (!is_string($key) || $key === '') {
-                continue;
-            }
-            $value = is_string($value) ? trim($value) : (string) $value;
-            if ($value !== '') {
-                $params[$key] = $value;
-            }
-        }
-
-        return '/imprimer-serie-magazine.php?' . http_build_query($params);
+        return MagazineUrls::magazineSeriesPrintUrl($seriesId, $sort, $dir, $queryExtra);
     }
 
     /** Page statistiques d’évolution d’une série magazine. */
     public static function magazineSeriesStatsUrl(int $seriesId, string $statut = LibraryStatut::COLLECTION): string
     {
-        if ($seriesId <= 0) {
-            return '/magazines.php';
-        }
-
-        $params = ['series_id' => $seriesId];
-        $statut = LibraryStatut::normalize($statut);
-        if ($statut !== LibraryStatut::COLLECTION) {
-            $params['statut'] = $statut;
-        }
-
-        return '/stats-serie-magazine.php?' . http_build_query($params);
+        return MagazineUrls::magazineSeriesStatsUrl($seriesId, $statut);
     }
 
     public static function magazineIssueUrl(int $bibId): string
     {
-        return $bibId > 0 ? '/magazine-numero.php?id=' . $bibId : '/magazines.php';
+        return MagazineUrls::magazineIssueUrl($bibId);
     }
 
     /** Lien cliquable vers un numéro magazine (bascule d’onglet si besoin). */
     public static function magazineIssueNavUrl(int $bibId): string
     {
-        $path = self::magazineIssueUrl($bibId);
-        if (MediaContext::current() === MediaDomain::MAGAZINE) {
-            return $path;
-        }
-
-        return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::MAGAZINE, $path);
+        return MagazineUrls::magazineIssueNavUrl($bibId);
     }
 
     public static function magazineSubjectSearchUrl(): string
     {
-        return '/magazines-recherche.php';
+        return MagazineUrls::magazineSubjectSearchUrl();
     }
 
     public static function magazineSubjectUrl(int $subjectId): string
     {
-        return $subjectId > 0
-            ? '/magazine-sujet.php?id=' . $subjectId
-            : self::magazineSubjectSearchUrl();
+        return MagazineUrls::magazineSubjectUrl($subjectId);
     }
 
     /** Lien cliquable vers une fiche sujet magazine (bascule d’onglet si besoin). */
     public static function magazineSubjectNavUrl(int $subjectId): string
     {
-        $path = self::magazineSubjectUrl($subjectId);
-        if (MediaContext::current() === MediaDomain::MAGAZINE) {
-            return $path;
-        }
-
-        return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::MAGAZINE, $path);
+        return MagazineUrls::magazineSubjectNavUrl($subjectId);
     }
 
     public static function magazineSubjectApiUrl(): string
     {
-        return '/rechercher-sujets-magazine.php';
+        return MagazineUrls::magazineSubjectApiUrl();
     }
 
     public static function userProfileMagazineSeriesUrl(
@@ -1002,42 +856,12 @@ final class View
         string $dir = 'desc',
         array $queryExtra = []
     ): string {
-        if ($targetUserId <= 0 || $seriesId <= 0) {
-            return self::userProfileUrl($targetUserId, MediaDomain::MAGAZINE);
-        }
-
-        $statut = $listMode === 'envies' ? LibraryStatut::WISHLIST : LibraryStatut::COLLECTION;
-        $params = [
-            'id' => (string) $targetUserId,
-            'series_id' => (string) $seriesId,
-            'statut' => $statut,
-            'sort' => $sort,
-            'dir' => $dir,
-        ];
-
-        foreach ($queryExtra as $key => $value) {
-            if (!is_string($key) || $key === '') {
-                continue;
-            }
-            $value = is_string($value) ? trim($value) : (string) $value;
-            if ($value !== '') {
-                $params[$key] = $value;
-            }
-        }
-
-        return '/utilisateur-serie-magazine.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return MagazineUrls::userProfileMagazineSeriesUrl($targetUserId, $seriesId, $listMode, $sort, $dir, $queryExtra);
     }
 
     public static function userProfileMagazineIssueUrl(int $targetUserId, int $bibId): string
     {
-        if ($targetUserId <= 0 || $bibId <= 0) {
-            return self::userProfileUrl($targetUserId, MediaDomain::MAGAZINE);
-        }
-
-        return '/utilisateur-numero-magazine.php?' . http_build_query([
-            'id' => (string) $targetUserId,
-            'bib_id' => (string) $bibId,
-        ], '', '&', PHP_QUERY_RFC3986);
+        return MagazineUrls::userProfileMagazineIssueUrl($targetUserId, $bibId);
     }
 
     public static function userProfileBdSeriesUrl(
@@ -1048,42 +872,12 @@ final class View
         string $dir = 'asc',
         array $queryExtra = []
     ): string {
-        if ($targetUserId <= 0 || $seriesId <= 0) {
-            return self::userProfileUrl($targetUserId, MediaDomain::BD);
-        }
-
-        $statut = $listMode === 'envies' ? LibraryStatut::WISHLIST : LibraryStatut::COLLECTION;
-        $params = [
-            'id' => (string) $targetUserId,
-            'series_id' => (string) $seriesId,
-            'statut' => $statut,
-            'sort' => $sort,
-            'dir' => $dir,
-        ];
-
-        foreach ($queryExtra as $key => $value) {
-            if (!is_string($key) || $key === '') {
-                continue;
-            }
-            $value = is_string($value) ? trim($value) : (string) $value;
-            if ($value !== '') {
-                $params[$key] = $value;
-            }
-        }
-
-        return '/utilisateur-serie-bd.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return BdUrls::userProfileBdSeriesUrl($targetUserId, $seriesId, $listMode, $sort, $dir, $queryExtra);
     }
 
     public static function userProfileBdAlbumUrl(int $targetUserId, int $bibId): string
     {
-        if ($targetUserId <= 0 || $bibId <= 0) {
-            return self::userProfileUrl($targetUserId, MediaDomain::BD);
-        }
-
-        return '/utilisateur-album-bd.php?' . http_build_query([
-            'id' => (string) $targetUserId,
-            'bib_id' => (string) $bibId,
-        ], '', '&', PHP_QUERY_RFC3986);
+        return BdUrls::userProfileBdAlbumUrl($targetUserId, $bibId);
     }
 
     public static function bdSeriesPrintUrl(
@@ -1092,27 +886,7 @@ final class View
         string $dir = 'asc',
         array $queryExtra = []
     ): string {
-        if ($seriesId <= 0) {
-            return '/bd.php';
-        }
-
-        $params = [
-            'series_id' => $seriesId,
-            'sort' => $sort,
-            'dir' => $dir,
-        ];
-
-        foreach ($queryExtra as $key => $value) {
-            if (!is_string($key) || $key === '') {
-                continue;
-            }
-            $value = is_string($value) ? trim($value) : (string) $value;
-            if ($value !== '') {
-                $params[$key] = $value;
-            }
-        }
-
-        return '/imprimer-serie-bd.php?' . http_build_query($params);
+        return BdUrls::bdSeriesPrintUrl($seriesId, $sort, $dir, $queryExtra);
     }
 
     public static function gamesCollectionUrl(
@@ -1122,25 +896,7 @@ final class View
         string $viewMode = '',
         ?GameListFilter $filter = null
     ): string {
-        $params = [];
-        if ($query !== '') {
-            $params['q'] = $query;
-        }
-        if ($sort !== 'titre') {
-            $params['sort'] = $sort;
-        }
-        if ($dir !== 'asc') {
-            $params['dir'] = $dir;
-        }
-        $viewParam = CollectionViewMode::queryValue($viewMode);
-        if ($viewParam !== null) {
-            $params['view'] = $viewParam;
-        }
-        foreach (($filter ?? GameListFilter::empty())->toQueryParams() as $key => $value) {
-            $params[$key] = $value;
-        }
-
-        return $params === [] ? '/jeux.php' : '/jeux.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return GameUrls::gamesCollectionUrl($query, $sort, $dir, $viewMode, $filter);
     }
 
     /** Version imprimable de Mes jeux (mêmes filtres / tri que /jeux.php). */
@@ -1150,22 +906,7 @@ final class View
         string $sortDir = 'asc',
         ?GameListFilter $filter = null
     ): string {
-        $params = [];
-        $searchQuery = trim($searchQuery);
-        if ($searchQuery !== '') {
-            $params['q'] = $searchQuery;
-        }
-        if ($sortBy !== '' && $sortBy !== 'titre') {
-            $params['sort'] = $sortBy;
-        }
-        if (strtolower($sortDir) === 'desc') {
-            $params['dir'] = 'desc';
-        }
-        foreach (($filter ?? GameListFilter::empty())->toQueryParams() as $key => $value) {
-            $params[$key] = $value;
-        }
-
-        return $params === [] ? '/imprimer-jeux.php' : '/imprimer-jeux.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return GameUrls::gamesPrintUrl($searchQuery, $sortBy, $sortDir, $filter);
     }
 
     /** Version imprimable des envies jeux. */
@@ -1174,19 +915,7 @@ final class View
         string $sortBy = 'titre',
         string $sortDir = 'asc'
     ): string {
-        $params = [];
-        $searchQuery = trim($searchQuery);
-        if ($searchQuery !== '') {
-            $params['q'] = $searchQuery;
-        }
-        if ($sortBy !== '' && $sortBy !== 'titre') {
-            $params['sort'] = $sortBy;
-        }
-        if (strtolower($sortDir) === 'desc') {
-            $params['dir'] = 'desc';
-        }
-
-        return $params === [] ? '/imprimer-envies-jeux.php' : '/imprimer-envies-jeux.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return GameUrls::gamesWishlistPrintUrl($searchQuery, $sortBy, $sortDir);
     }
 
     /** Hauteur fixe des tranches (vue bibliothèque), en pixels — jeux et films. */
@@ -1235,18 +964,7 @@ final class View
 
     public static function gamesWishlistUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string
     {
-        $params = [];
-        if ($query !== '') {
-            $params['q'] = $query;
-        }
-        if ($sort !== 'titre') {
-            $params['sort'] = $sort;
-        }
-        if ($dir !== 'asc') {
-            $params['dir'] = $dir;
-        }
-
-        return $params === [] ? '/jeux-envies.php' : '/jeux-envies.php?' . http_build_query($params);
+        return GameUrls::gamesWishlistUrl($query, $sort, $dir);
     }
 
     /** Lien de tri pour la liste « Mes jeux » (clic = bascule asc/desc). */
@@ -1258,12 +976,7 @@ final class View
         string $viewMode = '',
         ?GameListFilter $filter = null
     ): string {
-        $dir = 'asc';
-        if ($currentSort === $column && strtolower($currentDir) === 'asc') {
-            $dir = 'desc';
-        }
-
-        return self::gamesCollectionUrl($searchQuery, $column, $dir, $viewMode, $filter);
+        return GameUrls::gamesSortUrl($column, $currentSort, $currentDir, $searchQuery, $viewMode, $filter);
     }
 
     public static function gamesWishlistSortUrl(
@@ -1272,43 +985,33 @@ final class View
         string $currentDir,
         string $searchQuery = ''
     ): string {
-        $dir = 'asc';
-        if ($currentSort === $column && strtolower($currentDir) === 'asc') {
-            $dir = 'desc';
-        }
-
-        return self::gamesWishlistUrl($searchQuery, $column, $dir);
+        return GameUrls::gamesWishlistSortUrl($column, $currentSort, $currentDir, $searchQuery);
     }
 
     public static function gameUrl(int $bibId): string
     {
-        return $bibId > 0 ? '/jeu.php?id=' . $bibId : '/jeux.php';
+        return GameUrls::gameUrl($bibId);
     }
 
     /** Lien cliquable vers une fiche jeu (bascule d’onglet si besoin). */
     public static function gameNavUrl(int $bibId): string
     {
-        $path = self::gameUrl($bibId);
-        if (MediaContext::current() === MediaDomain::JEU) {
-            return $path;
-        }
-
-        return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::JEU, $path);
+        return GameUrls::gameNavUrl($bibId);
     }
 
     public static function magazineSubjectCatalogApiUrl(): string
     {
-        return '/rechercher-catalogue-sujet-magazine.php';
+        return MagazineUrls::magazineSubjectCatalogApiUrl();
     }
 
     public static function gameCatalogApiUrl(): string
     {
-        return '/rechercher-jeux-catalogue.php';
+        return GameUrls::gameCatalogApiUrl();
     }
 
     public static function gameEditUrl(int $bibId): string
     {
-        return $bibId > 0 ? '/modifier-jeu.php?id=' . $bibId : '/jeux.php';
+        return GameUrls::gameEditUrl($bibId);
     }
 
     public static function bdCollectionUrl(
@@ -1318,41 +1021,12 @@ final class View
         string $viewMode = '',
         ?BdListFilter $filter = null
     ): string {
-        $params = [];
-        if ($query !== '') {
-            $params['q'] = $query;
-        }
-        if ($sort !== 'titre') {
-            $params['sort'] = $sort;
-        }
-        if ($dir !== 'asc') {
-            $params['dir'] = $dir;
-        }
-        $viewParam = CollectionViewMode::queryValue($viewMode);
-        if ($viewParam !== null) {
-            $params['view'] = $viewParam;
-        }
-        foreach (($filter ?? BdListFilter::empty())->toQueryParams() as $key => $value) {
-            $params[$key] = $value;
-        }
-
-        return $params === [] ? '/bd.php' : '/bd.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return BdUrls::bdCollectionUrl($query, $sort, $dir, $viewMode, $filter);
     }
 
     public static function bdWishlistUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string
     {
-        $params = [];
-        if ($query !== '') {
-            $params['q'] = $query;
-        }
-        if ($sort !== 'titre') {
-            $params['sort'] = $sort;
-        }
-        if (strtolower($dir) === 'desc') {
-            $params['dir'] = 'desc';
-        }
-
-        return $params === [] ? '/bd-envies.php' : '/bd-envies.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return BdUrls::bdWishlistUrl($query, $sort, $dir);
     }
 
     public static function bdSortUrl(
@@ -1363,12 +1037,7 @@ final class View
         string $viewMode = '',
         ?BdListFilter $filter = null
     ): string {
-        $dir = 'asc';
-        if ($currentSort === $column && strtolower($currentDir) === 'asc') {
-            $dir = 'desc';
-        }
-
-        return self::bdCollectionUrl($searchQuery, $column, $dir, $viewMode, $filter);
+        return BdUrls::bdSortUrl($column, $currentSort, $currentDir, $searchQuery, $viewMode, $filter);
     }
 
     public static function bdWishlistSortUrl(
@@ -1377,37 +1046,27 @@ final class View
         string $currentDir,
         string $searchQuery = ''
     ): string {
-        $dir = 'asc';
-        if ($currentSort === $column && strtolower($currentDir) === 'asc') {
-            $dir = 'desc';
-        }
-
-        return self::bdWishlistUrl($searchQuery, $column, $dir);
+        return BdUrls::bdWishlistSortUrl($column, $currentSort, $currentDir, $searchQuery);
     }
 
     public static function bdUrl(int $bibId): string
     {
-        return $bibId > 0 ? '/album-bd.php?id=' . $bibId : '/bd.php';
+        return BdUrls::bdUrl($bibId);
     }
 
     public static function bdNavUrl(int $bibId): string
     {
-        $path = self::bdUrl($bibId);
-        if (MediaContext::current() === MediaDomain::BD) {
-            return $path;
-        }
-
-        return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::BD, $path);
+        return BdUrls::bdNavUrl($bibId);
     }
 
     public static function bdCatalogApiUrl(): string
     {
-        return '/rechercher-bd-catalogue.php';
+        return BdUrls::bdCatalogApiUrl();
     }
 
     public static function bdSeriesCatalogApiUrl(): string
     {
-        return '/rechercher-series-bd-catalogue.php';
+        return BdUrls::bdSeriesCatalogApiUrl();
     }
 
     public static function bdSeriesUrl(
@@ -1417,39 +1076,12 @@ final class View
         array $queryExtra = [],
         string $viewMode = ''
     ): string {
-        if ($seriesId <= 0) {
-            return '/bd.php';
-        }
-
-        $params = [
-            'series_id' => $seriesId,
-            'sort' => $sort,
-            'dir' => $dir,
-        ];
-
-        foreach ($queryExtra as $key => $value) {
-            if (!is_string($key) || $key === '') {
-                continue;
-            }
-            $value = is_string($value) ? trim($value) : (string) $value;
-            if ($value !== '') {
-                $params[$key] = $value;
-            }
-        }
-
-        $viewParam = CollectionViewMode::bdSeriesQueryValue($viewMode);
-        if ($viewParam !== null) {
-            $params['view'] = $viewParam;
-        }
-
-        return '/serie-bd.php?' . http_build_query($params);
+        return BdUrls::bdSeriesUrl($seriesId, $sort, $dir, $queryExtra, $viewMode);
     }
 
     public static function bdAddTomeUrl(int $seriesId, string $statut = 'collection'): string
     {
-        return $seriesId > 0
-            ? '/ajouter-tome-bd.php?series_id=' . $seriesId . '&statut=' . rawurlencode($statut)
-            : '/ajouter-serie-bd.php';
+        return BdUrls::bdAddTomeUrl($seriesId, $statut);
     }
 
     /** Rendu HTML du badge ressenti (icône + libellé optionnel). */

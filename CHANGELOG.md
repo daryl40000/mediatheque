@@ -9,6 +9,19 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.31] — 2026-07-20
+
+**Qualité code : dette Legacy + découpage View (URLs)**
+
+### Technique
+
+- **`FilmPresentation`** : helpers d’affichage films sortis de `FilmRepositoryLegacy` (durée, support, styles, rôles…).
+- **`View.php`** allégé : URLs BD / magazines / jeux → `BdUrls`, `MagazineUrls`, `GameUrls`, `CatalogPageUrls` (`View` reste façade).
+- CI : `actions/upload-artifact@v7` (fin de l’avertissement Node 20).
+- Tests : `FilmPresentationTest`, `DomainViewUrlsTest`.
+
+---
+
 ## [0.7.30] — 2026-07-20
 
 **Qualité code : Phase E (exceptions) + Phase F (Validator)**

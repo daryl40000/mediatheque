@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-07-20 (version **0.7.30** — Phase E exceptions + Phase F Validator)  
+**Dernière mise à jour :** 2026-07-20 (version **0.7.31** — dette Legacy + View URLs)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif
@@ -49,8 +49,8 @@ Fichiers les plus volumineux à surveiller :
 | `lib/BdRepository.php` | **~525** | Fait (pilote 2) |
 | `lib/GameRepository.php` | **~701** | Fait (pilote 1) — surveiller re-gonflement |
 | `lib/MagazineRepository.php` | **~500** | Fait (pilote 3) |
-| `lib/View.php` | ~1 500 | Moyenne (URLs par domaine) |
-| `lib/FilmRepositoryLegacy.php` | ~1 290 | Dette — fusion ou suppression |
+| `lib/View.php` | **~1 145** (était ~1 513) | URLs BD / magazine / jeu extraites ; reste render + films + divers |
+| `lib/FilmRepositoryLegacy.php` | **~1 230** | Helpers → `FilmPresentation` ; moteur encore en repli |
 | `lib/UserPublicProfileService.php` | ~1 170 | Moyenne |
 | `lib/UtilisateurRepository.php` | ~1 000 | Moyenne |
 
@@ -202,7 +202,7 @@ Préférer :
 
 ### Autres fichiers à traiter (priorité moyenne)
 
-- **`lib/View.php`** — scinder par domaine : `ViewBd`, `ViewMagazine`, `ViewGame` (URLs et helpers)
+- **`lib/View.php`** — URLs domaine extraites (`BdUrls`, `MagazineUrls`, `GameUrls`) ; reste render + URLs films
 - **`lib/UserPublicProfileService.php`** — extraire profils BD / magazine / jeu
 - **`lib/FilmRepositoryLegacy.php`** — planifier fusion avec `FilmRepository` / `CatalogFilmRepository` ou suppression
 
@@ -435,12 +435,19 @@ Validation dispersée dans les repositories. Un helper commun aide, mais **aprè
 
 ## Dette transversale (à planifier)
 
-| Sujet | Action |
-|-------|--------|
-| **`BibliothequeRepository`** | Documenter et centraliser la gestion multi-supports (films / magazines / BD) ; éviter les oublis comme supports BD non reconnus à l'insertion |
-| **`FilmRepositoryLegacy.php`** | Auditer les appels restants → fusion ou suppression |
-| **`ROADMAP.md` produit** | Tenir à jour séparément (versions, modules livrés) ; ce fichier ne remplace pas la roadmap fonctionnelle |
-| **Sync doc** | Mettre à jour [doc/](doc/) quand une extraction change les points d'entrée |
+| Sujet | Action | Statut |
+|-------|--------|--------|
+| **`FilmRepositoryLegacy.php`** | Helpers d’affichage → `FilmPresentation` ; moteur Legacy = repli pré-catalogue uniquement | ✅ Helpers extraits (2026-07-20) — suppression moteur = suite |
+| **`View.php`** | URLs BD / magazines / jeux → `BdUrls`, `MagazineUrls`, `GameUrls`, `CatalogPageUrls` ; `View` reste façade (render, URLs films, helpers divers) | ✅ URLs domaine extraites (2026-07-20) |
+| **`BibliothequeRepository`** | Documenter et centraliser la gestion multi-supports (films / magazines / BD) | ⏳ |
+| **`ROADMAP.md` produit** | Tenir à jour séparément (versions, modules livrés) | Continu |
+| **Sync doc** | Mettre à jour [doc/](doc/) quand une extraction change les points d'entrée | Continu |
+
+### Note Legacy
+
+Sur une install à jour (table `bibliotheque`), `FilmRepository` utilise `CatalogFilmRepository`.  
+`FilmRepositoryLegacy` ne sert que si la base n’a **pas** encore le schéma catalogue.  
+Les formats (durée, support, styles…) passent par [`FilmPresentation`](lib/FilmPresentation.php) — plus besoin de Legacy pour l’affichage quotidien.
 
 ---
 
@@ -494,5 +501,6 @@ Validation dispersée dans les repositories. Un helper commun aide, mais **aprè
 - [x] **Phase D** — 126 fichiers de tests ; cartographie extractions ; job CI couverture (pcov)
 - [x] **Phase E** — Pilote exceptions : `UtilisateurRepository` création + pages admin / premier compte
 - [x] **Phase F** — Pilote Validator (`Validator` + `UserAccountValidator` sur inscription / create)
-- [ ] **Dette** — `FilmRepositoryLegacy` traité
-- [ ] **Dette** — `View.php` scindé (au moins URLs BD / magazine / jeu)
+- [x] **Dette** — Helpers `FilmRepositoryLegacy` → `FilmPresentation` (moteur Legacy encore en repli)
+- [ ] **Dette** — Suppression complète de `FilmRepositoryLegacy` (après confirmation bases catalogue)
+- [x] **Dette** — `View.php` : URLs BD / magazine / jeu extraites (`BdUrls`, `MagazineUrls`, `GameUrls`, `CatalogPageUrls`) ; render + URLs films encore dans `View`
