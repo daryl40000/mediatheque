@@ -32,6 +32,9 @@ if (!$showBulkSelect && isset($existingFranchises)) {
                 <?php $sortHeader('Studio', 'studio'); ?>
                 <?php $sortHeader('Genres', 'genre'); ?>
                 <?php $sortHeader('Support', 'support'); ?>
+                <?php if (Moncine\MagazineGameLink::isAvailable()): ?>
+                    <?php $sortHeader('Magazines', 'magazines'); ?>
+                <?php endif; ?>
                 <?php $sortHeader('Note', 'note'); ?>
                 <?php $sortHeader('Fini le', 'finished_at'); ?>
                 <?php if (Moncine\GamePlaytime::isAvailable()): ?>
@@ -43,6 +46,8 @@ if (!$showBulkSelect && isset($existingFranchises)) {
             <?php foreach ($games as $game): ?>
                 <?php
                 $bibId = (int) ($game['id'] ?? 0);
+                $oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
+                $magazineIssueCount = (int) ($game['magazine_issue_count'] ?? 0);
                 $gameUrl = Moncine\View::gameUrl($bibId);
                 $posterSrc = Moncine\View::posterSrc($game['poster_url'] ?? null);
                 $genreList = $game['genre_list'] ?? Moncine\GameGenre::parseList((string) ($game['genre'] ?? ''));
@@ -99,6 +104,19 @@ if (!$showBulkSelect && isset($existingFranchises)) {
                         require MONCINE_ROOT . '/templates/_game_edition_icons.php';
                         ?>
                     </td>
+                    <?php if (Moncine\MagazineGameLink::isAvailable()): ?>
+                        <td class="col-magazines">
+                            <?php if ($magazineIssueCount > 0 && $oeuvreId > 0): ?>
+                                <a href="<?= Moncine\View::escape(Moncine\View::gameMagazinesUrl($oeuvreId, $bibId)) ?>"
+                                   class="games-table__magazines-link"
+                                   title="Voir les <?= $magazineIssueCount ?> magazine(s) qui parlent de <?= Moncine\View::escape($displayTitle) ?>">
+                                    <?= $magazineIssueCount ?>
+                                </a>
+                            <?php else: ?>
+                                <span class="text-muted" title="Aucun magazine relié à ce jeu">—</span>
+                            <?php endif; ?>
+                        </td>
+                    <?php endif; ?>
                     <td><?php $film = $game; $showFoyerAverage = true; $layout = 'stacked'; require MONCINE_ROOT . '/templates/_film_ratings.php'; ?></td>
                     <td><?= (string) ($game['finished_at_label'] ?? '') !== ''
                         ? Moncine\View::escape((string) $game['finished_at_label'])

@@ -2524,6 +2524,21 @@ textarea {
     vertical-align: middle;
 }
 
+.films-table .col-magazines {
+    width: 5.5rem;
+    text-align: center;
+    white-space: nowrap;
+}
+
+.films-table .games-table__magazines-link {
+    font-weight: 600;
+    text-decoration: none;
+}
+
+.films-table .games-table__magazines-link:hover {
+    text-decoration: underline;
+}
+
 .films-table__poster-link {
     display: block;
     line-height: 0;

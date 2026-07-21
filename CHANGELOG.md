@@ -9,6 +9,21 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.34] — 2026-07-21
+
+**Mes jeux : colonne Magazines (compteur + tri)**
+
+### Ajouté
+
+- Colonne **Magazines** dans la vue liste Mes jeux : nombre de numéros qui parlent du jeu (tous types de sujets), lien vers `/jeu-magazines.php`.
+- Tri croissant / décroissant sur cette colonne (titre de colonne cliquable).
+
+### Technique
+
+- Comptage groupé `MagazineGameLink::countIssueCoverageByOeuvreIds` ; expression de tri dans `GameCatalogSql`.
+
+---
+
 ## [0.7.33] — 2026-07-20
 
 **Import bibliothèque : fiabilité (doublons) + magazines**

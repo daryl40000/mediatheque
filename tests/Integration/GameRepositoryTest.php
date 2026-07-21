@@ -324,6 +324,33 @@ final class GameRepositoryTest extends MoncineTestCase
         $coverage = $link->listMagazineCoverageForGame($oeuvreId, $userId, $foyerId);
         $this->assertCount(1, $coverage);
         $this->assertSame('PC Jeux Lien Test', $coverage[0]['series_titre']);
+
+        $counts = $link->countIssueCoverageByOeuvreIds([$oeuvreId, 999999]);
+        $this->assertSame(1, $counts[$oeuvreId] ?? 0);
+        $this->assertArrayNotHasKey(999999, $counts);
+
+        MediaContext::set(MediaDomain::JEU);
+        $listed = $gameRepo->listInLibrary($userId, $foyerId, LibraryStatut::COLLECTION);
+        $matched = null;
+        foreach ($listed as $row) {
+            if ((int) ($row['oeuvre_id'] ?? 0) === $oeuvreId) {
+                $matched = $row;
+                break;
+            }
+        }
+        $this->assertNotNull($matched);
+        $this->assertSame(1, (int) ($matched['magazine_issue_count'] ?? 0));
+
+        $sortedDesc = $gameRepo->listInLibrary(
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION,
+            'magazines',
+            'desc'
+        );
+        $this->assertNotEmpty($sortedDesc);
+        $firstCount = (int) ($sortedDesc[0]['magazine_issue_count'] ?? 0);
+        $this->assertGreaterThanOrEqual(1, $firstCount);
     }
 
     public function testSortableColumnsIncludeSupport(): void
@@ -340,6 +367,10 @@ final class GameRepositoryTest extends MoncineTestCase
         if (GameSteamStatsRepository::isAvailable()) {
             $this->assertContains('steam_playtime', $columns);
             $this->assertTrue(GameRepository::isValidSortColumn('steam_playtime'));
+        }
+        if (MagazineGameLink::isAvailable()) {
+            $this->assertContains('magazines', $columns);
+            $this->assertTrue(GameRepository::isValidSortColumn('magazines'));
         }
     }
 

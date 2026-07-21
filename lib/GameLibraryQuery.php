@@ -82,7 +82,44 @@ final class GameLibraryQuery
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        return array_map([GameRowMapper::class, 'hydrateGameRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+        $games = array_map([GameRowMapper::class, 'hydrateGameRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+
+        return $this->attachMagazineIssueCounts($games);
+    }
+
+    /**
+     * Ajoute magazine_issue_count sur chaque ligne (0 si aucun lien sujet).
+     *
+     * @param list<array<string, mixed>> $games
+     * @return list<array<string, mixed>>
+     */
+    private function attachMagazineIssueCounts(array $games): array
+    {
+        if ($games === [] || !MagazineGameLink::isAvailable()) {
+            foreach ($games as &$game) {
+                $game['magazine_issue_count'] = (int) ($game['magazine_issue_count'] ?? 0);
+            }
+            unset($game);
+
+            return $games;
+        }
+
+        $oeuvreIds = [];
+        foreach ($games as $game) {
+            $oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
+            if ($oeuvreId > 0) {
+                $oeuvreIds[] = $oeuvreId;
+            }
+        }
+
+        $counts = (new MagazineGameLink())->countIssueCoverageByOeuvreIds($oeuvreIds);
+        foreach ($games as &$game) {
+            $oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
+            $game['magazine_issue_count'] = $counts[$oeuvreId] ?? 0;
+        }
+        unset($game);
+
+        return $games;
     }
 
     /** @return array<string, mixed>|null */

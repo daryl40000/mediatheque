@@ -29,6 +29,15 @@ final class GameCatalogSql
         if (GameSchema::hasIgdbMetadataColumns()) {
             array_splice($columns, 3, 0, ['franchise']);
         }
+        if (MagazineGameLink::isAvailable()) {
+            // Après Support, avant Note — comme dans le tableau Mes jeux.
+            $noteIndex = array_search('note', $columns, true);
+            if ($noteIndex === false) {
+                $columns[] = 'magazines';
+            } else {
+                array_splice($columns, $noteIndex, 0, ['magazines']);
+            }
+        }
         if (GameSteamStatsRepository::isAvailable() || GameSchema::hasManualPlaytimeColumn()) {
             $columns[] = 'steam_playtime';
         }
@@ -67,7 +76,30 @@ final class GameCatalogSql
             return GamePlaytime::totalMinutesSql();
         }
 
+        if ($sortBy === 'magazines') {
+            return MagazineGameLink::isAvailable()
+                ? self::magazineIssueCountOrderSql()
+                : self::SORT_COLUMNS['titre'];
+        }
+
         return self::SORT_COLUMNS[$sortBy] ?? self::SORT_COLUMNS['titre'];
+    }
+
+    /**
+     * Sous-requête de tri : nombre de numéros magazine liés au jeu (tous sujets).
+     */
+    public static function magazineIssueCountOrderSql(): string
+    {
+        $domain = str_replace("'", "''", MediaDomain::MAGAZINE);
+
+        return '(SELECT COUNT(DISTINCT oms_sort.oeuvre_id)
+                FROM magazine_subject ms_sort
+                INNER JOIN oeuvre_magazine_subject oms_sort ON oms_sort.subject_id = ms_sort.id
+                INNER JOIN oeuvre_magazine om_sort ON om_sort.oeuvre_id = oms_sort.oeuvre_id
+                INNER JOIN oeuvres o_mag_sort
+                    ON o_mag_sort.id = om_sort.oeuvre_id
+                   AND o_mag_sort.media_domain = \'' . $domain . '\'
+                WHERE ms_sort.catalog_oeuvre_id = o.id)';
     }
 
     public static function selectGameRow(): string

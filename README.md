@@ -3,7 +3,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 [![Tests](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml/badge.svg)](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml)
 
-**Version : 0.7.33**
+**Version : 0.7.34**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -73,6 +73,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.34** | Mes jeux : colonne Magazines (compteur cliquable + tri) |
 | **0.7.33** | Import bibliothèque : correctif doublons UNIQUE, magazines (séries + possession) |
 | **0.7.32** | BD : import CSV catalogue, retrait série ; import/export bibliothèque multi-médias |
 | **0.7.31** | Qualité code : dette Legacy (`FilmPresentation`) + URLs View (BD/magazines/jeux) |

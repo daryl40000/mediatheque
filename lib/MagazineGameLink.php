@@ -210,6 +210,56 @@ final class MagazineGameLink
     }
 
     /**
+     * Compte les numéros magazine (tous types de sujets) par jeu catalogue.
+     * Une seule requête pour toute une liste (Mes jeux).
+     *
+     * @param list<int> $oeuvreIds
+     * @return array<int, int> oeuvre_id => nombre de numéros distincts
+     */
+    public function countIssueCoverageByOeuvreIds(array $oeuvreIds): array
+    {
+        if (!self::isAvailable() || $oeuvreIds === []) {
+            return [];
+        }
+
+        $ids = [];
+        foreach ($oeuvreIds as $oeuvreId) {
+            $oeuvreId = (int) $oeuvreId;
+            if ($oeuvreId > 0) {
+                $ids[$oeuvreId] = $oeuvreId;
+            }
+        }
+        if ($ids === []) {
+            return [];
+        }
+
+        $idList = array_values($ids);
+        $placeholders = implode(',', array_fill(0, count($idList), '?'));
+        $stmt = $this->db->prepare(
+            'SELECT ms.catalog_oeuvre_id AS oeuvre_id,
+                    COUNT(DISTINCT oms.oeuvre_id) AS issue_count
+             FROM magazine_subject ms
+             INNER JOIN oeuvre_magazine_subject oms ON oms.subject_id = ms.id
+             INNER JOIN oeuvre_magazine om ON om.oeuvre_id = oms.oeuvre_id
+             INNER JOIN oeuvres o_issue
+                ON o_issue.id = om.oeuvre_id AND o_issue.media_domain = ?
+             WHERE ms.catalog_oeuvre_id IN (' . $placeholders . ')
+             GROUP BY ms.catalog_oeuvre_id'
+        );
+        $stmt->execute(array_merge([MediaDomain::MAGAZINE], $idList));
+
+        $map = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $oeuvreId = (int) ($row['oeuvre_id'] ?? 0);
+            if ($oeuvreId > 0) {
+                $map[$oeuvreId] = (int) ($row['issue_count'] ?? 0);
+            }
+        }
+
+        return $map;
+    }
+
+    /**
      * @param array<string, mixed> $row
      * @return array<string, mixed>
      */
