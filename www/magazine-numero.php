@@ -71,7 +71,12 @@ if (MagazineGameLink::isAvailable()) {
         $issueSubjects[$index] = $gameLink->enrichSubjectRow($issueSubject, $userId, $foyerId);
     }
 }
-$subjectCategories = MagazineSubject::choices();
+$subjectCategories = MagazineSubject::choicesForSeries(
+    (string) ($issue['series_categories'] ?? '')
+);
+$partitionedSubjects = MagazineSubject::partitionSubjectsByOffer($issueSubjects);
+$offeredSubjects = $partitionedSubjects['offered'];
+$issueSubjects = $partitionedSubjects['regular'];
 $catalogMediaLinkAvailable = MagazineSubjectCatalogLink::isAvailable();
 $catalogMediaDomainChoices = MagazineSubjectCatalogLink::linkableMediaDomainChoices();
 
@@ -85,6 +90,7 @@ View::render('magazine-numero', [
     'subjectDetached' => $subjectDetached,
     'subjectError' => $subjectError,
     'issueSubjects' => $issueSubjects,
+    'offeredSubjects' => $offeredSubjects,
     'subjectCategories' => $subjectCategories,
     'subjectsAvailable' => MagazineSubjectRepository::isAvailable(),
     'seriesTags' => $seriesTags,

@@ -33,8 +33,12 @@ if ($game === null && $oeuvreId > 0) {
 }
 
 $issues = [];
+$offeredIssues = [];
 if ($oeuvreId > 0 && MagazineGameLink::isAvailable()) {
-    $issues = (new MagazineGameLink())->listIssueCoverageForGame($oeuvreId, $userId, $foyerId);
+    $allIssues = (new MagazineGameLink())->listIssueCoverageForGame($oeuvreId, $userId, $foyerId);
+    $partitioned = (new MagazineGameLink())->partitionIssueCoverageByOffer($allIssues);
+    $offeredIssues = $partitioned['offered'];
+    $issues = $partitioned['coverage'];
 }
 
 $gameTitle = (string) ($game['display_titre'] ?? $game['titre'] ?? 'Jeu');
@@ -51,6 +55,7 @@ View::render('jeu-magazines', [
     'game' => $game,
     'gameTitle' => $gameTitle,
     'issues' => $issues,
+    'offeredIssues' => $offeredIssues,
     'backUrl' => $backUrl,
     'oeuvreId' => $oeuvreId,
     'bibId' => $bibId,

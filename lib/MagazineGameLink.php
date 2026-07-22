@@ -171,11 +171,14 @@ final class MagazineGameLink
                 continue;
             }
 
-            $categoryLabel = MagazineSubject::label((string) ($row['category'] ?? ''));
+            $category = MagazineSubject::normalizeCategory((string) ($row['category'] ?? ''));
+            $categoryLabel = MagazineSubject::label($category);
             if (!isset($grouped[$issueOeuvreId])) {
                 $row['subject_id'] = (int) ($row['subject_id'] ?? 0);
                 $row['bib_id'] = (int) ($row['bib_id'] ?? 0);
                 $row['parution_year'] = (int) ($row['parution_year'] ?? 0);
+                $row['category'] = $category;
+                $row['categories'] = $category !== '' ? [$category] : [];
                 $row['category_label'] = $categoryLabel;
                 $row['category_labels'] = $categoryLabel !== '' ? [$categoryLabel] : [];
                 $row['display_label'] = MagazineSubject::displayLabel(
@@ -187,6 +190,9 @@ final class MagazineGameLink
                 continue;
             }
 
+            if ($category !== '' && !in_array($category, $grouped[$issueOeuvreId]['categories'], true)) {
+                $grouped[$issueOeuvreId]['categories'][] = $category;
+            }
             if ($categoryLabel !== '' && !in_array($categoryLabel, $grouped[$issueOeuvreId]['category_labels'], true)) {
                 $grouped[$issueOeuvreId]['category_labels'][] = $categoryLabel;
             }
@@ -202,6 +208,64 @@ final class MagazineGameLink
         }
 
         return $rows;
+    }
+
+    /**
+     * Sépare les numéros « jeux offerts » des autres couvertures (tests, dossiers…).
+     *
+     * @param list<array<string, mixed>> $rows
+     * @return array{offered: list<array<string, mixed>>, coverage: list<array<string, mixed>>}
+     */
+    public function partitionIssueCoverageByOffer(array $rows): array
+    {
+        $offered = [];
+        $coverage = [];
+        foreach ($rows as $row) {
+            $categories = is_array($row['categories'] ?? null)
+                ? array_values(array_map(
+                    static fn (mixed $cat): string => MagazineSubject::normalizeCategory((string) $cat),
+                    $row['categories']
+                ))
+                : [];
+            if ($categories === []) {
+                $single = MagazineSubject::normalizeCategory((string) ($row['category'] ?? ''));
+                if ($single !== '') {
+                    $categories = [$single];
+                }
+            }
+
+            $hasOffer = in_array(MagazineSubject::JEUX_OFFERTS, $categories, true);
+            $otherCategories = array_values(array_filter(
+                $categories,
+                static fn (string $cat): bool => $cat !== MagazineSubject::JEUX_OFFERTS
+            ));
+
+            if ($hasOffer) {
+                $offerRow = $row;
+                $offerRow['categories'] = [MagazineSubject::JEUX_OFFERTS];
+                $offerRow['category'] = MagazineSubject::JEUX_OFFERTS;
+                $offerRow['category_label'] = MagazineSubject::label(MagazineSubject::JEUX_OFFERTS);
+                $offerRow['category_labels'] = [$offerRow['category_label']];
+                $offered[] = $offerRow;
+            }
+
+            if ($otherCategories !== []) {
+                $coverageRow = $row;
+                $coverageRow['categories'] = $otherCategories;
+                $coverageRow['category'] = $otherCategories[0];
+                $coverageRow['category_labels'] = [];
+                foreach ($otherCategories as $cat) {
+                    $label = MagazineSubject::label($cat);
+                    if ($label !== '' && !in_array($label, $coverageRow['category_labels'], true)) {
+                        $coverageRow['category_labels'][] = $label;
+                    }
+                }
+                $coverageRow['category_label'] = (string) ($coverageRow['category_labels'][0] ?? '');
+                $coverage[] = $coverageRow;
+            }
+        }
+
+        return ['offered' => $offered, 'coverage' => $coverage];
     }
 
     public function countIssueCoverageForGame(int $oeuvreId, int $userId, int $foyerId): int

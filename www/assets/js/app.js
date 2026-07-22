@@ -1164,7 +1164,7 @@ function initMagazineSubjectAutocompleteFields() {
         const mode = row.getAttribute('data-magazine-subject-autocomplete') || 'navigate';
         const form = row.closest('form');
         const mediaLinkCategories = new Set(
-            (form?.getAttribute('data-catalog-link-categories') || 'test,preview,interview,dossier,soluce')
+            (form?.getAttribute('data-catalog-link-categories') || 'test,preview,interview,dossier,soluce,jeux_offerts')
                 .split(',')
                 .map((value) => value.trim())
                 .filter(Boolean)

@@ -136,6 +136,36 @@ final class MagazineSeriesCategory
         return self::parseList((string) ($series['categories'] ?? ''));
     }
 
+    /**
+     * La série (ou la liste de catégories) inclut-elle « Jeux vidéo » ?
+     *
+     * @param list<string>|string|array<string, mixed> $categoriesOrSeries
+     */
+    public static function includesJeuxVideo(array|string $categoriesOrSeries): bool
+    {
+        if (is_array($categoriesOrSeries) && array_key_exists('categories', $categoriesOrSeries)) {
+            $list = self::listForSeries($categoriesOrSeries);
+        } elseif (is_string($categoriesOrSeries)) {
+            $list = self::parseList($categoriesOrSeries);
+        } else {
+            $list = [];
+            foreach ($categoriesOrSeries as $item) {
+                $label = self::normalizeLabel((string) $item);
+                if ($label !== '') {
+                    $list[] = $label;
+                }
+            }
+        }
+
+        foreach ($list as $label) {
+            if (self::normalizeLabel((string) $label) === self::JEUX_VIDEO) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /** Clé stable pour filtres HTML (ex. « Jeux vidéo » → « jeux video »). */
     public static function filterKey(string $label): string
     {

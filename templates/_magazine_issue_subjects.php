@@ -25,28 +25,35 @@ $hasMultipleTags = count($seriesTags) > 1;
 $hasSingleTag = $forcedTag !== null;
 $defaultSubjectYear = (int) ($defaultSubjectYear ?? Moncine\MagazineSubject::defaultSubjectYearFromIssue($issue));
 $subjectYearChoices = $subjectYearChoices ?? Moncine\MagazineSubject::subjectYearChoices($defaultSubjectYear);
+
+// Texte d’aide regroupé dans la bulle « i » à côté du titre.
+$subjectsInfoParts = [
+    'Associez un sujet testé ou traité dans ce numéro (jeu, voiture, matériel, dossier, interview…).',
+];
+if ($parutionYear > 0) {
+    $subjectsInfoParts[] = 'Choisissez l’année affichée sur le tag (par défaut celle du numéro : '
+        . (int) $parutionYear . ').';
+} else {
+    $subjectsInfoParts[] = 'Choisissez l’année affichée sur le tag '
+        . '(par défaut l’année courante si le numéro n’a pas encore de date de parution).';
+}
+if ($hasSingleTag) {
+    $subjectsInfoParts[] = 'Tag de la série : ' . (string) $forcedTag
+        . ' — ajouté automatiquement à chaque sujet de cette revue.';
+} elseif ($hasMultipleTags) {
+    $subjectsInfoParts[] = 'Cette revue a plusieurs tags — choisissez celui qui correspond à chaque sujet.';
+}
 ?>
-<section class="magazine-subjects-section" aria-labelledby="magazine-subjects-heading">
-    <h2 id="magazine-subjects-heading">Sujets et tests</h2>
-    <p class="hint">
-        Associez un sujet testé ou traité dans ce numéro (jeu, voiture, matériel, dossier, interview…).
-        Choisissez l’<strong>année</strong> affichée sur le tag (par défaut celle du numéro
-        <?php if ($parutionYear > 0): ?>
-            : <strong><?= (int) $parutionYear ?></strong>
-        <?php else: ?>
-            — année courante si le numéro n’a pas encore de date de parution
-        <?php endif; ?>).
-    </p>
-    <?php if ($hasSingleTag): ?>
-        <p class="hint">
-            Tag de la série : <strong><?= Moncine\View::escape($forcedTag) ?></strong>
-            — ajouté automatiquement à chaque sujet de cette revue.
-        </p>
-    <?php elseif ($hasMultipleTags): ?>
-        <p class="hint">
-            Cette revue a plusieurs tags — choisissez celui qui correspond à chaque sujet.
-        </p>
-    <?php endif; ?>
+<section class="magazine-subjects-section" aria-label="Sujets et tests">
+    <?php
+    $title = 'Sujets et tests';
+    $tag = 'h2';
+    $class = '';
+    $info = implode(' ', $subjectsInfoParts);
+    $infoHtml = null;
+    $infoAria = 'Aide sur les sujets et tests';
+    require MONCINE_ROOT . '/templates/_heading_with_info.php';
+    ?>
 
     <?php if ($subjectSaved): ?>
         <p class="alert alert-success">Sujet enregistré.</p>
@@ -64,7 +71,11 @@ $subjectYearChoices = $subjectYearChoices ?? Moncine\MagazineSubject::subjectYea
         <?php if ($issueSubjects === []): ?>
             <p class="hint">Aucun sujet associé à ce numéro.</p>
         <?php else: ?>
-            <?php require MONCINE_ROOT . '/templates/_magazine_issue_subjects_strip.php'; ?>
+            <?php
+            $stripSubjects = $issueSubjects;
+            require MONCINE_ROOT . '/templates/_magazine_issue_subjects_strip.php';
+            unset($stripSubjects);
+            ?>
         <?php endif; ?>
 
         <form method="post" action="/traiter-sujets-numero-magazine.php" class="magazine-subject-form import-form"
@@ -95,7 +106,8 @@ $subjectYearChoices = $subjectYearChoices ?? Moncine\MagazineSubject::subjectYea
                 </select>
                 <p class="hint" id="attach_catalog_media_help">
                     Pour un <strong>test</strong>, une <strong>preview</strong>, un <strong>dossier</strong>,
-                    une <strong>soluce</strong> ou une <strong>interview</strong>,
+                    une <strong>soluce</strong>, une <strong>interview</strong>
+                    ou un <strong>jeu offert</strong>,
                     choisissez le type de média puis son titre. S’il n’existe pas encore au catalogue,
                     sa fiche sera créée automatiquement.
                 </p>

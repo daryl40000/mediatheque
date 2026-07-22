@@ -3,15 +3,17 @@
  * Bandeau horizontal de vignettes pour les sujets / tests d’un numéro magazine.
  *
  * @var list<array<string, mixed>> $issueSubjects
+ * @var list<array<string, mixed>>|null $stripSubjects alias optionnel (prioritaire)
  * @var int $bibId
  */
-if (($issueSubjects ?? []) === []) {
+$stripSubjects = $stripSubjects ?? $issueSubjects ?? [];
+if ($stripSubjects === []) {
     return;
 }
 ?>
 <div class="magazine-subject-strip" role="region" aria-label="Sujets associés">
     <ul class="magazine-subject-strip__list" role="list">
-        <?php foreach ($issueSubjects as $subject): ?>
+        <?php foreach ($stripSubjects as $subject): ?>
             <?php
             $subjectId = (int) ($subject['id'] ?? 0);
             $navUrl = trim((string) ($subject['media_nav_url'] ?? Moncine\View::magazineSubjectUrl($subjectId)));

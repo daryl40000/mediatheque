@@ -6638,6 +6638,45 @@ body.has-magazine-category-rail .magazine-category-rail {
     line-height: 1.5;
 }
 
+.magazine-sommaire-row {
+    margin-top: 0.25rem;
+}
+
+.magazine-sommaire-row--with-offers {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(10rem, 15rem);
+    gap: 1.5rem;
+    align-items: start;
+}
+
+.magazine-jeux-offerts {
+    min-width: 0;
+}
+
+.magazine-jeux-offerts__hint {
+    margin: 0 0 0.75rem;
+}
+
+.magazine-jeux-offerts .magazine-subject-strip__list {
+    flex-wrap: wrap;
+}
+
+.game-magazines-section {
+    margin-top: 1.5rem;
+}
+
+.game-magazines-section + .game-magazines-section {
+    margin-top: 2rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+}
+
+@media (max-width: 720px) {
+    .magazine-sommaire-row--with-offers {
+        grid-template-columns: 1fr;
+    }
+}
+
 @media (max-width: 640px) {
     .magazine-issue-layout {
         grid-template-columns: 1fr;

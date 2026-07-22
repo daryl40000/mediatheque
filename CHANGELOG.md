@@ -9,6 +9,25 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.35] — 2026-07-22
+
+**Magazines : catégorie « Jeux offerts »**
+
+### Ajouté
+
+- Catégorie de sujet **Jeux offerts** (séries Jeux vidéo) : affichage à droite du sommaire sur la fiche numéro.
+- Page magazines d’un jeu : section **Revues qui ont offert ce jeu** au-dessus de « Revues qui parlent de… ».
+
+### Modifié
+
+- Aide « Sujets et tests » regroupée dans une bulle d’information (icône « i »).
+
+### Corrigé
+
+- Les jaquettes des jeux offerts n’apparaissent plus dans la ligne des autres sujets.
+
+---
+
 ## [0.7.34] — 2026-07-21
 
 **Mes jeux : colonne Magazines (compteur + tri)**

@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\MagazineRepository;
 use Moncine\MagazineGameLink;
+use Moncine\MagazineSeriesCategory;
 use Moncine\MagazineSubject;
 use Moncine\MagazineSubjectCatalogLink;
 use Moncine\MagazineSubjectRepository;
@@ -58,9 +59,25 @@ if ($action === 'detach') {
 $seriesId = (int) ($issue['series_id'] ?? 0);
 $series = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE) ?? [
     'tags' => (string) ($issue['series_tags'] ?? ''),
+    'categories' => (string) ($issue['series_categories'] ?? ''),
 ];
+if (!isset($series['categories'])) {
+    $series['categories'] = (string) ($issue['series_categories'] ?? '');
+}
 
 $category = (string) ($_POST['category'] ?? '');
+$normalizedCategory = MagazineSubject::normalizeCategory($category);
+if (
+    MagazineSubject::isJeuxOfferts($normalizedCategory)
+    && !MagazineSeriesCategory::includesJeuxVideo($series)
+) {
+    header(
+        'Location: ' . $returnUrl . '&subject_error='
+        . rawurlencode('La catégorie « Jeux offerts » est réservée aux séries Jeux vidéo.')
+    );
+    exit;
+}
+
 $label = trim((string) ($_POST['label'] ?? ''));
 $userDetail = trim((string) ($_POST['detail'] ?? ''));
 $parutionYear = (int) ($_POST['parution_year'] ?? 0);

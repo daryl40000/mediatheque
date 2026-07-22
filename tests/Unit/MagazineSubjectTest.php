@@ -29,6 +29,24 @@ final class MagazineSubjectTest extends TestCase
         $this->assertTrue(MagazineSubject::supportsCatalogGameLink(MagazineSubject::SOLUCE));
         $this->assertSame(MagazineSubject::SOLUCE, MagazineSubject::normalizeCategory('solution'));
         $this->assertFalse(MagazineSubject::supportsCatalogGameLink(MagazineSubject::COMPARATIF));
+        $this->assertSame(MagazineSubject::JEUX_OFFERTS, MagazineSubject::normalizeCategory('jeux offerts'));
+        $this->assertSame(MagazineSubject::JEUX_OFFERTS, MagazineSubject::normalizeCategory('jeux_offerts'));
+        $this->assertTrue(MagazineSubject::supportsCatalogGameLink(MagazineSubject::JEUX_OFFERTS));
+        $this->assertTrue(MagazineSubject::isJeuxOfferts('jeux_offerts'));
+        $this->assertArrayHasKey(
+            MagazineSubject::JEUX_OFFERTS,
+            MagazineSubject::choicesForSeries(['Jeux vidéo'])
+        );
+        $this->assertArrayNotHasKey(
+            MagazineSubject::JEUX_OFFERTS,
+            MagazineSubject::choicesForSeries(['Cinéma'])
+        );
+        $partition = MagazineSubject::partitionSubjectsByOffer([
+            ['category' => MagazineSubject::TEST, 'label' => 'A'],
+            ['category' => MagazineSubject::JEUX_OFFERTS, 'label' => 'B'],
+        ]);
+        $this->assertCount(1, $partition['offered']);
+        $this->assertCount(1, $partition['regular']);
         $this->assertSame(
             'Peugeot 308 III (2024)',
             MagazineSubject::displayLabel('Peugeot 308 III', '', 2024)

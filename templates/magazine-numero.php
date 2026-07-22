@@ -120,14 +120,20 @@
                     <p class="hint"><span class="magazine-tag magazine-tag--wishlist">En envies</span> — également listé dans vos envies.</p>
                 <?php endif; ?>
 
-                <section class="game-detail__facts" aria-labelledby="magazine-sommaire-heading">
-                    <h2 id="magazine-sommaire-heading" class="game-detail__section-title">Sommaire</h2>
-                    <?php if (trim((string) ($issue['sommaire'] ?? '')) !== ''): ?>
-                        <div class="game-detail__synopsis magazine-sommaire__body"><?= Moncine\View::escape((string) $issue['sommaire']) ?></div>
-                    <?php else: ?>
-                        <p class="hint">Aucun sommaire renseigné.</p>
-                    <?php endif; ?>
-                </section>
+                <div class="magazine-sommaire-row<?= ($offeredSubjects ?? []) !== [] ? ' magazine-sommaire-row--with-offers' : '' ?>">
+                    <section class="game-detail__facts magazine-sommaire-row__sommaire" aria-labelledby="magazine-sommaire-heading">
+                        <h2 id="magazine-sommaire-heading" class="game-detail__section-title">Sommaire</h2>
+                        <?php if (trim((string) ($issue['sommaire'] ?? '')) !== ''): ?>
+                            <div class="game-detail__synopsis magazine-sommaire__body"><?= Moncine\View::escape((string) $issue['sommaire']) ?></div>
+                        <?php else: ?>
+                            <p class="hint">Aucun sommaire renseigné.</p>
+                        <?php endif; ?>
+                    </section>
+                    <?php
+                    $offeredSubjects = $offeredSubjects ?? [];
+                    require MONCINE_ROOT . '/templates/_magazine_issue_jeux_offerts.php';
+                    ?>
+                </div>
 
                 <?php require MONCINE_ROOT . '/templates/_magazine_issue_subjects.php'; ?>
 

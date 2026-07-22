@@ -15,6 +15,8 @@ final class MagazineSubject
     public const DOSSIER = 'dossier';
     public const SOLUCE = 'soluce';
     public const INTERVIEW = 'interview';
+    /** Jeu fourni avec le numéro (CD/DVD, code…) — séries « Jeux vidéo » uniquement. */
+    public const JEUX_OFFERTS = 'jeux_offerts';
 
     /** Anciennes catégories fusionnées dans {@see TEST}. */
     private const LEGACY_TEST = ['test_jeu', 'test_voiture', 'test_materiel'];
@@ -50,7 +52,50 @@ final class MagazineSubject
             self::DOSSIER => 'Dossier',
             self::SOLUCE => 'Soluce',
             self::INTERVIEW => 'Interview',
+            self::JEUX_OFFERTS => 'Jeux offerts',
         ];
+    }
+
+    /**
+     * Catégories proposées à l’ajout sur un numéro (Jeux offerts seulement si série Jeux vidéo).
+     *
+     * @param list<string>|string $seriesCategories
+     * @return array<string, string>
+     */
+    public static function choicesForSeries(array|string $seriesCategories): array
+    {
+        $choices = self::choices();
+        if (!MagazineSeriesCategory::includesJeuxVideo($seriesCategories)) {
+            unset($choices[self::JEUX_OFFERTS]);
+        }
+
+        return $choices;
+    }
+
+    public static function isJeuxOfferts(string $category): bool
+    {
+        return self::normalizeCategory($category) === self::JEUX_OFFERTS;
+    }
+
+    /**
+     * Sépare les sujets « jeux offerts » des autres (bandeau sommaire vs sujets).
+     *
+     * @param list<array<string, mixed>> $subjects
+     * @return array{offered: list<array<string, mixed>>, regular: list<array<string, mixed>>}
+     */
+    public static function partitionSubjectsByOffer(array $subjects): array
+    {
+        $offered = [];
+        $regular = [];
+        foreach ($subjects as $subject) {
+            if (self::isJeuxOfferts((string) ($subject['category'] ?? ''))) {
+                $offered[] = $subject;
+            } else {
+                $regular[] = $subject;
+            }
+        }
+
+        return ['offered' => $offered, 'regular' => $regular];
     }
 
     /**
@@ -66,6 +111,7 @@ final class MagazineSubject
             self::INTERVIEW,
             self::DOSSIER,
             self::SOLUCE,
+            self::JEUX_OFFERTS,
         ];
     }
 
@@ -79,6 +125,11 @@ final class MagazineSubject
         $legacyTest = self::LEGACY_TEST;
         if (in_array($raw, $legacyTest, true)) {
             return self::TEST;
+        }
+
+        // Clés exactes avant les alias trop larges (« jeux » → test).
+        if (isset(self::choices()[$raw])) {
+            return $raw;
         }
 
         $aliases = [
@@ -97,11 +148,15 @@ final class MagazineSubject
             'entretiens' => self::INTERVIEW,
             'solution' => self::SOLUCE,
             'solutions' => self::SOLUCE,
+            'jeux offerts' => self::JEUX_OFFERTS,
+            'jeux offert' => self::JEUX_OFFERTS,
+            'jeu offert' => self::JEUX_OFFERTS,
+            'jeu offerts' => self::JEUX_OFFERTS,
+            'offert' => self::JEUX_OFFERTS,
+            'offerts' => self::JEUX_OFFERTS,
+            'covermount' => self::JEUX_OFFERTS,
+            'coverdisc' => self::JEUX_OFFERTS,
         ];
-
-        if (isset(self::choices()[$raw])) {
-            return $raw;
-        }
 
         return $aliases[$raw] ?? self::TEST;
     }
