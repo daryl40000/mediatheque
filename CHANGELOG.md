@@ -9,6 +9,21 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.36] — 2026-07-22
+
+**Magazines : statistiques sur une période**
+
+### Ajouté
+
+- Sélecteur d’années sur la page Statistiques magazines.
+- Sur la période : top 10 jeux les plus / moins évoqués ; top 5 magazines (séries) avec le plus de tests / previews.
+
+### Technique
+
+- `MagazinePeriodStats` + tests d’intégration.
+
+---
+
 ## [0.7.35] — 2026-07-22
 
 **Magazines : catégorie « Jeux offerts »**

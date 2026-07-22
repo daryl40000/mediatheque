@@ -11,6 +11,7 @@ use Moncine\CollectionStats;
 use Moncine\BdRepository;
 use Moncine\GameCollectionStats;
 use Moncine\LibraryStatut;
+use Moncine\MagazinePeriodStats;
 use Moncine\MagazineRepository;
 use Moncine\MediaContext;
 use Moncine\MediaDomain;
@@ -29,6 +30,24 @@ if (MediaDomain::isMagazine(MediaContext::current())) {
         ? $repo->collectionPdfStats($userId, $foyerId)
         : ['count' => 0, 'total_bytes' => 0];
 
+    $periodFrom = (int) ($_GET['period_from'] ?? 0);
+    $periodTo = (int) ($_GET['period_to'] ?? 0);
+    $periodStats = MagazinePeriodStats::isAvailable()
+        ? (new MagazinePeriodStats())->getPeriodDashboard(
+            $periodFrom > 0 ? $periodFrom : null,
+            $periodTo > 0 ? $periodTo : null
+        )
+        : [
+            'active' => false,
+            'from_year' => 0,
+            'to_year' => 0,
+            'year_choices' => [],
+            'games_most' => [],
+            'games_least' => [],
+            'series_most_tests' => [],
+            'series_most_previews' => [],
+        ];
+
     View::render('statistiques-magazines', [
         'pageTitle' => MediaContext::navLabels()['stats'],
         'seriesCount' => MagazineRepository::isAvailable()
@@ -42,6 +61,8 @@ if (MediaDomain::isMagazine(MediaContext::current())) {
             : 0,
         'pdfCount' => (int) ($pdfStats['count'] ?? 0),
         'pdfStorageLabel' => MagazineRepository::formatPdfStorageGigabytes((int) ($pdfStats['total_bytes'] ?? 0)),
+        'periodStats' => $periodStats,
+        'wideLayout' => true,
     ]);
     exit;
 }

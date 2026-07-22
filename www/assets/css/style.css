@@ -3416,6 +3416,55 @@ body.page-wide .container--wide:has(> .game-detail-page) {
     margin-bottom: 0.35rem;
 }
 
+.magazine-period-stats {
+    margin-top: 2rem;
+}
+
+.magazine-period-stats__form {
+    margin: 1rem 0 1.25rem;
+}
+
+.magazine-period-stats__fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.25rem;
+    align-items: flex-end;
+}
+
+.magazine-period-stats__fields label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.9rem;
+}
+
+.magazine-period-stats__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.magazine-period-stats__period-label {
+    margin: 0 0 1.25rem;
+}
+
+.magazine-period-stats__grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 1.5rem 2rem;
+}
+
+.magazine-period-stats__block h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.05rem;
+}
+
+@media (max-width: 800px) {
+    .magazine-period-stats__grid {
+        grid-template-columns: 1fr;
+    }
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
