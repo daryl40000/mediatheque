@@ -9,6 +9,24 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.38] — 2026-07-23
+
+**Magazines : Jeux offerts — badge Linux et liens fiches**
+
+### Ajouté
+
+- Badge Linux (OK / non supporté) à côté du titre du jeu sur la liste Jeux offerts, si l’info est renseignée.
+
+### Corrigé
+
+- Clic sur le titre → fiche du jeu ; clic sur le numéro → fiche du magazine (au lieu de la page magazines du jeu).
+
+### Technique
+
+- Jointure bibliothèque jeu dans `MagazineJeuxOffertsList` ; tests liens et badge.
+
+---
+
 ## [0.7.37] — 2026-07-23
 
 **Magazines : liste Jeux offerts + correctifs stats période**

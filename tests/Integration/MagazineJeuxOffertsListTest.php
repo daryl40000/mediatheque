@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Moncine\Tests\Integration;
 
+use Moncine\GameLibraryFields;
 use Moncine\GamePlatform;
 use Moncine\GameRepository;
 use Moncine\LibraryStatut;
@@ -55,6 +56,14 @@ final class MagazineJeuxOffertsListTest extends MoncineTestCase
         $this->assertNotNull($game);
         $gameOeuvreId = (int) $game['oeuvre_id'];
 
+        // Renseigne « testé sous Linux » pour vérifier le badge sur la liste.
+        GameLibraryFields::saveLinuxFlags(
+            \Moncine\Database::getInstance(),
+            $bibGame,
+            GamePlatform::PC,
+            true,
+            false
+        );
         MediaContext::set(MediaDomain::MAGAZINE);
         $seriesId = (new SeriesRepository())->create([
             'titre' => 'Revue Coverdisc Liste',
@@ -120,5 +129,14 @@ final class MagazineJeuxOffertsListTest extends MoncineTestCase
         $this->assertSame('1', (string) ($issues[0]['numero'] ?? ''));
         $this->assertSame('2', (string) ($issues[1]['numero'] ?? ''));
         $this->assertStringContainsString('Jeu Coverdisc Liste', (string) ($issues[0]['game_titre'] ?? ''));
+        $this->assertSame('supported', (string) ($issues[0]['linux_badge'] ?? ''));
+        // Titre → fiche jeu (avec bascule d’onglet si on est en Magazines) ; numéro → fiche magazine.
+        $gameUrl = (string) ($issues[0]['game_url'] ?? '');
+        $this->assertTrue(
+            str_contains($gameUrl, '/jeu.php?id=') || str_contains($gameUrl, '%2Fjeu.php%3Fid%3D'),
+            'Le lien jeu doit mener à la fiche jeu, reçu : ' . $gameUrl
+        );
+        $this->assertStringNotContainsString('jeu-magazines.php', $gameUrl);
+        $this->assertStringContainsString('/magazine-numero.php?id=', (string) ($issues[0]['issue_url'] ?? ''));
     }
 }

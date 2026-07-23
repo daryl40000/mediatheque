@@ -3441,7 +3441,7 @@ body.page-wide .container--wide:has(> .game-detail-page) {
 .magazines-jeux-offerts__item {
     display: flex;
     flex-wrap: wrap;
-    align-items: baseline;
+    align-items: center;
     gap: 0.35rem 0.5rem;
     padding: 0.4rem 0;
     border-bottom: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
@@ -3452,6 +3452,9 @@ body.page-wide .container--wide:has(> .game-detail-page) {
 }
 
 .magazines-jeux-offerts__game {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
     font-weight: 600;
 }
 

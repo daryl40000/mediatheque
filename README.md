@@ -3,7 +3,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 [![Tests](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml/badge.svg)](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml)
 
-**Version : 0.7.37**
+**Version : 0.7.38**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -73,6 +73,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.38** | Magazines : Jeux offerts — badge Linux + liens fiche jeu / magazine |
 | **0.7.37** | Magazines : liste Jeux offerts + correctifs stats période |
 | **0.7.36** | Magazines : statistiques sur une période (jeux / tests / previews) |
 | **0.7.35** | Magazines : catégorie Jeux offerts (sommaire + page jeu) |

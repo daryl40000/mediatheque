@@ -39,7 +39,10 @@ final class MagazineJeuxOffertsList
      *     date_label: string,
      *     game_titre: string,
      *     game_url: string,
-     *     issue_url: string
+     *     issue_url: string,
+     *     linux_badge: string,
+     *     tested_on_linux: bool,
+     *     linux_not_supported: bool
      *   }>
      * }>
      */
@@ -47,6 +50,15 @@ final class MagazineJeuxOffertsList
     {
         if (!self::isAvailable()) {
             return [];
+        }
+
+        // Infos Linux = fiche jeu dans ta bibliothèque (si renseignées).
+        $linuxSelect = '';
+        if (GameSchema::hasTestedOnLinuxColumn()) {
+            $linuxSelect = ', b_game.tested_on_linux';
+            if (GameSchema::hasLinuxNotSupportedColumn()) {
+                $linuxSelect .= ', b_game.linux_not_supported';
+            }
         }
 
         $stmt = $this->db->prepare(
@@ -64,7 +76,9 @@ final class MagazineJeuxOffertsList
                     ms.catalog_oeuvre_id,
                     o_game.titre AS game_titre,
                     o_game.titre_original AS game_titre_original,
-                    b.id AS bib_id
+                    b.id AS issue_bib_id,
+                    b_game.id AS game_bib_id'
+            . $linuxSelect . '
              FROM magazine_subject ms
              INNER JOIN oeuvre_magazine_subject oms ON oms.subject_id = ms.id
              INNER JOIN oeuvre_magazine om ON om.oeuvre_id = oms.oeuvre_id
@@ -81,6 +95,11 @@ final class MagazineJeuxOffertsList
                AND (
                     (b.statut = :collection AND b.foyer_id = :foyer_id)
                     OR (b.statut = :wishlist AND b.user_id = :user_id)
+               )
+             LEFT JOIN bibliotheque b_game ON b_game.oeuvre_id = ms.catalog_oeuvre_id
+               AND (
+                    (b_game.statut = :collection AND b_game.foyer_id = :foyer_id)
+                    OR (b_game.statut = :wishlist AND b_game.user_id = :user_id)
                )
              WHERE ms.category = :category
              ORDER BY s.titre COLLATE FRENCH_NOCASE ASC,
@@ -134,17 +153,31 @@ final class MagazineJeuxOffertsList
                 $gameTitre = 'Jeu offert';
             }
 
-            $bibId = (int) ($row['bib_id'] ?? 0);
+            // Lien numéro → fiche magazine (bibliothèque ou catalogue).
+            $issueBibId = (int) ($row['issue_bib_id'] ?? 0);
             $issueOeuvreId = (int) ($row['issue_oeuvre_id'] ?? 0);
-            $issueUrl = $bibId > 0
-                ? View::magazineIssueNavUrl($bibId)
+            $issueUrl = $issueBibId > 0
+                ? View::magazineIssueNavUrl($issueBibId)
                 : ($issueOeuvreId > 0 ? View::oeuvreMagazineNavUrl($issueOeuvreId) : '');
 
-            $gameUrl = $catalogOeuvreId > 0
-                ? View::gameMagazinesUrl($catalogOeuvreId, $bibId)
-                : '';
+            // Lien titre → fiche du jeu (bibliothèque ou catalogue), pas la page magazines.
+            $gameBibId = (int) ($row['game_bib_id'] ?? 0);
+            if ($gameBibId > 0) {
+                $gameUrl = View::gameNavUrl($gameBibId);
+            } elseif ($catalogOeuvreId > 0) {
+                $gameUrl = View::oeuvreJeuUrl($catalogOeuvreId);
+            } else {
+                $gameUrl = '';
+            }
 
             $dateParution = (string) ($row['date_parution'] ?? '');
+            $testedOnLinux = !empty($row['tested_on_linux']);
+            $linuxNotSupported = !empty($row['linux_not_supported']);
+            // Badge uniquement si l’info est connue : OK (supported) ou non OK (unsupported).
+            $linuxBadge = $testedOnLinux
+                ? 'supported'
+                : ($linuxNotSupported ? 'unsupported' : '');
+
             $grouped[$seriesId]['issues'][] = [
                 'issue_oeuvre_id' => $issueOeuvreId,
                 'numero' => (string) ($row['numero'] ?? ''),
@@ -160,6 +193,9 @@ final class MagazineJeuxOffertsList
                 'game_url' => $gameUrl,
                 'issue_url' => $issueUrl,
                 'subject_id' => (int) ($row['subject_id'] ?? 0),
+                'linux_badge' => $linuxBadge,
+                'tested_on_linux' => $testedOnLinux,
+                'linux_not_supported' => $linuxNotSupported,
             ];
         }
 

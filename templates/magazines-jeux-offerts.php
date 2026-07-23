@@ -89,6 +89,20 @@ $moduleAvailable = $moduleAvailable ?? true;
                                 <?php else: ?>
                                     <?= Moncine\View::escape($gameTitre) ?>
                                 <?php endif; ?>
+                                <?php
+                                // Logo Linux à côté du titre si l’info est renseignée sur le jeu.
+                                $linuxBadge = (string) ($issue['linux_badge'] ?? '');
+                                if ($linuxBadge !== '' || !empty($issue['tested_on_linux']) || !empty($issue['linux_not_supported'])) {
+                                    $game = [
+                                        'linux_badge' => $linuxBadge,
+                                        'tested_on_linux' => !empty($issue['tested_on_linux']),
+                                        'linux_not_supported' => !empty($issue['linux_not_supported']),
+                                    ];
+                                    $size = 'sm';
+                                    $plain = true;
+                                    require MONCINE_ROOT . '/templates/_game_linux_badge_if_set.php';
+                                }
+                                ?>
                             </span>
                         </li>
                     <?php endforeach; ?>
