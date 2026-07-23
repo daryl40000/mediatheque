@@ -33,6 +33,14 @@ $seriesMostPreviews = $periodStats['series_most_previews'] ?? [];
     <h1><?= Moncine\View::escape($mediaNav['stats']) ?></h1>
     <p class="lead">Vue d’ensemble de votre collection de magazines.</p>
 
+    <?php if (Moncine\MagazineJeuxOffertsList::isAvailable()): ?>
+        <p class="stats-page__actions">
+            <a href="<?= Moncine\View::escape(Moncine\View::magazinesJeuxOffertsUrl()) ?>" class="btn btn-secondary">
+                Jeux offerts
+            </a>
+        </p>
+    <?php endif; ?>
+
     <div class="stats-grid">
         <article class="stat-card stat-card--highlight">
             <p class="stat-card__value"><?= (int) $seriesCount ?></p>
@@ -128,7 +136,7 @@ $seriesMostPreviews = $periodStats['series_most_previews'] ?? [];
                                         </a>
                                         <span class="tag">
                                             <?= (int) ($game['subject_count'] ?? 0) ?>
-                                            sujet<?= (int) ($game['subject_count'] ?? 0) > 1 ? 's' : '' ?>
+                                            mention<?= (int) ($game['subject_count'] ?? 0) > 1 ? 's' : '' ?>
                                         </span>
                                     </li>
                                 <?php endforeach; ?>
@@ -151,7 +159,7 @@ $seriesMostPreviews = $periodStats['series_most_previews'] ?? [];
                                         </a>
                                         <span class="tag">
                                             <?= (int) ($game['subject_count'] ?? 0) ?>
-                                            sujet<?= (int) ($game['subject_count'] ?? 0) > 1 ? 's' : '' ?>
+                                            mention<?= (int) ($game['subject_count'] ?? 0) > 1 ? 's' : '' ?>
                                         </span>
                                     </li>
                                 <?php endforeach; ?>

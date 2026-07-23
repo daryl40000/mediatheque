@@ -3416,6 +3416,45 @@ body.page-wide .container--wide:has(> .game-detail-page) {
     margin-bottom: 0.35rem;
 }
 
+.stats-page__actions {
+    margin: 0 0 1.25rem;
+}
+
+.magazines-jeux-offerts__series {
+    margin-top: 1.75rem;
+}
+
+.magazines-jeux-offerts__series-title {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin: 0 0 0.6rem;
+    font-size: 1.15rem;
+}
+
+.magazines-jeux-offerts__list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+}
+
+.magazines-jeux-offerts__item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.35rem 0.5rem;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
+}
+
+.magazines-jeux-offerts__sep {
+    opacity: 0.45;
+}
+
+.magazines-jeux-offerts__game {
+    font-weight: 600;
+}
+
 .magazine-period-stats {
     margin-top: 2rem;
 }

@@ -116,6 +116,12 @@ final class MagazineUrls
         return '/magazines-recherche.php';
     }
 
+    /** Liste des numéros ayant offert un jeu (depuis les statistiques). */
+    public static function magazinesJeuxOffertsUrl(): string
+    {
+        return '/magazines-jeux-offerts.php';
+    }
+
     public static function magazineSubjectUrl(int $subjectId): string
     {
         return $subjectId > 0

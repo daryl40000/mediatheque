@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.7.36** (2026-07-22)  
+**Version actuelle : 0.7.37** (2026-07-23)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -13,7 +13,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 ---
 
-## Où en est-on ? (synthèse 0.7.36)
+## Où en est-on ? (synthèse 0.7.37)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
@@ -23,7 +23,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 | **BD / Manga** | 🔄 **En cours (M2)** | **0.7.2** → import CSV prêt | Collection, envies, partage, profil, impression, **import CSV** ; clôture → **0.8.0** |
 | **Livres** | ⏳ Placeholder (M3) | **0.7.8** | Onglet + page « bientôt » (`/livres.php`) |
 | **Musique** | ⏳ Placeholder (M8) | **0.7.8** | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles et CD physiques |
-| **Transversal** | 🔄 Partiel | **0.7.12**–**0.7.36** | Recherche globale, catalogue admin, import/export multi-médias, profil → fiches, partage, connexion pseudo, UI Compte/Import, menu mobile, PWA, CI |
+| **Transversal** | 🔄 Partiel | **0.7.12**–**0.7.37** | Recherche globale, catalogue admin, import/export multi-médias, profil → fiches, partage, connexion pseudo, UI Compte/Import, menu mobile, PWA, CI |
 
 ### Phases (suivi)
 
@@ -48,6 +48,10 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 - Import CSV catalogue livré en **0.7.32** — valider en usage réel puis tagger **0.8.0**.
 - Ensuite : **M3 Livres**.
+
+### ✅ **0.7.37** — Magazines : Jeux offerts (liste) + stats période (2026-07-23)
+
+- Page liste des numéros ayant offert un jeu ; correctif comptage mentions et dates FR.
 
 ### ✅ **0.7.36** — Magazines : stats sur une période (2026-07-22)
 
@@ -693,4 +697,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.7.36** — 2026-07-22 (Magazines : stats sur une période).*
+*Dernière mise à jour : **0.7.37** — 2026-07-23 (Magazines : liste Jeux offerts + stats période).*

@@ -832,6 +832,11 @@ final class View
         return MagazineUrls::magazineSubjectSearchUrl();
     }
 
+    public static function magazinesJeuxOffertsUrl(): string
+    {
+        return MagazineUrls::magazinesJeuxOffertsUrl();
+    }
+
     public static function magazineSubjectUrl(int $subjectId): string
     {
         return MagazineUrls::magazineSubjectUrl($subjectId);

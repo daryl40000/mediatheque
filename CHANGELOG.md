@@ -9,6 +9,24 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.37] — 2026-07-23
+
+**Magazines : liste Jeux offerts + correctifs stats période**
+
+### Ajouté
+
+- Bouton **Jeux offerts** sur Statistiques magazines → page listant les numéros ayant offert un jeu (par série, ordre de parution).
+
+### Corrigé
+
+- Stats période : chaque mention (sujet ↔ numéro) est comptée ; dates françaises (`mars 1996`) prises en compte.
+
+### Technique
+
+- `MagazineJeuxOffertsList`, `/magazines-jeux-offerts.php` ; tests associés.
+
+---
+
 ## [0.7.36] — 2026-07-22
 
 **Magazines : statistiques sur une période**
