@@ -63,6 +63,13 @@ $error = (string) ($error ?? '');
                         </label>
                     </fieldset>
 
+                    <!-- Case HS : sans elle, l’enregistrement remettait toujours hors-série à « non ». -->
+                    <label class="checkbox">
+                        <input type="checkbox" name="est_hors_serie" id="popover_edit_est_hors_serie" value="1"
+                            <?= !empty($issue['est_hors_serie']) ? ' checked' : '' ?>>
+                        Hors-série / numéro spécial
+                    </label>
+
                     <label for="popover_edit_sommaire">Sommaire</label>
                     <textarea name="sommaire" id="popover_edit_sommaire" rows="5"><?= Moncine\View::escape((string) ($issue['sommaire'] ?? '')) ?></textarea>
 

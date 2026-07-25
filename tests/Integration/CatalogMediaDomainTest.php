@@ -122,6 +122,30 @@ final class CatalogMediaDomainTest extends MoncineTestCase
         $this->assertNull((new OeuvreRepository())->findByIdForAdmin($gameId));
     }
 
+    public function testCatalogAdminSortsById(): void
+    {
+        $oeuvres = new OeuvreRepository();
+        $firstId = $oeuvres->insert([
+            'titre' => 'Zzz Sort Id A',
+            'realisateur' => '',
+            'media_domain' => MediaDomain::FILM,
+        ]);
+        $secondId = $oeuvres->insert([
+            'titre' => 'Aaa Sort Id B',
+            'realisateur' => '',
+            'media_domain' => MediaDomain::FILM,
+        ]);
+        $this->assertGreaterThan($firstId, $secondId);
+
+        $admin = new CatalogAdmin();
+        $asc = $admin->listOeuvres('Sort Id', 'id', 'asc', 1);
+        $desc = $admin->listOeuvres('Sort Id', 'id', 'desc', 1);
+
+        $this->assertSame([$firstId, $secondId], array_map('intval', array_column($asc, 'id')));
+        $this->assertSame([$secondId, $firstId], array_map('intval', array_column($desc, 'id')));
+        $this->assertStringContainsString('sort=id', $admin->sortUrl('id', 'titre', 'asc', '', 1));
+    }
+
     /**
      * @param array<string, string> $values
      * @return list<string>

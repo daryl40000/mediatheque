@@ -593,6 +593,33 @@ final class MagazineTest extends MoncineTestCase
         $this->assertSame(0, (int) ($issueStandard['est_hors_serie'] ?? 1));
     }
 
+    public function testUpdateCatalogNumeroOrdre(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'Ordre tri catalogue',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $repo = new MagazineRepository();
+        $oeuvreId = $repo->createCatalogIssue($seriesId, [
+            'numero' => '10',
+            'numero_ordre' => 10,
+        ]);
+        $this->assertIsInt($oeuvreId);
+
+        $this->assertTrue($repo->updateCatalogByOeuvreId($oeuvreId, [
+            'numero' => '10',
+            'numero_ordre' => 10.5,
+            'est_hors_serie' => true,
+        ]));
+
+        $issue = $repo->findCatalogIssueByOeuvreId($oeuvreId);
+        $this->assertNotNull($issue);
+        $this->assertSame(10.5, (float) ($issue['numero_ordre'] ?? 0));
+        $this->assertSame(1, (int) ($issue['est_hors_serie'] ?? 0));
+    }
+
     public function testUncheckHorsSerieBlockedWhenStandardNumeroExists(): void
     {
         $seriesId = (new SeriesRepository())->create([

@@ -308,7 +308,7 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                                            aria-label="Tout sélectionner sur cette page">
                                 </label>
                             </th>
-                            <th scope="col">ID</th>
+                            <?php $sortHeader('ID', 'id'); ?>
                             <?php $sortHeader('Titre', 'titre'); ?>
                             <?php $sortHeader('Réalisateur', 'realisateur'); ?>
                             <?php $sortHeader('Année', 'annee'); ?>

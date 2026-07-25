@@ -79,6 +79,16 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::MAGAZINE);
                 </header>
 
                 <dl class="film-facts">
+                    <?php if ((float) ($issue['numero_ordre'] ?? 0) > 0): ?>
+                        <dt>Ordre de tri</dt>
+                        <dd><?php
+                            $ordreAffiche = (float) $issue['numero_ordre'];
+                            echo Moncine\View::escape(
+                                rtrim(rtrim(number_format($ordreAffiche, 1, '.', ''), '0'), '.')
+                            );
+                        ?></dd>
+                    <?php endif; ?>
+
                     <?php if ((string) ($issue['editeur'] ?? '') !== ''): ?>
                         <dt>Éditeur</dt>
                         <dd><?= Moncine\View::escape((string) $issue['editeur']) ?></dd>

@@ -9,6 +9,25 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.39] — 2026-07-25
+
+**Magazines et catalogue : hors-série, ordre de tri, tri par ID**
+
+### Ajouté
+
+- Champ **ordre de tri** éditable sur la fiche catalogue d’un numéro magazine.
+- Colonne **ID** triable dans le catalogue admin.
+
+### Corrigé
+
+- Case **Hors-série** rétablie dans le formulaire de modification d’un numéro (évite aussi de perdre le statut HS à l’enregistrement).
+
+### Technique
+
+- Tests : mise à jour `numero_ordre`, tri catalogue par `id`.
+
+---
+
 ## [0.7.38] — 2026-07-23
 
 **Magazines : Jeux offerts — badge Linux et liens fiches**

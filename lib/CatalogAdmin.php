@@ -532,6 +532,7 @@ final class CatalogAdmin
     private function resolveSort(string $sortBy, string $sortDir): array
     {
         $allowed = [
+            'id' => 'o.id',
             'titre' => 'o.titre COLLATE FRENCH_NOCASE',
             'realisateur' => 'o.realisateur COLLATE FRENCH_NOCASE',
             'annee' => 'o.annee',

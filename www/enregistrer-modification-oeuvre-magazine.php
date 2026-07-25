@@ -40,6 +40,7 @@ if ($oeuvreId <= 0) {
 
 $result = (new MagazineRepository())->updateCatalogByOeuvreId($oeuvreId, [
     'numero' => (string) ($_POST['numero'] ?? ''),
+    'numero_ordre' => (float) ($_POST['numero_ordre'] ?? 0),
     'date_parution' => (string) ($_POST['date_parution'] ?? ''),
     'pages' => (int) ($_POST['pages'] ?? 0),
     'est_hors_serie' => FormCheckbox::isChecked($_POST, 'est_hors_serie'),

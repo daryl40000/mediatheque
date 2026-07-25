@@ -41,6 +41,21 @@ $catalogPage = (int) ($catalogPage ?? 1);
         <input type="text" name="numero" id="oeuvre_mag_numero" required maxlength="40"
                value="<?= Moncine\View::escape((string) ($issue['numero'] ?? '')) ?>">
 
+        <?php
+        // Ordre de tri dans la liste des numéros de la série (ex. 42 ou 42.5 pour un HS).
+        $numeroOrdreValue = (float) ($issue['numero_ordre'] ?? 0);
+        $numeroOrdreDisplay = $numeroOrdreValue > 0
+            ? rtrim(rtrim(number_format($numeroOrdreValue, 1, '.', ''), '0'), '.')
+            : '';
+        ?>
+        <label for="oeuvre_mag_numero_ordre">Ordre de tri</label>
+        <input type="number" step="0.1" name="numero_ordre" id="oeuvre_mag_numero_ordre"
+               value="<?= Moncine\View::escape($numeroOrdreDisplay) ?>">
+        <p class="hint">
+            Sert à classer les numéros dans la série (1, 2, 3…).
+            Pour un hors-série entre deux numéros, utilisez un demi (ex. 42.5).
+        </p>
+
         <label for="oeuvre_mag_date">Date de parution</label>
         <input type="date" name="date_parution" id="oeuvre_mag_date"
                value="<?= Moncine\View::escape((string) ($issue['date_parution'] ?? '')) ?>">
