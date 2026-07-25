@@ -20,4 +20,22 @@ final class MagazineCatalogSql {
         $s="LOWER(COALESCE($b.support_physique, ''))";
         return "(( $om.stored_object_id IS NOT NULL AND $om.stored_object_id > 0) OR (INSTR($s, 'papier') > 0) OR (INSTR($s, 'pdf') > 0) OR (INSTR($s, 'physique') > 0) OR (INSTR($s, 'demat') > 0) OR (INSTR($s, 'démat') > 0))";
     }
+
+    /**
+     * Sous-requête : nombre de sujets « Jeux offerts » liés au numéro.
+     * Nécessite le paramètre nommé :jeux_offerts_category.
+     */
+    public static function selectJeuxOffertsCount(string $oeuvreAlias = 'o'): string
+    {
+        if (!MagazineSubjectRepository::isAvailable()) {
+            return ', 0 AS jeux_offerts_count';
+        }
+
+        return ', (SELECT COUNT(*)
+                    FROM oeuvre_magazine_subject oms_jo
+                    INNER JOIN magazine_subject ms_jo ON ms_jo.id = oms_jo.subject_id
+                    WHERE oms_jo.oeuvre_id = ' . $oeuvreAlias . '.id
+                      AND ms_jo.category = :jeux_offerts_category
+                 ) AS jeux_offerts_count';
+    }
 }

@@ -138,5 +138,18 @@ final class MagazineJeuxOffertsListTest extends MoncineTestCase
         );
         $this->assertStringNotContainsString('jeu-magazines.php', $gameUrl);
         $this->assertStringContainsString('/magazine-numero.php?id=', (string) ($issues[0]['issue_url'] ?? ''));
+
+        // Compteur jeux offerts pour le badge CD sur les tuiles de la série.
+        $listed = (new MagazineRepository())->listIssuesForSeries(
+            $seriesId,
+            $userId,
+            $foyerId,
+            LibraryStatut::COLLECTION
+        );
+        $this->assertNotEmpty($listed);
+        foreach ($listed as $listedIssue) {
+            $this->assertGreaterThan(0, (int) ($listedIssue['jeux_offerts_count'] ?? 0));
+            $this->assertStringContainsString('Jeux', (string) ($listedIssue['series_categories'] ?? ''));
+        }
     }
 }

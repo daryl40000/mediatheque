@@ -4844,11 +4844,107 @@ a.collection-grid__link.social-profile-grid__card,
 
 .magazine-issue-card__cover-link {
     display: block;
+    position: relative;
     text-decoration: none;
 }
 
 .magazine-issue-card__cover-link:hover .magazine-cover {
     border-color: var(--media-accent, var(--accent));
+}
+
+/* Badge « papier » : feuille blanche avec écriture, bien contrastée. */
+.magazine-issue-card__paper-badge {
+    position: absolute;
+    top: 0.3rem;
+    right: 0.3rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 0.4rem;
+    background: rgba(255, 252, 245, 0.96);
+    border: 2px solid rgba(20, 16, 10, 0.88);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.55),
+        0 2px 6px rgba(0, 0, 0, 0.55);
+    pointer-events: none;
+}
+
+.magazine-issue-card__paper-icon {
+    display: block;
+    width: 1.2rem;
+    height: 1.2rem;
+}
+
+.magazine-issue-card__paper-sheet {
+    fill: #fff8eb;
+    stroke: #1a1410;
+    stroke-width: 1.2;
+    stroke-linejoin: round;
+}
+
+.magazine-issue-card__paper-fold {
+    fill: #e6d7b8;
+    stroke: #1a1410;
+    stroke-width: 1;
+    stroke-linejoin: round;
+}
+
+.magazine-issue-card__paper-lines {
+    fill: #1a1410;
+}
+
+.magazine-issues-grid--compact .magazine-issue-card__paper-badge {
+    width: 1.7rem;
+    height: 1.7rem;
+    top: 0.22rem;
+    right: 0.22rem;
+}
+
+.magazine-issues-grid--compact .magazine-issue-card__paper-icon {
+    width: 1.1rem;
+    height: 1.1rem;
+}
+
+/* Badge CD : même icône que les fiches jeux (angle bas droit). */
+.magazine-issue-card__cd-badge {
+    position: absolute;
+    bottom: 0.28rem;
+    right: 0.28rem;
+    z-index: 2;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.85rem;
+    height: 1.85rem;
+    border-radius: 0.4rem;
+    background: rgba(255, 252, 245, 0.96);
+    border: 2px solid rgba(20, 16, 10, 0.88);
+    box-shadow:
+        0 0 0 1px rgba(255, 255, 255, 0.55),
+        0 2px 6px rgba(0, 0, 0, 0.55);
+    pointer-events: none;
+}
+
+.magazine-issue-card__cd-badge .game-edition-icon {
+    width: 1.25rem;
+    height: 1.25rem;
+    box-shadow: none;
+    border-radius: 0;
+}
+
+.magazine-issues-grid--compact .magazine-issue-card__cd-badge {
+    width: 1.7rem;
+    height: 1.7rem;
+    bottom: 0.2rem;
+    right: 0.2rem;
+}
+
+.magazine-issues-grid--compact .magazine-issue-card__cd-badge .game-edition-icon {
+    width: 1.15rem;
+    height: 1.15rem;
 }
 
 .magazine-issue-card__body {

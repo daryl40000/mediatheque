@@ -293,12 +293,18 @@ final class MagazineLibraryQuery {
                     AND bw.statut = :in_wishlist_statut
                     AND bw.user_id = :in_wishlist_user) AS in_wishlist'
             : ', 0 AS in_wishlist';
+        $jeuxOffertsSelect = MagazineCatalogSql::selectJeuxOffertsCount('o');
+        if (str_contains($jeuxOffertsSelect, ':jeux_offerts_category')) {
+            $params['jeux_offerts_category'] = MagazineSubject::JEUX_OFFERTS;
+        }
 
         $sql = 'SELECT b.id AS bib_id, b.statut, b.support_physique, b.created_at AS bib_created_at,
                     o.id AS oeuvre_id, o.titre, o.poster_url,
                     om.numero, om.numero_ordre, om.date_parution, om.sommaire, om.pages,
                     om.est_hors_serie, om.stored_object_id,
-                    s.titre AS series_titre, s.publication_type' . $inWishlistSelect . '
+                    s.titre AS series_titre, s.publication_type, s.categories AS series_categories'
+            . $inWishlistSelect
+            . $jeuxOffertsSelect . '
                 FROM oeuvre_magazine om
                 INNER JOIN oeuvres o ON o.id = om.oeuvre_id AND o.media_domain = :domain
                 INNER JOIN series s ON s.id = om.series_id
@@ -361,12 +367,19 @@ final class MagazineLibraryQuery {
                     AND bw.statut = :in_wishlist_statut
                     AND bw.user_id = :in_wishlist_user) AS in_wishlist'
             : ', 0 AS in_wishlist';
+        $jeuxOffertsSelect = MagazineCatalogSql::selectJeuxOffertsCount('o');
+        if (str_contains($jeuxOffertsSelect, ':jeux_offerts_category')) {
+            $params['jeux_offerts_category'] = MagazineSubject::JEUX_OFFERTS;
+        }
 
         $sql = 'SELECT b.id AS bib_id, b.statut, b.support_physique, b.created_at AS bib_created_at,
                     o.id AS oeuvre_id, o.titre, o.poster_url,
                     om.numero, om.numero_ordre, om.date_parution, om.sommaire, om.pages,
                     om.est_hors_serie, om.stored_object_id,
-                    s.id AS series_id, s.titre AS series_titre, s.publication_type' . $inWishlistSelect . '
+                    s.id AS series_id, s.titre AS series_titre, s.publication_type,
+                    s.categories AS series_categories'
+            . $inWishlistSelect
+            . $jeuxOffertsSelect . '
                 FROM oeuvre_magazine om
                 INNER JOIN oeuvres o ON o.id = om.oeuvre_id AND o.media_domain = :domain
                 INNER JOIN series s ON s.id = om.series_id

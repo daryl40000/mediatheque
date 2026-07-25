@@ -9,6 +9,22 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.40] — 2026-07-25
+
+**Magazines : badges sur les tuiles de numéros**
+
+### Ajouté
+
+- Préfixe **HS** sous la tuile pour les hors-série.
+- Badge **papier** (feuille avec écriture) en haut à droite de la jaquette si possédé en papier.
+- Badge **CD** (même icône que les fiches jeux) en bas à droite si série Jeux vidéo avec un ou plusieurs jeux offerts.
+
+### Technique
+
+- Compteur `jeux_offerts_count` dans la liste des numéros ; tests associés.
+
+---
+
 ## [0.7.39] — 2026-07-25
 
 **Magazines et catalogue : hors-série, ordre de tri, tri par ID**
