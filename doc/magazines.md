@@ -97,7 +97,10 @@ Pour un numéro oublié au milieu de la série : modifiez **uniquement** ce num�
 
 Les PDF sont stockés sous :
 
-`data/media/magazines/{slug-revue}/{année}/{revue}-{numero}.pdf`
+`data/media/magazines/{slug-revue}/{année}/{revue}-{numero}[-hs]-id{oeuvreId}.pdf`
+
+Le suffixe `-hs` marque un hors-série ; l’`id` catalogue évite tout doublon
+(ex. n°33 et HS 33 la même année).
 
 (via `stored_objects` et `MagazineRepository::buildMagazinePdfRelativePath`).
 

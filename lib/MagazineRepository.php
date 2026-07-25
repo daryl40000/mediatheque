@@ -183,13 +183,25 @@ final class MagazineRepository
     }
 
     /**
-     * Chemin relatif d’un PDF magazine : revue / année / revue-numero.pdf
+     * Chemin relatif d’un PDF magazine :
+     * revue / année / revue-numero[-hs]-id{oeuvreId}.pdf
      *
      * @return string|false
      */
-    public static function buildMagazinePdfRelativePath(string $seriesTitle, string $numero, string $dateParution): string|false
-    {
-        return MagazinePdfService::buildMagazinePdfRelativePath($seriesTitle, $numero, $dateParution);
+    public static function buildMagazinePdfRelativePath(
+        string $seriesTitle,
+        string $numero,
+        string $dateParution,
+        bool $horsSerie = false,
+        int $oeuvreId = 0
+    ): string|false {
+        return MagazinePdfService::buildMagazinePdfRelativePath(
+            $seriesTitle,
+            $numero,
+            $dateParution,
+            $horsSerie,
+            $oeuvreId
+        );
     }
 
     public function registerSeriesInLibrary(

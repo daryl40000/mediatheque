@@ -700,4 +700,98 @@ final class MagazineTest extends MoncineTestCase
 
         $this->assertSame('Aucun PDF à retirer.', $repo->detachPdf($oeuvreId));
     }
+
+    public function testAttachPdfStandardAndHorsSerieSameNumeroDoNotCollide(): void
+    {
+        $seriesId = (new SeriesRepository())->create([
+            'titre' => 'PDF Collision Test',
+            'publication_type' => PublicationType::MENSUEL,
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $repo = new MagazineRepository();
+
+        $bibStandard = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '33',
+            'numero_ordre' => 33,
+            'date_parution' => '1996-03-01',
+            'est_hors_serie' => false,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $bibHs = $repo->createIssueWithLibrary($seriesId, [
+            'numero' => '33',
+            'numero_ordre' => 33.5,
+            'date_parution' => '1996-03-01',
+            'est_hors_serie' => true,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibStandard);
+        $this->assertIsInt($bibHs);
+
+        $standard = $repo->findIssueByBibId($bibStandard, $userId, $foyerId);
+        $horsSerie = $repo->findIssueByBibId($bibHs, $userId, $foyerId);
+        $this->assertNotNull($standard);
+        $this->assertNotNull($horsSerie);
+        $oeuvreStandard = (int) ($standard['oeuvre_id'] ?? 0);
+        $oeuvreHs = (int) ($horsSerie['oeuvre_id'] ?? 0);
+        $this->assertGreaterThan(0, $oeuvreStandard);
+        $this->assertGreaterThan(0, $oeuvreHs);
+        $this->assertNotSame($oeuvreStandard, $oeuvreHs);
+
+        $pathStandard = MagazineRepository::buildMagazinePdfRelativePath(
+            'PDF Collision Test',
+            '33',
+            '1996-03-01',
+            false,
+            $oeuvreStandard
+        );
+        $pathHs = MagazineRepository::buildMagazinePdfRelativePath(
+            'PDF Collision Test',
+            '33',
+            '1996-03-01',
+            true,
+            $oeuvreHs
+        );
+        $this->assertIsString($pathStandard);
+        $this->assertIsString($pathHs);
+        $this->assertNotSame($pathStandard, $pathHs);
+
+        $makePdf = function (string $marker): array {
+            $tmp = tempnam(sys_get_temp_dir(), 'magpdf_');
+            $this->assertNotFalse($tmp);
+            file_put_contents($tmp, "%PDF-1.4\n% {$marker}\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n");
+
+            return [$tmp, (int) filesize($tmp)];
+        };
+
+        [$tmpA, $sizeA] = $makePdf('STANDARD');
+        $this->assertSame(true, $repo->attachPdf($oeuvreStandard, $tmpA, 'std.pdf', $sizeA));
+        @unlink($tmpA);
+
+        [$tmpB, $sizeB] = $makePdf('HORS_SERIE');
+        $this->assertSame(true, $repo->attachPdf($oeuvreHs, $tmpB, 'hs.pdf', $sizeB));
+        @unlink($tmpB);
+
+        $standardAfter = $repo->findIssueByBibId($bibStandard, $userId, $foyerId);
+        $hsAfter = $repo->findIssueByBibId($bibHs, $userId, $foyerId);
+        $this->assertNotNull($standardAfter);
+        $this->assertNotNull($hsAfter);
+
+        $storedStandard = (int) ($standardAfter['stored_object_id'] ?? 0);
+        $storedHs = (int) ($hsAfter['stored_object_id'] ?? 0);
+        $this->assertGreaterThan(0, $storedStandard);
+        $this->assertGreaterThan(0, $storedHs);
+        $this->assertNotSame($storedStandard, $storedHs);
+
+        $rowStandard = (new \Moncine\StoredObjectRepository())->findById($storedStandard);
+        $rowHs = (new \Moncine\StoredObjectRepository())->findById($storedHs);
+        $this->assertNotNull($rowStandard);
+        $this->assertNotNull($rowHs);
+        $this->assertNotSame(
+            (string) ($rowStandard['relative_path'] ?? ''),
+            (string) ($rowHs['relative_path'] ?? '')
+        );
+        $this->assertStringContainsString('-hs-id', (string) ($rowHs['relative_path'] ?? ''));
+        $this->assertStringNotContainsString('-hs-id', (string) ($rowStandard['relative_path'] ?? ''));
+    }
 }

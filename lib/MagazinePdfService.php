@@ -5,16 +5,30 @@ use PDO;
 final class MagazinePdfService {
     public function __construct(private readonly PDO $db, private readonly MagazineLibraryQuery $libraryQuery, private readonly MagazineLibraryMutations $libraryMutations) {}
     /**
-     * Chemin relatif d’un PDF magazine : revue / année / revue-numero.pdf
+     * Chemin relatif d’un PDF magazine :
+     * revue / année / revue-numero[-hs]-id{oeuvreId}.pdf
+     *
+     * L’ID œuvre garantit l’unicité ; le suffixe -hs distingue un hors-série
+     * du numéro classique portant le même libellé (ex. 33 et HS 33).
      *
      * @return string|false
      */
-    public static function buildMagazinePdfRelativePath(string $seriesTitle, string $numero, string $dateParution): string|false
-    {
+    public static function buildMagazinePdfRelativePath(
+        string $seriesTitle,
+        string $numero,
+        string $dateParution,
+        bool $horsSerie = false,
+        int $oeuvreId = 0
+    ): string|false {
+        if ($oeuvreId <= 0) {
+            return false;
+        }
+
         $seriesSlug = MagazineNumeroOrdre::slugifyForPath($seriesTitle, 'revue');
         $numeroSlug = MagazineNumeroOrdre::slugifyForPath($numero, 'numero');
         $year = MagazineNumeroOrdre::extractParutionYear($dateParution);
-        $fileName = $seriesSlug . '-' . $numeroSlug . '.pdf';
+        $hsPart = $horsSerie ? '-hs' : '';
+        $fileName = $seriesSlug . '-' . $numeroSlug . $hsPart . '-id' . $oeuvreId . '.pdf';
 
         return MediaStorage::relativePath('magazine', $seriesSlug, $year, $fileName);
     }
@@ -54,7 +68,9 @@ final class MagazinePdfService {
         $relative = self::buildMagazinePdfRelativePath(
             (string) ($meta['series_titre'] ?? ''),
             (string) ($meta['numero'] ?? ''),
-            (string) ($meta['date_parution'] ?? '')
+            (string) ($meta['date_parution'] ?? ''),
+            !empty($meta['est_hors_serie']),
+            $oeuvreId
         );
         if ($relative === false) {
             return 'Chemin de stockage invalide.';
@@ -289,7 +305,7 @@ final class MagazinePdfService {
         }
 
         $stmt = $this->db->prepare(
-            'SELECT s.titre AS series_titre, om.numero, om.date_parution
+            'SELECT s.titre AS series_titre, om.numero, om.date_parution, om.est_hors_serie
              FROM oeuvre_magazine om
              INNER JOIN series s ON s.id = om.series_id
              WHERE om.oeuvre_id = ?

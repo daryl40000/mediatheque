@@ -9,6 +9,21 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.41] — 2026-07-25
+
+**Magazines : chemins PDF sans collision n° / hors-série**
+
+### Corrigé
+
+- Les PDF d’un numéro classique et d’un hors-série au même numéro (ex. 33 et HS 33) ne partagent plus le même fichier.
+- Nom de fichier : `revue-numero[-hs]-id{oeuvreId}.pdf`.
+
+### Technique
+
+- `MagazinePdfService::buildMagazinePdfRelativePath` ; tests unitaires et d’intégration.
+
+---
+
 ## [0.7.40] — 2026-07-25
 
 **Magazines : badges sur les tuiles de numéros**
