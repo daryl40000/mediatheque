@@ -70,7 +70,16 @@ final class GameCompletionRepository
         );
         $stmt->execute([$bibId, $userId]);
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $list = [];
+        foreach ($rows as $row) {
+            $list[] = [
+                'id' => (int) ($row['id'] ?? 0),
+                'completed_at' => (string) ($row['completed_at'] ?? ''),
+            ];
+        }
+
+        return $list;
     }
 
     public function countForGame(int $bibId, int $userId): int

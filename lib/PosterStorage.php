@@ -289,7 +289,10 @@ final class PosterStorage
         $stmt->bindValue(1, $limit, PDO::PARAM_INT);
         $stmt->execute();
 
-        return $this->processMigrationRows($stmt->fetchAll(), $db);
+        return $this->processMigrationRows(
+            ListOf::assocRows($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []),
+            $db
+        );
     }
 
     public function countRemotePosters(): int
@@ -430,7 +433,7 @@ final class PosterStorage
             $body = curl_exec($ch);
             $code = (int) curl_getinfo($ch, CURLINFO_HTTP_CODE);
             curl_close($ch);
-            if ($body === false || $code < 200 || $code >= 300) {
+            if (!is_string($body) || $code < 200 || $code >= 300) {
                 return null;
             }
             if (strlen($body) > $maxBytes) {

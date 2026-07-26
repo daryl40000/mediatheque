@@ -273,7 +273,7 @@ final class CatalogFilmRepository
 
     public function upsertFromExport(array $data, array $importedColumns = []): void
     {
-        $this->import()->upsertFromExport($data, $importedColumns);
+        $this->import()->upsertFromExport($data, ListOf::strings($importedColumns));
     }
 
     /** @return list<string> */

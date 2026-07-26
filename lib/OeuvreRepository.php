@@ -151,7 +151,7 @@ final class OeuvreRepository
             $bind[] = MediaContext::current();
         }
         $stmt->execute($bind);
-        $rows = $stmt->fetchAll() ?: [];
+        $rows = ListOf::assocRows($stmt->fetchAll() ?: []);
 
         return SearchMatch::filterRankLimit(
             $rows,
@@ -387,7 +387,7 @@ final class OeuvreRepository
             . ' ORDER BY o.titre COLLATE FRENCH_NOCASE, o.realisateur COLLATE FRENCH_NOCASE'
         );
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
 }

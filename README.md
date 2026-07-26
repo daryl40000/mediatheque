@@ -3,7 +3,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 [![Tests](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml/badge.svg)](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml)
 
-**Version : 0.7.43**
+**Version : 0.7.44**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -73,6 +73,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.44** | Qualité : baseline PHPStan à 0 (typage listes via `ListOf`) |
 | **0.7.43** | Qualité : PHPStan niveau 8 + correctifs (IGDB URL, wishlist groupe) |
 | **0.7.42** | Jeux : multi-PDF (manuel/soluce) + aides en bulles « i » |
 | **0.7.41** | Magazines : chemins PDF uniques (HS + ID) pour éviter les collisions |

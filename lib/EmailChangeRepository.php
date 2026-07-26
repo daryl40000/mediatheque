@@ -125,7 +125,15 @@ final class EmailChangeRepository
         $stmt->execute([$hash]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
 
-        return is_array($row) ? $row : null;
+        if (!is_array($row)) {
+            return null;
+        }
+
+        return [
+            'user_id' => (int) ($row['user_id'] ?? 0),
+            'new_email' => (string) ($row['new_email'] ?? ''),
+            'old_email' => (string) ($row['old_email'] ?? ''),
+        ];
     }
 
     public function consume(int $userId): bool

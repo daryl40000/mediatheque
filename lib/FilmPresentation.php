@@ -28,7 +28,7 @@ final class FilmPresentation
             }
         }
 
-        return $ids;
+        return ListOf::ints($ids);
     }
 
     public static function formatSagaOrdre(int $ordre): string
@@ -88,7 +88,7 @@ final class FilmPresentation
             }
         }
 
-        return $roles;
+        return ListOf::strings($roles);
     }
 
     private static function personFieldMatches(string $name, int $tmdbPersonId, string $queryLower, int $queryPersonId): bool
@@ -142,6 +142,6 @@ final class FilmPresentation
             }
         }
 
-        return $out;
+        return ListOf::strings($out);
     }
 }

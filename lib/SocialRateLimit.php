@@ -32,7 +32,7 @@ final class SocialRateLimit
         self::record(self::friendRequestKey($userId));
     }
 
-    /** @return positive-int secondes avant nouvelle tentative autorisée, ou 0 */
+    /** @return 0|positive-int secondes avant nouvelle tentative autorisée */
     public static function secondsUntilFriendRequestAllowed(int $userId): int
     {
         return self::secondsUntilAllowed(
@@ -141,6 +141,7 @@ final class SocialRateLimit
         return count($recent);
     }
 
+    /** @return 0|positive-int */
     private static function secondsUntilAllowed(string $key, int $windowSeconds, int $max): int
     {
         if ($key === '' || self::countInWindow($key, $windowSeconds) < $max) {
@@ -156,8 +157,8 @@ final class SocialRateLimit
 
         $oldest = min($attempts);
         $unlockAt = $oldest + $windowSeconds;
-        $remaining = $unlockAt - time();
+        $remaining = (int) ceil($unlockAt - time());
 
-        return $remaining > 0 ? $remaining : 0;
+        return $remaining > 0 ? max(1, $remaining) : 0;
     }
 }

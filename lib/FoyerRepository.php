@@ -50,14 +50,16 @@ final class FoyerRepository
     /** @return list<array<string, mixed>> */
     public function listAll(): array
     {
-        return $this->db->query(
-            'SELECT f.id, f.nom, f.created_at,
-                    (SELECT COUNT(*) FROM utilisateurs u WHERE u.foyer_id = f.id) AS member_count,
-                    (SELECT COUNT(*) FROM bibliotheque b
-                     WHERE b.foyer_id = f.id AND b.statut = \'collection\') AS collection_count
-             FROM foyers f
-             ORDER BY f.nom COLLATE FRENCH_NOCASE, f.id ASC'
-        )->fetchAll();
+        return ListOf::assocRows(
+            $this->db->query(
+                'SELECT f.id, f.nom, f.created_at,
+                        (SELECT COUNT(*) FROM utilisateurs u WHERE u.foyer_id = f.id) AS member_count,
+                        (SELECT COUNT(*) FROM bibliotheque b
+                         WHERE b.foyer_id = f.id AND b.statut = \'collection\') AS collection_count
+                 FROM foyers f
+                 ORDER BY f.nom COLLATE FRENCH_NOCASE, f.id ASC'
+            )->fetchAll()
+        );
     }
 
     /** @return list<array<string, mixed>> */
@@ -77,7 +79,7 @@ final class FoyerRepository
         );
         $stmt->execute([$foyerId]);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     public function countMembers(int $foyerId): int

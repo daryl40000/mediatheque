@@ -82,7 +82,10 @@ final class GameLibraryQuery
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        $games = array_map([GameRowMapper::class, 'hydrateGameRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+        $games = ListOf::assocRows(array_map(
+            [GameRowMapper::class, 'hydrateGameRow'],
+            $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []
+        ));
 
         return $this->attachMagazineIssueCounts($games);
     }
@@ -332,7 +335,7 @@ final class GameLibraryQuery
 
         if ($query !== '') {
             $rows = SearchMatch::filterRankLimit(
-                $rows,
+                ListOf::assocRows($rows),
                 $query,
                 static fn (array $row): string => GameTitle::searchText($row)
                     . ' '
@@ -341,7 +344,7 @@ final class GameLibraryQuery
             );
         }
 
-        return array_map([GameRowMapper::class, 'hydrateCatalogRow'], $rows);
+        return ListOf::assocRows(array_map([GameRowMapper::class, 'hydrateCatalogRow'], $rows));
     }
 
     /** @return list<string> */

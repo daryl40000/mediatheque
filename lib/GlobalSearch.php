@@ -66,7 +66,7 @@ final class GlobalSearch
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $rows = ListOf::assocRows($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []);
 
         $rows = SearchMatch::filterRankLimit(
             $rows,
@@ -117,7 +117,7 @@ final class GlobalSearch
 
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $rows = ListOf::assocRows($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []);
 
         $rows = SearchMatch::filterRankLimit(
             $rows,

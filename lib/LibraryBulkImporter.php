@@ -112,7 +112,9 @@ final class LibraryBulkImporter
                     $statut = LibraryStatut::normalize(
                         (string) ($parsed['statut'] ?? LibraryStatut::COLLECTION)
                     );
-                    $importColumns = (array) ($parsed['_import_columns'] ?? array_keys($map));
+                    $importColumns = ListOf::strings(
+                        (array) ($parsed['_import_columns'] ?? array_keys($map))
+                    );
                     $vuRaw = (string) ($parsed['_vu'] ?? '');
                     $noteRaw = (string) ($parsed['_note'] ?? '');
                     unset($parsed['_vu'], $parsed['_note'], $parsed['_import_columns']);

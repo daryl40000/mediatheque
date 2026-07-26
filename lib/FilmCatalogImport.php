@@ -320,8 +320,14 @@ final class FilmCatalogImport
         ];
     }
 
+    /**
+     * @param array<string, mixed> $data
+     * @param list<string> $importedColumns
+     */
     public function upsertFromExport(array $data, array $importedColumns = []): void
     {
+        $importedColumns = ListOf::strings($importedColumns);
+
         $existing = $this->libraryQuery->findByTitreAndRealisateur(
             (string) $data['titre'],
             (string) ($data['realisateur'] ?? '')

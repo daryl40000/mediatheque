@@ -40,7 +40,7 @@ final class GroupWishlistRepository
             $stmt->execute([$foyerId]);
             $ids = array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
 
-            return array_values(array_filter($ids, static fn (int $id): bool => $id > 0));
+            return ListOf::ints(array_values(array_filter($ids, static fn (int $id): bool => $id > 0)));
         }
 
         $stmt = $this->db->prepare(
@@ -48,7 +48,7 @@ final class GroupWishlistRepository
         );
         $stmt->execute([$foyerId]);
 
-        return array_map('intval', $stmt->fetchAll(PDO::FETCH_COLUMN));
+        return ListOf::ints($stmt->fetchAll(PDO::FETCH_COLUMN) ?: []);
     }
 
     public function canShowGroupView(int $foyerId): bool
@@ -131,7 +131,7 @@ final class GroupWishlistRepository
         $stmt->execute($params);
         $rows = $stmt->fetchAll() ?: [];
 
-        $oeuvreIds = array_map(static fn (array $r): int => (int) ($r['oeuvre_id'] ?? 0), $rows);
+        $oeuvreIds = ListOf::ints(array_map(static fn (array $r): int => (int) ($r['oeuvre_id'] ?? 0), $rows));
         $votersByOeuvre = $this->fetchVotersByOeuvre($memberIds, $oeuvreIds);
         $myIds = $this->fetchMyWishlistIds($currentUserId, $oeuvreIds);
 
@@ -144,7 +144,7 @@ final class GroupWishlistRepository
         }
         unset($row);
 
-        return $rows;
+        return ListOf::assocRows($rows);
     }
 
     /**

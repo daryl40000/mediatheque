@@ -87,7 +87,7 @@ final class ShareLinkGameRepository
         $stmt->execute($params);
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-        return array_map([GameRowMapper::class, 'hydrateGameRow'], $rows);
+        return ListOf::assocRows(array_map([GameRowMapper::class, 'hydrateGameRow'], $rows));
     }
 
     /**

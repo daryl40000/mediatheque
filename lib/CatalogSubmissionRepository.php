@@ -76,7 +76,7 @@ final class CatalogSubmissionRepository
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**
@@ -93,7 +93,7 @@ final class CatalogSubmissionRepository
              ORDER BY s.created_at ASC, s.id ASC"
         );
 
-        return $stmt ? ($stmt->fetchAll() ?: []) : [];
+        return $stmt !== false ? ListOf::assocRows($stmt->fetchAll() ?: []) : [];
     }
 
     public function countPending(): int

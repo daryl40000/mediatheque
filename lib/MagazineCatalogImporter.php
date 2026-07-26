@@ -157,7 +157,10 @@ final class MagazineCatalogImporter
 
             $seriesId = (int) ($seriesRow['id'] ?? 0);
             $issues = is_array($serie['issues'] ?? null) ? $serie['issues'] : [];
-            $processedSeriesIssues[] = ['series_id' => $seriesId, 'issues' => $issues];
+            $processedSeriesIssues[] = [
+                'series_id' => $seriesId,
+                'issues' => ListOf::assocRows($issues),
+            ];
 
             foreach ($issues as $issue) {
                 if (!is_array($issue)) {

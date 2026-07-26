@@ -95,7 +95,7 @@ final class BdLibraryQuery
         }
         unset($row);
 
-        return $rows;
+        return ListOf::assocRows($rows);
     }
 
     public function countSeriesInLibrary(
@@ -290,7 +290,10 @@ final class BdLibraryQuery
         $stmt = $this->db->prepare($sql);
         $stmt->execute(BdCatalogSql::filterParamsForSql($sql, $params));
 
-        return array_map([BdRowMapper::class, 'hydrateBdRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+        return ListOf::assocRows(array_map(
+            [BdRowMapper::class, 'hydrateBdRow'],
+            $stmt->fetchAll(PDO::FETCH_ASSOC),
+        ));
     }
 
     public function countTomesForSeries(
@@ -364,7 +367,7 @@ final class BdLibraryQuery
         }
         unset($row);
 
-        return $rows;
+        return ListOf::assocRows($rows);
     }
 
     /** @return array<string, mixed>|null */
@@ -449,7 +452,10 @@ final class BdLibraryQuery
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        return array_map([BdRowMapper::class, 'hydrateBdRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+        return ListOf::assocRows(array_map(
+            [BdRowMapper::class, 'hydrateBdRow'],
+            $stmt->fetchAll(PDO::FETCH_ASSOC),
+        ));
     }
 
     public function countInLibrary(
@@ -573,10 +579,10 @@ final class BdLibraryQuery
         );
         $stmt->execute([$seriesId, MediaDomain::BD]);
 
-        return array_map(
+        return ListOf::assocRows(array_map(
             [BdRowMapper::class, 'hydrateCatalogRow'],
             $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [],
-        );
+        ));
     }
 
     public function findLibraryBibIdForCatalogOeuvre(int $oeuvreId, int $userId, int $foyerId): ?int
@@ -644,7 +650,10 @@ final class BdLibraryQuery
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        return array_map([BdRowMapper::class, 'hydrateCatalogRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+        return ListOf::assocRows(array_map(
+            [BdRowMapper::class, 'hydrateCatalogRow'],
+            $stmt->fetchAll(PDO::FETCH_ASSOC),
+        ));
     }
 
     /** @return list<string> */
@@ -675,7 +684,7 @@ final class BdLibraryQuery
             }
         }
 
-        return $genres;
+        return ListOf::strings($genres);
     }
 
     /** @return array{0: string, 1: array<string, int|string>} */

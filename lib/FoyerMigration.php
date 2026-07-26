@@ -134,7 +134,7 @@ final class FoyerMigration
                 continue;
             }
 
-            $keeper = $this->pickBestCollectionRow($rows);
+            $keeper = $this->pickBestCollectionRow(ListOf::assocRows($rows));
             $keeperId = (int) ($keeper['id'] ?? 0);
             if ($keeperId <= 0) {
                 continue;

@@ -28,6 +28,9 @@ final class FilmLibraryQuery
         return UserContext::currentFoyerId();
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function findAll(
         string $sortBy = 'titre',
         string $sortDir = 'asc',
@@ -62,7 +65,7 @@ final class FilmLibraryQuery
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     public function countCollectionFiltered(
@@ -105,6 +108,9 @@ final class FilmLibraryQuery
         return $whereParts;
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function findAllWishlist(
         string $sortBy = 'titre',
         string $sortDir = 'asc',
@@ -114,6 +120,9 @@ final class FilmLibraryQuery
         return $this->findAll($sortBy, $sortDir, $searchQuery, LibraryStatut::WISHLIST, $kindFilter);
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function findAllForExport(): array
     {
         [$userWhere, $params] = CatalogSchema::libraryFilter($this->foyerId(), $this->userId(), LibraryStatut::COLLECTION);
@@ -133,7 +142,7 @@ final class FilmLibraryQuery
         $params['history_user_id'] = $this->userId();
         $stmt->execute($params);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**
@@ -166,7 +175,7 @@ final class FilmLibraryQuery
         $params['history_user_id'] = $this->userId();
         $stmt->execute($params);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**
@@ -215,6 +224,9 @@ final class FilmLibraryQuery
         return (int) $stmt->fetchColumn();
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function findAllRandomOrder(): array
     {
         [$userWhere, $params] = CatalogSchema::libraryFilter($this->foyerId(), $this->userId(), LibraryStatut::COLLECTION);
@@ -229,7 +241,7 @@ final class FilmLibraryQuery
         $params['history_user_id'] = $this->userId();
         $stmt->execute($params);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     public function count(): int
@@ -262,6 +274,9 @@ final class FilmLibraryQuery
         return $this->findById((int) $library['id']);
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function searchCatalogOeuvres(string $query, int $limit = 20): array
     {
         $rows = $this->oeuvres->searchByTitrePrefix($query, $limit);
@@ -336,6 +351,9 @@ final class FilmLibraryQuery
         return $label;
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function findBySaga(string $saga): array
     {
         $saga = trim($saga);
@@ -368,9 +386,12 @@ final class FilmLibraryQuery
         FilmCatalogSql::appendCollectionRatingParams($params, $this->userId());
         $stmt->execute($params);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function findBySupportPhysique(string $supportKey): array
     {
         if (!SupportPhysique::isValid($supportKey)) {
@@ -394,7 +415,7 @@ final class FilmLibraryQuery
         FilmCatalogSql::appendCollectionRatingParams($params, $this->userId());
         $stmt->execute($params);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     public function findByTmdbId(int $tmdbId): ?array
@@ -427,6 +448,9 @@ final class FilmLibraryQuery
         return $row ?: null;
     }
 
+    /**
+     * @return list<string>
+     */
     public function distinctSupportPhysique(): array
     {
         $stmt = $this->db->prepare(
@@ -445,9 +469,12 @@ final class FilmLibraryQuery
             }
         }
 
-        return $out;
+        return ListOf::strings($out);
     }
 
+    /**
+     * @return list<string>
+     */
     public function distinctNationalites(): array
     {
         $params = [
@@ -473,9 +500,12 @@ final class FilmLibraryQuery
         $list = array_keys($countries);
         usort($list, static fn (string $a, string $b): int => strcoll($a, $b));
 
-        return $list;
+        return ListOf::strings($list);
     }
 
+    /**
+     * @return list<string>
+     */
     public function distinctStyles(): array
     {
         $params = [
@@ -499,7 +529,7 @@ final class FilmLibraryQuery
         $list = array_keys($styles);
         sort($list, SORT_NATURAL | SORT_FLAG_CASE);
 
-        return $list;
+        return ListOf::strings($list);
     }
 
 }

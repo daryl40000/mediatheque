@@ -125,6 +125,9 @@ final class ImportOds
                     $pNodes = $xpath->query('.//text:p', $cellNode);
                     if ($pNodes !== false) {
                         foreach ($pNodes as $p) {
+                            if (!$p instanceof \DOMElement) {
+                                continue;
+                            }
                             $texts[] = $p->textContent;
                         }
                     }

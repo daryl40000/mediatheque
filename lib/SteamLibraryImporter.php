@@ -584,7 +584,7 @@ final class SteamLibraryImporter
 
         $rows = $payload['rows'] ?? null;
 
-        return is_array($rows) ? $rows : null;
+        return is_array($rows) ? ListOf::assocRows($rows) : null;
     }
 
     public function clearPreviewSession(): void

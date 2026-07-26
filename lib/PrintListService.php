@@ -99,7 +99,7 @@ final class PrintListService
             $params['query'],
             $params['kindFilter']
         );
-        $limit = self::applyRowLimit($films);
+        $limit = self::applyRowLimit(ListOf::assocRows($films));
 
         return [
             'layout' => 'print',
@@ -155,11 +155,11 @@ final class PrintListService
 
         $wishlistTargetsByFilmId = [];
         if (!$params['isGroupScope'] && WishlistTargetRepository::tableExists() && $films !== []) {
-            $ids = array_map(static fn (array $f): int => (int) ($f['id'] ?? 0), $films);
+            $ids = ListOf::ints(array_map(static fn (array $f): int => (int) ($f['id'] ?? 0), $films));
             $wishlistTargetsByFilmId = $this->wishlistTargets->mapByBibliothequeIds($ids);
         }
 
-        $limit = self::applyRowLimit($films);
+        $limit = self::applyRowLimit(ListOf::assocRows($films));
 
         return [
             'layout' => 'print',

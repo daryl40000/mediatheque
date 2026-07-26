@@ -100,7 +100,7 @@ final class NotificationRepository
         );
         $stmt->execute([$userId]);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     public function findByIdForUser(int $id, int $userId): ?array

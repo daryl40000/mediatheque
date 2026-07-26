@@ -50,7 +50,9 @@ final class ImportRunner
             ],
         };
 
-        return $this->withImportMeta($result, $analysis, $replaceCatalog);
+        return $this->normalizeImportCounts(
+            $this->withImportMeta($result, $analysis, $replaceCatalog)
+        );
     }
 
     /**
@@ -65,7 +67,7 @@ final class ImportRunner
         return [
             'imported' => (int) ($result['imported'] ?? 0),
             'vues' => (int) ($result['vues'] ?? 0),
-            'errors' => (array) ($result['errors'] ?? []),
+            'errors' => ListOf::strings((array) ($result['errors'] ?? [])),
             'added' => (int) ($result['added'] ?? 0),
             'updated' => (int) ($result['updated'] ?? 0),
             'error_total' => (int) ($result['error_total'] ?? 0),
@@ -143,7 +145,7 @@ final class ImportRunner
                 $hadExplicitIds = true;
                 $importColumns = (array) ($parsed['_import_columns'] ?? array_keys($map));
                 unset($parsed['_import_columns']);
-                $admin->importOeuvreFromExport($parsed, $importColumns);
+                $admin->importOeuvreFromExport($parsed, ListOf::strings($importColumns));
                 $imported++;
             } catch (\Throwable $e) {
                 $errors[] = 'Catalogue ligne ' . $line . ' : ' . $e->getMessage();
@@ -161,7 +163,9 @@ final class ImportRunner
 
         $sheet = ['imported' => $imported, 'vues' => 0, 'errors' => $errors, 'has_id_column' => true];
 
-        return $this->withSheetMeta($sheet, ImportFormat::KIND_CATALOG, $replaceCatalog        );
+        return $this->normalizeImportCounts(
+            $this->withSheetMeta($sheet, ImportFormat::KIND_CATALOG, $replaceCatalog)
+        );
     }
 
     /**
@@ -274,6 +278,19 @@ final class ImportRunner
             'has_id_column' => (bool) ($b['has_id_column'] ?? $a['has_id_column'] ?? false),
             'catalog_cleared' => (bool) ($b['catalog_cleared'] ?? $a['catalog_cleared'] ?? false),
         ];
+    }
+
+    /**
+     * @param array<string, mixed> $result
+     * @return array{imported: int, vues: int, errors: list<string>}&array<string, mixed>
+     */
+    private function normalizeImportCounts(array $result): array
+    {
+        $result['imported'] = (int) ($result['imported'] ?? 0);
+        $result['vues'] = (int) ($result['vues'] ?? 0);
+        $result['errors'] = ListOf::strings((array) ($result['errors'] ?? []));
+
+        return $result;
     }
 
     /**

@@ -78,9 +78,9 @@ final class ExportLibrary
     private function libraryRows(): array
     {
         if ($this->films->usesCatalogModel()) {
-            return (new CatalogFilmRepository())->findAllLibraryForExport();
+            return ListOf::assocRows((new CatalogFilmRepository())->findAllLibraryForExport());
         }
 
-        return $this->films->findAllForExport();
+        return ListOf::assocRows($this->films->findAllForExport());
     }
 }

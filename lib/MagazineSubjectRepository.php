@@ -146,7 +146,7 @@ final class MagazineSubjectRepository
 
         if ($query !== '') {
             $rows = SearchMatch::filterRankLimit(
-                $rows,
+                ListOf::assocRows($rows),
                 $query,
                 static fn (array $row): string => (string) ($row['label'] ?? '')
                     . ' '
@@ -155,7 +155,7 @@ final class MagazineSubjectRepository
             );
         }
 
-        return array_map(fn (array $row): array => $this->hydrateSubjectRow($row), $rows);
+        return ListOf::assocRows(array_map(fn (array $row): array => $this->hydrateSubjectRow($row), $rows));
     }
 
     /**
@@ -318,7 +318,7 @@ final class MagazineSubjectRepository
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-        return array_map(fn (array $row): array => $this->hydrateSubjectRow($row), $rows);
+        return ListOf::assocRows(array_map(fn (array $row): array => $this->hydrateSubjectRow($row), $rows));
     }
 
     /** @return true|string */
@@ -448,7 +448,7 @@ final class MagazineSubjectRepository
         $stmt = $this->db->prepare($sql);
         $stmt->execute($this->filterParamsForSql($sql, $params));
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        return ListOf::assocRows($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []);
     }
 
     public function countIssuesInLibrary(int $subjectId, int $userId, int $foyerId, ?string $statut = null): int

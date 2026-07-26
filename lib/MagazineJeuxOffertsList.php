@@ -28,23 +28,7 @@ final class MagazineJeuxOffertsList
     /**
      * Numéros avec jeu offert, regroupés par série, ordonnés par parution.
      *
-     * @return list<array{
-     *   series_id: int,
-     *   series_titre: string,
-     *   series_url: string,
-     *   issues: list<array{
-     *     issue_oeuvre_id: int,
-     *     numero: string,
-     *     date_parution: string,
-     *     date_label: string,
-     *     game_titre: string,
-     *     game_url: string,
-     *     issue_url: string,
-     *     linux_badge: string,
-     *     tested_on_linux: bool,
-     *     linux_not_supported: bool
-     *   }>
-     * }>
+     * @return list<array<string, mixed>>
      */
     public function listGroupedBySeries(int $userId, int $foyerId): array
     {
@@ -225,6 +209,6 @@ final class MagazineJeuxOffertsList
         }
         unset($group);
 
-        return array_values($grouped);
+        return ListOf::assocRows(array_values($grouped));
     }
 }

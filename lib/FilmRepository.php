@@ -438,7 +438,10 @@ final class FilmRepository
         return false;
     }
 
-    /** @param array<string, mixed> $post */
+    /**
+     * @param array<string, mixed> $post
+     * @return list<int>
+     */
     public static function parseBulkFilmIds(array $post): array
     {
         return FilmPresentation::parseBulkFilmIds($post);
@@ -459,7 +462,10 @@ final class FilmRepository
         return FilmPresentation::formatNationalite($nationalite);
     }
 
-    /** @param array<string, mixed> $film */
+    /**
+     * @param array<string, mixed> $film
+     * @return list<string>
+     */
     public static function rolesForPerson(array $film, string $query): array
     {
         return FilmPresentation::rolesForPerson($film, $query);
@@ -475,6 +481,7 @@ final class FilmRepository
         return FilmPresentation::formatDuree($minutes);
     }
 
+    /** @return list<string> */
     public static function splitStyles(string $styles): array
     {
         return FilmPresentation::splitStyles($styles);

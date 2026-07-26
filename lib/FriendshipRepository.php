@@ -152,7 +152,7 @@ final class FriendshipRepository
         );
         $stmt->execute([$blockerId, self::STATUS_BLOCKED]);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**
@@ -308,7 +308,7 @@ final class FriendshipRepository
             $userId,
         ]);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /** @return list<array<string, mixed>> */
@@ -327,7 +327,7 @@ final class FriendshipRepository
         );
         $stmt->execute([$userId, self::STATUS_PENDING]);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /** @return list<array<string, mixed>> */
@@ -346,7 +346,7 @@ final class FriendshipRepository
         );
         $stmt->execute([$userId, self::STATUS_PENDING]);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**

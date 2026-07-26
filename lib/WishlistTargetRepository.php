@@ -59,7 +59,7 @@ final class WishlistTargetRepository
         );
         $stmt->execute([$bibliothequeId]);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**

@@ -48,10 +48,10 @@ final class MagazineSupport
                 }
             }
 
-            return array_values($tags);
+            return ListOf::strings(array_values($tags));
         }
 
-        return self::parseLegacyFreeText($raw);
+        return ListOf::strings(self::parseLegacyFreeText($raw));
     }
 
     /**
@@ -67,7 +67,7 @@ final class MagazineSupport
             $tags[] = self::TAG_PDF;
         }
 
-        return $tags;
+        return ListOf::strings($tags);
     }
 
     public static function formatTagsForStorage(bool $hasPaper, bool $hasPdf): string
@@ -99,7 +99,7 @@ final class MagazineSupport
             $tags[] = self::TAG_PDF;
         }
 
-        return $tags;
+        return ListOf::strings($tags);
     }
 
     /** Numéro réellement possédé (au moins papier ou PDF). */
@@ -154,7 +154,7 @@ final class MagazineSupport
         };
     }
 
-    /** Anciennes saisies libres (« Papier + PDF », etc.). */
+    /** Anciennes saisies libres (« Papier + PDF », etc.). @return list<string> */
     private static function parseLegacyFreeText(string $raw): array
     {
         $lower = mb_strtolower($raw);
@@ -167,6 +167,6 @@ final class MagazineSupport
             $tags[self::TAG_PAPIER] = self::TAG_PAPIER;
         }
 
-        return array_values($tags);
+        return ListOf::strings(array_values($tags));
     }
 }

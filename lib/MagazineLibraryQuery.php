@@ -58,7 +58,7 @@ final class MagazineLibraryQuery {
         }
         unset($row);
 
-        return $rows;
+        return ListOf::assocRows($rows);
     }
     /**
      * Recherche des numéros catalogue d’une série (autocomplétion à l’ajout).
@@ -118,7 +118,7 @@ final class MagazineLibraryQuery {
         }
         unset($row);
 
-        return $rows;
+        return ListOf::assocRows($rows);
     }
     /**
      * Séries présentes dans la collection ou les envies de l’utilisateur.
@@ -199,7 +199,7 @@ final class MagazineLibraryQuery {
         }
         unset($row);
 
-        return $rows;
+        return ListOf::assocRows($rows);
     }
     public function countSeriesInLibrary(int $userId, int $foyerId, ?string $statut = null, string $query = ''): int
     {
@@ -234,6 +234,9 @@ final class MagazineLibraryQuery {
 
         return (int) $stmt->fetchColumn();
     }
+    /**
+     * @return array{count: int, total_bytes: int}
+     */
     public function collectionPdfStats(int $userId, int $foyerId): array
     {
         if (!MagazineRepository::isAvailable() || $foyerId <= 0 || !StoredObjectRepository::tableExists()) {
@@ -261,6 +264,9 @@ final class MagazineLibraryQuery {
             'total_bytes' => (int) ($row[1] ?? 0),
         ];
     }
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function listIssuesForSeries(
         int $seriesId,
         int $userId,
@@ -319,8 +325,11 @@ final class MagazineLibraryQuery {
         $stmt = $this->db->prepare($sql);
         $stmt->execute(MagazineCatalogSql::filterParamsForSql($sql, $params));
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        return ListOf::assocRows($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []);
     }
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function searchIssuesInLibrary(
         int $userId,
         int $foyerId,
@@ -392,7 +401,7 @@ final class MagazineLibraryQuery {
         $stmt = $this->db->prepare($sql);
         $stmt->execute(MagazineCatalogSql::filterParamsForSql($sql, $params));
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        return ListOf::assocRows($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []);
     }
     public function countIssuesForSeries(
         int $seriesId,
@@ -461,7 +470,7 @@ final class MagazineLibraryQuery {
             $params = array_merge($params, $searchParams);
         }
 
-        return [$where, $params, $statutNorm];
+        return [ListOf::strings($where), $params, $statutNorm];
     }
     public function findIssueByBibId(int $bibId, int $userId, int $foyerId): ?array
     {

@@ -99,11 +99,13 @@ final class InscriptionRequestRepository
      */
     public function listPendingAdmin(): array
     {
-        return $this->db->query(
-            "SELECT * FROM inscription_requests
-             WHERE status = 'pending_admin'
-             ORDER BY email_confirmed_at ASC, id ASC"
-        )->fetchAll();
+        return ListOf::assocRows(
+            $this->db->query(
+                "SELECT * FROM inscription_requests
+                 WHERE status = 'pending_admin'
+                 ORDER BY email_confirmed_at ASC, id ASC"
+            )->fetchAll()
+        );
     }
 
     public function countPendingAdmin(): int

@@ -66,7 +66,7 @@ final class MagazineSubjectMaintenance
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-        return array_map(fn (array $row): array => $this->hydrateRow($row, 0), $rows);
+        return ListOf::assocRows(array_map(fn (array $row): array => $this->hydrateRow($row, 0), $rows));
     }
 
     /**

@@ -41,7 +41,7 @@ final class OeuvreEanRepository
         );
         $stmt->execute([$oeuvreId]);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     public function findByEan(string $ean): ?array

@@ -153,10 +153,11 @@ final class Auth
         self::ensureSession();
         $_SESSION = [];
 
-        if (ini_get('session.use_cookies')) {
+        $sessionName = session_name();
+        if ($sessionName !== false && ini_get('session.use_cookies')) {
             $params = session_get_cookie_params();
             setcookie(
-                session_name(),
+                $sessionName,
                 '',
                 time() - 42000,
                 $params['path'],

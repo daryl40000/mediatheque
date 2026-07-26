@@ -44,7 +44,7 @@ final class GameAttachmentRepository
         );
         $stmt->execute([$bibId]);
 
-        return array_map([$this, 'hydrateRow'], $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []);
+        return ListOf::assocRows(array_map([$this, 'hydrateRow'], $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []));
     }
 
     public function userCanAccessStoredObject(int $storedObjectId, int $userId, int $foyerId): bool

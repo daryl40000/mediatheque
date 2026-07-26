@@ -31,6 +31,7 @@ final class MagazineSeriesTag
         return array_values($tags);
     }
 
+    /** @param array<int, string> $tags */
     public static function serializeList(array $tags): string
     {
         $out = [];
@@ -81,7 +82,7 @@ final class MagazineSeriesTag
     /**
      * Retrouve un tag série à partir d’une saisie (comparaison insensible à la casse).
      *
-     * @param list<string> $seriesTags
+     * @param list<string>|array<int, string> $seriesTags
      */
     public static function matchTag(string $userValue, array $seriesTags): ?string
     {

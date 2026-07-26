@@ -76,7 +76,7 @@ final class CatalogAuditLog
         $stmt->bindValue(1, $limit, PDO::PARAM_INT);
         $stmt->execute();
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     public static function actionLabel(string $action): string

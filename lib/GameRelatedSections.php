@@ -52,7 +52,7 @@ final class GameRelatedSections
      * @param list<array<string, mixed>> $remakes
      * @param list<array<string, mixed>> $franchiseGames Autres jeux de la même saga (catalogue)
      * @param callable(array<string, mixed>): string $urlForRelated URL pour chaque ligne extensions/remakes/saga
-     * @return list<array{title: string, items: list<array{url: string, poster_url: mixed, annee: int, titre: string, in_library: bool}>}>
+     * @return list<array<string, mixed>>
      */
     public static function build(
         array $game,

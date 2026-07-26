@@ -174,7 +174,7 @@ final class SeriesRepository
         );
         $stmt->execute([$domain, $pattern]);
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        return ListOf::assocRows($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []);
     }
 
     /**

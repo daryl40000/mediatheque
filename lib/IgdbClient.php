@@ -396,7 +396,7 @@ final class IgdbClient
             return null;
         }
 
-        return $data;
+        return ListOf::assocRows($data);
     }
 
     private function fetchAccessToken(): ?string

@@ -91,10 +91,10 @@ final class GameCatalogEnrichment
 
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-        return array_map(
+        return ListOf::assocRows(array_map(
             static fn (array $row): array => GameRowMapper::hydrateCatalogRow($row),
             $rows
-        );
+        ));
     }
 
     /**

@@ -116,7 +116,7 @@ final class FamilyGroupService
         );
         $stmt->execute([$foyerId]);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**
@@ -410,7 +410,7 @@ final class FamilyGroupService
         );
         $stmt->execute([$userId]);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     public function isMember(int $foyerId, int $userId): bool

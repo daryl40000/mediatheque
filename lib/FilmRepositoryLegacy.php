@@ -76,7 +76,7 @@ final class FilmRepositoryLegacy
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     public function countCollectionFiltered(string $searchQuery = '', string $kindFilter = ''): int
@@ -479,7 +479,7 @@ final class FilmRepositoryLegacy
         );
         $stmt->execute([$saga]);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**
@@ -653,7 +653,7 @@ final class FilmRepositoryLegacy
         );
         $stmt->execute([$supportKey]);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /** @return list<string> Clés de support présentes dans la collection (triées). */
@@ -760,7 +760,8 @@ final class FilmRepositoryLegacy
         }
         $stmt->bindValue(1, max(1, $limit), PDO::PARAM_INT);
         $stmt->execute();
-        return $stmt->fetchAll();
+
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**
@@ -1040,7 +1041,7 @@ final class FilmRepositoryLegacy
         );
         $stmt->execute($params);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /** @return list<string> Noms distincts (réalisateurs + acteurs) pour suggestions. */
@@ -1089,21 +1090,7 @@ final class FilmRepositoryLegacy
     /**
      * Mise à jour manuelle de la fiche (formulaire sur la page film).
      *
-     * @param array{
-     *   titre: string,
-     *   realisateur: string,
-     *   duree_min: int,
-     *   annee: int,
-     *   styles: string,
-     *   format_image: string,
-     *   format_son: string,
-     *   poster_url: string,
-     *   synopsis: string,
-     *   tmdb_id: int,
-     *   acteur_1?: string,
-     *   acteur_2?: string,
-     *   acteur_3?: string
-     * } $data
+     * @param array<string, mixed> $data
      * @return true|string true si OK, sinon message d’erreur
      */
     public function updateManual(int $filmId, array $data): bool|string

@@ -33,14 +33,7 @@ final class TmdbClient
      * Charge un film par son identifiant TMDB (correction manuelle).
      *
      * @phpstan-impure
-     * @return array{
-     *   tmdb_id: int,
-     *   overview: string,
-     *   poster_url: string,
-     *   runtime: int,
-     *   annee: int,
-     *   imdb_id: string
-     * }|null
+     * @return array<string, mixed>|null
      */
     public function getMovieById(int $tmdbId): ?array
     {
@@ -195,7 +188,7 @@ final class TmdbClient
 
     /**
      * @phpstan-impure
-     * @return array{overview: string, poster_url: string, runtime: int}|null
+     * @return array<string, mixed>|null
      */
     public function searchMovie(string $title): ?array
     {

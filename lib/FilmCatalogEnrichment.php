@@ -91,7 +91,7 @@ final class FilmCatalogEnrichment
         $stmt->bindValue('lim', $limit, PDO::PARAM_INT);
         $stmt->execute();
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**

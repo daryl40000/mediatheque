@@ -26,6 +26,9 @@ final class FilmPersonQuery
         return UserContext::currentFoyerId();
     }
 
+    /**
+     * @return list<array<string, mixed>>
+     */
     public function findByPersonne(string $query): array
     {
         $query = trim($query);
@@ -83,9 +86,12 @@ final class FilmPersonQuery
         );
         $stmt->execute($params);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
+    /**
+     * @return list<string>
+     */
     public function distinctPersonnes(int $limit = 300): array
     {
         $limit = max(1, min(500, $limit));
@@ -104,7 +110,7 @@ final class FilmPersonQuery
             }
         }
 
-        return $out;
+        return ListOf::strings($out);
     }
 
     private function selectPersonSearchRow(): string

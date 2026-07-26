@@ -243,7 +243,7 @@ final class CatalogMaintenance
         );
         $stmt->execute($ids);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /** Libellé lisible pour les listes déroulantes de fusion. */
@@ -324,7 +324,7 @@ final class CatalogMaintenance
         $stmt->bindValue(1, $limit, PDO::PARAM_INT);
         $stmt->execute();
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**

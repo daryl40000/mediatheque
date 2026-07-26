@@ -171,13 +171,13 @@ final class UtilisateurRepository
     /** @return list<array<string, mixed>> */
     public function listAll(): array
     {
-        return $this->db->query(
+        return ListOf::assocRows($this->db->query(
             'SELECT u.id, u.nom, u.prenom, u.pseudo, u.email, u.role, u.actif, u.foyer_id, u.last_login_at, u.created_at,
                     f.nom AS foyer_nom
              FROM utilisateurs u
              LEFT JOIN foyers f ON f.id = u.foyer_id
              ORDER BY u.role DESC, u.nom COLLATE FRENCH_NOCASE'
-        )->fetchAll();
+        )->fetchAll() ?: []);
     }
 
     /**
@@ -428,7 +428,7 @@ final class UtilisateurRepository
              ORDER BY nom COLLATE FRENCH_NOCASE"
         );
 
-        return $stmt ? ($stmt->fetchAll() ?: []) : [];
+        return $stmt ? ListOf::assocRows($stmt->fetchAll() ?: []) : [];
     }
 
     public function countLibraryEntries(int $userId): int
@@ -816,7 +816,7 @@ final class UtilisateurRepository
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     public function updateProfile(

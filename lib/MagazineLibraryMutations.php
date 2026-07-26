@@ -15,6 +15,9 @@ final class MagazineLibraryMutations { public function __construct(private reado
 
         return $stmt->rowCount() > 0 ? true : 'Suppression impossible.';
     }
+    /**
+     * @return array{removed_issues: int}|string
+     */
     public function removeSeriesFromLibrary(int $seriesId, string $statut, int $userId, int $foyerId): array|string
     {
         if (!MagazineRepository::isAvailable() || $seriesId <= 0) {

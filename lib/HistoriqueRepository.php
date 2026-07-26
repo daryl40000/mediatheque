@@ -267,7 +267,18 @@ final class HistoriqueRepository
         );
         $stmt->execute([$filmId, $userId]);
 
-        return $stmt->fetchAll();
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        $list = [];
+        foreach ($rows as $row) {
+            $note = $row['note'] ?? null;
+            $list[] = [
+                'id' => (int) ($row['id'] ?? 0),
+                'date_vue' => (string) ($row['date_vue'] ?? ''),
+                'note' => $note !== null && $note !== '' ? (int) $note : null,
+            ];
+        }
+
+        return $list;
     }
 
     public function deleteViewing(int $historiqueId, int $filmId): bool
@@ -383,7 +394,7 @@ final class HistoriqueRepository
             );
             $stmt->execute([$userId]);
 
-            return $stmt->fetchAll();
+            return ListOf::assocRows($stmt->fetchAll() ?: []);
         }
 
         $stmt = $this->db->query(
@@ -393,7 +404,7 @@ final class HistoriqueRepository
              ORDER BY h.date_vue DESC, f.titre COLLATE FRENCH_NOCASE'
         );
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt !== false ? ($stmt->fetchAll() ?: []) : []);
     }
 
     public function daysSinceLastView(int $filmId): ?int

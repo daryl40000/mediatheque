@@ -137,7 +137,7 @@ final class UserPublicProfileService
         );
         $stmt->execute($params);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /** @return list<array<string, mixed>> */
@@ -166,7 +166,7 @@ final class UserPublicProfileService
         );
         $stmt->execute($params);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /** @return list<array<string, mixed>> */
@@ -192,7 +192,7 @@ final class UserPublicProfileService
         );
         $stmt->execute($params);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /** @return list<array<string, mixed>> */
@@ -217,7 +217,7 @@ final class UserPublicProfileService
         );
         $stmt->execute($params);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /** @return list<array<string, mixed>> */
@@ -248,7 +248,7 @@ final class UserPublicProfileService
         );
         $stmt->execute($params);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**
@@ -354,7 +354,7 @@ final class UserPublicProfileService
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**
@@ -539,7 +539,7 @@ final class UserPublicProfileService
         }
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        return ListOf::assocRows($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []);
     }
 
     /**
@@ -842,7 +842,7 @@ final class UserPublicProfileService
         }
         unset($row);
 
-        return $rows;
+        return ListOf::assocRows($rows);
     }
 
     /**
@@ -900,7 +900,7 @@ final class UserPublicProfileService
         }
         unset($row);
 
-        return $rows;
+        return ListOf::assocRows($rows);
     }
 
     /**
@@ -1084,7 +1084,7 @@ final class UserPublicProfileService
         }
         $stmt->execute();
 
-        return $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+        return ListOf::assocRows($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []);
     }
 
     private function bdSeriesVisibleOnProfile(int $targetUserId, int $seriesId): bool

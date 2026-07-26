@@ -9,6 +9,21 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.44] — 2026-07-26
+
+**Qualité : baseline PHPStan à zéro**
+
+### Modifié
+
+- Typage des listes PHP (`list<>`) via le helper `ListOf` sur les lectures SQL / exports.
+- Correctifs ponctuels signalés par PHPStan (Auth cookie, import ODS, TMDB, PosterStorage, etc.).
+
+### Technique
+
+- `phpstan-baseline.neon` vide : **0** alerte figée ; `composer phpstan` reste vert au niveau 8.
+
+---
+
 ## [0.7.43] — 2026-07-26
 
 **Qualité : PHPStan niveau 8 et correctifs détectés**

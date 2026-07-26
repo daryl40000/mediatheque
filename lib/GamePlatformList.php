@@ -63,10 +63,10 @@ final class GamePlatformList
         return self::orderedKeys(array_values($items));
     }
 
-    /** @param list<string> $keys */
+    /** @param array<int, string> $keys */
     public static function serializeList(array $keys): string
     {
-        return implode(',', self::orderedKeys($keys));
+        return implode(',', self::orderedKeys(array_values($keys)));
     }
 
     /**

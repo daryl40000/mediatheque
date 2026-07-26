@@ -97,7 +97,7 @@ final class MagazineSeriesCategory
         return array_values($categories);
     }
 
-    /** @param list<string> $categories */
+    /** @param array<int, string> $categories */
     public static function serializeList(array $categories): string
     {
         $out = [];
@@ -130,7 +130,7 @@ final class MagazineSeriesCategory
         return self::normalizeInput($raw);
     }
 
-    /** @param array<string, mixed> $series */
+    /** @param array<int|string, mixed> $series */
     public static function listForSeries(array $series): array
     {
         return self::parseList((string) ($series['categories'] ?? ''));

@@ -88,7 +88,15 @@ final class BdCatalogImporter
      * @param list<list<string|null>> $rows
      * @param list<string|null> $header
      * @param array<string, mixed> $options
-     * @return array<string, mixed>
+     * @return array{
+     *   dry_run: bool,
+     *   series_created: int,
+     *   series_reused: int,
+     *   tomes_created: int,
+     *   tomes_skipped: int,
+     *   library_attached: int,
+     *   errors: list<string>
+     * }
      */
     public function importRows(array $rows, array $header, array $options = []): array
     {

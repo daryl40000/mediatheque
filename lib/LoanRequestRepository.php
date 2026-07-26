@@ -135,7 +135,7 @@ final class LoanRequestRepository
         );
         $stmt->execute([$ownerUserId, self::STATUS_PENDING]);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /** @return list<array<string, mixed>> */
@@ -158,7 +158,7 @@ final class LoanRequestRepository
         );
         $stmt->execute([$ownerUserId, self::STATUS_ACCEPTED]);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**

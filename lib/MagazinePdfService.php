@@ -242,6 +242,9 @@ final class MagazinePdfService {
         // Trigger SQL met à jour magazine_issue_fts ; secours si index désynchronisé.
         MagazineIssueFts::upsert($oeuvreId);
     }
+    /**
+     * @return array{indexed: int, skipped: int, errors: int}
+     */
     public function reindexPdfTextPreviewsForSeries(int $seriesId, int $userId, int $foyerId, ?string $statut = null): array
     {
         $result = ['indexed' => 0, 'skipped' => 0, 'errors' => 0];

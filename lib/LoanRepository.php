@@ -144,7 +144,7 @@ final class LoanRepository
         );
         $stmt->execute([$ownerUserId]);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**

@@ -400,7 +400,7 @@ final class MagazineRepository
 
     /**
      * @param array<string, mixed> $data
-     * @return true|string
+     * @return bool|string
      */
     public function updateCatalogByOeuvreId(int $oeuvreId, array $data): bool|string
     {
@@ -423,7 +423,7 @@ final class MagazineRepository
 
     /**
      * @param array<string, mixed> $data
-     * @return true|string
+     * @return bool|string
      */
     public function updateIssue(int $bibId, array $data, int $userId, int $foyerId): bool|string
     {

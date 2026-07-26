@@ -45,7 +45,9 @@ final class ImportLibraryRows
                 $data[$field] = match ($field) {
                     'support_physique' => self::normalizeSupportForImport(
                         $value,
-                        (string) ($data['media_domain'] ?? '')
+                        isset($data['media_domain']) && is_string($data['media_domain'])
+                            ? $data['media_domain']
+                            : ''
                     ),
                     'saga_ordre', 'saison_numero' => max(0, (int) $value),
                     'ean' => preg_replace('/\D+/', '', $value) ?? '',

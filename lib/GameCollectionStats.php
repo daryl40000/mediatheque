@@ -264,7 +264,7 @@ final class GameCollectionStats
         ]);
 
         return $this->buildBreakdownRows(
-            $stmt->fetchAll(PDO::FETCH_ASSOC),
+            ListOf::assocRows($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []),
             $total,
             'platform_key',
             static function (string $key): string {
@@ -379,7 +379,7 @@ final class GameCollectionStats
         ]);
 
         return $this->buildBreakdownRows(
-            $stmt->fetchAll(PDO::FETCH_ASSOC),
+            ListOf::assocRows($stmt->fetchAll(PDO::FETCH_ASSOC) ?: []),
             $total,
             'decade_start',
             static function (string $key): string {

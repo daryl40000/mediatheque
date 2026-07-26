@@ -402,7 +402,7 @@ final class CollectionStats
             $stmt->bindValue(':limit', $params['limit'], PDO::PARAM_INT);
             $stmt->execute($params);
 
-            return $stmt->fetchAll();
+            return ListOf::assocRows($stmt->fetchAll() ?: []);
         }
 
         $stmt = $this->db->prepare(
@@ -419,7 +419,7 @@ final class CollectionStats
         $stmt->bindValue(2, max(1, $limit), PDO::PARAM_INT);
         $stmt->execute();
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**
@@ -449,7 +449,7 @@ final class CollectionStats
             $stmt->bindValue(':limit', $params['limit'], PDO::PARAM_INT);
             $stmt->execute($params);
 
-            return $stmt->fetchAll();
+            return ListOf::assocRows($stmt->fetchAll() ?: []);
         }
 
         $stmt = $this->db->prepare(
@@ -464,7 +464,7 @@ final class CollectionStats
         $stmt->bindValue(1, max(1, $limit), PDO::PARAM_INT);
         $stmt->execute();
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     /**
@@ -492,7 +492,7 @@ final class CollectionStats
             $stmt->bindValue(':limit', $params['limit'], PDO::PARAM_INT);
             $stmt->execute($params);
 
-            return $stmt->fetchAll();
+            return ListOf::assocRows($stmt->fetchAll() ?: []);
         }
 
         $stmt = $this->db->prepare(
@@ -507,7 +507,7 @@ final class CollectionStats
         $stmt->bindValue(1, max(1, $limit), PDO::PARAM_INT);
         $stmt->execute();
 
-        return $stmt->fetchAll();
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     private function usesPerUserHistory(): bool

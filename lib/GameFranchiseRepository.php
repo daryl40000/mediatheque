@@ -168,7 +168,7 @@ final class GameFranchiseRepository
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        return array_map([GameRowMapper::class, 'hydrateGameRow'], $stmt->fetchAll(PDO::FETCH_ASSOC));
+        return ListOf::assocRows(array_map([GameRowMapper::class, 'hydrateGameRow'], $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []));
     }
 
     /**

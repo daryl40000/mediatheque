@@ -92,7 +92,7 @@ final class DatabaseBackupRateLimit
             return 0;
         }
 
-        return self::pruneAndCount($attempts, $windowSeconds, static function (array $recent) use ($bucketKey): void {
+        return self::pruneAndCount(ListOf::ints($attempts), $windowSeconds, static function (array $recent) use ($bucketKey): void {
             QuizSession::start();
             $bucket = $_SESSION[self::SESSION_KEY] ?? [];
             if (!is_array($bucket)) {
@@ -134,7 +134,7 @@ final class DatabaseBackupRateLimit
 
         $attempts = self::readIpAttempts($path);
 
-        return self::pruneAndCount($attempts, $windowSeconds, static function (array $recent) use ($path): void {
+        return self::pruneAndCount(ListOf::ints($attempts), $windowSeconds, static function (array $recent) use ($path): void {
             self::writeIpAttempts($path, $recent);
         });
     }
@@ -172,7 +172,7 @@ final class DatabaseBackupRateLimit
             return [];
         }
 
-        return array_values(array_filter($decoded, static fn ($ts): bool => is_int($ts)));
+        return ListOf::ints(array_values(array_filter($decoded, static fn ($ts): bool => is_int($ts))));
     }
 
     /** @param list<int> $attempts */

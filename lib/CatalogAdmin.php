@@ -94,7 +94,7 @@ final class CatalogAdmin
         $stmt = $this->db->prepare($sql);
         $stmt->execute($params);
 
-        return $stmt->fetchAll() ?: [];
+        return ListOf::assocRows($stmt->fetchAll() ?: []);
     }
 
     public function countOeuvres(string $search, string $mediaDomain = ''): int
@@ -545,7 +545,7 @@ final class CatalogAdmin
     }
 
     /**
-     * @return array{0: string, 1: list<mixed>}
+     * @return array{0: string, 1: array<string, mixed>}
      */
     private function searchWhere(string $search, string $mediaDomain = ''): array
     {
