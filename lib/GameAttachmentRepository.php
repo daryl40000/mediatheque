@@ -216,8 +216,57 @@ final class GameAttachmentRepository
         $row['display_label'] = trim((string) ($row['label'] ?? '')) !== ''
             ? trim((string) $row['label'])
             : (string) ($row['original_filename'] ?? 'Fichier');
+        $mime = strtolower(trim((string) ($row['mime'] ?? '')));
+        $ext = strtolower((string) pathinfo((string) ($row['original_filename'] ?? ''), PATHINFO_EXTENSION));
+        $row['is_pdf'] = $mime === 'application/pdf' || $ext === 'pdf';
 
         return $row;
+    }
+
+    /**
+     * Normalise $_FILES['attachment_file'] (un fichier ou plusieurs via attachment_file[]).
+     *
+     * @param array<string, mixed>|null $filesField
+     * @return list<array{name: string, tmp_name: string, size: int, error: int}>
+     */
+    public static function normalizeUploadedFiles(?array $filesField): array
+    {
+        if ($filesField === null || !isset($filesField['name'])) {
+            return [];
+        }
+
+        $uploads = [];
+        if (is_array($filesField['name'])) {
+            $count = count($filesField['name']);
+            for ($i = 0; $i < $count; $i++) {
+                $error = (int) ($filesField['error'][$i] ?? UPLOAD_ERR_NO_FILE);
+                if ($error === UPLOAD_ERR_NO_FILE) {
+                    continue;
+                }
+                $uploads[] = [
+                    'name' => (string) ($filesField['name'][$i] ?? 'fichier'),
+                    'tmp_name' => (string) ($filesField['tmp_name'][$i] ?? ''),
+                    'size' => (int) ($filesField['size'][$i] ?? 0),
+                    'error' => $error,
+                ];
+            }
+        } else {
+            $error = (int) ($filesField['error'] ?? UPLOAD_ERR_NO_FILE);
+            if ($error !== UPLOAD_ERR_NO_FILE) {
+                $uploads[] = [
+                    'name' => (string) ($filesField['name'] ?? 'fichier'),
+                    'tmp_name' => (string) ($filesField['tmp_name'] ?? ''),
+                    'size' => (int) ($filesField['size'] ?? 0),
+                    'error' => $error,
+                ];
+            }
+        }
+
+        return array_values(array_filter(
+            $uploads,
+            static fn (array $upload): bool => (int) ($upload['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK
+                && trim((string) ($upload['tmp_name'] ?? '')) !== ''
+        ));
     }
 
     private static function buildRelativePath(int $bibId, string $originalName): string|false

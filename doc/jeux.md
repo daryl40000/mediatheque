@@ -423,10 +423,14 @@ Dans les listes et sur la fiche, chaque support affiche une **icône** :
 - noms attendus : `cd_dvd`, `steam`, `gog`, `epic` ;
 - si aucun fichier n’existe, un **SVG de repli** est affiché (`GameEditionIcons::iconImageUrl()`).
 
-## Fichiers attachés (0.5.1)
+## Fichiers attachés (0.5.1 — multi-PDF)
 
-Sur la **fiche jeu**, le foyer peut joindre des fichiers utiles (abandonware, patch, archive, manuel scanné…) :
+Sur la **fiche jeu**, le foyer peut joindre des fichiers utiles :
 
+- **PDF** : manuel, soluce, guide, carte… (badge PDF, ouverture dans un nouvel onglet) ;
+- **Autres** : patch, image disque, archive…
+- **Plusieurs fichiers** d’un coup ;
+- **Type** facultatif (Manuel / Soluce / Guide…) utilisé comme libellé si la description est vide ;
 - **Limite** : 350 Mo par fichier (`UploadLimits::maxAttachmentBytes()`, même plafond que les PDF magazines) ;
 - **Stockage** : sous-dossier `games/` dans `MONCINE_DATA` ;
 - **Téléchargement** : via `/media-object.php` (contrôle d’accès foyer) ;

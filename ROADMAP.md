@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.7.41** (2026-07-25)  
+**Version actuelle : 0.7.42** (2026-07-26)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -13,7 +13,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 ---
 
-## Où en est-on ? (synthèse 0.7.41)
+## Où en est-on ? (synthèse 0.7.42)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
@@ -23,7 +23,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 | **BD / Manga** | 🔄 **En cours (M2)** | **0.7.2** → import CSV prêt | Collection, envies, partage, profil, impression, **import CSV** ; clôture → **0.8.0** |
 | **Livres** | ⏳ Placeholder (M3) | **0.7.8** | Onglet + page « bientôt » (`/livres.php`) |
 | **Musique** | ⏳ Placeholder (M8) | **0.7.8** | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles et CD physiques |
-| **Transversal** | 🔄 Partiel | **0.7.12**–**0.7.41** | Recherche globale, catalogue admin, import/export multi-médias, profil → fiches, partage, connexion pseudo, UI Compte/Import, menu mobile, PWA, CI |
+| **Transversal** | 🔄 Partiel | **0.7.12**–**0.7.42** | Recherche globale, catalogue admin, import/export multi-médias, profil → fiches, partage, connexion pseudo, UI Compte/Import, menu mobile, PWA, CI |
 
 ### Phases (suivi)
 
@@ -48,6 +48,10 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 - Import CSV catalogue livré en **0.7.32** — valider en usage réel puis tagger **0.8.0**.
 - Ensuite : **M3 Livres**.
+
+### ✅ **0.7.42** — Jeux : multi-PDF manuels/soluces (2026-07-26)
+
+- Plusieurs fichiers d’un coup ; type Manuel/Soluce ; aides en bulles « i ».
 
 ### ✅ **0.7.41** — Magazines : PDF n° / HS sans collision (2026-07-25)
 
@@ -713,4 +717,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.7.41** — 2026-07-25 (Magazines : chemins PDF uniques HS + ID).*
+*Dernière mise à jour : **0.7.42** — 2026-07-26 (Jeux : multi-PDF manuels/soluces + bulles d’aide).*

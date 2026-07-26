@@ -9,6 +9,25 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.42] — 2026-07-26
+
+**Jeux : manuels / soluces PDF et fiche plus légère**
+
+### Ajouté
+
+- Upload de **plusieurs fichiers** d’un coup sur la fiche jeu (PDF manuel, soluce, guide… ou archives).
+- Type facultatif (Manuel, Soluce, Guide…) ; badge PDF et ouverture dans un nouvel onglet.
+
+### Modifié
+
+- Textes d’aide du panneau fichiers déplacés dans des bulles **« i »** pour alléger la fiche.
+
+### Technique
+
+- `GameAttachmentRepository::normalizeUploadedFiles` ; tests unitaires associés.
+
+---
+
 ## [0.7.41] — 2026-07-25
 
 **Magazines : chemins PDF sans collision n° / hors-série**

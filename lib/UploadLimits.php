@@ -214,13 +214,17 @@ final class UploadLimits
                 continue;
             }
 
-            $error = (int) ($_FILES[$field]['error'] ?? UPLOAD_ERR_NO_FILE);
-            if ($error === UPLOAD_ERR_NO_FILE) {
-                continue;
-            }
-
-            if ($error !== UPLOAD_ERR_OK) {
-                self::redirectWithError($redirectUrl, self::fileUploadErrorMessage($error, $label));
+            $errorField = $_FILES[$field]['error'] ?? UPLOAD_ERR_NO_FILE;
+            // Un seul fichier ou plusieurs (name="champ[]") : error peut être int ou array.
+            $errors = is_array($errorField) ? $errorField : [$errorField];
+            foreach ($errors as $error) {
+                $error = (int) $error;
+                if ($error === UPLOAD_ERR_NO_FILE) {
+                    continue;
+                }
+                if ($error !== UPLOAD_ERR_OK) {
+                    self::redirectWithError($redirectUrl, self::fileUploadErrorMessage($error, $label));
+                }
             }
         }
 

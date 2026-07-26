@@ -1,6 +1,6 @@
 <?php
 /**
- * Enregistre un fichier joint sur une fiche jeu.
+ * Enregistre un ou plusieurs fichiers joints sur une fiche jeu (PDF manuel/soluce…).
  */
 
 declare(strict_types=1);
@@ -39,25 +39,55 @@ if (!UploadLimits::phpAllowsAttachmentUpload()) {
     exit;
 }
 
-if (!isset($_FILES['attachment_file']) || (int) ($_FILES['attachment_file']['error'] ?? UPLOAD_ERR_NO_FILE) !== UPLOAD_ERR_OK) {
-    header('Location: ' . $returnUrl . '&attachment_error=' . rawurlencode('Sélectionnez un fichier.'));
+$uploads = GameAttachmentRepository::normalizeUploadedFiles($_FILES['attachment_file'] ?? null);
+if ($uploads === []) {
+    header('Location: ' . $returnUrl . '&attachment_error=' . rawurlencode('Sélectionnez au moins un fichier.'));
     exit;
 }
 
-$result = $repo->attachUploadedFile(
-    $bibId,
-    $userId,
-    $foyerId,
-    (string) $_FILES['attachment_file']['tmp_name'],
-    (string) ($_FILES['attachment_file']['name'] ?? 'fichier'),
-    (int) ($_FILES['attachment_file']['size'] ?? 0),
-    (string) ($_POST['attachment_label'] ?? '')
-);
+$kind = trim((string) ($_POST['attachment_kind'] ?? ''));
+$label = trim((string) ($_POST['attachment_label'] ?? ''));
+if ($label === '' && $kind !== '' && $kind !== 'Autre') {
+    $label = $kind;
+}
 
-if ($result !== true) {
-    header('Location: ' . $returnUrl . '&attachment_error=' . rawurlencode((string) $result));
+$saved = 0;
+$errors = [];
+foreach ($uploads as $upload) {
+    $fileLabel = $label;
+    // Plusieurs fichiers + un seul libellé : on précise le nom du fichier.
+    if ($fileLabel !== '' && count($uploads) > 1) {
+        $fileLabel = $fileLabel . ' — ' . (string) ($upload['name'] ?? 'fichier');
+    }
+
+    $result = $repo->attachUploadedFile(
+        $bibId,
+        $userId,
+        $foyerId,
+        (string) ($upload['tmp_name'] ?? ''),
+        (string) ($upload['name'] ?? 'fichier'),
+        (int) ($upload['size'] ?? 0),
+        $fileLabel
+    );
+    if ($result === true) {
+        $saved++;
+    } else {
+        $errors[] = (string) $result;
+    }
+}
+
+if ($saved === 0) {
+    $message = $errors[0] ?? 'Impossible d’enregistrer les fichiers.';
+    header('Location: ' . $returnUrl . '&attachment_error=' . rawurlencode($message) . '#game-attachments');
     exit;
 }
 
-header('Location: ' . $returnUrl . '&attachment=1');
+$query = 'attachment=1&attachment_count=' . $saved;
+if ($errors !== []) {
+    $query .= '&attachment_error=' . rawurlencode(
+        $saved . ' fichier(s) enregistré(s), mais ' . count($errors) . ' échec(s) : ' . $errors[0]
+    );
+}
+
+header('Location: ' . $returnUrl . '&' . $query . '#game-attachments');
 exit;

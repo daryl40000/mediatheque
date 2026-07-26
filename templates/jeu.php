@@ -70,7 +70,13 @@ if ($linuxBadge === '' && !empty($game['linux_not_supported'])) {
             <p class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['delete_error']) ?></p>
         <?php endif; ?>
         <?php if (isset($_GET['attachment']) && (string) $_GET['attachment'] === '1'): ?>
-            <div class="alert alert-success">Fichier ajouté.</div>
+            <?php
+            $attachmentCount = max(1, (int) ($_GET['attachment_count'] ?? 1));
+            $attachmentMsg = $attachmentCount > 1
+                ? $attachmentCount . ' fichiers ajoutés.'
+                : 'Fichier ajouté.';
+            ?>
+            <div class="alert alert-success"><?= Moncine\View::escape($attachmentMsg) ?></div>
         <?php endif; ?>
         <?php if (isset($_GET['attachment_deleted']) && (string) $_GET['attachment_deleted'] === '1'): ?>
             <div class="alert alert-success">Fichier supprimé.</div>

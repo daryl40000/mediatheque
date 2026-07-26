@@ -1,18 +1,26 @@
 <?php
 /**
- * Fichiers joints (abandonware, patch…).
+ * Fichiers joints à la fiche jeu : PDF (manuel, soluce…), patch, archive…
  *
  * @var int $gameId
  * @var list<array<string, mixed>> $attachments
  */
 $gameId = (int) ($gameId ?? 0);
 $attachments = $attachments ?? [];
+$maxAttachmentLabel = Moncine\UploadLimits::maxAttachmentBytesLabel();
 ?>
-<section class="game-attachments-panel">
-    <h2 class="game-attachments-panel__title">Fichiers attachés</h2>
-    <p class="hint">
-        Abandonware, patch, image disque… (max <?= Moncine\View::escape(Moncine\UploadLimits::maxAttachmentBytesLabel()) ?>).
-    </p>
+<section class="game-attachments-panel" id="game-attachments">
+    <?php
+    unset($info, $infoHtml, $infoAria, $title, $tag, $class);
+    $title = 'Manuels, soluces et fichiers';
+    $tag = 'h2';
+    $class = 'game-attachments-panel__title';
+    $info = 'Ajoutez un ou plusieurs PDF (manuel, soluce, guide…) ou d’autres fichiers '
+        . '(patch, image disque…). Max ' . $maxAttachmentLabel . ' par fichier.';
+    $infoAria = 'Aide sur les fichiers joints';
+    require MONCINE_ROOT . '/templates/_heading_with_info.php';
+    unset($info, $infoAria, $title, $tag, $class);
+    ?>
 
     <?php require MONCINE_ROOT . '/templates/_upload_limits_warning.php'; ?>
 
@@ -22,10 +30,17 @@ $attachments = $attachments ?? [];
                 <?php
                 $attachmentId = (int) ($attachment['id'] ?? 0);
                 $storedObjectId = (int) ($attachment['stored_object_id'] ?? 0);
+                $isPdf = !empty($attachment['is_pdf']);
+                $linkClass = 'game-attachments-list__link'
+                    . ($isPdf ? ' game-attachments-list__link--pdf' : '');
                 ?>
                 <li class="game-attachments-list__item" role="listitem">
                     <a href="/media-object.php?id=<?= $storedObjectId ?>"
-                       class="game-attachments-list__link">
+                       class="<?= Moncine\View::escape($linkClass) ?>"
+                       <?= $isPdf ? 'target="_blank" rel="noopener"' : '' ?>>
+                        <?php if ($isPdf): ?>
+                            <span class="magazine-tag magazine-tag--pdf game-attachments-list__badge">PDF</span>
+                        <?php endif; ?>
                         <?= Moncine\View::escape((string) ($attachment['display_label'] ?? 'Fichier')) ?>
                     </a>
                     <span class="hint game-attachments-list__meta">
@@ -53,24 +68,50 @@ $attachments = $attachments ?? [];
     <?php endif; ?>
 
     <details class="game-attachments-add">
-        <summary class="btn btn-secondary btn-sm game-attachments-add__trigger">Ajouter un fichier</summary>
+        <summary class="btn btn-secondary btn-sm game-attachments-add__trigger">Ajouter des fichiers</summary>
         <form method="post" action="/enregistrer-fichier-jeu.php" enctype="multipart/form-data" class="game-attachments-form">
-        <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
-        <input type="hidden" name="game_id" value="<?= $gameId ?>">
+            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+            <input type="hidden" name="game_id" value="<?= $gameId ?>">
 
-        <label for="attachment_label">Description (facultatif)</label>
-        <input type="text" name="attachment_label" id="attachment_label" maxlength="120"
-               placeholder="Ex. Patch FR, ISO abandonware…">
+            <?php
+            unset($info, $infoHtml, $infoAria, $for, $label);
+            $for = 'attachment_kind';
+            $label = 'Type (facultatif)';
+            $info = 'Sert de libellé si vous ne renseignez pas la description ci-dessous.';
+            $infoAria = 'Aide sur le type de fichier';
+            require MONCINE_ROOT . '/templates/_form_label_info.php';
+            unset($info, $infoAria, $for, $label);
+            ?>
+            <select name="attachment_kind" id="attachment_kind">
+                <option value="">— Choisir —</option>
+                <option value="Manuel">Manuel</option>
+                <option value="Soluce">Soluce</option>
+                <option value="Guide">Guide</option>
+                <option value="Carte">Carte</option>
+                <option value="Patch">Patch</option>
+                <option value="Autre">Autre</option>
+            </select>
 
-        <label for="attachment_file">Fichier</label>
-        <input type="file" name="attachment_file" id="attachment_file" required>
-        <p class="hint">
-            Limite application : <?= Moncine\View::escape(Moncine\UploadLimits::maxAttachmentBytesLabel()) ?> —
-            PHP : upload <?= Moncine\View::escape(Moncine\UploadLimits::uploadMaxFilesizeLabel()) ?>,
-            post <?= Moncine\View::escape(Moncine\UploadLimits::postMaxSizeLabel()) ?>.
-        </p>
+            <label for="attachment_label">Description (facultatif)</label>
+            <input type="text" name="attachment_label" id="attachment_label" maxlength="120"
+                   placeholder="Ex. Manuel FR, Soluce complète…">
 
-        <button type="submit" class="btn btn-secondary btn-sm">Enregistrer le fichier</button>
+            <?php
+            unset($info, $infoHtml, $infoAria, $for, $label);
+            $for = 'attachment_file';
+            $label = 'Fichier(s)';
+            $info = 'Vous pouvez sélectionner plusieurs PDF (ou archives) en une fois. '
+                . 'Limite : ' . $maxAttachmentLabel . ' / fichier — PHP : upload '
+                . Moncine\UploadLimits::uploadMaxFilesizeLabel()
+                . ', post ' . Moncine\UploadLimits::postMaxSizeLabel() . '.';
+            $infoAria = 'Aide sur l’envoi de fichiers';
+            require MONCINE_ROOT . '/templates/_form_label_info.php';
+            unset($info, $infoAria, $for, $label);
+            ?>
+            <input type="file" name="attachment_file[]" id="attachment_file" required multiple
+                   accept=".pdf,application/pdf,.zip,.7z,.rar,.iso,.img,.bin,.cue,.nrg,.gz,.tar">
+
+            <button type="submit" class="btn btn-secondary btn-sm">Enregistrer</button>
         </form>
     </details>
 </section>

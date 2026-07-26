@@ -6006,6 +6006,19 @@ td .game-linux-badge--plain {
     max-width: 32rem;
 }
 
+.game-attachments-list__badge {
+    margin-right: 0.35rem;
+    vertical-align: middle;
+}
+
+.game-attachments-list__link--pdf {
+    font-weight: 600;
+}
+
+.game-attachments-form select {
+    max-width: 16rem;
+}
+
 .game-linux-panel {
     margin: 1.25rem 0;
     padding: 1rem 1.1rem;
