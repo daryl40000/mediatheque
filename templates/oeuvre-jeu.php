@@ -66,6 +66,21 @@ $completionCount = (int) ($completionCount ?? 0);
         <?php if (!empty($posterUploaded)): ?>
             <div class="alert alert-success">Jaquette enregistrée.</div>
         <?php endif; ?>
+        <?php if (isset($_GET['attachment']) && (string) $_GET['attachment'] === '1'): ?>
+            <?php
+            $attachmentCount = max(1, (int) ($_GET['attachment_count'] ?? 1));
+            $attachmentMsg = $attachmentCount > 1
+                ? $attachmentCount . ' fichiers ajoutés.'
+                : 'Fichier ajouté.';
+            ?>
+            <div class="alert alert-success"><?= Moncine\View::escape($attachmentMsg) ?></div>
+        <?php endif; ?>
+        <?php if (isset($_GET['attachment_deleted']) && (string) $_GET['attachment_deleted'] === '1'): ?>
+            <div class="alert alert-success">Fichier supprimé.</div>
+        <?php endif; ?>
+        <?php if (!empty($_GET['attachment_error'])): ?>
+            <p class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['attachment_error']) ?></p>
+        <?php endif; ?>
 
         <article class="film-detail game-detail<?= $posterSrc !== '' ? ' film-detail--with-poster' : '' ?>">
             <?php
@@ -162,6 +177,14 @@ $completionCount = (int) ($completionCount ?? 0);
                 $bibId = (int) ($libraryBibId ?? 0);
                 require MONCINE_ROOT . '/templates/_game_magazines_link.php';
                 ?>
+
+                <?php if (Moncine\GameAttachmentRepository::isAvailable()): ?>
+                    <?php
+                    $attachments = $attachments ?? [];
+                    $canManageAttachments = Moncine\CatalogAdmin::canAccess();
+                    require MONCINE_ROOT . '/templates/_game_attachments_panel.php';
+                    ?>
+                <?php endif; ?>
 
                 <?php if (Moncine\CatalogAdmin::canAccess()): ?>
                 <section class="oeuvre-catalog-page__admin-tools" aria-labelledby="catalog-game-admin-heading">

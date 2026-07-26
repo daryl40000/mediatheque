@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-07-26 (version **0.7.44** — PHPStan baseline 0)  
+**Dernière mise à jour :** 2026-07-26 (version **0.7.45** — fichiers jeux catalogue)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif

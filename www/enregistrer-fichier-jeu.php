@@ -1,28 +1,30 @@
 <?php
 /**
- * Enregistre un ou plusieurs fichiers joints sur une fiche jeu (PDF manuel/soluce…).
+ * Enregistre un ou plusieurs fichiers joints sur une fiche jeu catalogue
+ * (PDF manuel/soluce…) — réservé aux administrateurs du catalogue.
  */
 
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\CatalogAdmin;
 use Moncine\Csrf;
 use Moncine\GameAttachmentRepository;
 use Moncine\MediaDomainGuards;
 use Moncine\UploadLimits;
-use Moncine\UserContext;
 use Moncine\View;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /jeux.php');
+    header('Location: /catalogue.php');
     exit;
 }
 
 MediaDomainGuards::ensureGameContext();
+CatalogAdmin::denyUnlessAccess();
 
-$bibId = (int) ($_POST['game_id'] ?? 0);
-$returnUrl = View::gameUrl($bibId);
+$oeuvreId = (int) ($_POST['oeuvre_id'] ?? 0);
+$returnUrl = View::oeuvreJeuUrl($oeuvreId);
 
 Csrf::rejectUnlessValid($_POST, $returnUrl);
 
@@ -30,8 +32,6 @@ UploadLimits::guardPostWithFiles($_POST, $returnUrl, [
     'attachment_file' => 'Fichier joint',
 ]);
 
-$userId = UserContext::currentUserId();
-$foyerId = UserContext::currentFoyerId();
 $repo = new GameAttachmentRepository();
 
 if (!UploadLimits::phpAllowsAttachmentUpload()) {
@@ -61,9 +61,7 @@ foreach ($uploads as $upload) {
     }
 
     $result = $repo->attachUploadedFile(
-        $bibId,
-        $userId,
-        $foyerId,
+        $oeuvreId,
         (string) ($upload['tmp_name'] ?? ''),
         (string) ($upload['name'] ?? 'fichier'),
         (int) ($upload['size'] ?? 0),

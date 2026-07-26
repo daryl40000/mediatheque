@@ -9,6 +9,23 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.45] — 2026-07-26
+
+**Jeux : manuels / soluces au niveau catalogue (admin)**
+
+### Modifié
+
+- Les fichiers joints (manuel, soluce, patch…) sont liés à la **fiche catalogue** (`oeuvre_id`), plus à l’exemplaire perso.
+- **Ajout / suppression** réservés aux **administrateurs** du catalogue (fiche `oeuvre-jeu`).
+- **Consultation / téléchargement** pour tout utilisateur connecté (fiche catalogue et fiche perso en lecture seule).
+
+### Technique
+
+- Migration **067** (`game_attachment` : `bibliotheque_id` → `oeuvre_id`, reprise des fichiers existants).
+- `GameAttachmentRepository::listForOeuvre` ; endpoints upload/suppression protégés par `CatalogAdmin`.
+
+---
+
 ## [0.7.44] — 2026-07-26
 
 **Qualité : baseline PHPStan à zéro**

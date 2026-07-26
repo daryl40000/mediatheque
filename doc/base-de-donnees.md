@@ -76,7 +76,8 @@ erDiagram
     oeuvres ||--o| oeuvre_magazine : "magazine"
     series ||--o{ oeuvre_magazine : "numéros"
     bibliotheque ||--o{ historique : "notes"
-    bibliotheque ||--o{ game_attachment : "fichiers"
+    bibliotheque ||--o{ game_completion : "fins"
+    oeuvres ||--o{ game_attachment : "fichiers"
     bibliotheque ||--o{ loans : "prêts"
     oeuvre_jeu }o--o| oeuvres : "jeu de base"
     oeuvre_jeu }o--o| oeuvres : "jeu original"
@@ -168,9 +169,11 @@ URLs des pages Steam / GOG / Epic sur la fiche **catalogue** jeu (pas la possess
 
 La **possession** reste dans `oeuvre_jeu.digital_stores` (cases bibliothèque). Voir [jeux.md](jeux.md) et [enrichissement-magasins.md](enrichissement-magasins.md).
 
-#### `game_attachment` — fichiers joints à la bibliothèque
+#### `game_attachment` — fichiers joints au catalogue jeu
 
-Pièces jointes (manuels, sauvegardes…) liées à une entrée `bibliotheque`, via `stored_objects`.
+Pièces jointes (manuels, soluces, patch…) liées à une **œuvre** jeu (`oeuvre_id`), via `stored_objects`.
+Ajout / suppression réservés aux administrateurs catalogue ; consultation pour tout utilisateur connecté.
+Migration **067** (auparavant liées à `bibliotheque_id`).
 
 #### `game_completion` — fins de partie jeux (**054**, **0.6.9**)
 
@@ -285,6 +288,7 @@ Liste complète : voir [`sql/schema.sql`](../sql/schema.sql).
 | 040 | `040_oeuvre_jeu_editions.sql` | Supports physiques et magasins démat |
 | 041 | `041_bibliotheque_tested_on_linux.sql` | Flag Linux bibliothèque |
 | 042 | `042_game_attachment.sql` | Pièces jointes jeux |
+| 067 | `067_game_attachment_oeuvre.sql` | Pièces jointes au niveau catalogue (œuvre) |
 | 043 | `043_bibliotheque_linux_not_supported.sql` | Tri-état Linux |
 | 044 | `044_oeuvre_jeu_extensions.sql` | Extensions / DLC |
 | 045 | `045_oeuvre_jeu_remakes.sql` | Remakes |

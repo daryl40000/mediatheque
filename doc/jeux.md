@@ -64,19 +64,21 @@ Plusieurs lignes par jeu et par utilisateur (rejeu, nouvelle partie). Les **note
 | Colonne | Rôle |
 |---------|------|
 | `id` | Identifiant du fichier joint |
-| `bibliotheque_id` | Entrée bibliothèque (exemplaire du foyer) |
+| `oeuvre_id` | Fiche catalogue jeu (partagée) |
+| `stored_object_id` | Fichier sur disque (`stored_objects`) |
+| `label` | Libellé affiché (manuel, soluce…) |
 | `original_filename` | Nom du fichier à l’upload |
-| `stored_filename` | Nom sur disque (dossier `games/`) |
-| `mime_type` | Type MIME |
-| `file_size` | Taille en octets |
 | `created_at` | Date d’ajout |
+
+Ajout / suppression : **administrateur catalogue**. Consultation / téléchargement : tout utilisateur connecté.
 
 Migrations :
 
 - `sql/migrations/039_oeuvre_jeu_magazine_link.sql` — table `oeuvre_jeu` + pont magazine ;
 - `sql/migrations/040_oeuvre_jeu_editions.sql` — exemplaires physiques/démat ;
 - `sql/migrations/041_bibliotheque_tested_on_linux.sql` — flag « testé sur Linux » ;
-- `sql/migrations/042_game_attachment.sql` — fichiers attachés ;
+- `sql/migrations/042_game_attachment.sql` — fichiers attachés (niveau bibliothèque, historique) ;
+- `sql/migrations/067_game_attachment_oeuvre.sql` — fichiers attachés au niveau catalogue (œuvre) ;
 - `sql/migrations/043_bibliotheque_linux_not_supported.sql` — flag « Linux non supporté » ;
 - `sql/migrations/044_oeuvre_jeu_extensions.sql` — extensions (DLC) ;
 - `sql/migrations/045_oeuvre_jeu_remakes.sql` — remakes ;
@@ -327,7 +329,7 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | `GameRowMapper` | Hydratation lignes catalogue et bibliothèque |
 | `GameRelatedSections` | Bandeaux extensions / remakes |
 | `SearchMatch` | Recherche tolérante (accents, casse, faute) pour autocomplétion |
-| `GameAttachmentRepository` | Upload, liste et suppression des fichiers joints |
+| `GameAttachmentRepository` | Upload / liste / suppression des fichiers joints catalogue (admin) |
 | `GameEditionIcons` | Icônes support (CD/DVD, disquette, Steam…) — PNG/SVG dans `www/assets/img/game-editions/` |
 | `GameGenre` | Genres réutilisables (tags, comme magazines) |
 | `GameCollectionStats` | Statistiques collection jeux |
@@ -434,7 +436,7 @@ Sur la **fiche jeu**, le foyer peut joindre des fichiers utiles :
 - **Limite** : 350 Mo par fichier (`UploadLimits::maxAttachmentBytes()`, même plafond que les PDF magazines) ;
 - **Stockage** : sous-dossier `games/` dans `MONCINE_DATA` ;
 - **Téléchargement** : via `/media-object.php` (contrôle d’accès foyer) ;
-- **Interface** : panneau `_game_attachments_panel.php` (upload + liste + suppression).
+- **Interface** : panneau `_game_attachments_panel.php` sur la fiche catalogue (upload admin + liste pour tous) ; lecture seule sur la fiche perso.
 
 ## Notes et bibliothèque
 

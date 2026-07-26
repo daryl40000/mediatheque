@@ -93,8 +93,9 @@ if (isset($_GET['enrich'])) {
     }
 }
 
-$attachments = GameAttachmentRepository::isAvailable()
-    ? (new GameAttachmentRepository())->listForBibliotheque($bibId)
+$oeuvreIdForAttachments = (int) ($game['oeuvre_id'] ?? 0);
+$attachments = GameAttachmentRepository::isAvailable() && $oeuvreIdForAttachments > 0
+    ? (new GameAttachmentRepository())->listForOeuvre($oeuvreIdForAttachments)
     : [];
 $magazineIssues = MagazineGameLink::isAvailable()
     ? (new MagazineGameLink())->listIssueCoverageForGame((int) ($game['oeuvre_id'] ?? 0), $userId, $foyerId)

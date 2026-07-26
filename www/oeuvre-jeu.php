@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\CatalogAdmin;
 use Moncine\CatalogListContext;
+use Moncine\GameAttachmentRepository;
 use Moncine\GamePlatform;
 use Moncine\GameCompletionRepository;
 use Moncine\GameFranchiseRepository;
@@ -236,6 +237,10 @@ $magazineIssueCount = MagazineGameLink::isAvailable()
     ? (new MagazineGameLink())->countIssueCoverageForGame($oeuvreId, UserContext::currentUserId(), UserContext::currentFoyerId())
     : 0;
 
+$attachments = GameAttachmentRepository::isAvailable() && $oeuvreId > 0
+    ? (new GameAttachmentRepository())->listForOeuvre($oeuvreId)
+    : [];
+
 $mergeMessage = '';
 $mergeError = '';
 if (isset($_GET['merge_ok']) && (string) $_GET['merge_ok'] === '1') {
@@ -302,6 +307,7 @@ View::render('oeuvre-jeu', [
         ? (new GameFranchiseRepository())->listKnownSagas()
         : [],
     'magazineIssueCount' => $magazineIssueCount,
+    'attachments' => $attachments,
     'gameCompletions' => $gameCompletions,
     'completionCount' => $completionCount,
     'mergeMessage' => $mergeMessage,

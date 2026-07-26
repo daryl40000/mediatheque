@@ -182,7 +182,10 @@ if ($linuxBadge === '' && !empty($game['linux_not_supported'])) {
 
                 <?php if (Moncine\GameAttachmentRepository::isAvailable()): ?>
                     <?php
+                    // Lecture seule sur la fiche perso : l’ajout se fait sur la fiche catalogue (admin).
                     $attachments = $attachments ?? [];
+                    $oeuvreId = (int) ($game['oeuvre_id'] ?? $oeuvreId ?? 0);
+                    $canManageAttachments = false;
                     require MONCINE_ROOT . '/templates/_game_attachments_panel.php';
                     ?>
                 <?php endif; ?>

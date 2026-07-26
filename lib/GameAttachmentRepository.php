@@ -1,6 +1,10 @@
 <?php
 /**
- * Fichiers joints à un jeu (abandonware, patch, ISO…).
+ * Fichiers joints à une fiche jeu catalogue (manuel, soluce, patch…).
+ *
+ * Stockés au niveau de l’œuvre (partagés) : seuls les admins/modérateurs
+ * catalogue peuvent en ajouter ou en supprimer ; tout utilisateur connecté
+ * peut les consulter / télécharger.
  */
 
 declare(strict_types=1);
@@ -20,17 +24,32 @@ final class GameAttachmentRepository
 
     public static function isAvailable(): bool
     {
-        $stmt = Database::getInstance()->query(
+        $db = Database::getInstance();
+        $stmt = $db->query(
             "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'game_attachment' LIMIT 1"
         );
+        if ($stmt === false || $stmt->fetchColumn() === false) {
+            return false;
+        }
 
-        return $stmt !== false && $stmt->fetchColumn() !== false;
+        // Après la migration 067, la clé est oeuvre_id (plus bibliotheque_id).
+        $cols = $db->query('PRAGMA table_info(game_attachment)');
+        if ($cols === false) {
+            return false;
+        }
+        foreach ($cols->fetchAll(PDO::FETCH_ASSOC) ?: [] as $col) {
+            if ((string) ($col['name'] ?? '') === 'oeuvre_id') {
+                return true;
+            }
+        }
+
+        return false;
     }
 
     /** @return list<array<string, mixed>> */
-    public function listForBibliotheque(int $bibId): array
+    public function listForOeuvre(int $oeuvreId): array
     {
-        if (!self::isAvailable() || $bibId <= 0) {
+        if (!self::isAvailable() || $oeuvreId <= 0) {
             return [];
         }
 
@@ -39,15 +58,19 @@ final class GameAttachmentRepository
                     so.mime, so.size_bytes, so.relative_path
              FROM game_attachment ga
              INNER JOIN stored_objects so ON so.id = ga.stored_object_id
-             WHERE ga.bibliotheque_id = ?
+             WHERE ga.oeuvre_id = ?
              ORDER BY ga.created_at DESC, ga.id DESC'
         );
-        $stmt->execute([$bibId]);
+        $stmt->execute([$oeuvreId]);
 
         return ListOf::assocRows(array_map([$this, 'hydrateRow'], $stmt->fetchAll(PDO::FETCH_ASSOC) ?: []));
     }
 
-    public function userCanAccessStoredObject(int $storedObjectId, int $userId, int $foyerId): bool
+    /**
+     * Tout utilisateur connecté peut lire un fichier joint catalogue
+     * (manuel / soluce partagés sur la fiche œuvre).
+     */
+    public function userCanAccessStoredObject(int $storedObjectId, int $userId, int $_foyerId = 0): bool
     {
         if (!self::isAvailable() || $storedObjectId <= 0 || $userId <= 0) {
             return false;
@@ -56,33 +79,19 @@ final class GameAttachmentRepository
         $stmt = $this->db->prepare(
             'SELECT 1
              FROM game_attachment ga
-             INNER JOIN bibliotheque b ON b.id = ga.bibliotheque_id
-             INNER JOIN oeuvres o ON o.id = b.oeuvre_id
+             INNER JOIN oeuvres o ON o.id = ga.oeuvre_id
              WHERE ga.stored_object_id = ?
                AND o.media_domain = ?
-               AND (
-                    (b.statut = ? AND b.foyer_id = ?)
-                    OR (b.statut = ? AND b.user_id = ?)
-               )
              LIMIT 1'
         );
-        $stmt->execute([
-            $storedObjectId,
-            MediaDomain::JEU,
-            LibraryStatut::COLLECTION,
-            $foyerId,
-            LibraryStatut::WISHLIST,
-            $userId,
-        ]);
+        $stmt->execute([$storedObjectId, MediaDomain::JEU]);
 
         return (bool) $stmt->fetchColumn();
     }
 
     /** @return true|string */
     public function attachUploadedFile(
-        int $bibId,
-        int $userId,
-        int $foyerId,
+        int $oeuvreId,
         string $tmpPath,
         string $originalName,
         int $fileSize,
@@ -92,8 +101,8 @@ final class GameAttachmentRepository
             return 'Pièces jointes jeux non disponibles (migration en cours).';
         }
 
-        if ((new GameRepository())->findByBibId($bibId, $userId, $foyerId) === null) {
-            return 'Jeu introuvable.';
+        if ($oeuvreId <= 0 || !$this->oeuvreIsGame($oeuvreId)) {
+            return 'Jeu catalogue introuvable.';
         }
 
         if ($tmpPath === '' || !is_readable($tmpPath)) {
@@ -122,7 +131,7 @@ final class GameAttachmentRepository
         }
         $mime = is_string($mime) && $mime !== '' ? $mime : 'application/octet-stream';
 
-        $relative = self::buildRelativePath($bibId, $originalName);
+        $relative = self::buildRelativePath($oeuvreId, $originalName);
         if ($relative === false) {
             return 'Chemin de stockage invalide.';
         }
@@ -151,10 +160,10 @@ final class GameAttachmentRepository
         }
 
         $this->db->prepare(
-            'INSERT INTO game_attachment (bibliotheque_id, stored_object_id, label, original_filename)
+            'INSERT INTO game_attachment (oeuvre_id, stored_object_id, label, original_filename)
              VALUES (?, ?, ?, ?)'
         )->execute([
-            $bibId,
+            $oeuvreId,
             (int) ($stored['id'] ?? 0),
             trim($label),
             $originalName,
@@ -163,13 +172,9 @@ final class GameAttachmentRepository
         return true;
     }
 
-    public function deleteById(int $attachmentId, int $bibId, int $userId, int $foyerId): bool
+    public function deleteById(int $attachmentId, int $oeuvreId): bool
     {
-        if (!self::isAvailable() || $attachmentId <= 0 || $bibId <= 0) {
-            return false;
-        }
-
-        if ((new GameRepository())->findByBibId($bibId, $userId, $foyerId) === null) {
+        if (!self::isAvailable() || $attachmentId <= 0 || $oeuvreId <= 0) {
             return false;
         }
 
@@ -177,10 +182,10 @@ final class GameAttachmentRepository
             'SELECT ga.stored_object_id, so.relative_path
              FROM game_attachment ga
              INNER JOIN stored_objects so ON so.id = ga.stored_object_id
-             WHERE ga.id = ? AND ga.bibliotheque_id = ?
+             WHERE ga.id = ? AND ga.oeuvre_id = ?
              LIMIT 1'
         );
-        $stmt->execute([$attachmentId, $bibId]);
+        $stmt->execute([$attachmentId, $oeuvreId]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
         if ($row === false) {
             return false;
@@ -189,8 +194,8 @@ final class GameAttachmentRepository
         $storedObjectId = (int) ($row['stored_object_id'] ?? 0);
         $relativePath = (string) ($row['relative_path'] ?? '');
 
-        $this->db->prepare('DELETE FROM game_attachment WHERE id = ? AND bibliotheque_id = ?')
-            ->execute([$attachmentId, $bibId]);
+        $this->db->prepare('DELETE FROM game_attachment WHERE id = ? AND oeuvre_id = ?')
+            ->execute([$attachmentId, $oeuvreId]);
 
         if ($storedObjectId > 0) {
             (new StoredObjectRepository())->deleteById($storedObjectId);
@@ -204,6 +209,16 @@ final class GameAttachmentRepository
         }
 
         return true;
+    }
+
+    private function oeuvreIsGame(int $oeuvreId): bool
+    {
+        $stmt = $this->db->prepare(
+            'SELECT 1 FROM oeuvres WHERE id = ? AND media_domain = ? LIMIT 1'
+        );
+        $stmt->execute([$oeuvreId, MediaDomain::JEU]);
+
+        return (bool) $stmt->fetchColumn();
     }
 
     /** @return array<string, mixed> */
@@ -269,9 +284,9 @@ final class GameAttachmentRepository
         ));
     }
 
-    private static function buildRelativePath(int $bibId, string $originalName): string|false
+    private static function buildRelativePath(int $oeuvreId, string $originalName): string|false
     {
-        if ($bibId <= 0) {
+        if ($oeuvreId <= 0) {
             return false;
         }
 
@@ -281,7 +296,8 @@ final class GameAttachmentRepository
         $suffix = $ext !== '' ? '.' . preg_replace('/[^a-z0-9]+/', '', $ext) : '';
         $unique = substr(sha1($originalName . microtime(true)), 0, 8);
 
-        return MediaStorage::relativePath('game', (string) $bibId, $slug . '-' . $unique . $suffix);
+        // Dossier par œuvre catalogue (partagé), pas par exemplaire perso.
+        return MediaStorage::relativePath('game', 'oeuvre-' . $oeuvreId, $slug . '-' . $unique . $suffix);
     }
 
     private static function slugify(string $text, string $fallback): string

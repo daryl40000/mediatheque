@@ -1,35 +1,33 @@
 <?php
 /**
- * Supprime un fichier joint d’une fiche jeu.
+ * Supprime un fichier joint d’une fiche jeu catalogue — réservé aux admins.
  */
 
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\CatalogAdmin;
 use Moncine\Csrf;
 use Moncine\GameAttachmentRepository;
 use Moncine\MediaDomainGuards;
-use Moncine\UserContext;
 use Moncine\View;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /jeux.php');
+    header('Location: /catalogue.php');
     exit;
 }
 
 MediaDomainGuards::ensureGameContext();
+CatalogAdmin::denyUnlessAccess();
 
-$bibId = (int) ($_POST['game_id'] ?? 0);
+$oeuvreId = (int) ($_POST['oeuvre_id'] ?? 0);
 $attachmentId = (int) ($_POST['attachment_id'] ?? 0);
-$returnUrl = View::gameUrl($bibId);
+$returnUrl = View::oeuvreJeuUrl($oeuvreId);
 
 Csrf::rejectUnlessValid($_POST, $returnUrl);
 
-$userId = UserContext::currentUserId();
-$foyerId = UserContext::currentFoyerId();
-
-$deleted = (new GameAttachmentRepository())->deleteById($attachmentId, $bibId, $userId, $foyerId);
+$deleted = (new GameAttachmentRepository())->deleteById($attachmentId, $oeuvreId);
 if (!$deleted) {
     header('Location: ' . $returnUrl . '&attachment_error=' . rawurlencode('Fichier introuvable ou accès refusé.'));
     exit;
