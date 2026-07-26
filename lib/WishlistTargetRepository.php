@@ -98,7 +98,7 @@ final class WishlistTargetRepository
     }
 
     /**
-     * @return true|int|string
+     * @return int|string ID créé ou message d’erreur
      */
     public function add(
         int $bibliothequeId,
@@ -106,7 +106,7 @@ final class WishlistTargetRepository
         string $ean = '',
         string $label = '',
         ?int $oeuvreEanId = null
-    ): bool|int|string {
+    ): int|string {
         if (!self::tableExists()) {
             return 'Les cibles d’achat ne sont pas disponibles (migration en attente).';
         }
@@ -164,9 +164,9 @@ final class WishlistTargetRepository
     }
 
     /**
-     * @return true|int|string
+     * @return int|string ID créé ou message d’erreur
      */
-    public function addFromCatalogEan(int $bibliothequeId, int $oeuvreEanId, int $oeuvreId): bool|int|string
+    public function addFromCatalogEan(int $bibliothequeId, int $oeuvreEanId, int $oeuvreId): int|string
     {
         $row = $this->fetchOeuvreEanRow($oeuvreEanId);
         if ($row === null) {

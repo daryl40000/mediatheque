@@ -107,12 +107,12 @@ final class CatalogSchema
             . 'ELSE COALESCE(b.saga_ordre, 0) END ELSE 0 END AS saga_ordre';
     }
 
-    public static function hasOeuvreSagaColumns(?PDO $db = null): bool
+    public static function hasOeuvreSagaColumns(?\PDO $db = null): bool
     {
         return self::hasOeuvreColumn('saga', $db) && self::hasOeuvreColumn('saga_ordre', $db);
     }
 
-    public static function hasOeuvreColumn(string $column, ?PDO $db = null): bool
+    public static function hasOeuvreColumn(string $column, ?\PDO $db = null): bool
     {
         static $cache = [];
         $key = $column;
@@ -194,7 +194,7 @@ final class CatalogSchema
         return (bool) $stmt->fetchColumn();
     }
 
-    public static function hasMediaDomainColumn(?PDO $db = null): bool
+    public static function hasMediaDomainColumn(?\PDO $db = null): bool
     {
         $db ??= Database::getInstance();
         if (!self::usesCatalogTables($db)) {

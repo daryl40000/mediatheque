@@ -156,9 +156,9 @@ final class FriendshipRepository
     }
 
     /**
-     * @return true|int|string ID de la demande ou message d’erreur
+     * @return int|string ID de la demande ou message d’erreur
      */
-    public function sendRequest(int $requesterId, int $addresseeId): bool|int|string
+    public function sendRequest(int $requesterId, int $addresseeId): int|string
     {
         if (!self::isAvailable()) {
             return 'Les demandes d’ami ne sont pas disponibles.';

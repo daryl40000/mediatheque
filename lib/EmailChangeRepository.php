@@ -50,9 +50,9 @@ final class EmailChangeRepository
     }
 
     /**
-     * @return true|string
+     * @return string Jeton hex 64 caractères, ou message d’erreur
      */
-    public function create(int $userId, string $oldEmail, string $newEmail): bool|string
+    public function create(int $userId, string $oldEmail, string $newEmail): string
     {
         if (!self::tableExists() || $userId <= 0) {
             return 'Fonction indisponible. Appliquez les migrations.';

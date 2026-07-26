@@ -27,7 +27,7 @@ final class EpicCatalogClient
         }
 
         if (preg_match('~store\.epicgames\.com/p/([^/?#]+)~i', $url, $matches) === 1) {
-            return trim((string) ($matches[1] ?? ''));
+            return trim((string) $matches[1]);
         }
 
         return '';

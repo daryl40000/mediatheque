@@ -261,7 +261,7 @@ final class CatalogAdmin
         ];
 
         $oeuvreId = $this->oeuvres->insert($payload);
-        $this->cachePosterIfRemote($oeuvreId, (string) ($payload['poster_url'] ?? ''));
+        $this->cachePosterIfRemote($oeuvreId, (string) $payload['poster_url']);
 
         return $oeuvreId;
     }

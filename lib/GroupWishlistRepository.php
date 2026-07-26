@@ -109,7 +109,11 @@ final class GroupWishlistRepository
             $whereParts[] = $searchWhere;
         }
 
-        CatalogSchema::applyMediaDomainFilter($whereParts, $params);
+        // Placeholders positionnels (?) uniquement — pas de mélange avec :nom.
+        if (CatalogSchema::hasMediaDomainColumn()) {
+            $whereParts[] = 'o.media_domain = ?';
+            $params[] = MediaContext::current();
+        }
 
         $sql = 'SELECT o.id AS oeuvre_id, o.titre, o.titre_original, o.realisateur, o.annee,
                        o.nationalite, o.styles, o.poster_url, o.moncine_kind,
@@ -209,7 +213,7 @@ final class GroupWishlistRepository
     }
 
     /**
-     * @param array<string, string> $params
+     * @param array<int|string, int|string> $params
      */
     private function searchOeuvreWhereSql(string $searchQuery, array &$params): string
     {
@@ -219,7 +223,6 @@ final class GroupWishlistRepository
         }
 
         $pattern = '%' . str_replace(['\\', '%', '_'], ['\\\\', '\\%', '\\_'], $searchQuery) . '%';
-        $params['group_wish_q'] = $pattern;
 
         $fields = [
             'o.titre',
@@ -233,7 +236,8 @@ final class GroupWishlistRepository
 
         $parts = [];
         foreach ($fields as $field) {
-            $parts[] = 'LOWER(' . $field . ') LIKE LOWER(:group_wish_q) ESCAPE \'\\\'';
+            $parts[] = 'LOWER(' . $field . ') LIKE LOWER(?) ESCAPE \'\\\'';
+            $params[] = $pattern;
         }
 
         return '(' . implode(' OR ', $parts) . ')';

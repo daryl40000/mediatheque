@@ -13,7 +13,13 @@
         "php": ">=8.2"
     },
     "require-dev": {
+        "phpstan/phpstan": "^2.2",
         "phpunit/phpunit": "^11.5"
+    },
+    "autoload": {
+        "psr-4": {
+            "Moncine\\": "lib/"
+        }
     },
     "autoload-dev": {
         "psr-4": {
@@ -22,7 +28,9 @@
     },
     "scripts": {
         "test": "phpunit",
-        "test:coverage": "phpunit --coverage-text"
+        "test:coverage": "phpunit --coverage-text",
+        "phpstan": "phpstan analyse -c phpstan.neon.dist --memory-limit=512M",
+        "phpstan:baseline": "phpstan analyse -c phpstan.neon.dist --memory-limit=512M --generate-baseline"
     },
     "config": {
         "sort-packages": true,

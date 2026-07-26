@@ -247,7 +247,7 @@ final class SteamGameResolver
     public static function extractAppIdFromStoreUrl(string $url): int
     {
         if (preg_match('#/app/(\d+)#', $url, $matches) === 1) {
-            return (int) ($matches[1] ?? 0);
+            return (int) $matches[1];
         }
 
         return 0;

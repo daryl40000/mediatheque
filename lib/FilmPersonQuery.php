@@ -13,8 +13,6 @@ final class FilmPersonQuery
 {
     public function __construct(
         private readonly PDO $db,
-        private readonly OeuvreRepository $oeuvres = new OeuvreRepository(),
-        private readonly BibliothequeRepository $bibliotheque = new BibliothequeRepository(),
     ) {
     }
 

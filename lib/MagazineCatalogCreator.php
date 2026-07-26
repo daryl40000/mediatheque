@@ -2,7 +2,7 @@
 declare(strict_types=1);
 namespace Moncine;
 use PDO;
-final class MagazineCatalogCreator { public function __construct(private readonly PDO $db, private readonly MagazineCatalogWriter $catalogWriter, private readonly MagazineCatalogValidator $validator, private readonly MagazineLibraryQuery $libraryQuery, private readonly MagazineLibraryAttach $libraryAttach, private readonly MagazineLibraryMutations $libraryMutations) {}
+final class MagazineCatalogCreator { public function __construct(private readonly PDO $db, private readonly MagazineCatalogValidator $validator, private readonly MagazineLibraryQuery $libraryQuery, private readonly MagazineLibraryAttach $libraryAttach, private readonly MagazineLibraryMutations $libraryMutations) {}
     public function createCatalogIssue(int $seriesId, array $data): int|string
     {
         if (!MagazineRepository::isAvailable()) {

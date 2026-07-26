@@ -61,7 +61,7 @@ final class MagazineModule
              WHERE password_hash IS NOT NULL AND TRIM(password_hash) != ''
              LIMIT 1"
         );
-        $user = $stmt !== false ? $stmt->fetch(PDO::FETCH_ASSOC) : false;
+        $user = $stmt !== false ? $stmt->fetch(\PDO::FETCH_ASSOC) : false;
         if ($user === false) {
             $migrator->setMetadata(self::REPAIR_META, 'skipped_no_user');
 
@@ -85,7 +85,7 @@ final class MagazineModule
                AND id NOT IN (SELECT series_id FROM series_bibliotheque)'
         );
         $stmt->execute([MediaDomain::MAGAZINE]);
-        $orphanIds = $stmt->fetchAll(PDO::FETCH_COLUMN) ?: [];
+        $orphanIds = $stmt->fetchAll(\PDO::FETCH_COLUMN) ?: [];
         $magRepo = new MagazineRepository();
         foreach ($orphanIds as $seriesId) {
             $magRepo->registerSeriesInLibrary(

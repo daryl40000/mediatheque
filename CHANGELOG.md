@@ -9,6 +9,27 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.7.43] — 2026-07-26
+
+**Qualité : PHPStan niveau 8 et correctifs détectés**
+
+### Ajouté
+
+- **PHPStan** niveau **8** sur `lib/` (`composer phpstan`) + job CI GitHub Actions.
+- Autoload Composer PSR-4 pour `Moncine\` ; baseline pour la dette de typage héritée.
+
+### Corrigé
+
+- Parsing des URL IGDB (`igdb.com/games/…-123`) : regex cassée (le `#` coupait le motif).
+- Recherche wishlist de groupe : mélange incompatible de paramètres SQL `?` et `:nom`.
+
+### Technique
+
+- Tests `IgdbClientParseTest` (fichier dédié pour que PHPUnit les exécute).
+- Divers nettoyages de types / code mort signalés par PHPStan.
+
+---
+
 ## [0.7.42] — 2026-07-26
 
 **Jeux : manuels / soluces PDF et fiche plus légère**

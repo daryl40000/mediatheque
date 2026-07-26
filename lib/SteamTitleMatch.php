@@ -92,7 +92,7 @@ final class SteamTitleMatch
             return '';
         }
 
-        $slug = rawurldecode((string) ($matches[1] ?? ''));
+        $slug = rawurldecode((string) $matches[1]);
 
         return trim(str_replace('_', ' ', $slug));
     }

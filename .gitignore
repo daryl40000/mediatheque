@@ -38,7 +38,9 @@ IDEES.md
 
 # Tests / cache
 /.phpunit.cache/
+/.phpstan.cache/
 /phpunit.xml
+/phpstan.neon
 
 # Captures doc (fichiers lourds, optionnels en local)
 /doc/Screenshots/*

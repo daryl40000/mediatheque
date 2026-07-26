@@ -107,7 +107,7 @@ final class MagazineSeriesStats
 
         $rows = [];
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $row) {
-            $pages = isset($row['pages']) && $row['pages'] !== null && $row['pages'] !== ''
+            $pages = isset($row['pages']) && $row['pages'] !== ''
                 ? (int) $row['pages']
                 : 0;
             $rows[] = [

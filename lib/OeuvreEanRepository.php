@@ -79,9 +79,9 @@ final class OeuvreEanRepository
     }
 
     /**
-     * @return true|int|string
+     * @return int|string ID créé ou message d’erreur
      */
-    public function add(int $oeuvreId, string $ean, string $supportKey, string $label = '', string $source = 'manual'): bool|int|string
+    public function add(int $oeuvreId, string $ean, string $supportKey, string $label = '', string $source = 'manual'): int|string
     {
         if (!self::tableExists()) {
             return 'Les codes EAN catalogue ne sont pas disponibles (migration en attente).';

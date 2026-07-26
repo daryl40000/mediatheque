@@ -88,7 +88,6 @@ final class CatalogSubmissionPayload
     }
 
     /**
-     * @param array<string, mixed>|null $stored
      * @return array<string, mixed>
      */
     public static function decode(?string $json): array

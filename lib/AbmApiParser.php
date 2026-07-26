@@ -210,7 +210,7 @@ final class AbmApiParser
 
         if (preg_match('/^(\d+)(?:[.,](\d+))?/', $numero, $m)) {
             $base = (float) $m[1];
-            if (isset($m[2]) && $m[2] !== '') {
+            if (isset($m[2])) {
                 $base += ((float) ('0.' . $m[2]));
             } elseif ($horsSerie) {
                 $base += 0.5;

@@ -69,6 +69,7 @@ final class RegistrationService
         }
 
         $hash = UtilisateurRepository::hashPassword($plainPassword);
+        // Longueur déjà validée : hashPassword ne renvoie plus null dans ce chemin.
         if ($hash === null) {
             return UtilisateurRepository::passwordValidationMessage();
         }

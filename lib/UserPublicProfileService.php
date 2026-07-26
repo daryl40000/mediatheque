@@ -93,7 +93,8 @@ final class UserPublicProfileService
      *   media_domain: string,
      *   collection_count: int,
      *   wishlist_count: int,
-     *   issue_count: int,
+     *   issue_count?: int,
+     *   tome_count?: int,
      *   films_vus_count: int,
      *   films_vus_year_count: int,
      *   year: int
@@ -493,62 +494,6 @@ final class UserPublicProfileService
             $magSort,
             $sortDir
         );
-    }
-
-    /** @return list<array<string, mixed>> */
-    private function lastMagazineSeries(int $userId, string $statut, int $limit): array
-    {
-        if ($userId <= 0 || $limit <= 0 || !MagazineRepository::seriesLibraryTableExists()) {
-            return [];
-        }
-
-        $foyerId = $this->foyerIdForUser($userId);
-        $params = [
-            'domain_series' => MediaDomain::MAGAZINE,
-            'domain_oeuvre' => MediaDomain::MAGAZINE,
-            'limit' => $limit,
-        ];
-
-        if ($statut === LibraryStatut::COLLECTION) {
-            if ($foyerId <= 0) {
-                return [];
-            }
-            $scopeSql = 'sb.statut = :sb_statut AND sb.foyer_id = :sb_foyer_id';
-            $params['sb_statut'] = LibraryStatut::COLLECTION;
-            $params['sb_foyer_id'] = $foyerId;
-        } else {
-            $scopeSql = 'sb.statut = :sb_statut AND sb.user_id = :sb_user_id';
-            $params['sb_statut'] = LibraryStatut::WISHLIST;
-            $params['sb_user_id'] = $userId;
-        }
-
-        $sql = 'SELECT s.*,
-                    ' . SeriesPoster::sqlFirstVolumePosterSubquery(MediaDomain::MAGAZINE) . ' AS first_volume_poster_url,
-                    MAX(CASE WHEN TRIM(o.poster_url) != \'\' THEN o.poster_url END) AS latest_poster_url,
-                    COUNT(DISTINCT CASE WHEN b.statut = sb.statut THEN b.id END) AS issue_count
-                FROM series s
-                INNER JOIN series_bibliotheque sb ON sb.series_id = s.id
-                LEFT JOIN oeuvre_magazine om ON om.series_id = s.id
-                LEFT JOIN oeuvres o ON o.id = om.oeuvre_id AND o.media_domain = :domain_oeuvre
-                LEFT JOIN bibliotheque b ON b.oeuvre_id = o.id
-                WHERE s.media_domain = :domain_series AND ' . $scopeSql . '
-                GROUP BY s.id
-                ORDER BY sb.created_at DESC, s.id DESC
-                LIMIT :limit';
-
-        $stmt = $this->db->prepare($sql);
-        foreach ($params as $key => $value) {
-            $stmt->bindValue(':' . $key, $value, is_int($value) ? PDO::PARAM_INT : PDO::PARAM_STR);
-        }
-        $stmt->execute();
-
-        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
-        foreach ($rows as &$row) {
-            $row = SeriesPoster::enrichSeries($row);
-        }
-        unset($row);
-
-        return $rows;
     }
 
     /** @return list<array<string, mixed>> */

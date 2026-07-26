@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-07-20 (version **0.7.31** — dette Legacy + View URLs)  
+**Dernière mise à jour :** 2026-07-26 (version **0.7.43** — PHPStan niveau 8)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif
@@ -14,7 +14,19 @@ Améliorer la maintenabilité du projet (objectif indicatif : passer d'un code *
 | GitHub Actions — PHPUnit sur push/PR `main` | ✅ [`.github/workflows/tests.yml`](.github/workflows/tests.yml) |
 | Matrice PHP | 8.2 + 8.3 |
 | Couverture (pcov) | ✅ Job `Coverage baseline` + artefact `coverage-baseline.txt` |
-| PHPStan / analyse statique | ⏳ À faire (prochaine étape qualité) |
+| PHPStan / analyse statique | ✅ Niveau **8** sur `lib/` — `composer phpstan` + job CI |
+
+### PHPStan (en bref)
+
+PHPStan lit le code **sans l’exécuter** et signale des incohérences de types.
+
+| Commande | Rôle |
+|----------|------|
+| `composer phpstan` | Analyse ; doit rester vert (0 erreur hors baseline) |
+| `composer phpstan:baseline` | Régénère la liste des dettes déjà connues (`phpstan-baseline.neon`) |
+
+**État actuel :** niveau **8** (cible 5–8 atteinte), baseline ~149 alertes (surtout formes de tableaux / `return.type`).  
+**Suite prévue :** réduire la baseline en typant progressivement les `array` ; éventuellement étendre à `www/`.
 
 ---
 
@@ -504,3 +516,5 @@ Les formats (durée, support, styles…) passent par [`FilmPresentation`](lib/Fi
 - [x] **Dette** — Helpers `FilmRepositoryLegacy` → `FilmPresentation` (moteur Legacy encore en repli)
 - [ ] **Dette** — Suppression complète de `FilmRepositoryLegacy` (après confirmation bases catalogue)
 - [x] **Dette** — `View.php` : URLs BD / magazine / jeu extraites (`BdUrls`, `MagazineUrls`, `GameUrls`, `CatalogPageUrls`) ; render + URLs films encore dans `View`
+- [x] **Qualité** — PHPStan niveau 8 sur `lib/` + baseline + job CI (`composer phpstan`)
+- [ ] **Qualité** — Réduction progressive de la baseline PHPStan (typage des `array`)

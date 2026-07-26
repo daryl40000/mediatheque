@@ -67,7 +67,8 @@ final class GameCatalogEnrichment
         ];
 
         $pendingSql = $force ? '1 = 1' : self::enrichmentPendingSql('o', 'oj');
-        $igdbCols = GameRepository::hasIgdbColumns() ? ', oj.igdb_id, oj.igdb_enriched_at' : '';
+        // hasIgdbColumns() déjà vrai ici (sinon return [] plus haut).
+        $igdbCols = ', oj.igdb_id, oj.igdb_enriched_at';
 
         $stmt = $this->db->prepare(
             'SELECT DISTINCT o.id AS oeuvre_id, o.titre, o.titre_original, o.annee, o.poster_url, o.synopsis,'

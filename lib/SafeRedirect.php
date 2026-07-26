@@ -10,7 +10,7 @@ namespace Moncine;
 final class SafeRedirect
 {
     /**
-     * @return chemin interne sûr (ex. /films.php) ; sinon accueil.
+     * @return string Chemin interne sûr (ex. /films.php) ; sinon accueil.
      * Rejette https://… et //evil.com (détournement après connexion).
      */
     public static function path(string $raw): string

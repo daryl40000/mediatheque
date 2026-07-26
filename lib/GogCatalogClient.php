@@ -27,7 +27,7 @@ final class GogCatalogClient
         }
 
         if (preg_match('~gog\.com/(?:[a-z]{2}/)?game/([^/?#]+)~i', $url, $matches) === 1) {
-            return trim((string) ($matches[1] ?? ''));
+            return trim((string) $matches[1]);
         }
 
         return '';

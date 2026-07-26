@@ -283,8 +283,6 @@ final class GameEnricher
 
         $title = GameTitle::lookupTitle($game);
         if ($title === '') {
-            $this->igdb->getLastError();
-
             return null;
         }
 

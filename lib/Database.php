@@ -19,12 +19,15 @@ final class Database
 
     public static function getInstance(): PDO
     {
-        if (self::$pdo === null) {
-            self::$pdo = self::connect();
-            self::migrate();
+        if (self::$pdo instanceof PDO) {
+            return self::$pdo;
         }
 
-        return self::$pdo;
+        $pdo = self::connect();
+        self::$pdo = $pdo;
+        self::migrate($pdo);
+
+        return $pdo;
     }
 
     /**
@@ -70,9 +73,9 @@ final class Database
     /**
      * Met le schéma à jour automatiquement (install locale ou upgrade paquet YunoHost).
      */
-    private static function migrate(): void
+    private static function migrate(PDO $pdo): void
     {
-        $migrator = new SchemaMigrator(self::$pdo);
+        $migrator = new SchemaMigrator($pdo);
 
         // Première installation : toutes les tables depuis sql/schema.sql.
         if (!$migrator->tableExists('oeuvres')) {
@@ -81,11 +84,11 @@ final class Database
 
         // Fichiers numérotés dans sql/migrations/ (001, 002, …) non encore appliqués.
         $migrator->runPendingMigrations();
-        FoyerMigration::runIfNeeded(self::$pdo);
-        SocialMigration::runIfNeeded(self::$pdo);
+        FoyerMigration::runIfNeeded($pdo);
+        SocialMigration::runIfNeeded($pdo);
         $migrator->setMetadata(SchemaMigrator::META_PACKAGE_EDITION, SchemaMigrator::EDITION_YUNOHOST);
 
         // Correctif ponctuel si une ancienne base avait une mauvaise clé sur historique.
-        HistoriqueSchema::repairForeignKeyIfNeeded(self::$pdo);
+        HistoriqueSchema::repairForeignKeyIfNeeded($pdo);
     }
 }

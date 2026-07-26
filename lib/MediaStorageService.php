@@ -60,6 +60,9 @@ final class MediaStorageService
         ];
     }
 
+    /**
+     * @return resource|null
+     */
     public function openReadStream(string $relativePath)
     {
         return $this->storage->readStream($relativePath);

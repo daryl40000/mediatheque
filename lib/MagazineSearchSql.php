@@ -102,7 +102,7 @@ final class MagazineSearchSql {
     /**
      * Filtre séries : titre, contenu des numéros ou sujets associés (bibliothèque).
      *
-     * @param array<string, int|string> $params
+     * @param array<string, mixed> $params
      */
     public function seriesGlobalSearchFilterSql(
         string $searchQuery,
@@ -118,7 +118,8 @@ final class MagazineSearchSql {
         if ($issueSearchSql !== '') {
             [$librarySql, $libraryParams] = $this->libraryQuery->libraryStatutFilter($statut, $userId, $foyerId);
             $librarySqlInSub = str_replace('b.', 'b_gs.', $librarySql);
-            $params = array_merge($params, $libraryParams, $issueSearchParams);
+            self::mergeNamedParams($params, $libraryParams);
+            self::mergeNamedParams($params, $issueSearchParams);
             $params['domain_gs'] = MediaDomain::MAGAZINE;
             $searchParts[] = 's.id IN (
                 SELECT DISTINCT om_gs.series_id
@@ -134,7 +135,8 @@ final class MagazineSearchSql {
             if ($subjectSql !== '') {
                 [$librarySql, $libraryParams] = $this->libraryQuery->libraryStatutFilter($statut, $userId, $foyerId);
                 $librarySqlInSub = str_replace('b.', 'b_sub.', $librarySql);
-                $params = array_merge($params, $libraryParams, $subjectParams);
+                self::mergeNamedParams($params, $libraryParams);
+                self::mergeNamedParams($params, $subjectParams);
                 $params['domain_sub'] = MediaDomain::MAGAZINE;
                 $searchParts[] = 's.id IN (
                     SELECT DISTINCT om_sub.series_id
@@ -149,6 +151,19 @@ final class MagazineSearchSql {
         }
 
         return '(' . implode(' OR ', $searchParts) . ')';
+    }
+
+    /**
+     * Fusionne des paramètres nommés sans réassigner &$params (exigence PHPStan by-ref).
+     *
+     * @param array<string, mixed> $target
+     * @param array<string, mixed> $extra
+     */
+    private static function mergeNamedParams(array &$target, array $extra): void
+    {
+        foreach ($extra as $key => $value) {
+            $target[$key] = $value;
+        }
     }
 
     /**

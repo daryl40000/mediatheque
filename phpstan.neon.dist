@@ -1,0 +1,43 @@
+# Analyse statique PHPStan — niveau 8 (cible roadmap : 5–8 ✅).
+#
+# Lancer :
+#   composer phpstan
+#   ./vendor/bin/phpstan analyse -c phpstan.neon.dist
+#
+# Périmètre : lib/ (cœur métier). www/ et templates/ hors scope pour l’instant
+# (scripts procéduraux + HTML mélangés — à étendre plus tard).
+#
+# Baseline : phpstan-baseline.neon fige la dette déjà connue. La CI échoue
+# seulement sur les *nouvelles* erreurs. Régénérer depuis zéro :
+#   printf '%s\n' 'parameters:' '	ignoreErrors: []' > phpstan-baseline.neon
+#   composer phpstan:baseline
+#
+# Suite : réduire la baseline (typage des `array`) ; éventuellement analyser www/.
+
+includes:
+    - phpstan-baseline.neon
+
+parameters:
+    level: 8
+    paths:
+        - lib
+    excludePaths:
+        - lib/cli
+        - lib/bootstrap.php
+        - lib/config.php
+        - lib/mbstring_polyfill.php
+    # Charge les constantes MONCINE_* sans Auth / session web.
+    bootstrapFiles:
+        - lib/config.php
+    treatPhpDocTypesAsCertain: false
+    reportUnmatchedIgnoredErrors: true
+    # Constantes dont la valeur dépend de l’environnement (pas figée pour l’analyse).
+    dynamicConstantNames:
+        - MONCINE_TRUST_PROXY
+    ignoreErrors:
+        -
+            identifier: missingType.iterableValue
+        # Database force PDO::ERRMODE_EXCEPTION : query()/prepare() lèvent une
+        # exception plutôt que de renvoyer false. Le stub PDO de PHPStan l’ignore.
+        -
+            message: '#Cannot call method \w+\(\) on PDOStatement\|false#'

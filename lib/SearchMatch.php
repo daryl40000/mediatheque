@@ -19,7 +19,7 @@ final class SearchMatch
     /** Enregistre fold_search() pour les requêtes SQL (insensible accents / casse). */
     public static function registerSqlFunction(PDO $pdo): void
     {
-        if (self::$sqlRegistered || !method_exists($pdo, 'sqliteCreateFunction')) {
+        if (self::$sqlRegistered) {
             return;
         }
 

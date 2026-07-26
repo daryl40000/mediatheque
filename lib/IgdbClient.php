@@ -315,11 +315,12 @@ final class IgdbClient
             return $id > 0 ? $id : null;
         }
 
-        if (preg_match('#igdb\.com/games/[^/?#]*-(\d+)#i', $input, $m)) {
+        // Délimiteur ~ : un # dans [^/?#] cassait le motif (délimiteur #).
+        if (preg_match('~igdb\.com/games/[^/?#]*-(\d+)~i', $input, $m)) {
             return (int) $m[1];
         }
 
-        if (preg_match('#/games/(\d+)#', $input, $m)) {
+        if (preg_match('~/games/(\d+)~', $input, $m)) {
             return (int) $m[1];
         }
 

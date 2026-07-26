@@ -135,7 +135,7 @@ final class MagazinePeriodStats
 
         rsort($years, SORT_NUMERIC);
 
-        return array_values($years);
+        return $years;
     }
 
     /**

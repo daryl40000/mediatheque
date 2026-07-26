@@ -335,7 +335,7 @@ final class LibraryBulkImporter
             // Collection prime sur envies si les deux existent.
             if (
                 isset($map[$oeuvreId])
-                && ($map[$oeuvreId]['statut'] ?? '') === LibraryStatut::COLLECTION
+                && $map[$oeuvreId]['statut'] === LibraryStatut::COLLECTION
                 && $statut !== LibraryStatut::COLLECTION
             ) {
                 continue;

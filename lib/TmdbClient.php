@@ -32,6 +32,7 @@ final class TmdbClient
     /**
      * Charge un film par son identifiant TMDB (correction manuelle).
      *
+     * @phpstan-impure
      * @return array{
      *   tmdb_id: int,
      *   overview: string,
@@ -78,6 +79,7 @@ final class TmdbClient
     /**
      * Charge une série TV par identifiant TMDB (correction manuelle).
      *
+     * @phpstan-impure
      * @return array<string, mixed>|null
      */
     public function getTvById(int $tmdbId): ?array
@@ -192,6 +194,7 @@ final class TmdbClient
     }
 
     /**
+     * @phpstan-impure
      * @return array{overview: string, poster_url: string, runtime: int}|null
      */
     public function searchMovie(string $title): ?array
@@ -223,6 +226,7 @@ final class TmdbClient
     /**
      * Recherche une série TV par titre.
      *
+     * @phpstan-impure
      * @return array<string, mixed>|null
      */
     public function searchTv(string $title): ?array
@@ -254,6 +258,7 @@ final class TmdbClient
     /**
      * Recherche combinée film + TV (documentaires, émissions, séries).
      *
+     * @phpstan-impure
      * @return array<string, mixed>|null
      */
     public function searchByTitle(string $title): ?array
@@ -308,6 +313,7 @@ final class TmdbClient
     /**
      * Recherche globale TMDB (films + émissions / séries TV).
      *
+     * @phpstan-impure
      * @return array<string, mixed>|null
      */
     private function searchMultiBest(string $title): ?array
@@ -440,18 +446,7 @@ final class TmdbClient
 
     /**
      * @param array<string, mixed> $item
-     * @return array{
-     *   tmdb_id: int,
-     *   overview: string,
-     *   poster_url: string,
-     *   runtime: int,
-     *   annee: int,
-     *   imdb_id: string,
-     *   director: string,
-     *   acteur_1: string,
-     *   acteur_2: string,
-     *   acteur_3: string
-     * }
+     * @return array<string, mixed>
      */
     private function parseResult(array $item, string $type): array
     {

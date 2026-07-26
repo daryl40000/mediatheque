@@ -37,6 +37,11 @@ final class InscriptionRequestRepository
         return $stmt !== false && $stmt->fetchColumn() !== false;
     }
 
+    /**
+     * Une demande d’inscription est déjà en cours pour cet e-mail.
+     *
+     * @phpstan-impure Lit la base (peut changer entre deux appels — course à l’inscription).
+     */
     public function hasActiveRequestForEmail(string $email): bool
     {
         $email = $this->normalizeEmail($email);

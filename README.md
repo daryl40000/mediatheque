@@ -3,7 +3,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 [![Tests](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml/badge.svg)](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml)
 
-**Version : 0.7.42**
+**Version : 0.7.43**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -73,6 +73,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.7.43** | Qualité : PHPStan niveau 8 + correctifs (IGDB URL, wishlist groupe) |
 | **0.7.42** | Jeux : multi-PDF (manuel/soluce) + aides en bulles « i » |
 | **0.7.41** | Magazines : chemins PDF uniques (HS + ID) pour éviter les collisions |
 | **0.7.40** | Magazines : badges HS, papier et CD (jeux offerts) sur les tuiles |
@@ -371,12 +372,19 @@ composer test
 ./vendor/bin/phpunit
 ```
 
+Analyse statique (types, incohérences) :
+
+```bash
+composer phpstan
+```
+
 ### Intégration continue (CI)
 
-À chaque **push** ou **pull request** sur `main`, GitHub Actions lance automatiquement PHPUnit :
+À chaque **push** ou **pull request** sur `main`, GitHub Actions lance automatiquement PHPUnit et PHPStan :
 
 - **Unit** (PHP 8.2 et 8.3) — tests rapides, isolés
 - **Integration** (PHP 8.2 et 8.3) — tests avec base SQLite temporaire
+- **PHPStan** (PHP 8.3) — analyse statique niveau 8 sur `lib/`
 
 Workflow : [`.github/workflows/tests.yml`](.github/workflows/tests.yml)  
 Badge : statut visible en haut de ce README et dans l’onglet **Actions** du dépôt.
@@ -385,6 +393,7 @@ En local, avant d’ouvrir une PR :
 
 ```bash
 composer test
+composer phpstan
 # ou seulement les unitaires :
 ./vendor/bin/phpunit --testsuite unit
 ```

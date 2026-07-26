@@ -23,8 +23,6 @@ final class MagazineRepository
 
     private ?MagazineLibraryQuery $libraryQueryCache = null;
 
-    private ?MagazineCatalogWriter $catalogWriterCache = null;
-
     private ?MagazineCatalogValidator $catalogValidatorCache = null;
 
     private ?MagazineLibraryAttach $libraryAttachCache = null;
@@ -45,11 +43,6 @@ final class MagazineRepository
     private function libraryQuery(): MagazineLibraryQuery
     {
         return $this->libraryQueryCache ??= new MagazineLibraryQuery($this->db);
-    }
-
-    private function catalogWriter(): MagazineCatalogWriter
-    {
-        return $this->catalogWriterCache ??= new MagazineCatalogWriter();
     }
 
     private function catalogValidator(): MagazineCatalogValidator
@@ -75,7 +68,6 @@ final class MagazineRepository
     {
         return $this->catalogCreatorCache ??= new MagazineCatalogCreator(
             $this->db,
-            $this->catalogWriter(),
             $this->catalogValidator(),
             $this->libraryQuery(),
             $this->libraryAttach(),

@@ -334,7 +334,8 @@ final class HistoriqueRepository
     }
 
     /** @deprecated Notes foyer supprimées */
-    public function getFoyerAverageNote(int $filmId): ?float
+    /** @deprecated Notes foyer supprimées — toujours null. */
+    public function getFoyerAverageNote(int $filmId): null
     {
         return null;
     }

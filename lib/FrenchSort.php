@@ -24,7 +24,7 @@ final class FrenchSort
 
     public static function registerCollation(PDO $pdo): void
     {
-        if (self::$registered || !method_exists($pdo, 'sqliteCreateCollation')) {
+        if (self::$registered) {
             return;
         }
 

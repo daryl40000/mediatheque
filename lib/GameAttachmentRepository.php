@@ -212,7 +212,7 @@ final class GameAttachmentRepository
         $row['id'] = (int) ($row['id'] ?? 0);
         $row['stored_object_id'] = (int) ($row['stored_object_id'] ?? 0);
         $row['size_bytes'] = (int) ($row['size_bytes'] ?? 0);
-        $row['size_label'] = UploadLimits::formatBytesLabel((int) ($row['size_bytes'] ?? 0));
+        $row['size_label'] = UploadLimits::formatBytesLabel($row['size_bytes']);
         $row['display_label'] = trim((string) ($row['label'] ?? '')) !== ''
             ? trim((string) $row['label'])
             : (string) ($row['original_filename'] ?? 'Fichier');
@@ -264,8 +264,8 @@ final class GameAttachmentRepository
 
         return array_values(array_filter(
             $uploads,
-            static fn (array $upload): bool => (int) ($upload['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK
-                && trim((string) ($upload['tmp_name'] ?? '')) !== ''
+            static fn (array $upload): bool => (int) $upload['error'] === UPLOAD_ERR_OK
+                && trim((string) $upload['tmp_name']) !== ''
         ));
     }
 

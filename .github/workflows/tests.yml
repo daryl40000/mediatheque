@@ -103,3 +103,26 @@ jobs:
           name: coverage-baseline
           path: coverage-baseline.txt
           retention-days: 30
+
+  phpstan:
+    name: PHPStan (level 8)
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v5
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: mbstring, pdo_sqlite, sqlite3, dom, xml, ctype, tokenizer
+          coverage: none
+          tools: composer:v2
+          ini-values: memory_limit=512M
+      - uses: actions/cache@v5
+        with:
+          path: vendor
+          key: composer-${{ runner.os }}-php8.3-${{ hashFiles('composer.lock') }}
+          restore-keys: |
+            composer-${{ runner.os }}-php8.3-
+      - run: composer install --no-interaction --prefer-dist --no-progress
+      - name: PHPStan analyse
+        run: composer phpstan

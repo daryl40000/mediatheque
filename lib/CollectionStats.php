@@ -214,12 +214,11 @@ final class CollectionStats
 
     /**
      * @return array{
-     *   average_all: ?float,
-     *   average_per_film: ?float,
      *   count: int,
      *   viewings_without_note: int,
      *   distribution: array<int, int>,
-     *   distribution_max: int
+     *   distribution_max: int,
+     *   adore_count: int
      * }
      */
     private function noteStatistics(): array
@@ -568,12 +567,6 @@ final class CollectionStats
         return CatalogSchema::hasMediaDomainColumn()
             ? ' AND o.media_domain = :film_domain'
             : '';
-    }
-
-    /** Jointure historique → bibliothèque (multi-comptes) ou chaîne vide (legacy). */
-    private function historyJoinSql(): string
-    {
-        return '';
     }
 
     private function historyUserWhereSql(): string

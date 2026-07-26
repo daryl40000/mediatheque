@@ -644,7 +644,6 @@ final class MagazineLibraryQuery {
             ],
         ];
     }
-    /** @param array<string, int|string> $params */
     public function libraryStatutFilter(?string $statut, int $userId, int $foyerId): array
     {
         $statut = $statut !== null ? LibraryStatut::normalize($statut) : null;

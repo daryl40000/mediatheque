@@ -58,7 +58,8 @@ final class EmailChangeService
 
         $repo = new EmailChangeRepository();
         $plain = $repo->create($userId, $oldEmail, $newEmail);
-        if (!is_string($plain)) {
+        // Succès = jeton hex 64 caractères ; sinon message d’erreur lisible.
+        if (!preg_match('/^[a-f0-9]{64}$/', $plain)) {
             return $plain;
         }
 

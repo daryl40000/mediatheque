@@ -161,37 +161,7 @@ final class ImportRunner
 
         $sheet = ['imported' => $imported, 'vues' => 0, 'errors' => $errors, 'has_id_column' => true];
 
-        return $this->withSheetMeta($sheet, ImportFormat::KIND_CATALOG, $replaceCatalog);
-    }
-
-    /**
-     * @param array<string, mixed> $parsed
-     * @return array<string, mixed>|null
-     */
-    private function resolveLibraryFilmAfterImport(array $parsed): ?array
-    {
-        $libraryId = (int) ($parsed['bibliotheque_id'] ?? 0);
-        if ($libraryId > 0) {
-            return $this->films->findById($libraryId);
-        }
-
-        $oeuvreId = (int) ($parsed['oeuvre_id'] ?? 0);
-        if ($oeuvreId > 0 && $this->films->usesCatalogModel()) {
-            $repo = new CatalogFilmRepository();
-            $library = (new BibliothequeRepository())->findByOeuvreId(
-                $oeuvreId,
-                UserContext::currentUserId(),
-                UserContext::currentFoyerId()
-            );
-            if ($library !== null) {
-                return $repo->findById((int) $library['id']);
-            }
-        }
-
-        return $this->films->findByTitreAndRealisateur(
-            (string) ($parsed['titre'] ?? ''),
-            (string) ($parsed['realisateur'] ?? '')
-        );
+        return $this->withSheetMeta($sheet, ImportFormat::KIND_CATALOG, $replaceCatalog        );
     }
 
     /**
@@ -318,9 +288,6 @@ final class ImportRunner
         $result['has_id_column'] = $analysis['has_id_column'];
         $result['catalog_cleared'] = (bool) ($result['catalog_cleared'] ?? false)
             || ($replaceCatalog && $analysis['format'] === ImportFormat::KIND_CATALOG);
-        if (!array_key_exists('has_id_column', $result)) {
-            $result['has_id_column'] = $analysis['has_id_column'];
-        }
 
         return $result;
     }
@@ -339,9 +306,7 @@ final class ImportRunner
         $result['format_label'] = ImportFormat::label($format);
         $result['catalog_cleared'] = $catalogCleared
             || ($replaceCatalog && $format === ImportFormat::KIND_CATALOG);
-        if (!array_key_exists('has_id_column', $result)) {
-            $result['has_id_column'] = false;
-        }
+        $result['has_id_column'] = (bool) ($result['has_id_column'] ?? false);
 
         return $result;
     }
