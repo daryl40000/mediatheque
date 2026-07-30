@@ -1,7 +1,7 @@
 # Import catalogue BD / Manga — CSV
 
 **Statut :** ✅ Spécification + implémentation v1 (`BdCatalogImporter`)  
-**Phase :** **M2** — clôture vers **0.8.0**  
+**Phase :** **M2** — ✅ clôturée en **0.8.0**  
 **Page admin :** `/import-catalogue-bd.php`  
 **Doc module :** [bd.md](bd.md)
 
@@ -91,4 +91,4 @@ Rapport : séries créées / réutilisées, tomes créés / ignorés, erreurs pa
 
 ## Critère de clôture M2
 
-Avec cet import, l’onglet BD est utilisable **sans saisie manuelle massive** → phase M2 prête pour **0.8.0**.
+Avec cet import, l’onglet BD est utilisable **sans saisie manuelle massive** → phase M2 **livrée** en **0.8.0**.

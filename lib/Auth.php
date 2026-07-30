@@ -31,6 +31,8 @@ final class Auth
         '/partage-bd.php',
         '/partage-serie-bd.php',
         '/partage-album-bd.php',
+        '/partage-magazines.php',
+        '/partage-serie-magazine.php',
         '/poster.php',
     ];
 

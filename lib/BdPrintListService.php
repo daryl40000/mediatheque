@@ -11,10 +11,110 @@ final class BdPrintListService
 {
     public const MAX_ROWS = 2000;
 
+    /** Limite pour la liste des séries (Mes BD / Mes envies). */
+    public const MAX_SERIES_ROWS = 500;
+
     public function __construct(
         private readonly BdRepository $bd = new BdRepository(),
         private readonly SeriesRepository $series = new SeriesRepository(),
+        private readonly FamilyGroupService $familyGroups = new FamilyGroupService(),
+        private readonly FoyerRepository $foyers = new FoyerRepository(),
     ) {
+    }
+
+    /**
+     * @return array<string, mixed> données pour View::render('imprimer-bd', …)
+     */
+    public function viewDataForCollectionPrint(array $queryParams): array
+    {
+        return $this->viewDataForSeriesListPrint($queryParams, LibraryStatut::COLLECTION);
+    }
+
+    /**
+     * @return array<string, mixed> données pour View::render('imprimer-envies-bd', …)
+     */
+    public function viewDataForWishlistPrint(array $queryParams): array
+    {
+        return $this->viewDataForSeriesListPrint($queryParams, LibraryStatut::WISHLIST);
+    }
+
+    /**
+     * @param array<string, mixed> $queryParams
+     * @return array<string, mixed>
+     */
+    private function viewDataForSeriesListPrint(array $queryParams, string $statut): array
+    {
+        $query = trim((string) ($queryParams['q'] ?? ''));
+        $sortBy = (string) ($queryParams['sort'] ?? 'titre');
+        $sortDir = (string) ($queryParams['dir'] ?? 'asc');
+        $isWishlist = $statut === LibraryStatut::WISHLIST;
+
+        $rows = $this->bd->listSeriesInLibrary(
+            UserContext::currentUserId(),
+            UserContext::currentFoyerId(),
+            $statut,
+            $sortBy,
+            $sortDir,
+            $query
+        );
+        $total = count($rows);
+        $truncated = $total > self::MAX_SERIES_ROWS;
+        if ($truncated) {
+            $rows = array_slice($rows, 0, self::MAX_SERIES_ROWS);
+        }
+
+        $filterParts = [$isWishlist ? 'Mes envies' : 'Collection du foyer'];
+        if ($query !== '') {
+            $filterParts[] = 'recherche : « ' . $query . ' »';
+        }
+        $filterParts[] = $total . ' série' . ($total > 1 ? 's' : '');
+
+        return [
+            'layout' => 'print',
+            'pageTitle' => $isWishlist ? 'Mes envies BD — version imprimable' : 'Mes BD — version imprimable',
+            'seriesList' => $rows,
+            'printTruncated' => $truncated,
+            'printTotalRows' => $total,
+            'printRowLimit' => self::MAX_SERIES_ROWS,
+            'filterSummary' => implode(' · ', $filterParts),
+            'sortSummary' => self::seriesListSortSummary($sortBy, $sortDir),
+            'foyerLabel' => $isWishlist ? '' : $this->foyerLabelForCurrentUser(),
+            'isWishlist' => $isWishlist,
+            'countColumnLabel' => $isWishlist ? 'Tomes en envies' : 'Possédés / catalogue',
+            'backUrl' => $isWishlist
+                ? View::bdWishlistUrl($query, $sortBy, $sortDir)
+                : View::bdCollectionUrl($query, $sortBy, $sortDir),
+        ];
+    }
+
+    public function foyerLabelForCurrentUser(): string
+    {
+        $userId = UserContext::currentUserId();
+        $group = $this->familyGroups->findGroupForUser($userId);
+        if ($group !== null) {
+            return trim((string) ($group['nom'] ?? ''));
+        }
+
+        $foyerId = UserContext::currentFoyerId();
+        if ($foyerId <= 0) {
+            return '';
+        }
+
+        $foyer = $this->foyers->findById($foyerId);
+
+        return $foyer !== null ? trim((string) ($foyer['nom'] ?? '')) : '';
+    }
+
+    public static function seriesListSortSummary(string $sortBy, string $sortDir): string
+    {
+        $column = match ($sortBy) {
+            'editeur' => 'Éditeur',
+            'kind' => 'Type',
+            default => 'Titre',
+        };
+        $dir = strtolower($sortDir) === 'desc' ? 'décroissant' : 'croissant';
+
+        return $column . ' (' . $dir . ')';
     }
 
     /**

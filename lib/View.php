@@ -791,6 +791,27 @@ final class View
         return MagazineUrls::magazinesUrl($query, $sort, $dir);
     }
 
+    public static function magazinesWishlistUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string
+    {
+        return MagazineUrls::magazinesWishlistUrl($query, $sort, $dir);
+    }
+
+    public static function magazinesPrintUrl(
+        string $searchQuery = '',
+        string $sortBy = 'titre',
+        string $sortDir = 'asc'
+    ): string {
+        return MagazineUrls::magazinesPrintUrl($searchQuery, $sortBy, $sortDir);
+    }
+
+    public static function magazinesWishlistPrintUrl(
+        string $searchQuery = '',
+        string $sortBy = 'titre',
+        string $sortDir = 'asc'
+    ): string {
+        return MagazineUrls::magazinesWishlistPrintUrl($searchQuery, $sortBy, $sortDir);
+    }
+
     public static function magazineSeriesUrl(
         int $seriesId,
         string $sort = 'numero_ordre',
@@ -1032,6 +1053,22 @@ final class View
     public static function bdWishlistUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string
     {
         return BdUrls::bdWishlistUrl($query, $sort, $dir);
+    }
+
+    public static function bdPrintUrl(
+        string $searchQuery = '',
+        string $sortBy = 'titre',
+        string $sortDir = 'asc'
+    ): string {
+        return BdUrls::bdPrintUrl($searchQuery, $sortBy, $sortDir);
+    }
+
+    public static function bdWishlistPrintUrl(
+        string $searchQuery = '',
+        string $sortBy = 'titre',
+        string $sortDir = 'asc'
+    ): string {
+        return BdUrls::bdWishlistPrintUrl($searchQuery, $sortBy, $sortDir);
     }
 
     public static function bdSortUrl(

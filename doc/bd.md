@@ -71,10 +71,11 @@ Sur la fiche série (`/serie-bd.php`), filtre **Afficher : Tous / Possédés / N
 
 En-tête de série (collection) : **« X possédé(s) sur Y »** (tomes possédés / total catalogue). Les tomes catalogue manquants sont **rattachés automatiquement** comme non possédés à chaque visite (**0.7.16**).
 
-## Limites v0.8.x
+## Limites (après 0.8.0)
 
 - **Import CSV catalogue** : disponible pour les admins (`/import-catalogue-bd.php`, [import-bd.md](import-bd.md)).
 - Pas d’API externe d’enrichissement.
-- Profil public, partage visiteur et liste imprimable par série : disponibles (comme magazines / jeux).
+- Profil public, partage visiteur et listes imprimables (série + Mes BD) : disponibles.
 - **Couverture de série** : sans image dédiée, l’application affiche automatiquement la couverture du **tome 1** (hors-série exclus). Vous pouvez aussi téléverser une couverture propre à la série via **Modifier la série**.
 - **Maintenance catalogue** : les logos de série (`/posters/s{id}.jpg`) ne sont plus traités comme des affiches orphelines.
+- **Export CSV** : optionnel, pas encore livré.

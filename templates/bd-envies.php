@@ -10,6 +10,10 @@
     <div class="collection-page__head">
         <h1><?= Moncine\View::escape(Moncine\MediaContext::navLabels()['wishlist']) ?></h1>
         <div class="collection-page__head-actions">
+            <?php
+            $printUrl = Moncine\View::bdWishlistPrintUrl($query ?? '', $sortBy ?? 'titre', $sortDir ?? 'asc');
+            require MONCINE_ROOT . '/templates/_print_button.php';
+            ?>
             <a class="btn btn-secondary" href="/gerer-partages.php?domain=<?= Moncine\MediaDomain::BD ?>&scope=<?= Moncine\ShareLinkScope::WISHLIST ?>">
                 Partager
             </a>

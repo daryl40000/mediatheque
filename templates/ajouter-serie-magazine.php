@@ -8,14 +8,20 @@
 $moduleAvailable = $moduleAvailable ?? \Moncine\MagazineRepository::isAvailable();
 $canManageCatalog = $canManageCatalog ?? \Moncine\CatalogAdmin::canAccess();
 $catalogAddedMessage = $catalogAddedMessage ?? '';
+$statut = \Moncine\LibraryStatut::normalize($statut ?? \Moncine\LibraryStatut::COLLECTION);
+$isWishlist = $statut === \Moncine\LibraryStatut::WISHLIST;
+$backUrl = $isWishlist ? '/magazines-envies.php' : '/magazines.php';
+$backLabel = $isWishlist
+    ? Moncine\MediaContext::navLabels()['wishlist']
+    : Moncine\MediaContext::navLabels()['collection'];
 ?>
 <section>
-    <h1>Ajouter une série magazine</h1>
+    <h1><?= $isWishlist ? 'Ajouter une envie magazine' : 'Ajouter une série magazine' ?></h1>
     <p class="lead">
         Choisissez une revue déjà présente au <strong>catalogue partagé</strong>,
         ou créez une nouvelle série si elle n’existe pas encore.
     </p>
-    <p><a href="/magazines.php" class="btn btn-secondary btn-sm">← <?= Moncine\View::escape(Moncine\MediaContext::navLabels()['collection']) ?></a></p>
+    <p><a href="<?= Moncine\View::escape($backUrl) ?>" class="btn btn-secondary btn-sm">← <?= Moncine\View::escape($backLabel) ?></a></p>
 
     <?php if ($canManageCatalog): ?>
         <p class="hint">
@@ -43,6 +49,7 @@ $catalogAddedMessage = $catalogAddedMessage ?? '';
             <form method="post" action="/enregistrer-serie-magazine.php" class="import-form" id="magazine-series-catalog-form">
                 <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
                 <input type="hidden" name="action" value="from_catalog">
+                <input type="hidden" name="statut" value="<?= Moncine\View::escape($statut) ?>">
                 <input type="hidden" name="catalog_series_id" id="catalog_series_id" value="">
 
                 <label for="catalog_series_search">Rechercher au catalogue</label>
@@ -64,7 +71,7 @@ $catalogAddedMessage = $catalogAddedMessage ?? '';
                 <p class="hint catalog-title-autocomplete__hint" id="catalog_series_hint" hidden></p>
 
                 <button type="submit" class="btn btn-primary" id="catalog_series_submit" disabled>
-                    Ajouter à mes magazines
+                    <?= $isWishlist ? 'Ajouter à mes envies' : 'Ajouter à mes magazines' ?>
                 </button>
             </form>
         </div>
@@ -82,6 +89,7 @@ $catalogAddedMessage = $catalogAddedMessage ?? '';
             <form method="post" action="/enregistrer-serie-magazine.php" class="import-form" enctype="multipart/form-data">
                 <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
                 <input type="hidden" name="action" value="create">
+                <input type="hidden" name="statut" value="<?= Moncine\View::escape($statut) ?>">
 
                 <label for="titre">Titre de la série <span class="required">*</span></label>
                 <input type="text" name="titre" id="titre" required maxlength="200"

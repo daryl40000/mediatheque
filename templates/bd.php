@@ -7,19 +7,24 @@
 /** @var string $moduleError */
 ?>
 <section class="collection-page">
-    <header class="collection-page__header">
+    <div class="collection-page__head">
         <h1><?= Moncine\View::escape(Moncine\MediaContext::navLabels()['collection']) ?></h1>
-        <p class="lead">
-            Vos bandes dessinées et mangas sont regroupées par <strong>série</strong>
-            (Astérix, One Piece…). Créez d’abord une série, puis ajoutez les tomes.
-        </p>
-        <div class="collection-page__actions">
+        <div class="collection-page__head-actions">
+            <?php
+            $printUrl = Moncine\View::bdPrintUrl($query ?? '', $sortBy ?? 'titre', $sortDir ?? 'asc');
+            require MONCINE_ROOT . '/templates/_print_button.php';
+            ?>
             <a class="btn btn-secondary" href="/gerer-partages.php?domain=<?= Moncine\MediaDomain::BD ?>&scope=<?= Moncine\ShareLinkScope::COLLECTION ?>">
                 Partager
             </a>
-            <a href="/ajouter-serie-bd.php" class="btn btn-accent">Ajouter une série</a>
+            <a href="/ajouter-serie-bd.php" class="btn btn-primary">Ajouter une série</a>
         </div>
-    </header>
+    </div>
+
+    <p class="lead">
+        Vos bandes dessinées et mangas sont regroupées par <strong>série</strong>
+        (Astérix, One Piece…). Créez d’abord une série, puis ajoutez les tomes.
+    </p>
 
     <nav class="ui-pill-nav" aria-label="Navigation BD">
         <a href="/bd-envies.php" class="ui-pill"><?= Moncine\View::escape(Moncine\MediaContext::navLabels()['wishlist']) ?></a>

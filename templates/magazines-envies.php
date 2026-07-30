@@ -1,15 +1,31 @@
 <?php
 /** @var list<array<string, mixed>> $seriesList */
 /** @var string $query */
+/** @var string $sortBy */
+/** @var string $sortDir */
 /** @var int $totalCount */
 /** @var string $moduleError */
 ?>
-<section class="collection-page">
-    <header class="collection-page__header">
+<section class="collection-page wishlist-page">
+    <div class="collection-page__head">
         <h1><?= Moncine\View::escape(Moncine\MediaContext::navLabels()['wishlist']) ?></h1>
-        <p class="lead">Numéros que vous souhaitez acquérir, regroupés par série.</p>
-        <p><a href="/magazines.php" class="btn btn-secondary btn-sm">← <?= Moncine\View::escape(Moncine\MediaContext::navLabels()['collection']) ?></a></p>
-    </header>
+        <div class="collection-page__head-actions">
+            <?php
+            $printUrl = Moncine\View::magazinesWishlistPrintUrl($query ?? '', $sortBy ?? 'titre', $sortDir ?? 'asc');
+            require MONCINE_ROOT . '/templates/_print_button.php';
+            ?>
+            <a class="btn btn-secondary" href="/gerer-partages.php?domain=<?= Moncine\MediaDomain::MAGAZINE ?>&scope=<?= Moncine\ShareLinkScope::WISHLIST ?>">
+                Partager
+            </a>
+            <a class="btn btn-primary" href="/ajouter-serie-magazine.php?statut=wishlist">Ajouter une envie (série)</a>
+        </div>
+    </div>
+
+    <p class="lead">Numéros que vous souhaitez acquérir, regroupés par série.</p>
+
+    <nav class="ui-pill-nav" aria-label="Navigation envies magazines">
+        <a href="/magazines.php" class="ui-pill">← <?= Moncine\View::escape(Moncine\MediaContext::navLabels()['collection']) ?></a>
+    </nav>
 
     <?php if ($moduleError !== ''): ?>
         <div class="alert alert-warning"><?= Moncine\View::escape($moduleError) ?></div>
@@ -28,9 +44,20 @@
         </div>
     <?php endif; ?>
 
+    <form method="get" action="/magazines-envies.php" class="collection-search import-form">
+        <label for="mag_w_q">Rechercher</label>
+        <div class="collection-search__row">
+            <input type="search" name="q" id="mag_w_q"
+                   value="<?= Moncine\View::escape($query) ?>"
+                   placeholder="Titre de série…">
+            <button type="submit" class="btn btn-secondary btn-sm">Rechercher</button>
+        </div>
+    </form>
+
     <?php if ($totalCount === 0): ?>
         <p class="hint">Aucune envie magazine pour l’instant.</p>
     <?php else: ?>
+        <p class="hint"><?= (int) $totalCount ?> série<?= $totalCount > 1 ? 's' : '' ?> en envies.</p>
         <ul class="magazine-series-list">
             <?php foreach ($seriesList as $series): ?>
                 <li>

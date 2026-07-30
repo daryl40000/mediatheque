@@ -20,6 +20,71 @@ final class MagazineUrls
         return $params === [] ? '/magazines.php' : '/magazines.php?' . http_build_query($params);
     }
 
+    public static function magazinesWishlistUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string
+    {
+        $params = [];
+        $query = trim($query);
+        if ($query !== '') {
+            $params['q'] = $query;
+        }
+        if ($sort !== 'titre') {
+            $params['sort'] = $sort;
+        }
+        if (strtolower($dir) === 'desc') {
+            $params['dir'] = 'desc';
+        }
+
+        return $params === []
+            ? '/magazines-envies.php'
+            : '/magazines-envies.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    /** Version imprimable de Mes magazines (liste des séries). */
+    public static function magazinesPrintUrl(
+        string $searchQuery = '',
+        string $sortBy = 'titre',
+        string $sortDir = 'asc'
+    ): string {
+        $params = [];
+        $searchQuery = trim($searchQuery);
+        if ($searchQuery !== '') {
+            $params['q'] = $searchQuery;
+        }
+        if ($sortBy !== '' && $sortBy !== 'titre') {
+            $params['sort'] = $sortBy;
+        }
+        if (strtolower($sortDir) === 'desc') {
+            $params['dir'] = 'desc';
+        }
+
+        return $params === []
+            ? '/imprimer-magazines.php'
+            : '/imprimer-magazines.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    /** Version imprimable des envies magazines. */
+    public static function magazinesWishlistPrintUrl(
+        string $searchQuery = '',
+        string $sortBy = 'titre',
+        string $sortDir = 'asc'
+    ): string {
+        $params = [];
+        $searchQuery = trim($searchQuery);
+        if ($searchQuery !== '') {
+            $params['q'] = $searchQuery;
+        }
+        if ($sortBy !== '' && $sortBy !== 'titre') {
+            $params['sort'] = $sortBy;
+        }
+        if (strtolower($sortDir) === 'desc') {
+            $params['dir'] = 'desc';
+        }
+
+        return $params === []
+            ? '/imprimer-envies-magazines.php'
+            : '/imprimer-envies-magazines.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+    }
+
     public static function magazineSeriesUrl(
         int $seriesId,
         string $sort = 'numero_ordre',

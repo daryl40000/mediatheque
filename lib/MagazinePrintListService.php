@@ -12,10 +12,111 @@ final class MagazinePrintListService
     /** Limite de lignes (séries très longues). */
     public const MAX_ROWS = 2000;
 
+    /** Limite pour la liste des séries (Mes magazines / Mes envies). */
+    public const MAX_SERIES_ROWS = 500;
+
     public function __construct(
         private readonly MagazineRepository $magazines = new MagazineRepository(),
         private readonly SeriesRepository $series = new SeriesRepository(),
+        private readonly FamilyGroupService $familyGroups = new FamilyGroupService(),
+        private readonly FoyerRepository $foyers = new FoyerRepository(),
     ) {
+    }
+
+    /**
+     * @return array<string, mixed> données pour View::render('imprimer-magazines', …)
+     */
+    public function viewDataForCollectionPrint(array $queryParams): array
+    {
+        return $this->viewDataForSeriesListPrint($queryParams, LibraryStatut::COLLECTION);
+    }
+
+    /**
+     * @return array<string, mixed> données pour View::render('imprimer-envies-magazines', …)
+     */
+    public function viewDataForWishlistPrint(array $queryParams): array
+    {
+        return $this->viewDataForSeriesListPrint($queryParams, LibraryStatut::WISHLIST);
+    }
+
+    /**
+     * @param array<string, mixed> $queryParams
+     * @return array<string, mixed>
+     */
+    private function viewDataForSeriesListPrint(array $queryParams, string $statut): array
+    {
+        $query = trim((string) ($queryParams['q'] ?? ''));
+        $sortBy = (string) ($queryParams['sort'] ?? 'titre');
+        $sortDir = (string) ($queryParams['dir'] ?? 'asc');
+        $isWishlist = $statut === LibraryStatut::WISHLIST;
+
+        $rows = $this->magazines->listSeriesInLibrary(
+            UserContext::currentUserId(),
+            UserContext::currentFoyerId(),
+            $statut,
+            $sortBy,
+            $sortDir,
+            $query
+        );
+        $total = count($rows);
+        $truncated = $total > self::MAX_SERIES_ROWS;
+        if ($truncated) {
+            $rows = array_slice($rows, 0, self::MAX_SERIES_ROWS);
+        }
+
+        $filterParts = [$isWishlist ? 'Mes envies' : 'Collection du foyer'];
+        if ($query !== '') {
+            $filterParts[] = 'recherche : « ' . $query . ' »';
+        }
+        $filterParts[] = $total . ' série' . ($total > 1 ? 's' : '');
+
+        return [
+            'layout' => 'print',
+            'pageTitle' => $isWishlist
+                ? 'Mes envies magazines — version imprimable'
+                : 'Mes magazines — version imprimable',
+            'seriesList' => $rows,
+            'printTruncated' => $truncated,
+            'printTotalRows' => $total,
+            'printRowLimit' => self::MAX_SERIES_ROWS,
+            'filterSummary' => implode(' · ', $filterParts),
+            'sortSummary' => self::seriesListSortSummary($sortBy, $sortDir),
+            'foyerLabel' => $isWishlist ? '' : $this->foyerLabelForCurrentUser(),
+            'isWishlist' => $isWishlist,
+            'countColumnLabel' => $isWishlist ? 'Numéros en envies' : 'Possédés / catalogue',
+            'backUrl' => $isWishlist
+                ? View::magazinesWishlistUrl($query, $sortBy, $sortDir)
+                : View::magazinesUrl($query, $sortBy, $sortDir),
+        ];
+    }
+
+    public function foyerLabelForCurrentUser(): string
+    {
+        $userId = UserContext::currentUserId();
+        $group = $this->familyGroups->findGroupForUser($userId);
+        if ($group !== null) {
+            return trim((string) ($group['nom'] ?? ''));
+        }
+
+        $foyerId = UserContext::currentFoyerId();
+        if ($foyerId <= 0) {
+            return '';
+        }
+
+        $foyer = $this->foyers->findById($foyerId);
+
+        return $foyer !== null ? trim((string) ($foyer['nom'] ?? '')) : '';
+    }
+
+    public static function seriesListSortSummary(string $sortBy, string $sortDir): string
+    {
+        $column = match ($sortBy) {
+            'editeur' => 'Éditeur',
+            default => 'Titre',
+        };
+        $dir = strtolower($sortDir) === 'desc' ? 'décroissant' : 'croissant';
+
+        return $column . ' (' . $dir . ')';
     }
 
     /**

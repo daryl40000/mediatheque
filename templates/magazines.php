@@ -16,20 +16,33 @@ $hasContentSearch = trim($query) !== '';
 $canManageCatalog = $canManageCatalog ?? false;
 ?>
 <section class="collection-page">
-    <header class="collection-page__header">
-    <h1><?= Moncine\View::escape(Moncine\MediaContext::navLabels()['collection']) ?></h1>
-        <p class="lead">
-            Vos revues et magazines sont regroupés par <strong>série</strong>
-            (PC Jeux, Joystick, Warhammer…). Cliquez sur une série pour voir les numéros.
-        </p>
-        <div class="collection-page__actions">
-            <a href="/ajouter-serie-magazine.php" class="btn btn-accent">Ajouter une série</a>
-            <a href="<?= Moncine\View::escape(Moncine\View::magazineSubjectSearchUrl()) ?>" class="btn btn-secondary">Recherche par sujet</a>
-            <?php if ($canManageCatalog): ?>
-                <a href="/import-catalogue-magazines.php" class="btn btn-secondary">Import catalogue (JSON)</a>
-            <?php endif; ?>
+    <div class="collection-page__head">
+        <h1><?= Moncine\View::escape(Moncine\MediaContext::navLabels()['collection']) ?></h1>
+        <div class="collection-page__head-actions">
+            <?php
+            $printUrl = Moncine\View::magazinesPrintUrl($query ?? '', $sortBy ?? 'titre', $sortDir ?? 'asc');
+            require MONCINE_ROOT . '/templates/_print_button.php';
+            ?>
+            <a class="btn btn-secondary" href="/gerer-partages.php?domain=<?= Moncine\MediaDomain::MAGAZINE ?>&scope=<?= Moncine\ShareLinkScope::COLLECTION ?>">
+                Partager
+            </a>
+            <a href="/ajouter-serie-magazine.php" class="btn btn-primary">Ajouter une série</a>
         </div>
-    </header>
+    </div>
+
+    <p class="lead">
+        Vos revues et magazines sont regroupés par <strong>série</strong>
+        (PC Jeux, Joystick, Warhammer…). Cliquez sur une série pour voir les numéros.
+    </p>
+
+    <nav class="ui-pill-nav" aria-label="Accès rapides magazines">
+        <a href="/magazines-envies.php" class="ui-pill"><?= Moncine\View::escape(Moncine\MediaContext::navLabels()['wishlist']) ?></a>
+        <a href="<?= Moncine\View::escape(Moncine\View::magazineSubjectSearchUrl()) ?>" class="ui-pill">Recherche par sujet</a>
+        <a href="/statistiques.php" class="ui-pill"><?= Moncine\View::escape(Moncine\MediaContext::navLabels()['stats']) ?></a>
+        <?php if ($canManageCatalog): ?>
+            <a href="/import-catalogue-magazines.php" class="ui-pill">Import catalogue (JSON)</a>
+        <?php endif; ?>
+    </nav>
 
     <?php if ($moduleError !== ''): ?>
         <div class="alert alert-warning"><?= Moncine\View::escape($moduleError) ?></div>

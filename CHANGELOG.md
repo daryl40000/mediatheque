@@ -9,6 +9,31 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.0] — 2026-07-30
+
+**Clôture M2 — BD / Manga utilisable en production**
+
+Validation terrain (collection réelle + import CSV) et alignement des listes collection avec Films / Jeux.
+
+### Ajouté
+
+- **Version imprimable** pour Mes BD / Mes envies BD et Mes magazines / Mes envies magazines (liste des séries).
+- **Partage visiteur magazines** : liens lecture seule (`/partage-magazines.php`, `/partage-serie-magazine.php`).
+- Boutons d’en-tête unifiés sur Mes BD et Mes magazines : **Version imprimable**, **Partager**, **Ajouter**.
+
+### Modifié
+
+- Mes magazines / Mes envies magazines : même disposition d’actions que Films / Jeux / BD.
+- Ajout d’une série magazine possible directement en **envies**.
+- Phase **M2 BD** : statut **livré** (onglet utilisable sans API externe).
+
+### Technique
+
+- `BdPrintListService` / `MagazinePrintListService` : listes de séries imprimables.
+- `ShareLinkMagazineRepository` ; option Magazines dans `/gerer-partages.php`.
+
+---
+
 ## [0.7.45] — 2026-07-26
 
 **Jeux : manuels / soluces au niveau catalogue (admin)**

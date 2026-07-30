@@ -27,11 +27,13 @@ final class ShareLinkScope
             self::WISHLIST => match ($domain) {
                 MediaDomain::JEU => 'Mes envies jeux',
                 MediaDomain::BD => 'Mes envies BD',
+                MediaDomain::MAGAZINE => 'Mes envies magazines',
                 default => 'Mes envies',
             },
             default => match ($domain) {
                 MediaDomain::JEU => 'Mes jeux',
                 MediaDomain::BD => 'Mes BD',
+                MediaDomain::MAGAZINE => 'Mes magazines',
                 default => 'Mes films',
             },
         };

@@ -133,6 +133,7 @@ final class ShareLinkService
         return match (MediaDomain::normalize($mediaDomain)) {
             MediaDomain::JEU => '/partage-jeux.php',
             MediaDomain::BD => '/partage-bd.php',
+            MediaDomain::MAGAZINE => '/partage-magazines.php',
             default => '/partage.php',
         };
     }
@@ -244,6 +245,13 @@ final class ShareLinkService
         $query = array_merge(['t' => $rawToken, 'series_id' => $seriesId], $listContext);
 
         return '/partage-serie-bd.php?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    public static function magazineSeriesUrl(string $rawToken, int $seriesId, array $listContext = []): string
+    {
+        $query = array_merge(['t' => $rawToken, 'series_id' => $seriesId], $listContext);
+
+        return '/partage-serie-magazine.php?' . http_build_query($query, '', '&', PHP_QUERY_RFC3986);
     }
 
     public static function bdAlbumUrl(string $rawToken, int $bibId, array $listContext = []): string

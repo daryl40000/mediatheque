@@ -4,7 +4,7 @@
 <section>
     <h1>Liens de partage</h1>
     <p class="hint">
-        Créez un lien lecture seule pour montrer vos films, jeux ou BD (collection du foyer) ou vos envies
+        Créez un lien lecture seule pour montrer vos films, jeux, BD ou magazines (collection du foyer) ou vos envies
         à quelqu’un sans compte Moncine. Vous pouvez révoquer un lien à tout moment.
     </p>
 
@@ -51,6 +51,10 @@
                 <option value="<?= Moncine\MediaDomain::BD ?>"
                     <?= $defaultDomain === Moncine\MediaDomain::BD ? ' selected' : '' ?>>
                     BD / Manga
+                </option>
+                <option value="<?= Moncine\MediaDomain::MAGAZINE ?>"
+                    <?= $defaultDomain === Moncine\MediaDomain::MAGAZINE ? ' selected' : '' ?>>
+                    Magazines
                 </option>
             </select>
 

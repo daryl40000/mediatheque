@@ -29,44 +29,49 @@ Csrf::rejectUnlessValid($_POST, '/ajouter-serie-magazine.php');
 
 $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
+$statut = LibraryStatut::normalize((string) ($_POST['statut'] ?? LibraryStatut::COLLECTION));
 $action = (string) ($_POST['action'] ?? 'create');
 
 if ($action === 'from_catalog') {
     $seriesId = (int) ($_POST['catalog_series_id'] ?? 0);
     if ($seriesId <= 0) {
-        $params = http_build_query(['error' => 'Choisissez une revue dans la liste du catalogue.']);
+        $params = http_build_query(['error' => 'Choisissez une revue dans la liste du catalogue.', 'statut' => $statut]);
         header('Location: /ajouter-serie-magazine.php?' . $params);
         exit;
     }
 
     $series = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE);
     if ($series === null) {
-        $params = http_build_query(['error' => 'Série catalogue introuvable.']);
+        $params = http_build_query(['error' => 'Série catalogue introuvable.', 'statut' => $statut]);
         header('Location: /ajouter-serie-magazine.php?' . $params);
         exit;
     }
 
     if (!MagazineRepository::isAvailable()) {
-        $params = http_build_query(['error' => 'Module magazines non disponible.']);
+        $params = http_build_query(['error' => 'Module magazines non disponible.', 'statut' => $statut]);
         header('Location: /ajouter-serie-magazine.php?' . $params);
         exit;
     }
 
     $register = (new MagazineRepository())->registerSeriesInLibrary(
         $seriesId,
-        LibraryStatut::COLLECTION,
+        $statut,
         $userId,
         $foyerId
     );
     if ($register !== true) {
-        $params = http_build_query(['error' => (string) $register]);
+        $params = http_build_query(['error' => (string) $register, 'statut' => $statut]);
         header('Location: /ajouter-serie-magazine.php?' . $params);
         exit;
     }
 
-    $attached = (new MagazineRepository())->attachCatalogIssuesToCollection($seriesId, $userId, $foyerId);
+    $attached = 0;
+    if ($statut === LibraryStatut::COLLECTION) {
+        $attached = (new MagazineRepository())->attachCatalogIssuesToCollection($seriesId, $userId, $foyerId);
+    }
 
-    $redirect = View::magazineSeriesUrl($seriesId) . '&added_series=1';
+    $redirect = View::magazineSeriesUrl($seriesId, 'numero_ordre', 'desc', ['statut' => $statut])
+        . '&added_series=1';
     if ($attached > 0) {
         $redirect .= '&linked_issues=' . $attached;
     }
@@ -89,14 +94,18 @@ $result = (new SeriesRepository())->create([
 ], MediaDomain::MAGAZINE);
 
 if (!is_int($result)) {
-    $params = http_build_query(['error' => (string) $result, 'titre' => (string) ($_POST['titre'] ?? '')]);
+    $params = http_build_query([
+        'error' => (string) $result,
+        'titre' => (string) ($_POST['titre'] ?? ''),
+        'statut' => $statut,
+    ]);
     header('Location: /ajouter-serie-magazine.php?' . $params);
     exit;
 }
 
 $magRepo = new MagazineRepository();
 if (MagazineRepository::isAvailable()) {
-    $magRepo->registerSeriesInLibrary($result, LibraryStatut::COLLECTION, $userId, $foyerId);
+    $magRepo->registerSeriesInLibrary($result, $statut, $userId, $foyerId);
 }
 
 if (
@@ -110,5 +119,5 @@ if (
     }
 }
 
-header('Location: ' . View::magazineSeriesUrl($result));
+header('Location: ' . View::magazineSeriesUrl($result, 'numero_ordre', 'desc', ['statut' => $statut]));
 exit;

@@ -49,6 +49,8 @@ final class MediaDomainGuards
         '/traiter-numero-magazine.php',
         '/traiter-serie-magazine.php',
         '/imprimer-serie-magazine.php',
+        '/imprimer-magazines.php',
+        '/imprimer-envies-magazines.php',
         '/magazines-recherche.php',
         '/magazine-sujet.php',
         '/rechercher-series-catalogue.php',
@@ -76,6 +78,8 @@ final class MediaDomainGuards
         '/promouvoir-bd-collection.php',
         '/traiter-tome-bd.php',
         '/imprimer-serie-bd.php',
+        '/imprimer-bd.php',
+        '/imprimer-envies-bd.php',
         '/utilisateur-serie-bd.php',
         '/utilisateur-album-bd.php',
     ];

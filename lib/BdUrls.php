@@ -37,6 +37,50 @@ final class BdUrls
         return $params === [] ? '/bd.php' : '/bd.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
     }
 
+    /** Version imprimable de Mes BD (liste des séries). */
+    public static function bdPrintUrl(
+        string $searchQuery = '',
+        string $sortBy = 'titre',
+        string $sortDir = 'asc'
+    ): string {
+        $params = [];
+        $searchQuery = trim($searchQuery);
+        if ($searchQuery !== '') {
+            $params['q'] = $searchQuery;
+        }
+        if ($sortBy !== '' && $sortBy !== 'titre') {
+            $params['sort'] = $sortBy;
+        }
+        if (strtolower($sortDir) === 'desc') {
+            $params['dir'] = 'desc';
+        }
+
+        return $params === [] ? '/imprimer-bd.php' : '/imprimer-bd.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+    }
+
+    /** Version imprimable des envies BD. */
+    public static function bdWishlistPrintUrl(
+        string $searchQuery = '',
+        string $sortBy = 'titre',
+        string $sortDir = 'asc'
+    ): string {
+        $params = [];
+        $searchQuery = trim($searchQuery);
+        if ($searchQuery !== '') {
+            $params['q'] = $searchQuery;
+        }
+        if ($sortBy !== '' && $sortBy !== 'titre') {
+            $params['sort'] = $sortBy;
+        }
+        if (strtolower($sortDir) === 'desc') {
+            $params['dir'] = 'desc';
+        }
+
+        return $params === []
+            ? '/imprimer-envies-bd.php'
+            : '/imprimer-envies-bd.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+    }
+
     public static function bdWishlistUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string
     {
         $params = [];
