@@ -16,17 +16,17 @@ final class MediaDomainTest extends TestCase
         $this->assertSame(MediaDomain::FILM, MediaDomain::normalize('unknown'));
     }
 
-    public function testCollectionImplementedForFilmMagazineAndGame(): void
+    public function testCollectionImplementedForActiveDomains(): void
     {
         $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::FILM));
         $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::MAGAZINE));
         $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::JEU));
         $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::BD));
-        $this->assertFalse(MediaDomain::isCollectionImplemented(MediaDomain::LIVRE));
+        $this->assertTrue(MediaDomain::isCollectionImplemented(MediaDomain::LIVRE));
         $this->assertFalse(MediaDomain::isCollectionImplemented(MediaDomain::MUSIQUE));
     }
 
-    public function testPlaceholderCollectionPaths(): void
+    public function testLivreAndMusiqueCollectionPaths(): void
     {
         $this->assertSame('/livres.php', MediaDomain::collectionPath(MediaDomain::LIVRE));
         $this->assertSame('/musique.php', MediaDomain::collectionPath(MediaDomain::MUSIQUE));
@@ -45,11 +45,17 @@ final class MediaDomainTest extends TestCase
     public function testTabSwitchFromPlaceholderToImplementedCollection(): void
     {
         $this->assertTrue(MediaDomainGuards::isPlaceholderCollectionPath('/musique.php'));
-        $this->assertTrue(MediaDomainGuards::isPlaceholderCollectionPath('/livres-envies.php'));
+        $this->assertTrue(MediaDomainGuards::isPlaceholderCollectionPath('/musique-envies.php'));
+        $this->assertFalse(MediaDomainGuards::isPlaceholderCollectionPath('/livres.php'));
+        $this->assertFalse(MediaDomainGuards::isPlaceholderCollectionPath('/livres-envies.php'));
 
         $this->assertSame(
             '/jeux.php',
             MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::JEU, '/musique.php')
+        );
+        $this->assertSame(
+            '/livres.php',
+            MediaDomainGuards::redirectTargetForTabSwitch(MediaDomain::LIVRE, '/musique.php')
         );
         $this->assertSame(
             '/bd.php',
