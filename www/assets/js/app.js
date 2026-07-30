@@ -45,6 +45,7 @@ document.addEventListener('DOMContentLoaded', () => {
     runInit('magazineSeriesCatalogAutocomplete', initMagazineSeriesCatalogAutocomplete);
     runInit('magazineIssueCatalogAutocomplete', initMagazineIssueCatalogAutocomplete);
     runInit('tagsBadgeFields', initTagsBadgeFields);
+    runInit('livreGameLinksFields', initLivreGameLinksFields);
     runInit('gamePlatformFields', initGamePlatformFields);
     runInit('gameEditionFields', initGameEditionFields);
     runInit('gameRelationFields', initGameRelationFields);
@@ -56,6 +57,7 @@ document.addEventListener('DOMContentLoaded', () => {
     runInit('catalogOeuvreMerge', initCatalogOeuvreMerge);
     runInit('gameLibraryEditForms', initGameLibraryEditForms);
     runInit('gameDetailQuickActions', initGameDetailQuickActions);
+    runInit('livreCoverLightbox', initLivreCoverLightbox);
     runInit('globalSearch', initGlobalSearch);
 
     const params = new URLSearchParams(window.location.search);
@@ -1500,7 +1502,9 @@ function initTagsBadgeFields() {
             const badge = document.createElement('span');
             badge.className = root.classList.contains('game-genre-tags-field')
                 ? 'magazine-tag magazine-tag--game-genre'
-                : 'magazine-tag magazine-tag--series';
+                : (root.classList.contains('magazine-series-categories-field')
+                    ? 'magazine-tag magazine-tag--series-category'
+                    : 'magazine-tag magazine-tag--series');
 
             const text = document.createElement('span');
             text.className = 'magazine-series-tags-field__text';
@@ -1579,6 +1583,238 @@ function initTagsBadgeFields() {
 }
 
 /**
+ * Agrandit la 4e de couverture dans une surimpression (lightbox).
+ * Fermeture : bouton ×, clic hors image, ou touche Échap.
+ */
+function initLivreCoverLightbox() {
+    const triggers = [...document.querySelectorAll('[data-livre-cover-lightbox]')];
+    if (triggers.length === 0) {
+        return;
+    }
+
+    let overlay = document.getElementById('livre-cover-lightbox');
+    if (!overlay) {
+        overlay = document.createElement('div');
+        overlay.id = 'livre-cover-lightbox';
+        overlay.className = 'livre-cover-lightbox';
+        overlay.hidden = true;
+        overlay.setAttribute('role', 'dialog');
+        overlay.setAttribute('aria-modal', 'true');
+        overlay.setAttribute('aria-label', 'Aperçu de la couverture');
+        overlay.innerHTML = `
+            <div class="livre-cover-lightbox__backdrop" data-livre-cover-close tabindex="-1"></div>
+            <div class="livre-cover-lightbox__panel">
+                <button type="button"
+                        class="livre-cover-lightbox__close"
+                        data-livre-cover-close
+                        aria-label="Fermer l’aperçu">×</button>
+                <img class="livre-cover-lightbox__img" src="" alt="">
+            </div>
+        `;
+        document.body.appendChild(overlay);
+    }
+
+    const img = overlay.querySelector('.livre-cover-lightbox__img');
+    const closeButtons = [...overlay.querySelectorAll('[data-livre-cover-close]')];
+    let lastFocus = null;
+
+    const closeLightbox = () => {
+        if (overlay.hidden) {
+            return;
+        }
+        overlay.hidden = true;
+        document.body.classList.remove('livre-cover-lightbox-open');
+        if (lastFocus && typeof lastFocus.focus === 'function') {
+            lastFocus.focus();
+        }
+        lastFocus = null;
+    };
+
+    const openLightbox = (src, alt, trigger) => {
+        if (!src || !img) {
+            return;
+        }
+        lastFocus = trigger || document.activeElement;
+        img.src = src;
+        img.alt = alt || '4e de couverture';
+        overlay.hidden = false;
+        document.body.classList.add('livre-cover-lightbox-open');
+        const closeBtn = overlay.querySelector('.livre-cover-lightbox__close');
+        closeBtn?.focus();
+    };
+
+    triggers.forEach((trigger) => {
+        trigger.addEventListener('click', () => {
+            openLightbox(
+                trigger.getAttribute('data-cover-src') || '',
+                trigger.getAttribute('data-cover-alt') || '',
+                trigger
+            );
+        });
+    });
+
+    closeButtons.forEach((btn) => {
+        btn.addEventListener('click', closeLightbox);
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !overlay.hidden) {
+            event.preventDefault();
+            closeLightbox();
+        }
+    });
+}
+
+/**
+ * Formulaire livre : affiche les liens jeux si catégorie « Jeux vidéo »,
+ * et permet d’ajouter plusieurs jeux du catalogue.
+ */
+function initLivreGameLinksFields() {
+    document.querySelectorAll('[data-livre-form]').forEach((form) => {
+        const linksRoot = form.querySelector('[data-livre-game-links]');
+        const categoriesRoot = form.querySelector('[data-livre-categories-field]');
+        if (!linksRoot) {
+            return;
+        }
+        if (linksRoot.dataset.livreGameLinksReady === '1') {
+            return;
+        }
+        linksRoot.dataset.livreGameLinksReady = '1';
+
+        const jeuxVideoKey = (linksRoot.getAttribute('data-jeux-video-key') || 'jeux vidéo').toLowerCase();
+        const list = linksRoot.querySelector('[data-livre-game-links-list]');
+        const searchRoot = linksRoot.querySelector('[data-livre-game-link-search]');
+        const input = searchRoot?.querySelector('.catalog-title-autocomplete__input');
+        const suggestions = searchRoot?.querySelector('.catalog-title-autocomplete__list');
+        const searchUrl = searchRoot?.getAttribute('data-search-url') || '/rechercher-jeux-catalogue.php';
+
+        const hasJeuxVideoCategory = () => {
+            if (!categoriesRoot) {
+                return !linksRoot.hidden;
+            }
+            return [...categoriesRoot.querySelectorAll('input[name="categories[]"]')]
+                .some((field) => {
+                    const key = String(field.value || '')
+                        .trim()
+                        .toLowerCase()
+                        .normalize('NFD')
+                        .replace(/[\u0300-\u036f]/g, '');
+                    return key === jeuxVideoKey.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+                        || key.includes('jeux video')
+                        || key.includes('jeu video')
+                        || key === 'games'
+                        || key === 'games';
+                });
+        };
+
+        const syncVisibility = () => {
+            const visible = hasJeuxVideoCategory();
+            linksRoot.hidden = !visible;
+            if (!visible && list) {
+                // On garde les badges en mémoire DOM si l’utilisateur retire puis remet la catégorie.
+            }
+        };
+
+        const collectGameIds = () => new Set(
+            [...(list?.querySelectorAll('input[name="game_oeuvre_ids[]"]') || [])]
+                .map((field) => String(field.value || '').trim())
+                .filter(Boolean)
+        );
+
+        const appendGame = (item) => {
+            if (!list || !item) {
+                return;
+            }
+            const oeuvreId = String(item.oeuvre_id ?? '').trim();
+            const title = String(item.titre ?? item.display_label ?? '').trim();
+            if (!oeuvreId || !title || collectGameIds().has(oeuvreId)) {
+                return;
+            }
+
+            const row = document.createElement('li');
+            row.className = 'magazine-series-tags-field__item';
+            row.setAttribute('role', 'listitem');
+            row.dataset.gameOeuvreId = oeuvreId;
+
+            const badge = document.createElement('span');
+            badge.className = 'magazine-tag magazine-tag--game-genre';
+
+            const text = document.createElement('span');
+            text.className = 'magazine-series-tags-field__text';
+            text.textContent = title;
+
+            const removeBtn = document.createElement('button');
+            removeBtn.type = 'button';
+            removeBtn.className = 'magazine-series-tags-field__remove';
+            removeBtn.title = 'Retirer ce jeu';
+            removeBtn.setAttribute('aria-label', 'Retirer ' + title);
+            removeBtn.textContent = '×';
+
+            badge.appendChild(text);
+            badge.appendChild(removeBtn);
+
+            const hidden = document.createElement('input');
+            hidden.type = 'hidden';
+            hidden.name = 'game_oeuvre_ids[]';
+            hidden.value = oeuvreId;
+
+            row.appendChild(badge);
+            row.appendChild(hidden);
+            list.appendChild(row);
+        };
+
+        linksRoot.addEventListener('click', (event) => {
+            const target = event.target instanceof Element ? event.target : null;
+            const removeBtn = target?.closest('.magazine-series-tags-field__remove');
+            if (!removeBtn || !linksRoot.contains(removeBtn)) {
+                return;
+            }
+            event.preventDefault();
+            removeBtn.closest('.magazine-series-tags-field__item')?.remove();
+        });
+
+        if (categoriesRoot) {
+            categoriesRoot.addEventListener('click', () => {
+                window.setTimeout(syncVisibility, 0);
+            });
+            categoriesRoot.addEventListener('change', syncVisibility);
+            const categoryInput = categoriesRoot.querySelector('.magazine-series-tags-field__input');
+            categoryInput?.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    window.setTimeout(syncVisibility, 0);
+                }
+            });
+        }
+
+        if (input && suggestions && searchRoot) {
+            const optionIdPrefix = 'livre-game-link-' + Math.random().toString(36).slice(2, 8);
+            attachCatalogAutocomplete({
+                root: searchRoot,
+                input,
+                list: suggestions,
+                searchUrl,
+                optionIdPrefix,
+                onSelect: (item) => {
+                    appendGame(item);
+                    input.value = '';
+                },
+                buildOption: (item, index, onSelect) => createCatalogAutocompleteOption({
+                    item,
+                    index,
+                    optionIdPrefix,
+                    extraClass: 'catalog-title-autocomplete__option--game',
+                    label: item.display_label ?? item.titre ?? '',
+                    badgeText: item.in_library ? 'Dans votre bibliothèque' : null,
+                    onSelect,
+                }),
+            });
+        }
+
+        syncVisibility();
+    });
+}
+
+/**
  * Tags de série magazine : badges + ajout / retrait avant enregistrement du formulaire.
  */
 function initMagazineSeriesTagsField() {
@@ -1591,12 +1827,13 @@ function initMagazineSeriesTagsField() {
     });
 }
 
-/** Mes magazines : filtre latéral par catégorie de série. */
+/** Mes magazines / livres : filtre latéral par catégorie. */
 function initMagazineSeriesCategoryFilter() {
     const grid = document.querySelector('[data-magazine-series-grid]');
     const stats = document.querySelector('[data-magazine-series-stats]');
     const emptyHint = document.querySelector('[data-magazine-category-empty]');
-    const cards = grid ? [...grid.querySelectorAll('.magazine-series-card')] : [];
+    // Éléments filtrables : tout ce qui porte data-series-categories (magazines, livres…).
+    const cards = grid ? [...grid.querySelectorAll('[data-series-categories]')] : [];
 
     document.querySelectorAll('[data-magazine-category-filter]').forEach((filterRoot) => {
         const filterButtons = [...filterRoot.querySelectorAll('[data-category-filter]')];

@@ -167,6 +167,7 @@ if ($linuxBadge === '' && !empty($game['linux_not_supported'])) {
 
                 <?php
                 $magazineIssueCount = (int) ($magazineIssueCount ?? count($magazineCoverage ?? []));
+                $livreBookCount = (int) ($livreBookCount ?? 0);
                 $oeuvreId = (int) ($game['oeuvre_id'] ?? 0);
                 require MONCINE_ROOT . '/templates/_game_magazines_link.php';
                 ?>

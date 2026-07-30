@@ -6311,6 +6311,148 @@ td .game-linux-badge--plain {
     margin: 1.25rem 0 0;
 }
 
+.game-detail__media-links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+}
+
+.livre-game-links-field {
+    margin: 1rem 0;
+}
+
+.livre-linked-games {
+    list-style: disc;
+    padding-left: 1.25rem;
+    margin: 0.5rem 0 0;
+}
+
+/* 4e de couverture : plus petite, sous la couverture principale */
+.livre-back-cover {
+    margin: 0.85rem 0 0;
+    padding: 0;
+    max-width: 160px;
+    width: 100%;
+    text-align: center;
+}
+
+.livre-back-cover__open {
+    display: block;
+    margin: 0 auto;
+    padding: 0;
+    border: none;
+    background: transparent;
+    cursor: zoom-in;
+    border-radius: 2px;
+    line-height: 0;
+}
+
+.livre-back-cover__open:focus-visible {
+    outline: 2px solid var(--media-accent, var(--accent, #64b5f6));
+    outline-offset: 3px;
+}
+
+.livre-back-cover__img {
+    display: block;
+    width: 100%;
+    max-width: 100px;
+    margin: 0 auto;
+    border-radius: 2px;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.livre-back-cover__caption {
+    margin: 0.3rem 0 0;
+    font-size: 0.8rem;
+}
+
+/* Surimpression : image agrandie */
+body.livre-cover-lightbox-open {
+    overflow: hidden;
+}
+
+.livre-cover-lightbox {
+    position: fixed;
+    inset: 0;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1.25rem;
+}
+
+.livre-cover-lightbox[hidden] {
+    display: none !important;
+}
+
+.livre-cover-lightbox__backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(10, 12, 16, 0.78);
+    border: none;
+    cursor: pointer;
+}
+
+.livre-cover-lightbox__panel {
+    position: relative;
+    z-index: 1;
+    max-width: min(92vw, 720px);
+    max-height: 90vh;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.5rem;
+}
+
+.livre-cover-lightbox__close {
+    flex-shrink: 0;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: none;
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.95);
+    color: #111;
+    font-size: 1.5rem;
+    line-height: 1;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+}
+
+.livre-cover-lightbox__close:hover,
+.livre-cover-lightbox__close:focus-visible {
+    background: #fff;
+    outline: 2px solid var(--media-accent, var(--accent, #64b5f6));
+    outline-offset: 2px;
+}
+
+.livre-cover-lightbox__img {
+    display: block;
+    max-width: 100%;
+    max-height: calc(90vh - 3rem);
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 4px;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.45);
+    background: #111;
+}
+
+.livre-covers-fieldset {
+    margin: 1.25rem 0;
+    padding: 0.75rem 0 0;
+    border: none;
+    border-top: 1px solid var(--border-color, #ddd);
+}
+
+.livre-covers-fieldset legend {
+    padding: 0 0.25rem 0 0;
+    font-weight: 600;
+}
+
+.livre-subtitle {
+    margin-top: 0.25rem;
+}
+
 .magazine-subject-strip--coverage {
     margin: 0.5rem 0 0;
 }
@@ -6745,7 +6887,8 @@ body.has-magazine-category-rail .magazine-category-rail {
     opacity: 0.85;
 }
 
-.magazine-series-card.is-filter-hidden {
+.magazine-series-card.is-filter-hidden,
+[data-series-categories].is-filter-hidden {
     display: none;
 }
 
@@ -6782,7 +6925,11 @@ body.has-magazine-category-rail .magazine-category-rail {
 }
 
 .magazine-series-grid--poster-only .magazine-series-card.is-filter-hidden,
-.magazine-series-grid--poster-only .magazine-series-card[hidden] {
+.magazine-series-grid--poster-only .magazine-series-card[hidden],
+.collection-grid [data-series-categories].is-filter-hidden,
+.collection-grid [data-series-categories][hidden],
+.game-shelf-library [data-series-categories].is-filter-hidden,
+.game-shelf-library [data-series-categories][hidden] {
     display: none !important;
 }
 

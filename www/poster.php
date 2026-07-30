@@ -1,6 +1,7 @@
 <?php
 /**
- * Sert les affiches stockées dans MONCINE_DATA/posters/ (URL /posters/123.jpg ou /posters/s42.jpg).
+ * Sert les affiches stockées dans MONCINE_DATA/posters/
+ * (URL /posters/123.jpg, /posters/123-back.jpg ou /posters/s42.jpg).
  * Accès public (partage visiteur) — bootstrap allégé sans session ni login.
  */
 
@@ -13,6 +14,7 @@ use Moncine\PosterStorage;
 
 $id = (int) ($_GET['id'] ?? 0);
 $seriesId = (int) ($_GET['series'] ?? 0);
+$variant = strtolower(preg_replace('/[^a-z0-9]/', '', (string) ($_GET['variant'] ?? '')) ?: '');
 $ext = strtolower(trim((string) ($_GET['ext'] ?? '')));
 if ($ext === 'jpeg') {
     $ext = 'jpg';
@@ -25,6 +27,8 @@ if (!preg_match('/^(jpg|png|webp)$/', $ext)) {
 
 if ($seriesId > 0) {
     $webPath = PosterStorage::webPathForSeries($seriesId, $ext);
+} elseif ($id > 0 && $variant !== '') {
+    $webPath = PosterStorage::webPathForOeuvreVariant($id, $ext, $variant);
 } elseif ($id > 0) {
     $webPath = PosterStorage::WEB_PREFIX . '/' . $id . '.' . $ext;
 } else {

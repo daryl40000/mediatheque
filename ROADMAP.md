@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.8.0** (2026-07-30)  
+**Version actuelle : 0.8.1** (2026-07-30)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -13,7 +13,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 ---
 
-## Où en est-on ? (synthèse 0.8.0)
+## Où en est-on ? (synthèse 0.8.1)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
@@ -21,9 +21,9 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 | **Jeux** | ✅ Utilisable | 0.5.0 → **0.7.17** | Complet (IGDB, sagas, Steam, prêts, magasins catalogue, `/jeu-magazines.php`) |
 | **Magazines** | ✅ Complet (M5) | 0.2.x → **0.7.17** / **0.8.0** | ABM, PDF, FTS, sujets, pont catalogue, **partage + listes imprimables** |
 | **BD / Manga** | ✅ **Livré (M2)** | **0.7.2** → **0.8.0** | Collection, envies, partage, profil, impression, **import CSV** |
-| **Livres** | ⏳ Placeholder (M3) | **0.7.8** | Onglet + page « bientôt » (`/livres.php`) |
+| **Livres** | ✅ **Utilisable (M3)** | **0.8.1** | Collection, envies, sagas, lectures, stats, pont jeux ([doc/livres.md](doc/livres.md)) |
 | **Musique** | ⏳ Placeholder (M8) | **0.7.8** | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles et CD physiques |
-| **Transversal** | 🔄 Partiel | **0.7.12**–**0.8.0** | Recherche globale, catalogue admin, import/export multi-médias, profil → fiches, partage, connexion pseudo, UI Compte/Import, menu mobile, PWA, CI, **PHPStan 0 alerte** |
+| **Transversal** | 🔄 Partiel | **0.7.12**–**0.8.1** | Recherche globale, catalogue admin, import/export multi-médias, profil → fiches, partage, connexion pseudo, UI Compte/Import, menu mobile, PWA, CI, **PHPStan 0 alerte** |
 
 ### Phases (suivi)
 
@@ -35,7 +35,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 | **M5** Magazines | ✅ **Livré** | **0.7.17** | Maintenance ; polish ponctuel |
 | **Pont** Magazines ↔ Catalogue | ✅ Livré | **0.7.17** | Jeu (0.6.3) + **film** (0.7.17) |
 | **M2** BD / Manga | ✅ **Livré** | **0.8.0** | Export CSV optionnel ; suite → **M3** |
-| **M3** Livres | ⏳ À faire | 0.8.x (indicatif) | Après M2 |
+| **M3** Livres | ✅ **Utilisable** | **0.8.1** | Import CSV / partage / imprimable optionnels |
 | **M8** Musique (vinyles, CD) | ⏳ À faire | 0.8.x+ (indicatif) | **Après M3** |
 | **M6** Transversal | 🔄 **Partiel** | 0.7.14+ | Stats, import/export par domaine → **0.9.0** |
 | **M7** Identité & polish | ⏳ À faire | 1.0.0 | Fin |
@@ -44,10 +44,14 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 ## Prochaines étapes (par priorité)
 
-### 🔜 **M3 Livres** (après 0.8.0)
+### ✅ **0.8.1** — M3 Livres utilisable (2026-07-30)
 
-- Remplacer le placeholder `/livres.php` par une collection livres papier.
-- Voir section **M3** ci-dessous.
+- Collection / envies, sagas, 4e de couverture, lectures / ressentis, bandeau saga, stats dédiées, pont jeux.
+- Voir [doc/livres.md](doc/livres.md) et [CHANGELOG.md](CHANGELOG.md).
+
+### 🔜 **Suite M3 / M8**
+
+- Polish livres (import CSV, partage, listes imprimables) si besoin ; puis **M8 Musique**.
 
 ### ✅ **0.8.0** — Clôture M2 BD (2026-07-30)
 
@@ -356,7 +360,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ### Priorité 2 — **M3 Livres** (M2 BD clôturée en 0.8.0)
 
 9. ~~**M2** — import CSV BD~~ — ✅ **0.8.0**
-10. **M3 Livres** — schéma `oeuvre_livre`, ISBN, collection papier.
+10. ~~**M3 Livres** — collection, sagas, lectures, stats, pont jeux~~ — ✅ **0.8.1** (polish import/partage optionnel)
 
 ### Priorité 3 — Polish **M4** (non bloquant)
 
@@ -386,7 +390,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 flowchart LR
   A[M5 Magazines ✅ 0.7.17] --> B[Pont catalogue ✅]
   B --> C[M2 BD ✅ 0.8.0]
-  C --> D[M3 Livres]
+  C --> D[M3 Livres ✅ 0.8.1]
   D --> E[M8 Musique]
   E --> F[Polish M4 GOG]
   F --> G[M6 transversal 🔄]
@@ -587,18 +591,23 @@ Relier optionnellement un sujet magazine à une fiche **jeu ou film** catalogue 
 
 ---
 
-## M3 — Livres ⏳ À faire
+## M3 — Livres ✅ Utilisable (0.8.1)
 
-**Version visée (indicatif) :** 0.8.x
+**Version de première livraison :** **0.8.1**
 
-| Tâche | Détail |
-|-------|--------|
-| Schéma | Table `oeuvre_livre` : auteur(s), ISBN, pages, éditeur |
-| Stockage | `MediaStorage::SUBDIR_BOOKS` |
-| Import | `doc/import-livres.md` |
-| Onglet | Placeholder `/livres.php` (déjà en place, **0.7.8**) |
+| Tâche | Détail | Statut |
+|-------|--------|--------|
+| Schéma | `oeuvre_livre`, `livre_game_link`, sous-titre / 4e de couverture | ✅ |
+| Collection / envies | `/livres.php`, `/livres-envies.php`, modes d’affichage | ✅ |
+| Fiche | Ressenti, marquer lu, bandeau saga | ✅ |
+| Sagas | `/sagas-livres.php` | ✅ |
+| Pont jeux | Catégorie Jeux vidéo + `/jeu-livres.php` | ✅ |
+| Stats | `/statistiques.php` domaine Livres | ✅ |
+| Doc | [doc/livres.md](doc/livres.md) | ✅ |
+| Import CSV | Catalogue livres | ⏳ Optionnel |
+| Partage / imprimable | Comme BD | ⏳ Optionnel |
 
-**Critère de sortie :** livres papier en collection.
+**Critère de sortie :** livres papier en collection, catégories, pont jeux — **atteint** (**0.8.1**).
 
 ---
 
@@ -633,7 +642,7 @@ Gestion d’une **bibliothèque physique** : disques vinyle (33 tours, 45 tours,
 | **Recherche globale** | Barre en-tête, bibliothèque + catalogue | ✅ **0.7.14** |
 | **Catalogue admin** | Filtre média, suppression groupée, fusion fiches | ✅ **0.7.10**–**0.7.17** |
 | **Profil public → catalogue** | Fiches consultables, envies sous jaquette | ✅ **0.7.12** |
-| Statistiques | Filtre domaine ; libellés selon média (vu / joué / lu / écouté) | ⏳ |
+| Statistiques | Filtre domaine ; libellés selon média (vu / joué / lu / écouté) | 🔄 (films/jeux/BD/magazines/**livres** ✅) |
 | Prêts | Physique uniquement ; pas de prêt PDF/démat | ⏳ (jeux/films ✅) |
 | Partage | Paramètre domaine dans le lien | ⏳ (films/jeux/BD partiels) |
 | Import / export | Schéma CSV par domaine | ⏳ |
@@ -709,7 +718,7 @@ flowchart TB
 | M0, M1, M4, M5, Pont | ✅ fait | 0.1.0 → **0.7.17** |
 | M6 (partiel) | recherche globale, catalogue admin, profil | **0.7.14**–**0.7.17** ✅ |
 | M2 clôture (import CSV BD) | ~1 semaine | **0.8.0** |
-| M3 Livres | ~2 semaines | 0.8.x |
+| M3 Livres | ~2 semaines | **0.8.1** |
 | M8 Musique | ~2 semaines | 0.8.x+ |
 | Polish M4 (GOG) | quelques jours | 0.8.x |
 | M6 (reste) | 2–3 semaines | **0.9.0** |
@@ -726,6 +735,7 @@ flowchart TB
 | Jeux (M4) | `lib/GameRepository.php`, `lib/GameListFilter.php`, `lib/GameCollectionStats.php`, `doc/jeux.md` |
 | Fiches catalogue jeux | `www/oeuvre-jeu.php`, `templates/oeuvre-jeu.php` |
 | BD (M2) | `lib/BdRepository.php`, `lib/BdLibraryQuery.php`, … |
+| Livres (M3) | `lib/LivreRepository.php`, `lib/LivreCollectionStats.php`, `doc/livres.md` |
 | Magazines (M5) | `lib/MagazineRepository.php`, `lib/MagazineLibraryQuery.php`, `doc/magazines.md` |
 | Fiches catalogue magazines | `www/oeuvre-magazine.php`, `templates/oeuvre-magazine.php` |
 | Pont magazine ↔ catalogue | `lib/MagazineSubjectCatalogLink.php`, `lib/MagazineGameLink.php`, `lib/MagazineSubjectRepository.php`, `www/jeu-magazines.php` |
@@ -735,4 +745,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.8.0** — 2026-07-30 (clôture M2 BD).*
+*Dernière mise à jour : **0.8.1** — 2026-07-30 (M3 Livres utilisable).*

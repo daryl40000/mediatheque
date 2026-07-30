@@ -82,6 +82,7 @@ final class View
             'bd-envies',
             'serie-bd',
             'statistiques-bd',
+            'statistiques-livres',
             'jeux',
             'jeux-envies',
             'sagas-jeux',
@@ -89,6 +90,14 @@ final class View
             'modifier-jeu',
             'jeu',
             'jeu-magazines',
+            'jeu-livres',
+            'livres',
+            'livres-envies',
+            'livre',
+            'ajouter-livre',
+            'modifier-livre',
+            'oeuvre-livre',
+            'sagas-livres',
             'film',
             'album-bd',
             'magazine-numero',
@@ -519,6 +528,7 @@ final class View
             MediaDomain::JEU => self::oeuvreJeuUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia),
             MediaDomain::MAGAZINE => self::oeuvreMagazineUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia),
             MediaDomain::BD => self::oeuvreBdUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia),
+            MediaDomain::LIVRE => self::oeuvreLivreUrl($oeuvreId),
             default => self::oeuvreUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia),
         };
     }
@@ -555,6 +565,7 @@ final class View
             MediaDomain::JEU => '/jeux.php',
             MediaDomain::BD => '/bd.php',
             MediaDomain::MAGAZINE => '/magazines.php',
+            MediaDomain::LIVRE => '/livres.php',
             default => '/films.php',
         };
     }
@@ -593,6 +604,57 @@ final class View
     public static function gameMagazinesUrl(int $oeuvreId, int $bibId = 0): string
     {
         return GameUrls::gameMagazinesUrl($oeuvreId, $bibId);
+    }
+
+    public static function gameLivresUrl(int $oeuvreId, int $bibId = 0): string
+    {
+        return LivreUrls::gameLivresUrl($oeuvreId, $bibId);
+    }
+
+    public static function livreUrl(int $bibId): string
+    {
+        return LivreUrls::livreUrl($bibId);
+    }
+
+    public static function livresCollectionUrl(string $query = '', string $sort = 'titre', string $dir = 'asc', string $viewMode = ''): string
+    {
+        return LivreUrls::livresCollectionUrl($query, $sort, $dir, $viewMode);
+    }
+
+    public static function livresWishlistUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string
+    {
+        return LivreUrls::livresWishlistUrl($query, $sort, $dir);
+    }
+
+    public static function oeuvreLivreUrl(int $oeuvreId): string
+    {
+        return LivreUrls::oeuvreLivreUrl($oeuvreId);
+    }
+
+    public static function addLivreUrl(string $statut = LibraryStatut::COLLECTION): string
+    {
+        return LivreUrls::addLivreUrl($statut);
+    }
+
+    public static function livreEditUrl(int $bibId): string
+    {
+        return LivreUrls::livreEditUrl($bibId);
+    }
+
+    public static function sagasLivresUrl(string $sagaName = ''): string
+    {
+        return LivreUrls::sagasLivresUrl($sagaName);
+    }
+
+    public static function livresSortUrl(
+        string $column,
+        string $currentSort,
+        string $currentDir,
+        string $query = '',
+        bool $wishlist = false,
+        string $viewMode = ''
+    ): string {
+        return LivreUrls::livresSortUrl($column, $currentSort, $currentDir, $query, $wishlist, $viewMode);
     }
 
     /** Fiche catalogue admin — album BD / manga. */

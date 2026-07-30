@@ -55,7 +55,7 @@ final class PosterStorage
     }
 
     /**
-     * @return array{id?: int, series?: int, ext: string}|null
+     * @return array{id?: int, series?: int, ext: string, variant?: string}|null
      */
     private static function parseLocalWebPath(string $path): ?array
     {
@@ -75,6 +75,24 @@ final class PosterStorage
             }
 
             return ['series' => (int) $m[1], 'ext' => $ext];
+        }
+
+        // Variante (ex. 4e de couverture) : /posters/123-back.jpg
+        if (preg_match(
+            '#^' . preg_quote(self::WEB_PREFIX, '#') . '/(\d+)-([a-z0-9]+)\.(jpe?g|png|webp)$#i',
+            $path,
+            $m
+        )) {
+            $ext = strtolower($m[3]);
+            if ($ext === 'jpeg') {
+                $ext = 'jpg';
+            }
+            $variant = strtolower($m[2]);
+            if (!preg_match('/^[a-z0-9]+$/', $variant)) {
+                return null;
+            }
+
+            return ['id' => (int) $m[1], 'ext' => $ext, 'variant' => $variant];
         }
 
         if (!preg_match(
@@ -109,9 +127,87 @@ final class PosterStorage
     /** Chemin web local pour une œuvre (fichier peut ne pas exister encore). */
     public static function webPathForOeuvre(int $oeuvreId, string $extension): string
     {
-        $ext = strtolower(preg_replace('/[^a-z0-9]/', '', $extension) ?: 'jpg');
+        return self::webPathForOeuvreVariant($oeuvreId, $extension, '');
+    }
 
-        return self::WEB_PREFIX . '/' . $oeuvreId . '.' . $ext;
+    /**
+     * Chemin web local pour une variante d’image d’œuvre (ex. 4e de couverture = « back »).
+     */
+    public static function webPathForOeuvreVariant(int $oeuvreId, string $extension, string $variant = ''): string
+    {
+        $ext = strtolower(preg_replace('/[^a-z0-9]/', '', $extension) ?: 'jpg');
+        $variant = strtolower(preg_replace('/[^a-z0-9]/', '', $variant) ?: '');
+        $suffix = $variant !== '' ? '-' . $variant : '';
+
+        return self::WEB_PREFIX . '/' . $oeuvreId . $suffix . '.' . $ext;
+    }
+
+    /**
+     * Enregistre une image variante (ex. 4e de couverture) sans toucher à la couverture principale.
+     */
+    public function importBinaryForOeuvreVariant(int $oeuvreId, string $binary, string $variant): string
+    {
+        $variant = strtolower(preg_replace('/[^a-z0-9]/', '', $variant) ?: '');
+        if ($oeuvreId <= 0 || $binary === '' || $variant === '') {
+            return '';
+        }
+
+        $maxBytes = defined('MONCINE_POSTER_MAX_BYTES') ? (int) MONCINE_POSTER_MAX_BYTES : 2_097_152;
+        if (strlen($binary) > $maxBytes) {
+            return '';
+        }
+
+        $mime = $this->detectImageMime($binary);
+        if ($mime === null) {
+            return '';
+        }
+
+        self::ensureDirectory();
+        $ext = self::ALLOWED_MIME[$mime];
+        $webPath = self::webPathForOeuvreVariant($oeuvreId, $ext, $variant);
+        $this->removeLocalFilesForOeuvreVariant($oeuvreId, $variant);
+
+        $filePath = self::postersFilesystemDir() . '/' . $oeuvreId . '-' . $variant . '.' . $ext;
+        if (@file_put_contents($filePath, $binary) === false) {
+            return '';
+        }
+
+        @chmod($filePath, 0644);
+
+        return $webPath;
+    }
+
+    /**
+     * Télécharge une URL distante pour une variante (4e de couverture…).
+     */
+    public function ensureLocalForOeuvreVariant(int $oeuvreId, string $posterUrl, string $variant): string
+    {
+        $variant = strtolower(preg_replace('/[^a-z0-9]/', '', $variant) ?: '');
+        $posterUrl = trim($posterUrl);
+        if ($oeuvreId <= 0 || $posterUrl === '' || $variant === '') {
+            return '';
+        }
+
+        if (self::isLocalWebPath($posterUrl)) {
+            $filePath = self::filesystemPathFromWeb($posterUrl);
+            if ($filePath !== null && is_file($filePath)) {
+                return $posterUrl;
+            }
+
+            return '';
+        }
+
+        if (!self::isRemoteUrl($posterUrl)) {
+            return '';
+        }
+
+        self::ensureDirectory();
+        $binary = $this->download($posterUrl);
+        if ($binary === null) {
+            return '';
+        }
+
+        return $this->importBinaryForOeuvreVariant($oeuvreId, $binary, $variant);
     }
 
     /**
@@ -334,7 +430,7 @@ final class PosterStorage
         }
 
         $name = basename($webPath);
-        if (!preg_match('/^(s\d+|\d+)\.(jpe?g|png|webp)$/i', $name)) {
+        if (!preg_match('/^(s\d+|\d+(?:-[a-z0-9]+)?)\.(jpe?g|png|webp)$/i', $name)) {
             return null;
         }
 
@@ -390,6 +486,24 @@ final class PosterStorage
     {
         foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
             $name = $oeuvreId . '.' . $ext;
+            foreach (self::posterSearchDirs() as $dir) {
+                $path = $dir . '/' . $name;
+                if (is_file($path)) {
+                    @unlink($path);
+                }
+            }
+        }
+    }
+
+    private function removeLocalFilesForOeuvreVariant(int $oeuvreId, string $variant): void
+    {
+        $variant = strtolower(preg_replace('/[^a-z0-9]/', '', $variant) ?: '');
+        if ($oeuvreId <= 0 || $variant === '') {
+            return;
+        }
+
+        foreach (['jpg', 'jpeg', 'png', 'webp'] as $ext) {
+            $name = $oeuvreId . '-' . $variant . '.' . $ext;
             foreach (self::posterSearchDirs() as $dir) {
                 $path = $dir . '/' . $name;
                 if (is_file($path)) {

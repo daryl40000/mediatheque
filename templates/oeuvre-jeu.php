@@ -172,6 +172,7 @@ $completionCount = (int) ($completionCount ?? 0);
                 <?php endif; ?>
 
                 <?php $magazineIssueCount = (int) ($magazineIssueCount ?? 0); ?>
+                <?php $livreBookCount = (int) ($livreBookCount ?? 0); ?>
                 <?php
                 $oeuvreId = (int) ($game['oeuvre_id'] ?? $oeuvreId ?? 0);
                 $bibId = (int) ($libraryBibId ?? 0);

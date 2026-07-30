@@ -9,6 +9,30 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.1] — 2026-07-30
+
+**M3 Livres — collection utilisable (première livraison)**
+
+L’onglet Livres quitte le placeholder : collection, envies, fiches, sagas, lectures / ressentis, stats dédiées et pont avec les jeux.
+
+### Ajouté
+
+- **Collection / envies** livres (`/livres.php`, `/livres-envies.php`) avec modes Liste / Vignettes / Bibliothèque.
+- Fiche livre : couverture + 4e de couverture (agrandissement), sous-titre, catégories, résumé, jeux liés.
+- **Sagas livres** (`/sagas-livres.php`) + bandeau des volumes voisins sur la fiche (comme les BD).
+- Actions rapides sous la couverture : **ressenti**, **modifier**, **marquer comme lu** (date + historique).
+- **Statistiques livres** sur `/statistiques.php` (lectures, pages, ressentis, supports, catégories).
+- Pont **jeu ↔ livres** : bouton Livres sur la fiche jeu ; page `/jeu-livres.php`.
+- Catégories livre (Jeux vidéo, Cinéma, Figurines, Divers…) ; liens catalogue si « Jeux vidéo ».
+
+### Technique
+
+- Migrations **068** (`oeuvre_livre`, `livre_game_link`) et **069** (sous-titre, 4e de couverture).
+- Classes `LivreRepository`, `LivreCategory`, `LivreGameLink`, `LivreSagaContext`, `LivreCollectionStats`, `LivreUrls`.
+- Doc : [doc/livres.md](doc/livres.md).
+
+---
+
 ## [0.8.0] — 2026-07-30
 
 **Clôture M2 — BD / Manga utilisable en production**

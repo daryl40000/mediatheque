@@ -11,8 +11,6 @@ final class MediaDomainGuards
 {
     /** Pages « bientôt disponible » (domaines pas encore implémentés). */
     private const PLACEHOLDER_COLLECTION_PATHS = [
-        '/livres.php',
-        '/livres-envies.php',
         '/musique.php',
         '/musique-envies.php',
     ];
@@ -92,11 +90,37 @@ final class MediaDomainGuards
         '/bd-envies.php',
     ];
 
+    /** Préfixes d’URL réservés à l’onglet Livres. */
+    private const LIVRE_ONLY_PATH_PREFIXES = [
+        '/livres',
+        '/livre.php',
+        '/ajouter-livre.php',
+        '/modifier-livre.php',
+        '/enregistrer-livre.php',
+        '/enregistrer-modification-livre.php',
+        '/supprimer-livre.php',
+        '/promouvoir-livre-collection.php',
+        '/oeuvre-livre.php',
+        '/rechercher-livres-catalogue.php',
+        '/jeu-livres.php',
+        '/sagas-livres.php',
+        '/marquer-livre-lu.php',
+        '/marquer-livre-ressenti.php',
+    ];
+
+    /** Pages collection / envies réservées à l’onglet Livres. */
+    private const LIVRE_COLLECTION_PATHS = [
+        '/livres.php',
+        '/livre.php',
+        '/livres-envies.php',
+    ];
+
     /** Préfixes d’URL réservés à l’onglet Jeux. */
     private const GAME_ONLY_PATH_PREFIXES = [
         '/jeux',
         '/jeu.php',
         '/jeu-magazines.php',
+        '/jeu-livres.php',
         '/sagas-jeux.php',
         '/ajouter-jeu.php',
         '/modifier-jeu.php',
@@ -173,6 +197,24 @@ final class MediaDomainGuards
         return in_array(self::normalizePath($path), self::BD_COLLECTION_PATHS, true);
     }
 
+    public static function isLivreOnlyPath(string $path): bool
+    {
+        $path = self::normalizePath($path);
+
+        foreach (self::LIVRE_ONLY_PATH_PREFIXES as $prefix) {
+            if (str_starts_with($path, $prefix)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    public static function isLivreCollectionPath(string $path): bool
+    {
+        return in_array(self::normalizePath($path), self::LIVRE_COLLECTION_PATHS, true);
+    }
+
     public static function isPlaceholderCollectionPath(string $path): bool
     {
         return in_array(self::normalizePath($path), self::PLACEHOLDER_COLLECTION_PATHS, true);
@@ -231,19 +273,23 @@ final class MediaDomainGuards
             return MediaDomain::collectionPath($targetDomain);
         }
 
-        if (MediaDomain::isBd($targetDomain) && (self::isFilmCollectionPath($pathOnly) || self::isMagazineOnlyPath($pathOnly) || self::isGameOnlyPath($pathOnly))) {
+        if (MediaDomain::isBd($targetDomain) && (self::isFilmCollectionPath($pathOnly) || self::isMagazineOnlyPath($pathOnly) || self::isGameOnlyPath($pathOnly) || self::isLivreOnlyPath($pathOnly))) {
             return MediaDomain::collectionPath($targetDomain);
         }
 
-        if (MediaDomain::isFilm($targetDomain) && self::isBdOnlyPath($pathOnly)) {
+        if (MediaDomain::isLivre($targetDomain) && (self::isFilmCollectionPath($pathOnly) || self::isMagazineOnlyPath($pathOnly) || self::isGameOnlyPath($pathOnly) || self::isBdOnlyPath($pathOnly))) {
             return MediaDomain::collectionPath($targetDomain);
         }
 
-        if (MediaDomain::isMagazine($targetDomain) && self::isBdOnlyPath($pathOnly)) {
+        if (MediaDomain::isFilm($targetDomain) && (self::isBdOnlyPath($pathOnly) || self::isLivreOnlyPath($pathOnly))) {
             return MediaDomain::collectionPath($targetDomain);
         }
 
-        if (MediaDomain::isGame($targetDomain) && self::isBdOnlyPath($pathOnly)) {
+        if (MediaDomain::isMagazine($targetDomain) && (self::isBdOnlyPath($pathOnly) || self::isLivreOnlyPath($pathOnly))) {
+            return MediaDomain::collectionPath($targetDomain);
+        }
+
+        if (MediaDomain::isGame($targetDomain) && (self::isBdOnlyPath($pathOnly) || self::isLivreOnlyPath($pathOnly))) {
             return MediaDomain::collectionPath($targetDomain);
         }
 
@@ -333,6 +379,17 @@ final class MediaDomainGuards
         }
 
         header('Location: ' . self::mediaDomainSwitchUrl(MediaDomain::BD, $redirectPath, '/bd.php'));
+        exit;
+    }
+
+    /** Redirige vers l’onglet Livres si besoin. */
+    public static function ensureLivreContext(?string $redirectPath = null): void
+    {
+        if (MediaContext::current() === MediaDomain::LIVRE) {
+            return;
+        }
+
+        header('Location: ' . self::mediaDomainSwitchUrl(MediaDomain::LIVRE, $redirectPath, '/livres.php'));
         exit;
     }
 

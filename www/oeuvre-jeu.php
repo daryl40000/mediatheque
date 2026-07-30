@@ -15,6 +15,7 @@ use Moncine\GameCompletionRepository;
 use Moncine\GameFranchiseRepository;
 use Moncine\GameRelatedSections;
 use Moncine\GameRepository;
+use Moncine\LivreGameLink;
 use Moncine\MagazineGameLink;
 use Moncine\MediaDomain;
 use Moncine\UserContext;
@@ -237,6 +238,10 @@ $magazineIssueCount = MagazineGameLink::isAvailable()
     ? (new MagazineGameLink())->countIssueCoverageForGame($oeuvreId, UserContext::currentUserId(), UserContext::currentFoyerId())
     : 0;
 
+$livreBookCount = LivreGameLink::isAvailable()
+    ? (new LivreGameLink())->countBooksForGame($oeuvreId)
+    : 0;
+
 $attachments = GameAttachmentRepository::isAvailable() && $oeuvreId > 0
     ? (new GameAttachmentRepository())->listForOeuvre($oeuvreId)
     : [];
@@ -307,6 +312,7 @@ View::render('oeuvre-jeu', [
         ? (new GameFranchiseRepository())->listKnownSagas()
         : [],
     'magazineIssueCount' => $magazineIssueCount,
+    'livreBookCount' => $livreBookCount,
     'attachments' => $attachments,
     'gameCompletions' => $gameCompletions,
     'completionCount' => $completionCount,

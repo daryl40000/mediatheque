@@ -105,6 +105,11 @@ final class MediaDomain
         return self::normalize($domain) === self::BD;
     }
 
+    public static function isLivre(string $domain): bool
+    {
+        return self::normalize($domain) === self::LIVRE;
+    }
+
     public static function isMusique(string $domain): bool
     {
         return self::normalize($domain) === self::MUSIQUE;
@@ -118,7 +123,8 @@ final class MediaDomain
         return $domain === self::FILM
             || $domain === self::MAGAZINE
             || $domain === self::JEU
-            || $domain === self::BD;
+            || $domain === self::BD
+            || $domain === self::LIVRE;
     }
 
     /** Page principale « ma collection » selon l’onglet actif. */

@@ -13,6 +13,7 @@ use Moncine\BibliothequeRepository;
 use Moncine\FilmRepository;
 use Moncine\GameRepository;
 use Moncine\LibraryStatut;
+use Moncine\LivreRepository;
 use Moncine\MagazineRepository;
 use Moncine\MediaContext;
 use Moncine\MediaDomain;
@@ -96,6 +97,31 @@ if (MediaDomain::isGame($mediaDomain)) {
         'setupDone' => isset($_GET['setup']) && (string) $_GET['setup'] === '1',
         'lastNoted' => $lastNoted,
         'lastFinished' => $lastFinished,
+        'lastCollection' => $lastCollection,
+        'lastWishlist' => $lastWishlist,
+        'currentUserId' => $userId,
+    ]);
+    exit;
+}
+
+if (MediaDomain::isLivre($mediaDomain)) {
+    $foyerId = UserContext::currentFoyerId();
+    $bookCount = $userId > 0 && LivreRepository::isAvailable()
+        ? (new LivreRepository())->countInLibrary($userId, $foyerId, LibraryStatut::COLLECTION)
+        : 0;
+
+    $lastCollection = [];
+    $lastWishlist = [];
+    if ($userId > 0) {
+        $profile = new UserPublicProfileService();
+        $lastCollection = $profile->lastCollectionFilms($userId, 5, MediaDomain::LIVRE);
+        $lastWishlist = $profile->lastWishlistFilms($userId, 5, MediaDomain::LIVRE);
+    }
+
+    View::render('home-livre', [
+        'pageTitle' => 'Accueil',
+        'bookCount' => $bookCount,
+        'setupDone' => isset($_GET['setup']) && (string) $_GET['setup'] === '1',
         'lastCollection' => $lastCollection,
         'lastWishlist' => $lastWishlist,
         'currentUserId' => $userId,

@@ -23,10 +23,11 @@ En **0.2.x**, les onglets **Films** et **Magazines** sont utilisables. Les autre
 En haut de chaque page connectée :
 
 - **Films** (gris) — comportement identique à Monciné 1.0.0  
-- **BD / Manga** (rose) — à venir  
-- **Livres** (bleu) — à venir  
+- **BD / Manga** (rose) — collection, envies, import CSV (**0.8.0**, voir [bd.md](bd.md))  
+- **Livres** (bleu) — collection, sagas, lectures (**0.8.1**, voir [livres.md](livres.md))  
 - **Jeux** (violet) — collection, envies, pont magazine ↔ jeux (**0.5.0+**, complété **0.6.3**, voir [jeux.md](jeux.md) et [pont-magazine-jeu.md](pont-magazine-jeu.md))  
 - **Magazines** (vert d’eau) — séries, numéros, PDF (**0.2.0+**, voir [magazines.md](magazines.md))  
+- **Musique** (ambre) — placeholder « bientôt » (**0.7.8**) 
 
 Un clic change **toute l’interface** : couleur, libellés du menu (« Mes films », « Mes envies »…), fond léger.
 
@@ -131,7 +132,7 @@ Voir `.gitignore` :
 
 Points essentiels :
 
-- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.8.0**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.8.1**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
 
 ### Catalogue admin (0.7.15+)
 

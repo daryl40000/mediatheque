@@ -11,6 +11,7 @@ use Moncine\CollectionStats;
 use Moncine\BdRepository;
 use Moncine\GameCollectionStats;
 use Moncine\LibraryStatut;
+use Moncine\LivreCollectionStats;
 use Moncine\MagazinePeriodStats;
 use Moncine\MagazineRepository;
 use Moncine\MediaContext;
@@ -97,6 +98,19 @@ if (MediaDomain::isBd(MediaContext::current())) {
         'wishlistSeriesCount' => BdRepository::isAvailable()
             ? $repo->countSeriesInLibrary($userId, $foyerId, LibraryStatut::WISHLIST)
             : 0,
+    ]);
+    exit;
+}
+
+if (MediaDomain::isLivre(MediaContext::current())) {
+    MediaDomainGuards::ensureLivreContext('/statistiques.php');
+    $userId = UserContext::currentUserId();
+    $foyerId = UserContext::currentFoyerId();
+
+    View::render('statistiques-livres', [
+        'pageTitle' => MediaContext::navLabels()['stats'],
+        'stats' => (new LivreCollectionStats())->getDashboard($userId, $foyerId),
+        'wideLayout' => true,
     ]);
     exit;
 }

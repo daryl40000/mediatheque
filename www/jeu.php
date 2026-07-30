@@ -16,6 +16,7 @@ use Moncine\GameRepository;
 use Moncine\HistoriqueRepository;
 use Moncine\IgdbConfig;
 use Moncine\LibraryStatut;
+use Moncine\LivreGameLink;
 use Moncine\MagazineGameLink;
 use Moncine\MediaDomain;
 use Moncine\MediaDomainGuards;
@@ -101,6 +102,10 @@ $magazineIssues = MagazineGameLink::isAvailable()
     ? (new MagazineGameLink())->listIssueCoverageForGame((int) ($game['oeuvre_id'] ?? 0), $userId, $foyerId)
     : [];
 $magazineIssueCount = count($magazineIssues);
+
+$livreBookCount = LivreGameLink::isAvailable()
+    ? (new LivreGameLink())->countBooksForGame((int) ($game['oeuvre_id'] ?? 0))
+    : 0;
 
 $gameCompletions = [];
 $completionCount = 0;
@@ -226,6 +231,7 @@ View::render('jeu', [
     'game' => $game,
     'magazineCoverage' => $magazineIssues,
     'magazineIssueCount' => $magazineIssueCount,
+    'livreBookCount' => $livreBookCount,
     'baseGame' => $baseGame,
     'extensions' => $extensions,
     'originalGame' => $originalGame,

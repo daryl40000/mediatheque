@@ -540,6 +540,34 @@ CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_scenariste ON oeuvre_bd(scenariste COLL
 CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_dessinateur ON oeuvre_bd(dessinateur COLLATE NOCASE);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_editeur ON oeuvre_bd(editeur COLLATE NOCASE);
 
+CREATE TABLE IF NOT EXISTS oeuvre_livre (
+    oeuvre_id INTEGER PRIMARY KEY REFERENCES oeuvres(id) ON DELETE CASCADE,
+    auteur TEXT NOT NULL DEFAULT '',
+    isbn TEXT NOT NULL DEFAULT '',
+    pages INTEGER NOT NULL DEFAULT 0,
+    editeur TEXT NOT NULL DEFAULT '',
+    categories TEXT NOT NULL DEFAULT '',
+    langue TEXT NOT NULL DEFAULT 'fr',
+    collection_label TEXT NOT NULL DEFAULT '',
+    sous_titre TEXT NOT NULL DEFAULT '',
+    back_cover_url TEXT NOT NULL DEFAULT ''
+);
+
+CREATE INDEX IF NOT EXISTS idx_oeuvre_livre_auteur ON oeuvre_livre(auteur COLLATE NOCASE);
+CREATE INDEX IF NOT EXISTS idx_oeuvre_livre_editeur ON oeuvre_livre(editeur COLLATE NOCASE);
+CREATE INDEX IF NOT EXISTS idx_oeuvre_livre_isbn ON oeuvre_livre(isbn);
+
+CREATE TABLE IF NOT EXISTS livre_game_link (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    oeuvre_id INTEGER NOT NULL REFERENCES oeuvres(id) ON DELETE CASCADE,
+    game_oeuvre_id INTEGER NOT NULL REFERENCES oeuvres(id) ON DELETE CASCADE,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    UNIQUE (oeuvre_id, game_oeuvre_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_livre_game_link_oeuvre ON livre_game_link(oeuvre_id);
+CREATE INDEX IF NOT EXISTS idx_livre_game_link_game ON livre_game_link(game_oeuvre_id);
+
 CREATE TABLE IF NOT EXISTS game_attachment (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     oeuvre_id INTEGER NOT NULL REFERENCES oeuvres(id) ON DELETE CASCADE,
