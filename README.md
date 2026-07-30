@@ -260,7 +260,8 @@ Les données (base, affiches, PDF, sessions) sont stockées dans le dossier **`d
 - **Films** : dvdthèque complète (collection, envies, visions, prêts entre amis, questionnaire du soir…).
 - **Jeux** (**0.5.7**) : collection (`/jeux.php`), envies, statistiques, extensions, remakes, **enrichissement IGDB**, **sagas jeux**, **vue Bibliothèque**, recherche acronymes ; détail [doc/jeux.md](doc/jeux.md).
 - **Magazines** : séries → numéros → fiche détaillée ; détail [doc/magazines.md](doc/magazines.md).
-- **BD, Livres** : onglets présents mais marqués **« Bientôt disponible »**.
+- **BD** (**0.8.0**) : séries → tomes, envies, partage, import CSV ; détail [doc/bd.md](doc/bd.md).
+- **Livres** (et **Musique**) : onglets présents mais marqués **« Bientôt disponible »**.
 
 #### Parcours magazines (résumé)
 
