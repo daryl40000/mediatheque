@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-07-30 (version **0.8.1** — M3 Livres)  
+**Dernière mise à jour :** 2026-08-01 (version **0.8.2** — suppléments magazines / saga jeux)  
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif

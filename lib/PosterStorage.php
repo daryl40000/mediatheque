@@ -495,7 +495,8 @@ final class PosterStorage
         }
     }
 
-    private function removeLocalFilesForOeuvreVariant(int $oeuvreId, string $variant): void
+    /** Supprime les fichiers locaux d’une variante d’affiche (ex. couverture supplément). */
+    public function removeLocalFilesForOeuvreVariant(int $oeuvreId, string $variant): void
     {
         $variant = strtolower(preg_replace('/[^a-z0-9]/', '', $variant) ?: '');
         if ($oeuvreId <= 0 || $variant === '') {

@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\MagazineGameLink;
+use Moncine\MagazineIssueSupplementRepository;
 use Moncine\MagazineSubjectCatalogLink;
 use Moncine\MagazineRepository;
 use Moncine\MagazineSeriesTag;
@@ -43,10 +44,12 @@ $saved = isset($_GET['saved']);
 $error = (string) ($_GET['error'] ?? '');
 $allowedPopovers = ['edit', 'pdf'];
 $popoverOpen = '';
-if ($error !== '') {
-    $popoverOpen = isset($_GET['pdf']) ? 'pdf' : 'edit';
-} elseif (isset($_GET['popover']) && in_array((string) $_GET['popover'], $allowedPopovers, true)) {
+if (isset($_GET['popover']) && in_array((string) $_GET['popover'], $allowedPopovers, true)) {
     $popoverOpen = (string) $_GET['popover'];
+} elseif ($error !== '') {
+    $popoverOpen = isset($_GET['pdf']) ? 'pdf' : 'edit';
+} elseif (isset($_GET['supplement']) || isset($_GET['supplement_removed'])) {
+    $popoverOpen = 'pdf';
 }
 $subjectSaved = isset($_GET['subject']);
 $subjectDetached = isset($_GET['subject_detached']);
@@ -80,6 +83,10 @@ $issueSubjects = $partitionedSubjects['regular'];
 $catalogMediaLinkAvailable = MagazineSubjectCatalogLink::isAvailable();
 $catalogMediaDomainChoices = MagazineSubjectCatalogLink::linkableMediaDomainChoices();
 
+$supplements = MagazineIssueSupplementRepository::isAvailable()
+    ? (new MagazineIssueSupplementRepository())->listForOeuvre($oeuvreId)
+    : [];
+
 View::render('magazine-numero', [
     'pageTitle' => (string) ($issue['titre'] ?? 'Numéro'),
     'issue' => $issue,
@@ -107,4 +114,5 @@ View::render('magazine-numero', [
     'pdfUrl' => (int) ($issue['stored_object_id'] ?? 0) > 0
         ? '/media-object.php?id=' . (int) $issue['stored_object_id']
         : '',
+    'supplements' => $supplements,
 ]);

@@ -121,6 +121,20 @@ Sur la **fiche numéro** (`/magazine-numero.php?id=…`) :
 
 Le fichier est supprimé du serveur et l’icône PDF disparaît. Le numéro reste dans votre collection (si vous aviez aussi le support **Papier**, il reste possédé).
 
+### Suppléments / livrets bonus
+
+Un numéro peut avoir **un ou plusieurs PDF secondaires** (livret posters, CD-ROM, etc.) :
+
+1. Sur la fiche numéro, icône **PDF** → section **Suppléments / livrets**.
+2. Choisissez un libellé optionnel et un ou plusieurs fichiers PDF.
+3. Sous la couverture apparaissent des **vignettes** (1re page de chaque PDF), comme la 4e de couverture des livres.
+4. Clic sur la vignette → agrandissement ; lien **Lire** → ouverture du PDF.
+
+Le texte des 6 premières pages de chaque supplément est **indexé** et fusionné dans la recherche du numéro.
+
+Table : `magazine_issue_supplement` (migration `070_magazine_issue_supplement.sql`).  
+Chemin fichier : `…/{revue}-{numero}-id{oeuvreId}-supp-{uniq}.pdf`.
+
 ### Après l’import (traitement différé)
 
 Pour ne pas bloquer le navigateur sur les gros fichiers, le post-traitement s’exécute en fin de requête HTTP :

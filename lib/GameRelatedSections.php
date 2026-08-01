@@ -193,7 +193,7 @@ final class GameRelatedSections
     /**
      * @param list<array<string, mixed>> $rows
      * @param callable(array<string, mixed>): string $urlForRelated
-     * @return list<array{url: string, poster_url: mixed, annee: int, titre: string, in_library: bool}>
+     * @return list<array{url: string, poster_url: mixed, annee: int, titre: string, in_library: bool, is_current: bool}>
      */
     private static function mapRelatedItems(array $rows, callable $urlForRelated): array
     {
@@ -202,15 +202,18 @@ final class GameRelatedSections
             if (!is_array($row)) {
                 continue;
             }
+            $isCurrent = !empty($row['is_current']);
             $inLibrary = array_key_exists('in_library', $row)
                 ? (bool) $row['in_library']
                 : (int) ($row['bib_id'] ?? $row['library_bib_id'] ?? 0) > 0;
+            $url = $isCurrent ? '' : $urlForRelated($row);
             $items[] = [
-                'url' => $urlForRelated($row),
+                'url' => $url,
                 'poster_url' => $row['poster_url'] ?? null,
                 'annee' => (int) ($row['annee'] ?? 0),
                 'titre' => (string) ($row['titre'] ?? ''),
                 'in_library' => $inLibrary,
+                'is_current' => $isCurrent,
             ];
         }
 

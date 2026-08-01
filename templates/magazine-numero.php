@@ -76,6 +76,12 @@
         <?php if (isset($_GET['pdf_removed'])): ?>
             <div class="alert alert-success">Le PDF a été retiré de ce numéro.</div>
         <?php endif; ?>
+        <?php if (isset($_GET['supplement'])): ?>
+            <div class="alert alert-success">Supplément(s) ajouté(s). La vignette et l’indexation se préparent en arrière-plan.</div>
+        <?php endif; ?>
+        <?php if (isset($_GET['supplement_removed'])): ?>
+            <div class="alert alert-success">Supplément retiré.</div>
+        <?php endif; ?>
         <?php if ($error !== ''): ?>
             <div class="alert alert-warning"><?= Moncine\View::escape($error) ?></div>
         <?php endif; ?>

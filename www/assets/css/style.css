@@ -6366,6 +6366,66 @@ td .game-linux-badge--plain {
     font-size: 0.8rem;
 }
 
+/* Suppléments magazine (sous la couverture, même motif que 4e de couverture livres) */
+.magazine-supplements {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin-top: 0.85rem;
+    max-width: 160px;
+}
+
+.magazine-supplements .livre-back-cover {
+    margin-top: 0;
+}
+
+.magazine-supplement__placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100px;
+    height: 140px;
+    margin: 0 auto;
+    background: var(--surface-muted, #eceff1);
+    color: var(--text-muted, #607d8b);
+    font-size: 0.75rem;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+}
+
+.magazine-pdf-popover__sep {
+    margin: 1rem 0;
+    border: none;
+    border-top: 1px solid var(--border, rgba(0, 0, 0, 0.12));
+}
+
+.magazine-supplement-manage-list {
+    list-style: none;
+    margin: 0 0 0.75rem;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.45rem;
+}
+
+.magazine-supplement-manage-list__item {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.35rem 0.75rem;
+    padding: 0.35rem 0;
+    border-bottom: 1px solid var(--border, rgba(0, 0, 0, 0.08));
+}
+
+.magazine-supplement-manage-list__actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+}
+
 /* Surimpression : image agrandie */
 body.livre-cover-lightbox-open {
     overflow: hidden;

@@ -3,7 +3,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 [![Tests](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml/badge.svg)](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml)
 
-**Version : 0.8.1**
+**Version : 0.8.2**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -75,6 +75,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.8.2** | Magazines : suppléments PDF ; jeux : jeu courant encadré dans la saga |
 | **0.8.1** | M3 Livres : collection, sagas, lectures / ressentis, stats, pont jeux |
 | **0.8.0** | Clôture M2 BD : validation terrain, listes imprimables BD/magazines, partage magazines |
 | **0.7.45** | Jeux : manuels/soluces partagés sur le catalogue (admin) |

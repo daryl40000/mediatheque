@@ -125,6 +125,51 @@ final class GameRelatedSectionsTest extends TestCase
         $this->assertTrue($sections[1]['items'][1]['in_library']);
     }
 
+    public function testFranchiseCurrentGameIsFramedWithoutLink(): void
+    {
+        $sections = GameRelatedSections::build(
+            ['is_extension' => false, 'is_remake' => false],
+            null,
+            null,
+            [],
+            [],
+            static fn (array $row): string => (string) ($row['library_url'] ?? ''),
+            [
+                [
+                    'in_library' => true,
+                    'library_url' => '/jeu.php?id=1',
+                    'titre' => 'Saga 1',
+                    'annee' => 2018,
+                    'poster_url' => null,
+                    'is_current' => false,
+                ],
+                [
+                    'in_library' => true,
+                    'library_url' => '/jeu.php?id=2',
+                    'titre' => 'Saga courant',
+                    'annee' => 2020,
+                    'poster_url' => null,
+                    'is_current' => true,
+                ],
+                [
+                    'in_library' => false,
+                    'library_url' => '/jeu.php?id=3',
+                    'titre' => 'Saga 3',
+                    'annee' => 2022,
+                    'poster_url' => null,
+                    'is_current' => false,
+                ],
+            ],
+        );
+
+        $this->assertCount(1, $sections);
+        $this->assertSame('Saga', $sections[0]['title']);
+        $this->assertFalse($sections[0]['items'][0]['is_current']);
+        $this->assertTrue($sections[0]['items'][1]['is_current']);
+        $this->assertSame('', $sections[0]['items'][1]['url']);
+        $this->assertSame('/jeu.php?id=3', $sections[0]['items'][2]['url']);
+    }
+
     public function testExtensionAlsoShowsFranchiseSection(): void
     {
         $sections = GameRelatedSections::build(

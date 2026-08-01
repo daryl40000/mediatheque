@@ -9,6 +9,28 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.2] — 2026-08-01
+
+**Magazines — suppléments PDF · Jeux — saga avec titre courant**
+
+### Ajouté
+
+- **Suppléments / livrets bonus** sur un numéro magazine : un ou plusieurs PDF, vignette = 1re page, texte indexé dans la recherche.
+- Vignettes des suppléments sous la couverture (motif 4e de couverture livres) ; gestion via le panneau PDF.
+- Boutons **Modifier** / **PDF** placés juste sous la couverture principale.
+
+### Modifié
+
+- **Saga jeux** : le jeu de la fiche apparaît **à sa place**, encadré (comme les séries BD / sagas livres), avec voisins avant/après.
+
+### Technique
+
+- Migration **070** (`magazine_issue_supplement`) ; `MagazineIssueSupplementRepository` ; FTS enrichi des textes suppléments.
+- `GameSagaContext` pour le bandeau saga ; tests `GameRelatedSectionsTest`.
+- Doc : [doc/magazines.md](doc/magazines.md).
+
+---
+
 ## [0.8.1] — 2026-07-30
 
 **M3 Livres — collection utilisable (première livraison)**

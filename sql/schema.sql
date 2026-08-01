@@ -442,6 +442,25 @@ CREATE TABLE IF NOT EXISTS oeuvre_magazine (
 CREATE INDEX IF NOT EXISTS idx_oeuvre_magazine_series ON oeuvre_magazine(series_id);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_magazine_series_ordre ON oeuvre_magazine(series_id, numero_ordre);
 
+CREATE TABLE IF NOT EXISTS magazine_issue_supplement (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    oeuvre_id INTEGER NOT NULL REFERENCES oeuvres(id) ON DELETE CASCADE,
+    stored_object_id INTEGER NOT NULL REFERENCES stored_objects(id) ON DELETE CASCADE,
+    label TEXT NOT NULL DEFAULT '',
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    cover_url TEXT NOT NULL DEFAULT '',
+    pdf_text_preview TEXT NOT NULL DEFAULT '',
+    pages INTEGER NOT NULL DEFAULT 0,
+    original_filename TEXT NOT NULL DEFAULT '',
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_magazine_issue_supplement_oeuvre
+    ON magazine_issue_supplement(oeuvre_id);
+
+CREATE UNIQUE INDEX IF NOT EXISTS idx_magazine_issue_supplement_stored
+    ON magazine_issue_supplement(stored_object_id);
+
 CREATE TABLE IF NOT EXISTS series_bibliotheque (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     series_id INTEGER NOT NULL REFERENCES series(id) ON DELETE CASCADE,

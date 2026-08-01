@@ -14,6 +14,7 @@ use Moncine\GamePlatform;
 use Moncine\GameCompletionRepository;
 use Moncine\GameFranchiseRepository;
 use Moncine\GameRelatedSections;
+use Moncine\GameSagaContext;
 use Moncine\GameRepository;
 use Moncine\LivreGameLink;
 use Moncine\MagazineGameLink;
@@ -166,26 +167,16 @@ if (GameRepository::hasRemakeColumns()) {
 $franchiseGames = [];
 $franchiseName = GameRelatedSections::resolveFranchiseName($game, $baseGame, $originalGame);
 if ($franchiseName !== '' && GameFranchiseRepository::isAvailable() && $oeuvreId > 0) {
-    $franchiseRepo = new GameFranchiseRepository();
-    $franchiseGames = $franchiseRepo->listCatalogByFranchise($franchiseName, $oeuvreId);
     $userId = UserContext::currentUserId();
     $foyerId = UserContext::currentFoyerId();
-    foreach ($franchiseGames as $index => $row) {
-        $sagaOeuvreId = (int) ($row['oeuvre_id'] ?? 0);
-        if ($sagaOeuvreId <= 0) {
-            continue;
-        }
-        $franchiseGames[$index] = array_merge(
-            $franchiseGames[$index],
-            GameRelatedSections::libraryStateForRelatedOeuvre(
-                $repo,
-                $sagaOeuvreId,
-                $userId,
-                $foyerId,
-                View::oeuvreJeuUrl($sagaOeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage),
-            ),
-        );
-    }
+    $franchiseGames = GameSagaContext::neighborStrip(
+        new GameFranchiseRepository(),
+        $repo,
+        $franchiseName,
+        $oeuvreId,
+        $userId,
+        $foyerId,
+    );
 }
 
 $saveError = (string) ($_GET['save_error'] ?? '');

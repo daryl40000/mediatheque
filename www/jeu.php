@@ -12,6 +12,7 @@ use Moncine\GameCompletionRepository;
 use Moncine\GamePlatform;
 use Moncine\GameFranchiseRepository;
 use Moncine\GameRelatedSections;
+use Moncine\GameSagaContext;
 use Moncine\GameRepository;
 use Moncine\HistoriqueRepository;
 use Moncine\IgdbConfig;
@@ -206,24 +207,14 @@ if (GameRepository::hasRemakeColumns()) {
 $franchiseGames = [];
 $franchiseName = GameRelatedSections::resolveFranchiseName($game, $baseGame, $originalGame);
 if ($franchiseName !== '' && GameFranchiseRepository::isAvailable() && $oeuvreId > 0) {
-    $franchiseRepo = new GameFranchiseRepository();
-    $franchiseGames = $franchiseRepo->listCatalogByFranchise($franchiseName, $oeuvreId);
-    foreach ($franchiseGames as $index => $row) {
-        $sagaOeuvreId = (int) ($row['oeuvre_id'] ?? 0);
-        if ($sagaOeuvreId <= 0) {
-            continue;
-        }
-        $franchiseGames[$index] = array_merge(
-            $franchiseGames[$index],
-            GameRelatedSections::libraryStateForRelatedOeuvre(
-                $repo,
-                $sagaOeuvreId,
-                $userId,
-                $foyerId,
-                View::oeuvreJeuUrl($sagaOeuvreId),
-            ),
-        );
-    }
+    $franchiseGames = GameSagaContext::neighborStrip(
+        new GameFranchiseRepository(),
+        $repo,
+        $franchiseName,
+        $oeuvreId,
+        $userId,
+        $foyerId,
+    );
 }
 
 View::render('jeu', [

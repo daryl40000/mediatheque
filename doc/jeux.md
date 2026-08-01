@@ -247,6 +247,8 @@ Fichiers dans `www/assets/img/game-editions/` : `cd_dvd`, `disquette`, `steam`, 
 
 Depuis **0.7.12** : sur une fiche **extension** ou **remake**, bandeau **Saga** (franchise du jeu de base si la fiche n’en a pas) ; sections **Jeu de base** / **Jeu d’origine** en tête de fiche (`GameRelatedSections::resolveFranchiseName`).
 
+Depuis **0.8.2** : le bandeau saga inclut le **jeu courant encadré** à sa position (voisins avant/après), comme les séries BD / sagas livres (`GameSagaContext`).
+
 Depuis **0.7.13** : sur la fiche bibliothèque (`/jeu.php`), les jaquettes de saga / extensions / remakes **non possédées** restent grisées mais **cliquables** vers la fiche catalogue (`/oeuvre-jeu.php`) pour tout utilisateur connecté.
 
 ### Liens magasins catalogue vs possession (**0.7.14**)
@@ -327,7 +329,8 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | `GameTitle` | Titre affiché (français prioritaire, anglais en secours) |
 | `GameSchema` | Détection colonnes / migrations progressives |
 | `GameRowMapper` | Hydratation lignes catalogue et bibliothèque |
-| `GameRelatedSections` | Bandeaux extensions / remakes |
+| `GameRelatedSections` | Bandeaux extensions / remakes / saga |
+| `GameSagaContext` | Bandeau saga avec titre courant encadré (**0.8.2**) |
 | `SearchMatch` | Recherche tolérante (accents, casse, faute) pour autocomplétion |
 | `GameAttachmentRepository` | Upload / liste / suppression des fichiers joints catalogue (admin) |
 | `GameEditionIcons` | Icônes support (CD/DVD, disquette, Steam…) — PNG/SVG dans `www/assets/img/game-editions/` |

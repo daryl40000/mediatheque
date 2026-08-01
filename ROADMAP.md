@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.8.1** (2026-07-30)  
+**Version actuelle : 0.8.2** (2026-08-01)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -43,6 +43,10 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.8.2** — Suppléments magazines + saga jeux (2026-08-01)
+
+- PDF suppléments / livrets sur les numéros ; bandeau saga jeux avec titre courant encadré.
 
 ### ✅ **0.8.1** — M3 Livres utilisable (2026-07-30)
 
@@ -745,4 +749,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.8.1** — 2026-07-30 (M3 Livres utilisable).*
+*Dernière mise à jour : **0.8.2** — 2026-08-01 (suppléments magazines, saga jeux).*

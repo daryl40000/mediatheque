@@ -11,6 +11,7 @@ use Moncine\Auth;
 use Moncine\CatalogAdmin;
 use Moncine\GameAttachmentRepository;
 use Moncine\LocalFilesystemObjectStorage;
+use Moncine\MagazineIssueSupplementRepository;
 use Moncine\MagazineRepository;
 use Moncine\MediaStorage;
 use Moncine\StoredObjectDelivery;
@@ -35,6 +36,8 @@ $foyerId = UserContext::currentFoyerId();
 $canAccess = CatalogAdmin::canAccess()
     || (MagazineRepository::isAvailable()
         && (new MagazineRepository())->userCanAccessStoredObject($id, $userId, $foyerId))
+    || (MagazineIssueSupplementRepository::isAvailable()
+        && (new MagazineIssueSupplementRepository())->userCanAccessStoredObject($id, $userId, $foyerId))
     || (GameAttachmentRepository::isAvailable()
         && (new GameAttachmentRepository())->userCanAccessStoredObject($id, $userId, $foyerId));
 

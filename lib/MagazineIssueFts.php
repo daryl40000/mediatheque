@@ -25,7 +25,7 @@ final class MagazineIssueFts
         return MagazineFtsQuery::matchExpression($query);
     }
 
-    /** Reconstruit l’index à partir de oeuvre_magazine (maintenance). */
+    /** Reconstruit l’index à partir de oeuvre_magazine (+ textes des suppléments). */
     public static function reindexAll(): void
     {
         if (!self::isAvailable()) {
@@ -34,16 +34,13 @@ final class MagazineIssueFts
 
         $db = Database::getInstance();
         $db->exec('DELETE FROM magazine_issue_fts');
-        $db->exec(
-            'INSERT INTO magazine_issue_fts (oeuvre_id, series_id, numero, sommaire, pdf_text_preview, date_parution)
-             SELECT om.oeuvre_id,
-                    om.series_id,
-                    COALESCE(om.numero, \'\'),
-                    COALESCE(om.sommaire, \'\'),
-                    COALESCE(om.pdf_text_preview, \'\'),
-                    COALESCE(om.date_parution, \'\')
-             FROM oeuvre_magazine om'
-        );
+        $stmt = $db->query('SELECT oeuvre_id FROM oeuvre_magazine ORDER BY oeuvre_id ASC');
+        if ($stmt === false) {
+            return;
+        }
+        foreach ($stmt->fetchAll(PDO::FETCH_COLUMN) ?: [] as $oeuvreId) {
+            self::upsert((int) $oeuvreId);
+        }
     }
 
     public static function upsert(int $oeuvreId): void
@@ -68,6 +65,15 @@ final class MagazineIssueFts
         }
 
         self::delete($oeuvreId);
+        $pdfPreview = (string) ($row['pdf_text_preview'] ?? '');
+        if (MagazineIssueSupplementRepository::isAvailable()) {
+            $supplementText = (new MagazineIssueSupplementRepository())
+                ->concatTextPreviewsForOeuvre($oeuvreId);
+            if ($supplementText !== '') {
+                $pdfPreview = trim($pdfPreview . "\n\n" . $supplementText);
+            }
+        }
+
         $insert = $db->prepare(
             'INSERT INTO magazine_issue_fts (oeuvre_id, series_id, numero, sommaire, pdf_text_preview, date_parution)
              VALUES (?, ?, ?, ?, ?, ?)'
@@ -77,7 +83,7 @@ final class MagazineIssueFts
             (int) ($row['series_id'] ?? 0),
             (string) ($row['numero'] ?? ''),
             (string) ($row['sommaire'] ?? ''),
-            (string) ($row['pdf_text_preview'] ?? ''),
+            $pdfPreview,
             (string) ($row['date_parution'] ?? ''),
         ]);
     }

@@ -8,6 +8,7 @@
  * @var string $pdfUrl
  * @var string $popoverOpen edit|pdf
  * @var string $error
+ * @var list<array<string, mixed>> $supplements
  */
 $bibId = (int) ($bibId ?? 0);
 $seriesId = (int) ($seriesId ?? 0);
@@ -16,6 +17,8 @@ $pdfUrl = trim((string) ($pdfUrl ?? ''));
 $hasPdf = $pdfUrl !== '';
 $popoverOpen = (string) ($popoverOpen ?? '');
 $error = (string) ($error ?? '');
+$supplements = $supplements ?? [];
+$supplementsAvailable = Moncine\MagazineIssueSupplementRepository::isAvailable();
 ?>
 <div class="game-detail-sidebar__actions"
      data-detail-actions
@@ -133,6 +136,60 @@ $error = (string) ($error ?? '');
                         <label for="popover_upload_pdf">Fichier PDF</label>
                         <input type="file" name="pdf_file" id="popover_upload_pdf" accept="application/pdf,.pdf" required>
                         <button type="submit" class="btn btn-primary">Importer le PDF</button>
+                    </form>
+                <?php endif; ?>
+
+                <?php if ($supplementsAvailable): ?>
+                    <hr class="magazine-pdf-popover__sep">
+                    <p class="game-action-popover__title">Suppléments / livrets</p>
+                    <p class="hint">PDF bonus (posters, livret, CD…). La 1re page sert de vignette ; le texte est indexé pour la recherche.</p>
+
+                    <?php if ($supplements !== []): ?>
+                        <ul class="magazine-supplement-manage-list" role="list">
+                            <?php foreach ($supplements as $supplement):
+                                $suppId = (int) ($supplement['id'] ?? 0);
+                                $suppLabel = (string) ($supplement['display_label'] ?? 'Supplément');
+                                $suppPdfUrl = trim((string) ($supplement['pdf_url'] ?? ''));
+                                ?>
+                                <li class="magazine-supplement-manage-list__item" role="listitem">
+                                    <span class="magazine-supplement-manage-list__label">
+                                        <?= Moncine\View::escape($suppLabel) ?>
+                                        <?php if ((int) ($supplement['pages'] ?? 0) > 0): ?>
+                                            <span class="hint">(<?= (int) $supplement['pages'] ?> p.)</span>
+                                        <?php endif; ?>
+                                    </span>
+                                    <span class="magazine-supplement-manage-list__actions">
+                                        <?php if ($suppPdfUrl !== ''): ?>
+                                            <a href="<?= Moncine\View::escape($suppPdfUrl) ?>"
+                                               class="btn btn-ghost btn-sm"
+                                               target="_blank" rel="noopener">Lire</a>
+                                        <?php endif; ?>
+                                        <form method="post" action="/traiter-numero-magazine.php" class="inline-form"
+                                              onsubmit="return confirm('Retirer ce supplément ? Le fichier sera supprimé.');">
+                                            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                                            <input type="hidden" name="bib_id" value="<?= $bibId ?>">
+                                            <input type="hidden" name="action" value="remove_supplement">
+                                            <input type="hidden" name="supplement_id" value="<?= $suppId ?>">
+                                            <button type="submit" class="btn btn-danger-text btn-sm">Retirer</button>
+                                        </form>
+                                    </span>
+                                </li>
+                            <?php endforeach; ?>
+                        </ul>
+                    <?php endif; ?>
+
+                    <form method="post" action="/traiter-numero-magazine.php" enctype="multipart/form-data" class="import-form">
+                        <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                        <input type="hidden" name="bib_id" value="<?= $bibId ?>">
+                        <input type="hidden" name="action" value="add_supplement">
+                        <label for="popover_supplement_label">Libellé (optionnel)</label>
+                        <input type="text" name="supplement_label" id="popover_supplement_label"
+                               maxlength="120" placeholder="Ex. Livret posters, CD-ROM…">
+                        <label for="popover_supplement_pdf">PDF du supplément</label>
+                        <input type="file" name="supplement_pdf_file[]" id="popover_supplement_pdf"
+                               accept="application/pdf,.pdf" multiple required>
+                        <p class="hint">Vous pouvez sélectionner plusieurs fichiers d’un coup.</p>
+                        <button type="submit" class="btn btn-secondary btn-sm">Ajouter le(s) supplément(s)</button>
                     </form>
                 <?php endif; ?>
             </div>
