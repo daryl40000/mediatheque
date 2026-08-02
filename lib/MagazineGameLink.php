@@ -136,8 +136,9 @@ final class MagazineGameLink
 
         $stmt = $this->db->prepare(
             'SELECT ms.id AS subject_id, ms.category, ms.label, ms.detail, ms.parution_year,
-                    oms.oeuvre_id AS issue_oeuvre_id,
-                    om.numero, om.numero_ordre, om.date_parution,
+                    oms.oeuvre_id AS issue_oeuvre_id,'
+            . (MagazineSubjectRepository::hasPageColumn() ? ' oms.page AS article_page,' : ' 0 AS article_page,')
+            . ' om.numero, om.numero_ordre, om.date_parution, om.stored_object_id,
                     s.titre AS series_titre, s.publication_type,
                     s.poster_url AS series_poster_url,
                     o_issue.poster_url,
@@ -177,6 +178,8 @@ final class MagazineGameLink
                 $row['subject_id'] = (int) ($row['subject_id'] ?? 0);
                 $row['bib_id'] = (int) ($row['bib_id'] ?? 0);
                 $row['parution_year'] = (int) ($row['parution_year'] ?? 0);
+                $row['stored_object_id'] = (int) ($row['stored_object_id'] ?? 0);
+                $row['article_page'] = MagazineSubjectRepository::normalizePage($row['article_page'] ?? 0);
                 $row['category'] = $category;
                 $row['categories'] = $category !== '' ? [$category] : [];
                 $row['category_label'] = $categoryLabel;
@@ -199,6 +202,18 @@ final class MagazineGameLink
 
             if ((int) ($grouped[$issueOeuvreId]['bib_id'] ?? 0) <= 0 && (int) ($row['bib_id'] ?? 0) > 0) {
                 $grouped[$issueOeuvreId]['bib_id'] = (int) $row['bib_id'];
+            }
+            if ((int) ($grouped[$issueOeuvreId]['stored_object_id'] ?? 0) <= 0 && (int) ($row['stored_object_id'] ?? 0) > 0) {
+                $grouped[$issueOeuvreId]['stored_object_id'] = (int) $row['stored_object_id'];
+            }
+
+            // Garder la plus petite page positive (début d’article le plus tôt).
+            $candidatePage = MagazineSubjectRepository::normalizePage($row['article_page'] ?? 0);
+            $currentPage = MagazineSubjectRepository::normalizePage(
+                $grouped[$issueOeuvreId]['article_page'] ?? 0
+            );
+            if ($candidatePage > 0 && ($currentPage <= 0 || $candidatePage < $currentPage)) {
+                $grouped[$issueOeuvreId]['article_page'] = $candidatePage;
             }
         }
 
@@ -354,6 +369,14 @@ final class MagazineGameLink
             $label = (string) ($row['category_label'] ?? '');
             $row['category_labels'] = $label !== '' ? [$label] : [];
         }
+
+        $storedObjectId = (int) ($row['stored_object_id'] ?? 0);
+        $articlePage = MagazineSubjectRepository::normalizePage($row['article_page'] ?? 0);
+        $row['stored_object_id'] = $storedObjectId;
+        $row['article_page'] = $articlePage;
+        $row['pdf_url'] = $storedObjectId > 0
+            ? View::mediaObjectUrl($storedObjectId, $articlePage)
+            : '';
 
         return $row;
     }

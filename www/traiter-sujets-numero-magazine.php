@@ -56,6 +56,18 @@ if ($action === 'detach') {
     exit;
 }
 
+if ($action === 'update_page') {
+    $subjectId = (int) ($_POST['subject_id'] ?? 0);
+    $page = MagazineSubjectRepository::normalizePage($_POST['page'] ?? 0);
+    $result = $subjectRepo->updateLinkPage($oeuvreId, $subjectId, $page);
+    if ($result !== true) {
+        header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode((string) $result));
+        exit;
+    }
+    header('Location: ' . $returnUrl . '&subject_page=1');
+    exit;
+}
+
 $seriesId = (int) ($issue['series_id'] ?? 0);
 $series = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE) ?? [
     'tags' => (string) ($issue['series_tags'] ?? ''),
@@ -137,7 +149,8 @@ if ($subject === null) {
     exit;
 }
 
-$result = $subjectRepo->attachToOeuvre($oeuvreId, (int) ($subject['id'] ?? 0));
+$page = MagazineSubjectRepository::normalizePage($_POST['page'] ?? 0);
+$result = $subjectRepo->attachToOeuvre($oeuvreId, (int) ($subject['id'] ?? 0), $page);
 if ($result !== true) {
     header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode((string) $result));
     exit;

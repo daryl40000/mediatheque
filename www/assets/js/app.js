@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
     };
 
     runInit('seriesPossessionFilterMemory', initSeriesPossessionFilterMemory);
+    runInit('collectionViewModeMemory', initCollectionViewModeMemory);
     runInit('catalogListNavScrollReset', initCatalogListNavScrollReset);
     runInit('mobileNav', initMobileNav);
     runInit('desktopNavMenus', initDesktopNavMenus);
@@ -125,6 +126,72 @@ function initSeriesPossessionFilterMemory() {
             const possession = linkParams.get('possession') || 'all';
             if (SERIES_POSSESSION_FILTERS.has(possession)) {
                 localStorage.setItem(storageKey, possession);
+            }
+        } catch {
+            // URL invalide : on ignore.
+        }
+    });
+}
+
+/**
+ * Mémorise le mode d’affichage (Liste / Vignettes / Bibliothèque)
+ * sur Mes films, Mes jeux et Mes livres.
+ */
+const COLLECTION_VIEW_MODES = new Set(['list', 'grid', 'shelf']);
+
+function initCollectionViewModeMemory() {
+    const path = window.location.pathname;
+    let storageKey = null;
+    if (path.endsWith('/films.php')) {
+        storageKey = 'mediatheque.collectionView.film';
+    } else if (path.endsWith('/jeux.php')) {
+        storageKey = 'mediatheque.collectionView.jeu';
+    } else if (path.endsWith('/livres.php')) {
+        storageKey = 'mediatheque.collectionView.livre';
+    }
+    if (!storageKey) {
+        return;
+    }
+
+    const nav = document.querySelector('[data-collection-view-memory]');
+    if (!nav) {
+        return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+
+    if (params.has('view')) {
+        // Mode explicite dans l’URL (vignettes / bibliothèque) → on le garde.
+        const current = params.get('view') || 'list';
+        if (COLLECTION_VIEW_MODES.has(current)) {
+            localStorage.setItem(storageKey, current);
+        }
+    } else {
+        // Pas de `view` = mode Liste dans l’URL.
+        // Si une autre préférence est enregistrée, on y revient automatiquement.
+        const saved = localStorage.getItem(storageKey);
+        if (saved && saved !== 'list' && COLLECTION_VIEW_MODES.has(saved)) {
+            params.set('view', saved);
+            const query = params.toString();
+            window.location.replace(query !== '' ? `${path}?${query}` : path);
+            return;
+        }
+        // Liste choisie (ou première visite) → mémoriser « list ».
+        localStorage.setItem(storageKey, 'list');
+    }
+
+    // Au clic sur Liste / Vignettes / Bibliothèque : enregistrer avant le changement de page.
+    nav.addEventListener('click', (event) => {
+        const link = event.target.closest('a.ui-pill-bar__item[href]');
+        if (!link || !nav.contains(link)) {
+            return;
+        }
+        try {
+            const linkUrl = new URL(link.href, window.location.origin);
+            const linkParams = new URLSearchParams(linkUrl.search);
+            const mode = linkParams.has('view') ? (linkParams.get('view') || 'list') : 'list';
+            if (COLLECTION_VIEW_MODES.has(mode)) {
+                localStorage.setItem(storageKey, mode);
             }
         } catch {
             // URL invalide : on ignore.

@@ -189,7 +189,7 @@ Une ligne par fin enregistrée : `bibliotheque_id`, `user_id`, `completed_at`. V
 | `oeuvre_magazine` | Numéro : `series_id`, `numero`, date, sommaire, PDF (`stored_object_id`) |
 | `series_bibliotheque` | Série suivie en collection ou envies (niveau **série**, pas numéro) |
 | `magazine_subject` | Sujet normalisé (test, preview, interview…) |
-| `oeuvre_magazine_subject` | Lien N↔N numéro ↔ sujet |
+| `oeuvre_magazine_subject` | Lien N↔N numéro ↔ sujet (`page` = page PDF, **071**) |
 | `magazine_subject.catalog_oeuvre_id` | Lien optionnel vers un **jeu** ou un **film** catalogue (pont magazine ↔ catalogue) — voir [pont-magazine-jeu.md](pont-magazine-jeu.md) |
 
 Recherche plein texte (FTS) : migration **038** — voir [magazines.md](magazines.md).

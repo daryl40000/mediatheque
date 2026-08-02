@@ -353,4 +353,107 @@ final class MagazineSubjectTest extends MoncineTestCase
             $this->assertSame(true, (new MagazineGameLink())->setSubjectCatalogLink($subjectId, $catalogOeuvreId));
         }
     }
+
+    public function testSubjectLinkPageStoredAndUsedInGameMagazinePdfUrl(): void
+    {
+        if (!MagazineSubjectRepository::hasPageColumn()) {
+            $this->markTestSkipped('Colonne page absente (migration 071).');
+        }
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $magRepo = new MagazineRepository();
+        $subjectRepo = new MagazineSubjectRepository();
+        $seriesRepo = new SeriesRepository();
+        $gameRepo = new GameRepository();
+
+        $seriesId = $seriesRepo->create([
+            'titre' => 'Page Link Mag ' . uniqid('', true),
+            'publication_type' => PublicationType::MENSUEL,
+            'tags' => 'PC',
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $bibId = $magRepo->createIssueWithLibrary($seriesId, [
+            'numero' => '99',
+            'numero_ordre' => 99,
+            'date_parution' => '2024-05-01',
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bibId);
+        $issue = $magRepo->findIssueByBibId($bibId, $userId, $foyerId);
+        $this->assertNotNull($issue);
+        $issueOeuvreId = (int) $issue['oeuvre_id'];
+
+        // Simuler un PDF déjà importé.
+        $db = \Moncine\Database::getInstance();
+        $db->prepare(
+            'INSERT INTO stored_objects (backend, relative_path, mime, size_bytes)
+             VALUES (\'local\', ?, \'application/pdf\', 100)'
+        )->execute(['magazines/test-page-link-' . uniqid('', true) . '.pdf']);
+        $storedObjectId = (int) $db->lastInsertId();
+        $this->assertGreaterThan(0, $storedObjectId);
+        $db->prepare(
+            'UPDATE oeuvre_magazine SET stored_object_id = ? WHERE oeuvre_id = ?'
+        )->execute([$storedObjectId, $issueOeuvreId]);
+
+        MediaContext::set(MediaDomain::JEU);
+        $gameBibId = $gameRepo->createWithLibrary([
+            'titre' => 'Page Link Game ' . uniqid('', true),
+            'platform' => GamePlatform::PC,
+            'annee' => 2024,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($gameBibId);
+        $game = $gameRepo->findByBibId($gameBibId, $userId, $foyerId);
+        $this->assertNotNull($game);
+        $catalogOeuvreId = (int) $game['oeuvre_id'];
+
+        MediaContext::set(MediaDomain::MAGAZINE);
+        $series = $seriesRepo->findById($seriesId, MediaDomain::MAGAZINE);
+        $this->assertNotNull($series);
+        $prepared = $subjectRepo->prepareSubjectForIssueWithCatalog(
+            MagazineSubject::TEST,
+            (string) $game['titre'],
+            '',
+            $series,
+            $issue,
+            2024,
+            $catalogOeuvreId
+        );
+        $this->assertIsArray($prepared);
+        $subject = $subjectRepo->findOrCreate(
+            (string) $prepared['category'],
+            (string) $prepared['label'],
+            (string) $prepared['detail'],
+            (int) $prepared['parution_year']
+        );
+        $this->assertNotNull($subject);
+        $subjectId = (int) $subject['id'];
+
+        $this->assertTrue($subjectRepo->attachToOeuvre($issueOeuvreId, $subjectId, 42) === true);
+        $this->assertSame(true, (new MagazineGameLink())->setSubjectCatalogLink($subjectId, $catalogOeuvreId));
+
+        $linked = $subjectRepo->listForOeuvre($issueOeuvreId);
+        $this->assertCount(1, $linked);
+        $this->assertSame(42, (int) ($linked[0]['page'] ?? 0));
+
+        $this->assertTrue($subjectRepo->updateLinkPage($issueOeuvreId, $subjectId, 55) === true);
+        $linked = $subjectRepo->listForOeuvre($issueOeuvreId);
+        $this->assertSame(55, (int) ($linked[0]['page'] ?? 0));
+
+        $coverage = (new MagazineGameLink())->listIssueCoverageForGame($catalogOeuvreId, $userId, $foyerId);
+        $this->assertNotEmpty($coverage);
+        $match = null;
+        foreach ($coverage as $row) {
+            if ((int) ($row['issue_oeuvre_id'] ?? 0) === $issueOeuvreId) {
+                $match = $row;
+                break;
+            }
+        }
+        $this->assertNotNull($match);
+        $this->assertSame(55, (int) ($match['article_page'] ?? 0));
+        $this->assertSame(
+            '/media-object.php?id=' . $storedObjectId . '#page=55',
+            (string) ($match['pdf_url'] ?? '')
+        );
+    }
 }

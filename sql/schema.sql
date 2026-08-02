@@ -630,6 +630,7 @@ CREATE INDEX IF NOT EXISTS idx_magazine_subject_catalog_oeuvre ON magazine_subje
 CREATE TABLE IF NOT EXISTS oeuvre_magazine_subject (
     oeuvre_id INTEGER NOT NULL REFERENCES oeuvres(id) ON DELETE CASCADE,
     subject_id INTEGER NOT NULL REFERENCES magazine_subject(id) ON DELETE CASCADE,
+    page INTEGER NOT NULL DEFAULT 0,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (oeuvre_id, subject_id)
 );

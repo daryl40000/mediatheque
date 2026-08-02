@@ -905,6 +905,12 @@ final class View
         return MagazineUrls::magazineIssueUrl($bibId);
     }
 
+    /** Lecture PDF stocké, éventuellement à une page précise (#page=N). */
+    public static function mediaObjectUrl(int $storedObjectId, int $page = 0): string
+    {
+        return MagazineUrls::mediaObjectUrl($storedObjectId, $page);
+    }
+
     /** Lien cliquable vers un numéro magazine (bascule d’onglet si besoin). */
     public static function magazineIssueNavUrl(int $bibId): string
     {

@@ -16,9 +16,10 @@ Un sujet **sans lien** reste parfaitement valide. Le pont enrichit l’expérien
 
 1. **À l’ajout** d’un sujet sur un numéro : menu **type de média** (jeu, film) + autocomplétion catalogue ; **création automatique** de la fiche si le titre n’existe pas encore (**0.7.17**).
 2. **Fiche sujet** : lien vers la fiche catalogue si le média est dans votre bibliothèque.
-3. **Fiche jeu** (`/jeu.php`) : bouton **Magazines** → page `/jeu-magazines.php` (grille de couvertures + tags par numéro, catalogue complet) (**0.7.17**).
-4. **Fiche catalogue admin** (`/oeuvre-jeu.php`, `/oeuvre.php`) : sujets reliés (tous numéros du catalogue).
-5. **Recherche globale** (`/magazines.php`) : remonte aussi les sujets reliés dont le **titre catalogue** correspond.
+3. **Fiche jeu** (`/jeu.php`) : bouton **Magazines** → page `/jeu-magazines.php` (grille de couvertures + tags par numéro, catalogue complet) (**0.7.17**). Bouton **PDF** (avec `p.N` si renseigné) ouvre le fichier à la page de l’article.
+4. **Fiche numéro** : champ **Page** à l’ajout d’un sujet, et sous chaque sujet déjà lié (pour compléter les anciens liens).
+5. **Fiche catalogue admin** (`/oeuvre-jeu.php`, `/oeuvre.php`) : sujets reliés (tous numéros du catalogue).
+6. **Recherche globale** (`/magazines.php`) : remonte aussi les sujets reliés dont le **titre catalogue** correspond.
 
 ## Rattachement rétroactif (admin)
 

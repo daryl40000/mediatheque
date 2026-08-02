@@ -68,6 +68,47 @@ if ($stripSubjects === []) {
                         </div>
                     <?php endif; ?>
 
+                    <?php
+                    // Procédure pour les liens déjà existants : saisir / corriger la page PDF.
+                    $articlePage = Moncine\MagazineSubjectRepository::normalizePage($subject['page'] ?? 0);
+                    $storedObjectId = (int) ($issue['stored_object_id'] ?? 0);
+                    $pdfUrl = $storedObjectId > 0
+                        ? Moncine\View::mediaObjectUrl($storedObjectId, $articlePage)
+                        : '';
+                    ?>
+                    <form method="post"
+                          action="/traiter-sujets-numero-magazine.php"
+                          class="magazine-subject-strip__page-form"
+                          onclick="event.stopPropagation()">
+                        <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                        <input type="hidden" name="bib_id" value="<?= (int) $bibId ?>">
+                        <input type="hidden" name="action" value="update_page">
+                        <input type="hidden" name="subject_id" value="<?= $subjectId ?>">
+                        <label class="magazine-subject-strip__page-label" for="subject_page_<?= $subjectId ?>">
+                            Page
+                        </label>
+                        <input type="number"
+                               class="magazine-subject-strip__page-input"
+                               name="page"
+                               id="subject_page_<?= $subjectId ?>"
+                               min="0"
+                               max="9999"
+                               step="1"
+                               value="<?= $articlePage > 0 ? $articlePage : '' ?>"
+                               placeholder="—"
+                               inputmode="numeric"
+                               title="Page dans le PDF">
+                        <button type="submit" class="btn btn-secondary btn-sm magazine-subject-strip__page-save"
+                                title="Enregistrer la page">OK</button>
+                        <?php if ($pdfUrl !== '' && $articlePage > 0): ?>
+                            <a href="<?= Moncine\View::escape($pdfUrl) ?>"
+                               class="magazine-subject-strip__page-open"
+                               target="_blank"
+                               rel="noopener"
+                               title="Ouvrir le PDF à la page <?= $articlePage ?>">PDF</a>
+                        <?php endif; ?>
+                    </form>
+
                     <form method="post"
                           action="/traiter-sujets-numero-magazine.php"
                           class="magazine-subject-strip__detach"

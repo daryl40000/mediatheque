@@ -75,6 +75,24 @@ if ($magazineCoverageRows === []) {
                 </div>
             <?php endif; ?>
 
+            <?php
+            $pdfUrl = trim((string) ($row['pdf_url'] ?? ''));
+            $articlePage = Moncine\MagazineSubjectRepository::normalizePage($row['article_page'] ?? 0);
+            ?>
+            <?php if ($pdfUrl !== ''): ?>
+                <div class="magazine-issue-card__footer magazine-issue-card__footer--coverage">
+                    <a href="<?= Moncine\View::escape($pdfUrl) ?>"
+                       class="btn btn-accent btn-sm magazine-issue-card__pdf"
+                       target="_blank"
+                       rel="noopener"
+                       title="<?= $articlePage > 0
+                           ? 'Ouvrir le PDF à la page ' . $articlePage
+                           : 'Ouvrir le PDF' ?>">
+                        PDF<?= $articlePage > 0 ? ' p.' . $articlePage : '' ?>
+                    </a>
+                </div>
+            <?php endif; ?>
+
             <?php // Bulle au survol : mois et année de parution du numéro. ?>
             <?php if ($dateLabel !== ''): ?>
                 <div class="collection-grid__hover-bubble" aria-hidden="true">

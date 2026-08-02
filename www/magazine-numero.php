@@ -53,6 +53,7 @@ if (isset($_GET['popover']) && in_array((string) $_GET['popover'], $allowedPopov
 }
 $subjectSaved = isset($_GET['subject']);
 $subjectDetached = isset($_GET['subject_detached']);
+$subjectPageUpdated = isset($_GET['subject_page']);
 $subjectError = (string) ($_GET['subject_error'] ?? '');
 
 $oeuvreId = (int) ($issue['oeuvre_id'] ?? 0);
@@ -95,6 +96,7 @@ View::render('magazine-numero', [
     'popoverOpen' => $popoverOpen,
     'subjectSaved' => $subjectSaved,
     'subjectDetached' => $subjectDetached,
+    'subjectPageUpdated' => $subjectPageUpdated,
     'subjectError' => $subjectError,
     'issueSubjects' => $issueSubjects,
     'offeredSubjects' => $offeredSubjects,

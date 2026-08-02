@@ -9,6 +9,23 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.4] — 2026-08-02
+
+**Magazines — page PDF des sujets · Collections — mode d’affichage mémorisé**
+
+### Ajouté
+
+- **Sujets magazines** : numéro de **page PDF** sur le lien sujet ↔ numéro ; édition des liens existants ; ouverture du PDF à la bonne page depuis `/jeu-magazines.php`.
+- **Mes livres / films / jeux** : le mode d’affichage (Liste, Vignettes, Bibliothèque) est **mémorisé** dans le navigateur pour la visite suivante.
+- **Stats remakes** : liste plus compacte, ordre chronologique (jeu d’origine → remake).
+
+### Technique
+
+- Migration **071** (`oeuvre_magazine_subject.page`) ; `MagazineUrls::mediaObjectUrl(..., $page)` ; `MagazineSubjectRepository::updateLinkPage`.
+- `initCollectionViewModeMemory` dans `app.js`.
+
+---
+
 ## [0.8.3] — 2026-08-02
 
 **Jeux — statistiques remakes**

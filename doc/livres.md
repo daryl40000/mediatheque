@@ -7,7 +7,7 @@ Module de gestion des **livres** papier ou numériques, sur le même parcours qu
 
 - Collection (`/livres.php`) et envies (`/livres-envies.php`)
 - Fiche livre (`/livre.php`) : ajout / modification / suppression
-- Modes d’affichage collection : **Liste**, **Vignettes**, **Bibliothèque**
+- Modes d’affichage collection : **Liste**, **Vignettes**, **Bibliothèque** (choix **mémorisé** dans le navigateur pour la prochaine visite)
 - **Sous-titre**, **saga** (comme films / jeux) avec numéro d’ordre
 - **Couverture** + **4e de couverture** (clic pour agrandir)
 - **Catégories** (comme les magazines) : Jeux vidéo, Cinéma, Figurines, Divers…

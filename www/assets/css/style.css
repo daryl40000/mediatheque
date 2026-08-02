@@ -4486,51 +4486,67 @@ body.page-wide .container--wide:has(> .game-detail-page) {
     color: var(--muted);
 }
 
-/* Stats jeux : paires remake / jeu d’origine */
+/* Stats jeux : paires remake / jeu d’origine (compact, ordre chrono) */
 .stats-page__back {
-    margin: 0 0 0.75rem;
-    font-size: 0.95rem;
+    margin: 0 0 0.5rem;
+    font-size: 0.9rem;
 }
 
 .stats-remake-pairs {
     list-style: none;
-    margin: 1.25rem 0 0;
+    margin: 0.75rem 0 0;
     padding: 0;
     display: flex;
     flex-direction: column;
-    gap: 1.25rem;
+    gap: 0.5rem;
 }
 
 .stats-remake-pair {
     display: flex;
-    flex-wrap: wrap;
-    align-items: flex-start;
-    justify-content: center;
-    gap: 1rem 1.5rem;
-    padding: 1rem 1.15rem;
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 0.65rem 0.85rem;
+    padding: 0.45rem 0.65rem;
     border: 1px solid var(--border, rgba(255, 255, 255, 0.08));
-    border-radius: 10px;
+    border-radius: 8px;
     background: rgba(255, 255, 255, 0.02);
 }
 
 .stats-remake-pair__side {
-    flex: 0 1 12rem;
-    max-width: 14rem;
-    text-align: center;
+    flex: 1 1 0;
+    min-width: 0;
+    max-width: none;
+    display: flex;
+    align-items: center;
+    gap: 0.55rem;
+    text-align: left;
 }
 
 .stats-remake-pair__side .game-related-posters {
-    justify-content: center;
+    flex: 0 0 auto;
+    justify-content: flex-start;
     overflow: visible;
+    gap: 0;
 }
 
 .stats-remake-pair__side .game-related-posters__item {
-    width: 7rem;
+    width: 3.25rem;
+}
+
+.stats-remake-pair__side .game-related-posters__year {
+    margin-top: 0.15rem;
+    font-size: 0.68rem;
+}
+
+.stats-remake-pair__meta {
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .stats-remake-pair__role {
-    margin: 0 0 0.45rem;
-    font-size: 0.8rem;
+    margin: 0 0 0.1rem;
+    font-size: 0.68rem;
     font-weight: 600;
     letter-spacing: 0.02em;
     text-transform: uppercase;
@@ -4538,9 +4554,12 @@ body.page-wide .container--wide:has(> .game-detail-page) {
 }
 
 .stats-remake-pair__title {
-    margin: 0.45rem 0 0.2rem;
-    font-size: 0.95rem;
-    line-height: 1.3;
+    margin: 0;
+    font-size: 0.88rem;
+    line-height: 1.25;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 
 .stats-remake-pair__title a {
@@ -4555,8 +4574,8 @@ body.page-wide .container--wide:has(> .game-detail-page) {
 }
 
 .stats-remake-pair__possession {
-    margin: 0;
-    font-size: 0.8rem;
+    margin: 0.1rem 0 0;
+    font-size: 0.72rem;
     color: var(--muted);
 }
 
@@ -4565,19 +4584,38 @@ body.page-wide .container--wide:has(> .game-detail-page) {
 }
 
 .stats-remake-pair__arrow {
+    flex: 0 0 auto;
     align-self: center;
-    font-size: 1.35rem;
+    font-size: 1rem;
     color: var(--muted);
     line-height: 1;
-    padding-top: 1.5rem;
+    padding: 0;
 }
 
 .stats-remake-pair__side--empty {
-    min-height: 8rem;
+    min-height: 0;
     display: flex;
     flex-direction: column;
     justify-content: center;
 }
+
+@media (max-width: 640px) {
+    .stats-remake-pair {
+        flex-wrap: wrap;
+        gap: 0.4rem 0.55rem;
+    }
+
+    .stats-remake-pair__arrow {
+        width: 100%;
+        text-align: center;
+        transform: rotate(90deg);
+    }
+
+    .stats-remake-pair__side {
+        flex: 1 1 100%;
+    }
+}
+
 
 /* Bandeau série BD : tome courant encadré au centre */
 .bd-series-context__strip {
@@ -6339,6 +6377,51 @@ td .game-linux-badge--plain {
     margin-right: 0;
     font-size: 0.65rem;
     padding: 0.1rem 0.3rem;
+}
+
+.magazine-subject-strip__page-form {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+    margin-top: 0.35rem;
+}
+
+.magazine-subject-strip__page-label {
+    margin: 0;
+    font-size: 0.7rem;
+    color: var(--muted);
+}
+
+.magazine-subject-strip__page-input {
+    width: 3.25rem;
+    padding: 0.15rem 0.3rem;
+    font-size: 0.8rem;
+    text-align: center;
+}
+
+.magazine-subject-strip__page-save {
+    padding: 0.15rem 0.45rem;
+    font-size: 0.72rem;
+    line-height: 1.2;
+}
+
+.magazine-subject-strip__page-open {
+    font-size: 0.72rem;
+    font-weight: 600;
+    color: var(--accent);
+    text-decoration: none;
+}
+
+.magazine-subject-strip__page-open:hover,
+.magazine-subject-strip__page-open:focus-visible {
+    text-decoration: underline;
+}
+
+.magazine-issue-card__footer--coverage {
+    margin-top: 0.35rem;
+    justify-content: center;
 }
 
 .magazine-subject-strip__bubble {

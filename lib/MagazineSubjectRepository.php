@@ -37,6 +37,46 @@ final class MagazineSubjectRepository
         return $stmt !== false && $stmt->fetchColumn() !== false;
     }
 
+    /** Colonne page sur oeuvre_magazine_subject (migration 071). */
+    public static function hasPageColumn(): bool
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        if (!self::tableExists()) {
+            return $cache = false;
+        }
+
+        $stmt = Database::getInstance()->query('PRAGMA table_info(oeuvre_magazine_subject)');
+        if ($stmt === false) {
+            return $cache = false;
+        }
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $col) {
+            if (($col['name'] ?? '') === 'page') {
+                return $cache = true;
+            }
+        }
+
+        return $cache = false;
+    }
+
+    /** Normalise un numéro de page PDF (0 = non renseigné). */
+    public static function normalizePage(int|string|null $page): int
+    {
+        $page = (int) $page;
+        if ($page < 0) {
+            return 0;
+        }
+        if ($page > 9999) {
+            return 9999;
+        }
+
+        return $page;
+    }
+
     /** Colonnes magazine_subject (inclut catalog_oeuvre_id si migration 039 appliquée). */
     private static function selectSubjectColumns(string $alias = ''): string
     {
@@ -308,7 +348,9 @@ final class MagazineSubjectRepository
         }
 
         $stmt = $this->db->prepare(
-            'SELECT ' . self::selectSubjectColumns('ms') . ', oms.created_at AS linked_at
+            'SELECT ' . self::selectSubjectColumns('ms')
+            . (self::hasPageColumn() ? ', oms.page' : ', 0 AS page')
+            . ', oms.created_at AS linked_at
              FROM oeuvre_magazine_subject oms
              INNER JOIN magazine_subject ms ON ms.id = oms.subject_id
              WHERE oms.oeuvre_id = ?
@@ -322,7 +364,7 @@ final class MagazineSubjectRepository
     }
 
     /** @return true|string */
-    public function attachToOeuvre(int $oeuvreId, int $subjectId): bool|string
+    public function attachToOeuvre(int $oeuvreId, int $subjectId, int $page = 0): bool|string
     {
         if (!self::tableExists() || $oeuvreId <= 0 || $subjectId <= 0) {
             return 'Sujet ou numéro invalide.';
@@ -331,9 +373,67 @@ final class MagazineSubjectRepository
             return 'Sujet introuvable.';
         }
 
+        $page = self::normalizePage($page);
+
+        if (self::hasPageColumn()) {
+            $existsStmt = $this->db->prepare(
+                'SELECT page FROM oeuvre_magazine_subject WHERE oeuvre_id = ? AND subject_id = ? LIMIT 1'
+            );
+            $existsStmt->execute([$oeuvreId, $subjectId]);
+            $existingPage = $existsStmt->fetchColumn();
+            if ($existingPage !== false) {
+                // Lien déjà présent : mettre à jour la page si une nouvelle valeur est fournie.
+                if ($page > 0 && (int) $existingPage !== $page) {
+                    return $this->updateLinkPage($oeuvreId, $subjectId, $page);
+                }
+
+                return true;
+            }
+
+            $this->db->prepare(
+                'INSERT INTO oeuvre_magazine_subject (oeuvre_id, subject_id, page) VALUES (?, ?, ?)'
+            )->execute([$oeuvreId, $subjectId, $page]);
+
+            return true;
+        }
+
         $this->db->prepare(
             'INSERT OR IGNORE INTO oeuvre_magazine_subject (oeuvre_id, subject_id) VALUES (?, ?)'
         )->execute([$oeuvreId, $subjectId]);
+
+        return true;
+    }
+
+    /**
+     * Met à jour la page PDF d’un lien sujet déjà rattaché à un numéro.
+     *
+     * @return true|string
+     */
+    public function updateLinkPage(int $oeuvreId, int $subjectId, int $page): bool|string
+    {
+        if (!self::tableExists() || $oeuvreId <= 0 || $subjectId <= 0) {
+            return 'Sujet ou numéro invalide.';
+        }
+        if (!self::hasPageColumn()) {
+            return 'La colonne page n’est pas encore disponible (migration 071).';
+        }
+
+        $page = self::normalizePage($page);
+        $stmt = $this->db->prepare(
+            'UPDATE oeuvre_magazine_subject SET page = ? WHERE oeuvre_id = ? AND subject_id = ?'
+        );
+        $stmt->execute([$page, $oeuvreId, $subjectId]);
+
+        if ($stmt->rowCount() <= 0) {
+            // SQLite peut renvoyer 0 si la valeur est identique : vérifier que le lien existe.
+            $check = $this->db->prepare(
+                'SELECT 1 FROM oeuvre_magazine_subject WHERE oeuvre_id = ? AND subject_id = ? LIMIT 1'
+            );
+            $check->execute([$oeuvreId, $subjectId]);
+            if ($check->fetchColumn() === false) {
+                return 'Ce sujet n’est pas lié à ce numéro.';
+            }
+        }
 
         return true;
     }
@@ -373,10 +473,22 @@ final class MagazineSubjectRepository
         }
 
         // Numéro magazine → sujets : transférer avant le CASCADE sur removeId.
-        $this->db->prepare(
-            'INSERT OR IGNORE INTO oeuvre_magazine_subject (oeuvre_id, subject_id)
-             SELECT ?, subject_id FROM oeuvre_magazine_subject WHERE oeuvre_id = ?'
-        )->execute([$keepOeuvreId, $removeOeuvreId]);
+        if (self::hasPageColumn()) {
+            $this->db->prepare(
+                'INSERT INTO oeuvre_magazine_subject (oeuvre_id, subject_id, page)
+                 SELECT ?, subject_id, page FROM oeuvre_magazine_subject WHERE oeuvre_id = ?
+                 ON CONFLICT(oeuvre_id, subject_id) DO UPDATE SET
+                    page = CASE
+                        WHEN oeuvre_magazine_subject.page > 0 THEN oeuvre_magazine_subject.page
+                        ELSE excluded.page
+                    END'
+            )->execute([$keepOeuvreId, $removeOeuvreId]);
+        } else {
+            $this->db->prepare(
+                'INSERT OR IGNORE INTO oeuvre_magazine_subject (oeuvre_id, subject_id)
+                 SELECT ?, subject_id FROM oeuvre_magazine_subject WHERE oeuvre_id = ?'
+            )->execute([$keepOeuvreId, $removeOeuvreId]);
+        }
 
         $this->db->prepare(
             'DELETE FROM oeuvre_magazine_subject WHERE oeuvre_id = ?'
@@ -517,6 +629,7 @@ final class MagazineSubjectRepository
         $row['display_label'] = MagazineSubject::displayLabel($label, $detail, $parutionYear);
         $row['usage_count'] = (int) ($row['usage_count'] ?? 0);
         $row['catalog_oeuvre_id'] = (int) ($row['catalog_oeuvre_id'] ?? 0);
+        $row['page'] = self::normalizePage($row['page'] ?? 0);
 
         return $row;
     }

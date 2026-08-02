@@ -95,7 +95,7 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
         </div>
     </form>
 
-    <nav class="ui-pill-bar" aria-label="Mode d’affichage">
+    <nav class="ui-pill-bar" aria-label="Mode d’affichage" data-collection-view-memory>
         <?php foreach (Moncine\CollectionViewMode::choices() as $modeKey => $modeLabel): ?>
             <?php
             $modeActive = $viewMode === $modeKey;

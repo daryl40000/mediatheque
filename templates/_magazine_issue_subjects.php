@@ -8,6 +8,7 @@
  * @var array<string, mixed> $issue
  * @var bool $subjectSaved
  * @var bool $subjectDetached
+ * @var bool $subjectPageUpdated
  * @var string $subjectError
  * @var list<string> $seriesTags
  * @var string|null $forcedTag
@@ -19,6 +20,7 @@
  */
 $bibId = (int) ($issue['bib_id'] ?? 0);
 $subjectDetached = $subjectDetached ?? false;
+$subjectPageUpdated = $subjectPageUpdated ?? false;
 $catalogMediaLinkAvailable = $catalogMediaLinkAvailable ?? false;
 $catalogMediaDomainChoices = $catalogMediaDomainChoices ?? MagazineSubjectCatalogLink::linkableMediaDomainChoices();
 $hasMultipleTags = count($seriesTags) > 1;
@@ -29,6 +31,7 @@ $subjectYearChoices = $subjectYearChoices ?? Moncine\MagazineSubject::subjectYea
 // Texte d’aide regroupé dans la bulle « i » à côté du titre.
 $subjectsInfoParts = [
     'Associez un sujet testé ou traité dans ce numéro (jeu, voiture, matériel, dossier, interview…).',
+    'Indiquez la page du PDF pour ouvrir l’article au bon endroit depuis la fiche d’un jeu.',
 ];
 if ($parutionYear > 0) {
     $subjectsInfoParts[] = 'Choisissez l’année affichée sur le tag (par défaut celle du numéro : '
@@ -60,6 +63,9 @@ if ($hasSingleTag) {
     <?php endif; ?>
     <?php if ($subjectDetached): ?>
         <p class="alert alert-success">Sujet retiré de ce numéro.</p>
+    <?php endif; ?>
+    <?php if ($subjectPageUpdated): ?>
+        <p class="alert alert-success">Page de l’article enregistrée.</p>
     <?php endif; ?>
     <?php if ($subjectError !== ''): ?>
         <p class="alert alert-warning"><?= Moncine\View::escape($subjectError) ?></p>
@@ -167,6 +173,14 @@ if ($hasSingleTag) {
                     pour les appliquer automatiquement.
                 </p>
             <?php endif; ?>
+
+            <label for="attach_page">Page dans le PDF (optionnel)</label>
+            <input type="number" name="page" id="attach_page" min="0" max="9999" step="1"
+                   value="" placeholder="Ex. 42" inputmode="numeric">
+            <p class="hint">
+                Numéro de page du fichier PDF (pas forcément celui imprimé sur le papier).
+                Laissez vide si inconnu — vous pourrez le remplir plus tard sous chaque sujet.
+            </p>
 
             <button type="submit" class="btn btn-accent">Ajouter le sujet</button>
         </form>

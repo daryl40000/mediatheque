@@ -518,6 +518,7 @@ Sur `/jeux.php` :
   - **Liste** (défaut) ;
   - **Vignettes** (`?view=grid`) — mode **affiche seule** avec bulle au survol (**0.7.17**) ;
   - **Bibliothèque** (`?view=shelf`) — tranches verticales (190 px), bord gauche de la jaquette, vignette au survol ; **toute la collection sur une page** (sans pagination).
+  - Le dernier choix est **mémorisé** dans le navigateur (comme Mes livres / Mes films).
 
 Styles : classes `.game-shelf-*` ; script `initGameShelfHoverPreviews()` dans `app.js`.
 
@@ -525,7 +526,7 @@ Styles : classes `.game-shelf-*` ; script `initGameShelfHoverPreviews()` dans `a
 
 Page `/statistiques.php` (onglet Jeux) : répartition par plateforme, physique/démat, genres, décennies, sujets magazine reliés, **temps de jeu total** et **temps Steam** (**0.7.11**), jeux les plus joués (selon temps total).
 
-Carte **Remakes** (si au moins un remake lié à la collection) : clic → `/stats-remakes-jeux.php` avec paires **remake / jeu d’origine**, jaquettes cliquables (couleur si possédé, grisées sinon) via `GameCollectionStats::listRemakePairs`.
+Carte **Remakes** (si au moins un remake lié à la collection) : clic → `/stats-remakes-jeux.php` avec paires **jeu d’origine → remake** (ordre chronologique), jaquettes cliquables (couleur si possédé, grisées sinon) via `GameCollectionStats::listRemakePairs`.
 
 ## Import bibliothèque GOG (à venir)
 

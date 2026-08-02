@@ -25,7 +25,6 @@ $renderRemakePoster = static function (array $card, string $roleLabel): void {
     }
     ?>
     <div class="stats-remake-pair__side">
-        <p class="stats-remake-pair__role"><?= Moncine\View::escape($roleLabel) ?></p>
         <ul class="game-related-posters" role="list">
             <li class="<?= $itemClasses ?>" role="listitem">
                 <?php if ($url !== ''): ?>
@@ -54,16 +53,19 @@ $renderRemakePoster = static function (array $card, string $roleLabel): void {
                 <?php endif; ?>
             </li>
         </ul>
-        <p class="stats-remake-pair__title">
-            <?php if ($url !== ''): ?>
-                <a href="<?= Moncine\View::escape($url) ?>"><?= Moncine\View::escape($titre) ?></a>
-            <?php else: ?>
-                <?= Moncine\View::escape($titre) ?>
-            <?php endif; ?>
-        </p>
-        <p class="stats-remake-pair__possession<?= $inLibrary ? '' : ' stats-remake-pair__possession--missing' ?>">
-            <?= $inLibrary ? 'Possédé' : 'Non possédé' ?>
-        </p>
+        <div class="stats-remake-pair__meta">
+            <p class="stats-remake-pair__role"><?= Moncine\View::escape($roleLabel) ?></p>
+            <p class="stats-remake-pair__title">
+                <?php if ($url !== ''): ?>
+                    <a href="<?= Moncine\View::escape($url) ?>"><?= Moncine\View::escape($titre) ?></a>
+                <?php else: ?>
+                    <?= Moncine\View::escape($titre) ?>
+                <?php endif; ?>
+            </p>
+            <p class="stats-remake-pair__possession<?= $inLibrary ? '' : ' stats-remake-pair__possession--missing' ?>">
+                <?= $inLibrary ? 'Possédé' : 'Non possédé' ?>
+            </p>
+        </div>
     </div>
     <?php
 };
@@ -75,7 +77,7 @@ $renderRemakePoster = static function (array $card, string $roleLabel): void {
     <h1>Remakes</h1>
     <p class="lead">
         <?= $pairCount ?> remake<?= $pairCount > 1 ? 's' : '' ?> lié<?= $pairCount > 1 ? 's' : '' ?>
-        à votre collection. Chaque ligne montre le remake et son jeu d’origine :
+        à votre collection. Chaque ligne montre le jeu d’origine puis le remake (ordre chronologique) :
         jaquette en couleur si vous le possédez, grisée sinon. Cliquez pour ouvrir la fiche.
     </p>
 
@@ -98,8 +100,6 @@ $renderRemakePoster = static function (array $card, string $roleLabel): void {
                 }
                 ?>
                 <li class="stats-remake-pair" role="listitem">
-                    <?php $renderRemakePoster($remake, 'Remake'); ?>
-                    <span class="stats-remake-pair__arrow" aria-hidden="true">↔</span>
                     <?php if ($original !== null): ?>
                         <?php $renderRemakePoster($original, 'Jeu d’origine'); ?>
                     <?php else: ?>
@@ -108,6 +108,8 @@ $renderRemakePoster = static function (array $card, string $roleLabel): void {
                             <p class="hint">Non renseigné</p>
                         </div>
                     <?php endif; ?>
+                    <span class="stats-remake-pair__arrow" aria-hidden="true">→</span>
+                    <?php $renderRemakePoster($remake, 'Remake'); ?>
                 </li>
             <?php endforeach; ?>
         </ul>

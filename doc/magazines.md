@@ -256,13 +256,22 @@ Pour retrouver un **test**, une **preview**, un **dossier** ou une **interview**
    - si le titre catalogue n’existe pas encore, une **fiche minimale est créée automatiquement** à l’enregistrement (**0.7.17**) ;
    - les sujets reliés s’affichent en **bandeau horizontal** de couvertures (défilement, bulle test/preview…, lien bibliothèque ou catalogue) (**0.7.17**) ;
    - **année** : menu déroulant sur la fiche numéro (par défaut l’année du numéro, modifiable si le test porte sur une autre année) ;
+   - **page PDF** (optionnel) : numéro de page dans le fichier pour ouvrir l’article au bon endroit ; saisissable à l’ajout **ou** sous chaque sujet déjà lié (champ Page + OK) ;
    - à l’enregistrement, les libellés **proches** (espaces ou ponctuation différents) sont **fusionnés** avec le sujet existant.
 3. **Recherche par sujet** (`/magazines-recherche.php`) : filtre **Test** regroupe aussi les anciennes catégories en base ; autocomplétion sur le nom.
 4. **Mes magazines** (`/magazines.php`) : recherche globale dans titres, sujets, sommaires et extraits PDF (depuis **0.4.1**).
+5. **Depuis une fiche jeu** (`/jeu-magazines.php`) : bouton **PDF** (avec `p.N` si la page est connue) ouvre le fichier à la bonne page via `#page=N`.
 
 Affichage type : `Gran Turismo 7 (PC · 2024)`.
 
-Tables : `magazine_subject`, `oeuvre_magazine_subject`, `series.tags` — migrations `034` à `037` ; index FTS — migration `038`.
+Tables : `magazine_subject`, `oeuvre_magazine_subject` (**colonne `page`**, migration **071**), `series.tags` — migrations `034` à `037` ; index FTS — migration `038`.
+
+### Compléter la page sur les liens déjà existants
+
+1. Ouvrez la fiche du **numéro** magazine concerné.
+2. Sous chaque vignette de sujet, saisissez le numéro de **Page** puis **OK**.
+3. Un lien **PDF** apparaît dès qu’une page est enregistrée (si le numéro a un PDF).
+4. Sur la fiche d’un **jeu** → **Magazines** : le bouton PDF ouvre alors directement à cette page.
 
 **Évolution (onglet Jeux, phase M4+)** : lien optionnel d’un sujet test/preview/interview vers une **fiche catalogue** (`catalog_oeuvre_id`) — **jeu** ou **film** depuis **0.7.17**. À l’ajout d’un sujet sur un numéro, l’autocomplétion propose les titres du catalogue (titre, plateforme ou année selon le média) en plus des sujets déjà saisis. Les sujets déjà en production restent valides ; voir [ROADMAP.md](../ROADMAP.md) § *Pont Magazines ↔ Jeux vidéo*, [pont-magazine-jeu.md](pont-magazine-jeu.md) et [jeux.md](jeux.md).
 

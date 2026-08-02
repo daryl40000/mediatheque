@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.8.3** (2026-08-02)  
+**Version actuelle : 0.8.4** (2026-08-02)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -43,6 +43,10 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.8.4** — Page PDF sujets + mode d’affichage mémorisé (2026-08-02)
+
+- Page d’article sur les liens sujet ↔ numéro ; PDF ouvert à la bonne page depuis la fiche jeu ; mémoire Liste / Vignettes / Bibliothèque.
 
 ### ✅ **0.8.3** — Stats remakes jeux (2026-08-02)
 
@@ -753,4 +757,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.8.3** — 2026-08-02 (stats remakes jeux).*
+*Dernière mise à jour : **0.8.4** — 2026-08-02 (page PDF sujets, mode d’affichage mémorisé).*

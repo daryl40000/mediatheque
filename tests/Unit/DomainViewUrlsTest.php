@@ -44,11 +44,14 @@ final class DomainViewUrlsTest extends TestCase
         $this->assertSame('/jeux.php', GameUrls::gamesCollectionUrl());
     }
 
-    public function testViewMagazinesUrlDelegatesToMagazineUrls(): void
+    public function testMediaObjectUrlWithPageFragment(): void
     {
+        $this->assertSame('/media-object.php?id=7', MagazineUrls::mediaObjectUrl(7));
+        $this->assertSame('/media-object.php?id=7#page=42', MagazineUrls::mediaObjectUrl(7, 42));
+        $this->assertSame('', MagazineUrls::mediaObjectUrl(0, 10));
         $this->assertSame(
-            MagazineUrls::magazinesUrl('x'),
-            View::magazinesUrl('x')
+            MagazineUrls::mediaObjectUrl(9, 3),
+            View::mediaObjectUrl(9, 3)
         );
     }
 }

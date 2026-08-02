@@ -165,6 +165,25 @@ final class MagazineUrls
         return $bibId > 0 ? '/magazine-numero.php?id=' . $bibId : '/magazines.php';
     }
 
+    /**
+     * URL de lecture d’un PDF stocké (optionnellement à une page précise).
+     * Le fragment #page=N est interprété par le lecteur PDF du navigateur.
+     */
+    public static function mediaObjectUrl(int $storedObjectId, int $page = 0): string
+    {
+        if ($storedObjectId <= 0) {
+            return '';
+        }
+
+        $url = '/media-object.php?id=' . $storedObjectId;
+        $page = max(0, $page);
+        if ($page > 0) {
+            $url .= '#page=' . $page;
+        }
+
+        return $url;
+    }
+
     /** Lien cliquable vers un numéro magazine (bascule d’onglet si besoin). */
     public static function magazineIssueNavUrl(int $bibId): string
     {

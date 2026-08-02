@@ -208,24 +208,43 @@ final class MagazineSubjectMaintenance
         $this->db->beginTransaction();
         try {
             $stmtLinks = $this->db->prepare(
-                'SELECT oeuvre_id FROM oeuvre_magazine_subject WHERE subject_id = ?'
+                MagazineSubjectRepository::hasPageColumn()
+                    ? 'SELECT oeuvre_id, page FROM oeuvre_magazine_subject WHERE subject_id = ?'
+                    : 'SELECT oeuvre_id, 0 AS page FROM oeuvre_magazine_subject WHERE subject_id = ?'
             );
             $stmtLinks->execute([$removeId]);
-            $oeuvreIds = $stmtLinks->fetchAll(PDO::FETCH_COLUMN) ?: [];
+            $links = $stmtLinks->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
-            $attach = $this->db->prepare(
-                'INSERT OR IGNORE INTO oeuvre_magazine_subject (oeuvre_id, subject_id) VALUES (?, ?)'
-            );
+            $attach = MagazineSubjectRepository::hasPageColumn()
+                ? $this->db->prepare(
+                    'INSERT INTO oeuvre_magazine_subject (oeuvre_id, subject_id, page) VALUES (?, ?, ?)
+                     ON CONFLICT(oeuvre_id, subject_id) DO UPDATE SET
+                        page = CASE
+                            WHEN oeuvre_magazine_subject.page > 0 THEN oeuvre_magazine_subject.page
+                            ELSE excluded.page
+                        END'
+                )
+                : $this->db->prepare(
+                    'INSERT OR IGNORE INTO oeuvre_magazine_subject (oeuvre_id, subject_id) VALUES (?, ?)'
+                );
             $detach = $this->db->prepare(
                 'DELETE FROM oeuvre_magazine_subject WHERE oeuvre_id = ? AND subject_id = ?'
             );
 
-            foreach ($oeuvreIds as $oeuvreId) {
-                $oeuvreId = (int) $oeuvreId;
+            foreach ($links as $link) {
+                $oeuvreId = (int) ($link['oeuvre_id'] ?? 0);
                 if ($oeuvreId <= 0) {
                     continue;
                 }
-                $attach->execute([$oeuvreId, $keepId]);
+                if (MagazineSubjectRepository::hasPageColumn()) {
+                    $attach->execute([
+                        $oeuvreId,
+                        $keepId,
+                        MagazineSubjectRepository::normalizePage($link['page'] ?? 0),
+                    ]);
+                } else {
+                    $attach->execute([$oeuvreId, $keepId]);
+                }
                 $detach->execute([$oeuvreId, $removeId]);
             }
 

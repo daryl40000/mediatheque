@@ -52,6 +52,8 @@ $issues = $issues ?? [];
                 <?php else: ?>
                     <p class="hint">
                         <?= count($issues) ?> numéro<?= count($issues) > 1 ? 's' : '' ?>.
+                        Le bouton PDF ouvre le fichier
+                        (à la bonne page si elle est renseignée sur le sujet).
                     </p>
                     <?php
                     $magazineCoverageRows = $issues;
