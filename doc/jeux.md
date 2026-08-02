@@ -317,6 +317,7 @@ Colonne **`magazine_subject.catalog_oeuvre_id`** (nullable) :
 | `/enregistrer-fichier-jeu.php` | Ajouter un fichier joint (POST) |
 | `/supprimer-fichier-jeu.php` | Supprimer un fichier joint |
 | `/statistiques.php` | Statistiques jeux (onglet Jeux actif) |
+| `/stats-remakes-jeux.php` | Liste remakes / jeux d’origine (depuis la carte stats) |
 
 ## Classes PHP
 
@@ -523,6 +524,8 @@ Styles : classes `.game-shelf-*` ; script `initGameShelfHoverPreviews()` dans `a
 ## Statistiques
 
 Page `/statistiques.php` (onglet Jeux) : répartition par plateforme, physique/démat, genres, décennies, sujets magazine reliés, **temps de jeu total** et **temps Steam** (**0.7.11**), jeux les plus joués (selon temps total).
+
+Carte **Remakes** (si au moins un remake lié à la collection) : clic → `/stats-remakes-jeux.php` avec paires **remake / jeu d’origine**, jaquettes cliquables (couleur si possédé, grisées sinon) via `GameCollectionStats::listRemakePairs`.
 
 ## Import bibliothèque GOG (à venir)
 

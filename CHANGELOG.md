@@ -9,6 +9,20 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.3] — 2026-08-02
+
+**Jeux — statistiques remakes**
+
+### Ajouté
+
+- **Statistiques jeux** : carte **Remakes** cliquable → liste remake / jeu d’origine avec jaquettes (couleur si possédé, grisées sinon).
+
+### Technique
+
+- `GameCollectionStats::listRemakePairs` ; page `/stats-remakes-jeux.php` ; test `GameCollectionStatsRemakesTest`.
+
+---
+
 ## [0.8.2] — 2026-08-01
 
 **Magazines — suppléments PDF · Jeux — saga avec titre courant**

@@ -214,4 +214,10 @@ final class GameUrls
     {
         return $bibId > 0 ? '/modifier-jeu.php?id=' . $bibId : '/jeux.php';
     }
+
+    /** Liste des remakes liés à la collection (depuis les statistiques). */
+    public static function gameRemakeStatsUrl(): string
+    {
+        return '/stats-remakes-jeux.php';
+    }
 }

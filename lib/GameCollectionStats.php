@@ -31,6 +31,7 @@ final class GameCollectionStats
 
         $totalInLibrary = $this->countByStatut($userId, $foyerId, LibraryStatut::COLLECTION);
         $extensionCount = $this->countExtensions($userId, $foyerId);
+        $remakeCount = $this->countRemakes($userId, $foyerId);
         $collectionCount = max(0, $totalInLibrary - $extensionCount);
         $wishlistCount = $this->countByStatut($userId, $foyerId, LibraryStatut::WISHLIST);
         $digitalCount = $this->countBySupport($userId, $foyerId, true);
@@ -60,6 +61,7 @@ final class GameCollectionStats
         return [
             'collection_count' => $collectionCount,
             'extension_count' => $extensionCount,
+            'remake_count' => $remakeCount,
             'wishlist_count' => $wishlistCount,
             'digital_count' => $digitalCount,
             'physical_count' => $physicalCount,
@@ -92,6 +94,7 @@ final class GameCollectionStats
         return [
             'collection_count' => 0,
             'extension_count' => 0,
+            'remake_count' => 0,
             'wishlist_count' => 0,
             'digital_count' => 0,
             'physical_count' => 0,
@@ -155,6 +158,193 @@ final class GameCollectionStats
         $stmt->execute($params);
 
         return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Nombre de remakes distincts liés à la collection
+     * (remake possédé, ou jeu d’origine possédé avec remake au catalogue).
+     */
+    private function countRemakes(int $userId, int $foyerId): int
+    {
+        if (!GameRepository::isAvailable() || !GameRepository::hasRemakeColumns()) {
+            return 0;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT COUNT(DISTINCT remake_o.id)
+             FROM oeuvre_jeu oj_remake
+             INNER JOIN oeuvres remake_o
+                ON remake_o.id = oj_remake.oeuvre_id
+               AND remake_o.media_domain = :game_domain
+             LEFT JOIN oeuvres orig_o
+                ON orig_o.id = oj_remake.original_game_oeuvre_id
+             WHERE oj_remake.is_remake = 1
+               AND (
+                    EXISTS (
+                        SELECT 1 FROM bibliotheque b_remake
+                        WHERE b_remake.oeuvre_id = remake_o.id
+                          AND b_remake.statut = :collection
+                          AND b_remake.foyer_id = :foyer_id
+                    )
+                    OR (
+                        orig_o.id IS NOT NULL
+                        AND EXISTS (
+                            SELECT 1 FROM bibliotheque b_orig
+                            WHERE b_orig.oeuvre_id = orig_o.id
+                              AND b_orig.statut = :collection
+                              AND b_orig.foyer_id = :foyer_id
+                        )
+                    )
+               )'
+        );
+        $stmt->execute([
+            'game_domain' => MediaDomain::JEU,
+            'collection' => LibraryStatut::COLLECTION,
+            'foyer_id' => $foyerId,
+        ]);
+
+        return (int) $stmt->fetchColumn();
+    }
+
+    /**
+     * Paires remake / jeu d’origine liées à la collection du foyer.
+     * Chaque jaquette indique si le titre est possédé (couleur) ou non (grisé).
+     *
+     * @return list<array{
+     *     remake: array{oeuvre_id: int, titre: string, annee: int, poster_url: mixed, in_library: bool, url: string},
+     *     original: ?array{oeuvre_id: int, titre: string, annee: int, poster_url: mixed, in_library: bool, url: string}
+     * }>
+     */
+    public function listRemakePairs(int $userId, int $foyerId): array
+    {
+        if (!GameRepository::isAvailable() || !GameRepository::hasRemakeColumns()) {
+            return [];
+        }
+
+        $params = [
+            'game_domain' => MediaDomain::JEU,
+            'collection' => LibraryStatut::COLLECTION,
+            'foyer_id' => $foyerId,
+        ];
+
+        // Remakes liés à la collection : remake en rayon, ou original en rayon.
+        $stmt = $this->db->prepare(
+            'SELECT
+                remake_o.id AS remake_oeuvre_id,
+                remake_o.titre AS remake_titre,
+                remake_o.titre_original AS remake_titre_original,
+                remake_o.annee AS remake_annee,
+                remake_o.poster_url AS remake_poster_url,
+                orig_o.id AS original_oeuvre_id,
+                orig_o.titre AS original_titre,
+                orig_o.titre_original AS original_titre_original,
+                orig_o.annee AS original_annee,
+                orig_o.poster_url AS original_poster_url
+             FROM oeuvre_jeu oj_remake
+             INNER JOIN oeuvres remake_o
+                ON remake_o.id = oj_remake.oeuvre_id
+               AND remake_o.media_domain = :game_domain
+             LEFT JOIN oeuvres orig_o
+                ON orig_o.id = oj_remake.original_game_oeuvre_id
+             WHERE oj_remake.is_remake = 1
+               AND (
+                    EXISTS (
+                        SELECT 1 FROM bibliotheque b_remake
+                        WHERE b_remake.oeuvre_id = remake_o.id
+                          AND b_remake.statut = :collection
+                          AND b_remake.foyer_id = :foyer_id
+                    )
+                    OR (
+                        orig_o.id IS NOT NULL
+                        AND EXISTS (
+                            SELECT 1 FROM bibliotheque b_orig
+                            WHERE b_orig.oeuvre_id = orig_o.id
+                              AND b_orig.statut = :collection
+                              AND b_orig.foyer_id = :foyer_id
+                        )
+                    )
+               )
+             ORDER BY remake_o.titre COLLATE FRENCH_NOCASE ASC, remake_o.annee ASC'
+        );
+        $stmt->execute($params);
+
+        $repo = new GameRepository();
+        $pairs = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $remakeOeuvreId = (int) ($row['remake_oeuvre_id'] ?? 0);
+            if ($remakeOeuvreId <= 0) {
+                continue;
+            }
+
+            $remakeTitle = GameRowMapper::displayTitle([
+                'titre' => (string) ($row['remake_titre'] ?? ''),
+                'titre_original' => (string) ($row['remake_titre_original'] ?? ''),
+            ]);
+            $remakeCard = $this->buildRemakePairCard(
+                $repo,
+                $remakeOeuvreId,
+                $remakeTitle,
+                (int) ($row['remake_annee'] ?? 0),
+                $row['remake_poster_url'] ?? null,
+                $userId,
+                $foyerId
+            );
+
+            $originalCard = null;
+            $originalOeuvreId = (int) ($row['original_oeuvre_id'] ?? 0);
+            if ($originalOeuvreId > 0) {
+                $originalTitle = GameRowMapper::displayTitle([
+                    'titre' => (string) ($row['original_titre'] ?? ''),
+                    'titre_original' => (string) ($row['original_titre_original'] ?? ''),
+                ]);
+                $originalCard = $this->buildRemakePairCard(
+                    $repo,
+                    $originalOeuvreId,
+                    $originalTitle,
+                    (int) ($row['original_annee'] ?? 0),
+                    $row['original_poster_url'] ?? null,
+                    $userId,
+                    $foyerId
+                );
+            }
+
+            $pairs[] = [
+                'remake' => $remakeCard,
+                'original' => $originalCard,
+            ];
+        }
+
+        return $pairs;
+    }
+
+    /**
+     * @return array{oeuvre_id: int, titre: string, annee: int, poster_url: mixed, in_library: bool, url: string}
+     */
+    private function buildRemakePairCard(
+        GameRepository $repo,
+        int $oeuvreId,
+        string $titre,
+        int $annee,
+        mixed $posterUrl,
+        int $userId,
+        int $foyerId
+    ): array {
+        $state = GameRelatedSections::libraryStateForRelatedOeuvre(
+            $repo,
+            $oeuvreId,
+            $userId,
+            $foyerId,
+            View::oeuvreJeuUrl($oeuvreId)
+        );
+
+        return [
+            'oeuvre_id' => $oeuvreId,
+            'titre' => $titre,
+            'annee' => $annee,
+            'poster_url' => $posterUrl,
+            'in_library' => !empty($state['in_library']),
+            'url' => (string) ($state['library_url'] ?? ''),
+        ];
     }
 
     private function countBySupport(int $userId, int $foyerId, bool $digital): int

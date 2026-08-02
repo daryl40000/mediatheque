@@ -62,6 +62,7 @@ final class View
             'statistiques',
             'statistiques-magazines',
             'statistiques-jeux',
+            'stats-remakes-jeux',
             'catalogue',
             'oeuvre',
             'oeuvre-jeu',
@@ -1100,6 +1101,11 @@ final class View
     public static function gameEditUrl(int $bibId): string
     {
         return GameUrls::gameEditUrl($bibId);
+    }
+
+    public static function gameRemakeStatsUrl(): string
+    {
+        return GameUrls::gameRemakeStatsUrl();
     }
 
     public static function bdCollectionUrl(

@@ -4,7 +4,9 @@ $s = $stats;
 $mediaNav = Moncine\MediaContext::navLabels();
 $collectionCount = (int) ($s['collection_count'] ?? 0);
 $extensionCount = (int) ($s['extension_count'] ?? 0);
+$remakeCount = (int) ($s['remake_count'] ?? 0);
 $totalInLibrary = $collectionCount + $extensionCount;
+$remakesListUrl = Moncine\View::gameRemakeStatsUrl();
 $platformBreakdown = $s['platform_breakdown'] ?? ['items' => [], 'max' => 1];
 $platformItems = $platformBreakdown['items'] ?? [];
 $platformMax = max(1, (int) ($platformBreakdown['max'] ?? 1));
@@ -29,7 +31,7 @@ $physicalListUrl = Moncine\View::gamesCollectionUrl(filter: Moncine\GameListFilt
     <h1><?= Moncine\View::escape($mediaNav['stats']) ?></h1>
     <p class="lead">
         Vue d’ensemble de votre collection de jeux vidéo : plateformes, supports démat/physique,
-        genres, extensions et liens avec vos magazines (tests, previews…).
+        genres, extensions, remakes et liens avec vos magazines (tests, previews…).
         Cliquez sur un chiffre ou un libellé pour afficher la liste correspondante.
     </p>
 
@@ -54,6 +56,19 @@ $physicalListUrl = Moncine\View::gamesCollectionUrl(filter: Moncine\GameListFilt
                 </p>
                 <p class="stat-card__label">Extensions en collection</p>
                 <p class="stat-card__hint">DLC, season pass, add-ons…</p>
+            </article>
+        <?php endif; ?>
+        <?php if ($remakeCount > 0): ?>
+            <article class="stat-card">
+                <p class="stat-card__value">
+                    <a href="<?= Moncine\View::escape($remakesListUrl) ?>" class="stat-card__link">
+                        <?= $remakeCount ?>
+                    </a>
+                </p>
+                <p class="stat-card__label">Remakes</p>
+                <p class="stat-card__hint">
+                    <a href="<?= Moncine\View::escape($remakesListUrl) ?>">Voir remake / jeu d’origine</a>
+                </p>
             </article>
         <?php endif; ?>
         <?php if ($collectionCount > 0 && Moncine\GameCompletionRepository::isAvailable()): ?>
