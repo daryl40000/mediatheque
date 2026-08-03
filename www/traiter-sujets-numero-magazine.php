@@ -1,12 +1,13 @@
 <?php
 /**
- * Ajoute ou retire un sujet sur un numéro magazine.
+ * Ajoute ou retire un sujet sur un numéro magazine (ou un supplément).
  */
 
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\MagazineIssueSupplementRepository;
 use Moncine\MagazineRepository;
 use Moncine\MagazineGameLink;
 use Moncine\MagazineSeriesCategory;
@@ -27,7 +28,10 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 MediaDomainGuards::ensureMagazineContext();
 
 $bibId = (int) ($_POST['bib_id'] ?? 0);
-$returnUrl = View::magazineIssueUrl($bibId);
+$supplementId = max(0, (int) ($_POST['supplement_id'] ?? 0));
+$returnUrl = $supplementId > 0
+    ? View::magazineSupplementUrl($bibId, $supplementId)
+    : View::magazineIssueUrl($bibId);
 \Moncine\Csrf::rejectUnlessValid($_POST, $returnUrl);
 
 $userId = UserContext::currentUserId();
@@ -47,11 +51,30 @@ if ($issue === null) {
 }
 
 $oeuvreId = (int) ($issue['oeuvre_id'] ?? 0);
+
+if ($supplementId > 0) {
+    if (!MagazineSubjectRepository::hasSupplementSubjectTable()) {
+        header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode('Sujets sur supplément non disponibles (migration 072).'));
+        exit;
+    }
+    $supplement = MagazineIssueSupplementRepository::isAvailable()
+        ? (new MagazineIssueSupplementRepository())->findById($supplementId, $oeuvreId)
+        : null;
+    if ($supplement === null) {
+        header('Location: ' . View::magazineIssueUrl($bibId) . '&subject_error=' . rawurlencode('Supplément introuvable.'));
+        exit;
+    }
+}
+
 $action = (string) ($_POST['action'] ?? 'attach');
 
 if ($action === 'detach') {
     $subjectId = (int) ($_POST['subject_id'] ?? 0);
-    $subjectRepo->detachFromOeuvre($oeuvreId, $subjectId);
+    if ($supplementId > 0) {
+        $subjectRepo->detachFromSupplement($supplementId, $subjectId);
+    } else {
+        $subjectRepo->detachFromOeuvre($oeuvreId, $subjectId);
+    }
     header('Location: ' . $returnUrl . '&subject_detached=1');
     exit;
 }
@@ -59,7 +82,9 @@ if ($action === 'detach') {
 if ($action === 'update_page') {
     $subjectId = (int) ($_POST['subject_id'] ?? 0);
     $page = MagazineSubjectRepository::normalizePage($_POST['page'] ?? 0);
-    $result = $subjectRepo->updateLinkPage($oeuvreId, $subjectId, $page);
+    $result = $supplementId > 0
+        ? $subjectRepo->updateSupplementLinkPage($supplementId, $subjectId, $page)
+        : $subjectRepo->updateLinkPage($oeuvreId, $subjectId, $page);
     if ($result !== true) {
         header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode((string) $result));
         exit;
@@ -150,13 +175,15 @@ if ($subject === null) {
 }
 
 $page = MagazineSubjectRepository::normalizePage($_POST['page'] ?? 0);
-$result = $subjectRepo->attachToOeuvre($oeuvreId, (int) ($subject['id'] ?? 0), $page);
+$subjectId = (int) ($subject['id'] ?? 0);
+$result = $supplementId > 0
+    ? $subjectRepo->attachToSupplement($supplementId, $subjectId, $page)
+    : $subjectRepo->attachToOeuvre($oeuvreId, $subjectId, $page);
 if ($result !== true) {
     header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode((string) $result));
     exit;
 }
 
-$subjectId = (int) ($subject['id'] ?? 0);
 if ($subjectId > 0 && $catalogOeuvreId > 0 && MagazineGameLink::isAvailable()) {
     $linkResult = (new MagazineGameLink())->setSubjectCatalogLink($subjectId, $catalogOeuvreId);
     if ($linkResult !== true) {

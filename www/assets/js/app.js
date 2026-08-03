@@ -53,6 +53,7 @@ document.addEventListener('DOMContentLoaded', () => {
     runInit('gameShelfHoverPreviews', initGameShelfHoverPreviews);
     runInit('collectionGridHoverBubbles', initCollectionGridHoverBubbles);
     runInit('magazineSubjectStripHoverBubbles', initMagazineSubjectStripHoverBubbles);
+    runInit('magazineSubjectPageEdit', initMagazineSubjectPageEdit);
     runInit('shareLinkCopy', initShareLinkCopy);
     runInit('steamImportMapping', initSteamImportMapping);
     runInit('catalogOeuvreMerge', initCatalogOeuvreMerge);
@@ -2602,6 +2603,59 @@ function initMagazineSubjectStripHoverBubbles() {
 
         window.addEventListener('scroll', hideBubble, { passive: true });
         window.addEventListener('resize', hideBubble);
+    });
+}
+
+/**
+ * Crayon sous une vignette sujet : affiche / masque le champ « page PDF ».
+ * Un seul formulaire ouvert à la fois.
+ */
+function initMagazineSubjectPageEdit() {
+    const roots = document.querySelectorAll('[data-subject-page]');
+    if (roots.length === 0) {
+        return;
+    }
+
+    const closeAll = (except) => {
+        roots.forEach((root) => {
+            if (root === except) {
+                return;
+            }
+            root.classList.remove('is-editing');
+            const btn = root.querySelector('[data-subject-page-toggle]');
+            if (btn) {
+                btn.setAttribute('aria-expanded', 'false');
+            }
+        });
+    };
+
+    roots.forEach((root) => {
+        const toggle = root.querySelector('[data-subject-page-toggle]');
+        const form = root.querySelector('.magazine-subject-strip__page-form');
+        const input = root.querySelector('.magazine-subject-strip__page-input');
+        if (!toggle || !form) {
+            return;
+        }
+
+        toggle.addEventListener('click', (event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            const willOpen = !root.classList.contains('is-editing');
+            closeAll(willOpen ? root : null);
+            root.classList.toggle('is-editing', willOpen);
+            toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
+            if (willOpen && input) {
+                input.focus();
+                input.select();
+            }
+        });
+    });
+
+    document.addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') {
+            return;
+        }
+        closeAll(null);
     });
 }
 

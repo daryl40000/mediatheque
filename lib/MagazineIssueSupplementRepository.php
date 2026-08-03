@@ -423,10 +423,37 @@ final class MagazineIssueSupplementRepository
             ? $row['label']
             : ($row['original_filename'] !== '' ? $row['original_filename'] : 'Supplément');
         $row['pdf_url'] = $row['stored_object_id'] > 0
-            ? '/media-object.php?id=' . $row['stored_object_id']
+            ? View::mediaObjectUrl($row['stored_object_id'])
             : '';
         $row['size_label'] = UploadLimits::formatBytesLabel($row['size_bytes']);
 
         return $row;
+    }
+
+    /** @return array<string, mixed>|null */
+    public function findById(int $supplementId, int $oeuvreId = 0): ?array
+    {
+        if (!self::isAvailable() || $supplementId <= 0) {
+            return null;
+        }
+
+        $sql = 'SELECT mis.id, mis.oeuvre_id, mis.stored_object_id, mis.label, mis.sort_order,
+                       mis.cover_url, mis.pdf_text_preview, mis.pages, mis.original_filename, mis.created_at,
+                       so.mime, so.size_bytes, so.relative_path
+                FROM magazine_issue_supplement mis
+                INNER JOIN stored_objects so ON so.id = mis.stored_object_id
+                WHERE mis.id = ?';
+        $params = [$supplementId];
+        if ($oeuvreId > 0) {
+            $sql .= ' AND mis.oeuvre_id = ?';
+            $params[] = $oeuvreId;
+        }
+        $sql .= ' LIMIT 1';
+
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+        $row = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        return $row !== false ? $this->hydrateRow($row) : null;
     }
 }

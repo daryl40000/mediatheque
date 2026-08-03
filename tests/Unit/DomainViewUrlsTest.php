@@ -54,4 +54,13 @@ final class DomainViewUrlsTest extends TestCase
             View::mediaObjectUrl(9, 3)
         );
     }
+
+    public function testMagazineSupplementUrl(): void
+    {
+        $this->assertSame(
+            '/magazine-supplement.php?id=5&supplement_id=12',
+            MagazineUrls::magazineSupplementUrl(5, 12)
+        );
+        $this->assertSame('/magazine-numero.php?id=5', MagazineUrls::magazineSupplementUrl(5, 0));
+    }
 }

@@ -102,6 +102,7 @@ final class View
             'film',
             'album-bd',
             'magazine-numero',
+            'magazine-supplement',
         ], true);
     }
 
@@ -909,6 +910,11 @@ final class View
     public static function mediaObjectUrl(int $storedObjectId, int $page = 0): string
     {
         return MagazineUrls::mediaObjectUrl($storedObjectId, $page);
+    }
+
+    public static function magazineSupplementUrl(int $bibId, int $supplementId): string
+    {
+        return MagazineUrls::magazineSupplementUrl($bibId, $supplementId);
     }
 
     /** Lien cliquable vers un numéro magazine (bascule d’onglet si besoin). */

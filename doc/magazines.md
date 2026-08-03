@@ -125,14 +125,15 @@ Le fichier est supprimé du serveur et l’icône PDF disparaît. Le numéro res
 
 Un numéro peut avoir **un ou plusieurs PDF secondaires** (livret posters, CD-ROM, etc.) :
 
-1. Sur la fiche numéro, icône **PDF** → section **Suppléments / livrets**.
+1. Sur la fiche numéro, icône **Gérer le PDF** → section **Suppléments / livrets**.
 2. Choisissez un libellé optionnel et un ou plusieurs fichiers PDF.
-3. Sous la couverture apparaissent des **vignettes** (1re page de chaque PDF), comme la 4e de couverture des livres.
-4. Clic sur la vignette → agrandissement ; lien **Lire** → ouverture du PDF.
+3. Sous la couverture apparaissent des **vignettes** (1re page de chaque PDF).
+4. **Clic sur la vignette** → fiche dédiée du supplément (`/magazine-supplement.php`) : lecture PDF, sujets reliés aux jeux/films (comme un numéro).
+5. Sur la fiche numéro, si un PDF principal existe : badge vert **PDF** juste sous la couverture, à côté de Modifier / Gérer le PDF.
 
 Le texte des 6 premières pages de chaque supplément est **indexé** et fusionné dans la recherche du numéro.
 
-Table : `magazine_issue_supplement` (migration `070_magazine_issue_supplement.sql`).  
+Tables : `magazine_issue_supplement` (migration **070**), `magazine_supplement_subject` (sujets du supplément, migration **072**).  
 Chemin fichier : `…/{revue}-{numero}-id{oeuvreId}-supp-{uniq}.pdf`.
 
 ### Après l’import (traitement différé)
@@ -230,7 +231,7 @@ Classe : `lib/UploadLimits.php` — alerte dans les formulaires si les limites P
 | `lib/MagazineSubjectFts.php` | Index FTS5 du catalogue de sujets |
 | `lib/MagazineFtsQuery.php` | Construction des requêtes MATCH |
 | `templates/_magazine_issue_subjects.php` | Formulaire sujets sur fiche numéro |
-| `templates/_magazine_issue_subjects_strip.php` | Bandeau horizontal de vignettes (sujets reliés, **0.7.17**) |
+| `templates/_magazine_issue_subjects_strip.php` | Vignettes sujets : **une rangée par type** d’article, pastille de page + crayon (**0.8.5**) |
 | `templates/_magazine_series_tags_field.php` | Badges tags sur fiche série |
 | `templates/_magazine_delete_button.php` | Formulaire suppression (mode fiche) |
 | `templates/_magazine_wishlist_button.php` | Bouton / badge envies |
@@ -254,7 +255,7 @@ Pour retrouver un **test**, une **preview**, un **dossier** ou une **interview**
    - **type de média** (jeu, film…) pour lier le sujet à une fiche catalogue (**0.7.17**) ;
    - **autocomplétion** pendant la saisie : sujets déjà existants **ou** titres du catalogue selon le type choisi ;
    - si le titre catalogue n’existe pas encore, une **fiche minimale est créée automatiquement** à l’enregistrement (**0.7.17**) ;
-   - les sujets reliés s’affichent en **bandeau horizontal** de couvertures (défilement, bulle test/preview…, lien bibliothèque ou catalogue) (**0.7.17**) ;
+   - les sujets reliés s’affichent **par type d’article** (une rangée Test, Preview…) avec pastille de page PDF et crayon (**0.8.5**) ;
    - **année** : menu déroulant sur la fiche numéro (par défaut l’année du numéro, modifiable si le test porte sur une autre année) ;
    - **page PDF** (optionnel) : numéro de page dans le fichier pour ouvrir l’article au bon endroit ; saisissable à l’ajout **ou** sous chaque sujet déjà lié (champ Page + OK) ;
    - à l’enregistrement, les libellés **proches** (espaces ou ponctuation différents) sont **fusionnés** avec le sujet existant.

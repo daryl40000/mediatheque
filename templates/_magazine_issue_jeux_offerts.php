@@ -16,8 +16,10 @@ if ($offeredSubjects === []) {
     <p class="hint magazine-jeux-offerts__hint">Jeux fournis avec ce numéro.</p>
     <?php
     // Variable dédiée : ne pas écraser $issueSubjects (ligne « Sujets et tests » plus bas).
+    // Pas de regroupement par type : section déjà titrée « Jeux offerts ».
     $stripSubjects = $offeredSubjects;
+    $stripGroupByCategory = false;
     require MONCINE_ROOT . '/templates/_magazine_issue_subjects_strip.php';
-    unset($stripSubjects);
+    unset($stripSubjects, $stripGroupByCategory);
     ?>
 </aside>

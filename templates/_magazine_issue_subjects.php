@@ -21,6 +21,7 @@
 $bibId = (int) ($issue['bib_id'] ?? 0);
 $subjectDetached = $subjectDetached ?? false;
 $subjectPageUpdated = $subjectPageUpdated ?? false;
+$subjectTargetSupplementId = (int) ($subjectTargetSupplementId ?? 0);
 $catalogMediaLinkAvailable = $catalogMediaLinkAvailable ?? false;
 $catalogMediaDomainChoices = $catalogMediaDomainChoices ?? MagazineSubjectCatalogLink::linkableMediaDomainChoices();
 $hasMultipleTags = count($seriesTags) > 1;
@@ -30,8 +31,12 @@ $subjectYearChoices = $subjectYearChoices ?? Moncine\MagazineSubject::subjectYea
 
 // Texte d’aide regroupé dans la bulle « i » à côté du titre.
 $subjectsInfoParts = [
-    'Associez un sujet testé ou traité dans ce numéro (jeu, voiture, matériel, dossier, interview…).',
-    'Indiquez la page du PDF pour ouvrir l’article au bon endroit depuis la fiche d’un jeu.',
+    $subjectTargetSupplementId > 0
+        ? 'Associez un sujet présent dans ce supplément (jeu, film, dossier…).'
+        : 'Associez un sujet testé ou traité dans ce numéro (jeu, voiture, matériel, dossier, interview…).',
+    'Indiquez la page du PDF pour ouvrir l’article au bon endroit depuis la fiche d’un jeu. '
+        . 'Quand la page est connue, elle s’affiche sous la vignette (ex. p.42) ; '
+        . 'le crayon permet de la saisir ou de la modifier.',
 ];
 if ($parutionYear > 0) {
     $subjectsInfoParts[] = 'Choisissez l’année affichée sur le tag (par défaut celle du numéro : '
@@ -92,6 +97,9 @@ if ($hasSingleTag) {
             <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
             <input type="hidden" name="bib_id" value="<?= $bibId ?>">
             <input type="hidden" name="action" value="attach">
+            <?php if ($subjectTargetSupplementId > 0): ?>
+                <input type="hidden" name="supplement_id" value="<?= $subjectTargetSupplementId ?>">
+            <?php endif; ?>
             <?php if ($catalogMediaLinkAvailable): ?>
                 <input type="hidden" name="catalog_oeuvre_id" id="attach_catalog_oeuvre_id" value="">
             <?php endif; ?>
@@ -179,7 +187,7 @@ if ($hasSingleTag) {
                    value="" placeholder="Ex. 42" inputmode="numeric">
             <p class="hint">
                 Numéro de page du fichier PDF (pas forcément celui imprimé sur le papier).
-                Laissez vide si inconnu — vous pourrez le remplir plus tard sous chaque sujet.
+                Laissez vide si inconnu — vous pourrez le remplir plus tard avec le crayon sous chaque sujet.
             </p>
 
             <button type="submit" class="btn btn-accent">Ajouter le sujet</button>

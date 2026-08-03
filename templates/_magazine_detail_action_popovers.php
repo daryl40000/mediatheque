@@ -24,7 +24,7 @@ $supplementsAvailable = Moncine\MagazineIssueSupplementRepository::isAvailable()
      data-detail-actions
      <?= $popoverOpen !== '' ? ' data-popover-open="' . Moncine\View::escape($popoverOpen) . '"' : '' ?>>
     <div class="game-action-popover-anchor" data-detail-action-anchor="edit">
-        <button type="button" class="btn btn-icon btn-secondary btn-sm" data-detail-action="edit"
+                <button type="button" class="btn btn-icon btn-secondary btn-sm" data-detail-action="edit"
                 title="Modifier ce numéro" aria-label="Modifier ce numéro"
                 aria-expanded="<?= $popoverOpen === 'edit' ? 'true' : 'false' ?>"
                 aria-controls="magazine-popover-edit">
@@ -84,6 +84,15 @@ $supplementsAvailable = Moncine\MagazineIssueSupplementRepository::isAvailable()
             </div>
         </div>
     </div>
+
+    <?php if ($hasPdf): ?>
+        <a href="<?= Moncine\View::escape($pdfUrl) ?>"
+           class="btn btn-accent btn-sm magazine-issue-card__pdf"
+           target="_blank"
+           rel="noopener"
+           title="Ouvrir le PDF"
+           aria-label="Ouvrir le PDF du numéro">PDF</a>
+    <?php endif; ?>
 
     <div class="game-action-popover-anchor" data-detail-action-anchor="pdf">
         <button type="button" class="btn btn-icon btn-secondary btn-sm" data-detail-action="pdf"
@@ -159,6 +168,10 @@ $supplementsAvailable = Moncine\MagazineIssueSupplementRepository::isAvailable()
                                         <?php endif; ?>
                                     </span>
                                     <span class="magazine-supplement-manage-list__actions">
+                                        <?php if ($suppId > 0): ?>
+                                            <a href="<?= Moncine\View::escape(Moncine\View::magazineSupplementUrl($bibId, $suppId)) ?>"
+                                               class="btn btn-ghost btn-sm">Fiche</a>
+                                        <?php endif; ?>
                                         <?php if ($suppPdfUrl !== ''): ?>
                                             <a href="<?= Moncine\View::escape($suppPdfUrl) ?>"
                                                class="btn btn-ghost btn-sm"

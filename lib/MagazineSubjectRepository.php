@@ -77,6 +77,21 @@ final class MagazineSubjectRepository
         return $page;
     }
 
+    /** Table magazine_supplement_subject (migration 072). */
+    public static function hasSupplementSubjectTable(): bool
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        $stmt = Database::getInstance()->query(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'magazine_supplement_subject' LIMIT 1"
+        );
+
+        return $cache = ($stmt !== false && $stmt->fetchColumn() !== false);
+    }
+
     /** Colonnes magazine_subject (inclut catalog_oeuvre_id si migration 039 appliquée). */
     private static function selectSubjectColumns(string $alias = ''): string
     {
@@ -361,6 +376,99 @@ final class MagazineSubjectRepository
         $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
 
         return ListOf::assocRows(array_map(fn (array $row): array => $this->hydrateSubjectRow($row), $rows));
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function listForSupplement(int $supplementId): array
+    {
+        if (!self::tableExists() || !self::hasSupplementSubjectTable() || $supplementId <= 0) {
+            return [];
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT ' . self::selectSubjectColumns('ms')
+            . ', mss.page, mss.created_at AS linked_at
+             FROM magazine_supplement_subject mss
+             INNER JOIN magazine_subject ms ON ms.id = mss.subject_id
+             WHERE mss.supplement_id = ?
+             ORDER BY ms.category ASC, ms.parution_year DESC, ms.label COLLATE FRENCH_NOCASE ASC, ms.detail COLLATE FRENCH_NOCASE ASC'
+        );
+        $stmt->execute([$supplementId]);
+
+        $rows = $stmt->fetchAll(PDO::FETCH_ASSOC) ?: [];
+
+        return ListOf::assocRows(array_map(fn (array $row): array => $this->hydrateSubjectRow($row), $rows));
+    }
+
+    /** @return true|string */
+    public function attachToSupplement(int $supplementId, int $subjectId, int $page = 0): bool|string
+    {
+        if (!self::tableExists() || !self::hasSupplementSubjectTable() || $supplementId <= 0 || $subjectId <= 0) {
+            return 'Supplément ou sujet invalide.';
+        }
+        if ($this->findById($subjectId) === null) {
+            return 'Sujet introuvable.';
+        }
+
+        $page = self::normalizePage($page);
+        $existsStmt = $this->db->prepare(
+            'SELECT page FROM magazine_supplement_subject WHERE supplement_id = ? AND subject_id = ? LIMIT 1'
+        );
+        $existsStmt->execute([$supplementId, $subjectId]);
+        $existingPage = $existsStmt->fetchColumn();
+        if ($existingPage !== false) {
+            if ($page > 0 && (int) $existingPage !== $page) {
+                return $this->updateSupplementLinkPage($supplementId, $subjectId, $page);
+            }
+
+            return true;
+        }
+
+        $this->db->prepare(
+            'INSERT INTO magazine_supplement_subject (supplement_id, subject_id, page) VALUES (?, ?, ?)'
+        )->execute([$supplementId, $subjectId, $page]);
+
+        return true;
+    }
+
+    /** @return true|string */
+    public function updateSupplementLinkPage(int $supplementId, int $subjectId, int $page): bool|string
+    {
+        if (!self::hasSupplementSubjectTable() || $supplementId <= 0 || $subjectId <= 0) {
+            return 'Supplément ou sujet invalide.';
+        }
+
+        $page = self::normalizePage($page);
+        $stmt = $this->db->prepare(
+            'UPDATE magazine_supplement_subject SET page = ? WHERE supplement_id = ? AND subject_id = ?'
+        );
+        $stmt->execute([$page, $supplementId, $subjectId]);
+
+        if ($stmt->rowCount() <= 0) {
+            $check = $this->db->prepare(
+                'SELECT 1 FROM magazine_supplement_subject WHERE supplement_id = ? AND subject_id = ? LIMIT 1'
+            );
+            $check->execute([$supplementId, $subjectId]);
+            if ($check->fetchColumn() === false) {
+                return 'Ce sujet n’est pas lié à ce supplément.';
+            }
+        }
+
+        return true;
+    }
+
+    public function detachFromSupplement(int $supplementId, int $subjectId): bool
+    {
+        if (!self::hasSupplementSubjectTable() || $supplementId <= 0 || $subjectId <= 0) {
+            return false;
+        }
+
+        $stmt = $this->db->prepare(
+            'DELETE FROM magazine_supplement_subject WHERE supplement_id = ? AND subject_id = ?'
+        );
+        $stmt->execute([$supplementId, $subjectId]);
+
+        return $stmt->rowCount() > 0;
     }
 
     /** @return true|string */

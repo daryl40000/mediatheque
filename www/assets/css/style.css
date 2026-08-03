@@ -4907,7 +4907,8 @@ a.collection-grid__link.social-profile-grid__card,
     color: var(--media-accent, var(--accent));
 }
 
-.magazine-issue-card__footer .magazine-issue-card__pdf {
+.magazine-issue-card__footer .magazine-issue-card__pdf,
+.game-detail-sidebar__actions .magazine-issue-card__pdf {
     flex-shrink: 0;
     margin: 0;
     padding: 0.08rem 0.28rem;
@@ -6241,6 +6242,42 @@ td .game-linux-badge--plain {
     margin: 0 0 1.25rem;
     min-width: 0;
     max-width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 0.85rem;
+}
+
+/* Une rangée = un type d’article (label à gauche, vignettes à droite). */
+.magazine-subject-strip__row {
+    display: flex;
+    flex-wrap: nowrap;
+    align-items: flex-start;
+    gap: 0.75rem 1rem;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.magazine-subject-strip__row--no-label {
+    display: block;
+}
+
+.magazine-subject-strip__row-label {
+    flex: 0 0 6.25rem;
+    width: 6.25rem;
+    box-sizing: border-box;
+    margin: 0.15rem 0 0;
+    padding: 0.45rem 0.55rem 0.45rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: left;
+    color: var(--text);
+    background: color-mix(in srgb, var(--media-accent) 12%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--media-accent) 35%, var(--border));
+    border-left: 3px solid var(--media-accent, var(--accent));
+    border-radius: 0 6px 6px 0;
 }
 
 .magazine-subject-strip__list {
@@ -6253,6 +6290,8 @@ td .game-linux-badge--plain {
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
+    flex: 1 1 auto;
+    min-width: 0;
 }
 
 .magazine-subject-strip__item {
@@ -6379,13 +6418,94 @@ td .game-linux-badge--plain {
     padding: 0.1rem 0.3rem;
 }
 
-.magazine-subject-strip__page-form {
+/* Page PDF : p.42 + crayon, formulaire masqué jusqu’au clic. */
+.magazine-subject-strip__page {
+    margin-top: 0.4rem;
+    min-height: 1.55rem;
+}
+
+.magazine-subject-strip__page-view {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
     justify-content: center;
     gap: 0.25rem;
-    margin-top: 0.35rem;
+}
+
+.magazine-subject-strip__page.is-editing .magazine-subject-strip__page-view {
+    display: none;
+}
+
+.magazine-subject-strip__page-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.4rem;
+    padding: 0.18rem 0.45rem;
+    font-size: 0.82rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+    line-height: 1.2;
+    color: color-mix(in srgb, var(--media-accent) 25%, #e8f0d8);
+    text-decoration: none;
+    background: color-mix(in srgb, var(--success, #4ade80) 14%, var(--surface));
+    border: 1px solid color-mix(in srgb, var(--success, #4ade80) 40%, var(--border));
+    border-radius: 999px;
+}
+
+a.magazine-subject-strip__page-num:hover,
+a.magazine-subject-strip__page-num:focus-visible {
+    color: #f4ffe8;
+    background: color-mix(in srgb, var(--success, #4ade80) 22%, var(--surface));
+    border-color: color-mix(in srgb, var(--success, #4ade80) 55%, var(--border));
+    text-decoration: none;
+}
+
+span.magazine-subject-strip__page-num {
+    color: var(--muted);
+    font-weight: 600;
+    background: var(--surface-muted);
+    border-color: var(--border);
+}
+
+.magazine-subject-strip__page-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    padding: 0.2rem;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 0;
+}
+
+.magazine-subject-strip__page-edit:hover,
+.magazine-subject-strip__page-edit:focus-visible {
+    color: var(--text);
+    background: color-mix(in srgb, var(--media-accent) 12%, var(--surface));
+    border-color: color-mix(in srgb, var(--media-accent) 30%, var(--border));
+}
+
+.magazine-subject-strip__page-edit-icon {
+    display: block;
+    width: 0.95rem;
+    height: 0.95rem;
+}
+
+.magazine-subject-strip__page-form {
+    display: none;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.magazine-subject-strip__page.is-editing .magazine-subject-strip__page-form {
+    display: flex;
 }
 
 .magazine-subject-strip__page-label {
@@ -6553,6 +6673,31 @@ td .game-linux-badge--plain {
 
 .magazine-supplements .livre-back-cover {
     margin-top: 0;
+}
+
+/* Lien vers la fiche supplément : main (pointer), pas zoom-in (lightbox). */
+.magazine-supplement__link {
+    display: block;
+    margin: 0 auto;
+    padding: 0;
+    border: none;
+    background: transparent;
+    text-decoration: none;
+    color: inherit;
+    cursor: pointer;
+    border-radius: 2px;
+    line-height: 0;
+}
+
+.magazine-supplement__link:focus-visible {
+    outline: 2px solid var(--media-accent, var(--accent, #64b5f6));
+    outline-offset: 3px;
+}
+
+.magazine-supplement__link:hover .livre-back-cover__img,
+.magazine-supplement__link:focus-visible .livre-back-cover__img {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
 }
 
 .magazine-supplement__placeholder {
@@ -7257,6 +7402,19 @@ body.has-magazine-category-rail .magazine-category-rail {
 @media (max-width: 720px) {
     .magazine-sommaire-row--with-offers {
         grid-template-columns: 1fr;
+    }
+
+    .magazine-subject-strip__row:not(.magazine-subject-strip__row--no-label) {
+        flex-direction: column;
+        gap: 0.4rem;
+    }
+
+    .magazine-subject-strip__row-label {
+        flex: none;
+        width: auto;
+        max-width: 100%;
+        border-radius: 6px;
+        border-left-width: 3px;
     }
 }
 

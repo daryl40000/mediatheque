@@ -9,6 +9,27 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [Unreleased]
+
+---
+
+## [0.8.5] — 2026-08-03
+
+**Magazines — fiche supplément · sujets par type · ouverture PDF rapide**
+
+### Ajouté
+
+- **Suppléments magazines** : fiche dédiée (comme un numéro) avec sujets / liens médias ; clic sur la vignette ouvre cette fiche.
+- **Fiche numéro** : badge vert **PDF** sous la couverture pour ouvrir le fichier en un clic (à côté de Modifier / Gérer le PDF).
+- **Sujets** (numéro et supplément) : une **rangée par type** d’article (Test, Preview…) ; page PDF affichée en pastille `p.42` + crayon pour saisir ou modifier.
+
+### Technique
+
+- Migration **072** (`magazine_supplement_subject`) ; page `/magazine-supplement.php`.
+- `MagazineSubjectRepository::listForSupplement` / attach / detach / update page ; URLs `magazineSupplementUrl`.
+
+---
+
 ## [0.8.4] — 2026-08-02
 
 **Magazines — page PDF des sujets · Collections — mode d’affichage mémorisé**

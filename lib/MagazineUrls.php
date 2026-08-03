@@ -195,6 +195,19 @@ final class MagazineUrls
         return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::MAGAZINE, $path);
     }
 
+    /** Lien vers la fiche d’un supplément (sujets, lecture PDF). */
+    public static function magazineSupplementUrl(int $bibId, int $supplementId): string
+    {
+        if ($bibId <= 0 || $supplementId <= 0) {
+            return self::magazineIssueUrl($bibId);
+        }
+
+        return '/magazine-supplement.php?' . http_build_query([
+            'id' => $bibId,
+            'supplement_id' => $supplementId,
+        ]);
+    }
+
     public static function magazineSubjectSearchUrl(): string
     {
         return '/magazines-recherche.php';

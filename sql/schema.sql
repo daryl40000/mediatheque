@@ -461,6 +461,17 @@ CREATE INDEX IF NOT EXISTS idx_magazine_issue_supplement_oeuvre
 CREATE UNIQUE INDEX IF NOT EXISTS idx_magazine_issue_supplement_stored
     ON magazine_issue_supplement(stored_object_id);
 
+CREATE TABLE IF NOT EXISTS magazine_supplement_subject (
+    supplement_id INTEGER NOT NULL REFERENCES magazine_issue_supplement(id) ON DELETE CASCADE,
+    subject_id INTEGER NOT NULL REFERENCES magazine_subject(id) ON DELETE CASCADE,
+    page INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    PRIMARY KEY (supplement_id, subject_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_mss_subject ON magazine_supplement_subject(subject_id);
+CREATE INDEX IF NOT EXISTS idx_mss_supplement ON magazine_supplement_subject(supplement_id);
+
 CREATE TABLE IF NOT EXISTS series_bibliotheque (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
     series_id INTEGER NOT NULL REFERENCES series(id) ON DELETE CASCADE,
