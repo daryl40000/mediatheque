@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.8.6** (2026-08-03)  
+**Version actuelle : 0.8.7** (2026-08-03)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -43,6 +43,10 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.8.7** — Liens « consulter en ligne » magazines (2026-08-03)
+
+- Lien HTTPS par série et par numéro ; bouton sur les fiches ; rempli à l’import ABM ; inclus dans l’export/import catalogue.
 
 ### ✅ **0.8.6** — Notes tests magazines + export/import catalogue (2026-08-03)
 
@@ -766,4 +770,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.8.6** — 2026-08-03 (notes tests magazines, export/import ODS catalogue).*
+*Dernière mise à jour : **0.8.7** — 2026-08-03 (liens « consulter en ligne » magazines).*

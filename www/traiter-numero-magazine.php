@@ -259,6 +259,7 @@ $data = [
     'pages' => (int) ($_POST['pages'] ?? $issue['pages'] ?? 0),
     'est_hors_serie' => FormCheckbox::isChecked($_POST, 'est_hors_serie'),
     'support_papier' => isset($_POST['support_papier']),
+    'external_url' => (string) ($_POST['external_url'] ?? $issue['external_url'] ?? ''),
 ];
 
 if ($oeuvreId > 0 && isset($_FILES['cover_file']) && (int) ($_FILES['cover_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {

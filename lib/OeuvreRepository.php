@@ -376,6 +376,9 @@ final class OeuvreRepository
                 . ' om.numero_ordre AS mag_numero_ordre, om.date_parution AS mag_date_parution,'
                 . ' om.sommaire AS mag_sommaire, om.pages AS mag_pages,'
                 . ' om.est_hors_serie AS mag_est_hors_serie';
+            $select .= MagazineRepository::externalUrlColumnExists()
+                ? ', om.external_url AS mag_external_url'
+                : ', \'\' AS mag_external_url';
             if (SeriesRepository::tableExists()) {
                 $select .= ', s_mag.titre AS mag_series_titre,'
                     . ' s_mag.publication_type AS mag_series_publication_type,'
@@ -392,6 +395,9 @@ final class OeuvreRepository
                 $select .= SeriesRepository::ratingScaleColumnExists()
                     ? ', s_mag.rating_scale AS mag_series_rating_scale'
                     : ', \'\' AS mag_series_rating_scale';
+                $select .= SeriesRepository::externalUrlColumnExists()
+                    ? ', s_mag.external_url AS mag_series_external_url'
+                    : ', \'\' AS mag_series_external_url';
             }
         }
         if ($bdTable) {

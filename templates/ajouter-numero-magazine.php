@@ -105,6 +105,11 @@ $seriesId = (int) ($series['id'] ?? 0);
         <textarea name="sommaire" id="sommaire" rows="8"
                   placeholder="Rubriques, articles principaux, pages…"></textarea>
 
+        <label for="external_url">Lien « consulter en ligne » (URL HTTPS)</label>
+        <input type="url" name="external_url" id="external_url" maxlength="500"
+               placeholder="https://…">
+        <p class="hint">Lien vers ce numéro sur un site externe (facultatif).</p>
+
         <label for="cover_file">Couverture (JPEG, PNG, WebP)</label>
         <input type="file" name="cover_file" id="cover_file" accept="image/jpeg,image/png,image/webp">
         <p class="hint">Taille max. <?= Moncine\View::escape(Moncine\UploadLimits::maxPosterBytesLabel()) ?> (comme les affiches films).</p>

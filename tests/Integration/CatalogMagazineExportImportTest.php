@@ -50,9 +50,11 @@ final class CatalogMagazineExportImportTest extends MoncineTestCase
             'Magazine — tags série' => 'PC',
             'Magazine — catégories série' => 'jeux',
             'Magazine — notes sur' => '20',
+            'Magazine — lien série en ligne' => 'https://www.abandonware-magazines.org/affiche_mag.php?mag=601',
             'Magazine — numéro' => '100',
             'Magazine — ordre' => '100',
             'Magazine — date parution' => '2020-01-01',
+            'Magazine — lien en ligne' => 'https://www.abandonware-magazines.org/affiche_mag.php?mag=601&num=100',
         ]);
 
         $result = (new ImportRunner())->importCatalogSheet([$row], $header);
@@ -64,11 +66,19 @@ final class CatalogMagazineExportImportTest extends MoncineTestCase
         $this->assertSame('Joystick Export', $series['titre']);
         $this->assertSame('20', (string) ($series['rating_scale'] ?? ''));
         $this->assertStringContainsString('PC', (string) ($series['tags'] ?? ''));
+        $this->assertSame(
+            'https://www.abandonware-magazines.org/affiche_mag.php?mag=601',
+            (string) ($series['external_url'] ?? '')
+        );
 
         $catalog = (new MagazineRepository())->findCatalogIssueByOeuvreId(9201);
         $this->assertNotNull($catalog);
         $this->assertSame(601, (int) $catalog['series_id']);
         $this->assertSame('100', (string) $catalog['numero']);
+        $this->assertSame(
+            'https://www.abandonware-magazines.org/affiche_mag.php?mag=601&num=100',
+            (string) ($catalog['external_url'] ?? '')
+        );
     }
 
     public function testRoundTripSeriesSubjectsLinksPageAndScore(): void

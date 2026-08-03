@@ -93,6 +93,15 @@ $posterSrc = Moncine\View::seriesPosterSrc($series);
         <label for="notes">Notes</label>
         <textarea name="notes" id="notes" rows="3"><?= Moncine\View::escape((string) ($series['notes'] ?? '')) ?></textarea>
 
+        <label for="external_url">Lien « consulter en ligne » (URL HTTPS)</label>
+        <input type="url" name="external_url" id="external_url" maxlength="500"
+               placeholder="https://www.abandonware-magazines.org/affiche_mag.php?mag=…"
+               value="<?= Moncine\View::escape((string) ($series['external_url'] ?? '')) ?>">
+        <p class="hint">
+            Page de la revue sur un site externe (ex. Abandonware Magazines).
+            Laissez vide s’il n’y a pas de version en ligne.
+        </p>
+
         <button type="submit" class="btn btn-primary">Enregistrer</button>
     </form>
 

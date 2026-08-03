@@ -70,6 +70,7 @@ if ($oeuvreIdFromCatalog > 0) {
         'pages' => (int) ($_POST['pages'] ?? 0),
         'est_hors_serie' => isset($_POST['est_hors_serie']),
         'support_papier' => $supportPapier,
+        'external_url' => (string) ($_POST['external_url'] ?? ''),
     ], $statut, $userId, $foyerId);
 }
 

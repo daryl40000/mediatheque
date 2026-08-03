@@ -13,6 +13,20 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.7] — 2026-08-03
+
+**Magazines — liens « consulter en ligne » (série + numéro)**
+
+### Ajouté
+
+- **Magazines — consulter en ligne** : lien HTTPS par **série** et par **numéro** (bouton sur les fiches ; saisie depuis le crayon d’édition du numéro ou le formulaire série / catalogue). À l’import ABM, les URLs Abandonware Magazines sont remplies automatiquement. Export/import catalogue (CSV + feuille ODS `SeriesMagazines`) : colonnes `Magazine — lien série en ligne` / `Magazine — lien en ligne`.
+
+### Technique
+
+- Migration **074** (`series.external_url`, `oeuvre_magazine.external_url`) ; `MagazineExternalUrl` ; tests unitaires et import CSV.
+
+---
+
 ## [0.8.6] — 2026-08-03
 
 **Magazines — notes des tests · export/import catalogue global complet**

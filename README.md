@@ -3,7 +3,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 [![Tests](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml/badge.svg)](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml)
 
-**Version : 0.8.6**
+**Version : 0.8.7**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -75,6 +75,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.8.7** | Magazines : liens « consulter en ligne » (série + numéro), rempli à l’import ABM, export/import catalogue |
 | **0.8.6** | Magazines : notes des tests, moyenne presse, export/import ODS catalogue (sujets, page, note) |
 | **0.8.5** | Magazines : fiche supplément, sujets par type, badge PDF sous couverture |
 | **0.8.4** | Magazines : page PDF des sujets ; mode d’affichage collection mémorisé |

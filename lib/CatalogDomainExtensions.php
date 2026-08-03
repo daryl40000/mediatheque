@@ -37,12 +37,14 @@ final class CatalogDomainExtensions
         'mag_series_langue' => 'Magazine — langue',
         'mag_series_pays' => 'Magazine — pays série',
         'mag_series_notes' => 'Magazine — notes série',
+        'mag_series_external_url' => 'Magazine — lien série en ligne',
         'mag_numero' => 'Magazine — numéro',
         'mag_numero_ordre' => 'Magazine — ordre',
         'mag_date_parution' => 'Magazine — date parution',
         'mag_sommaire' => 'Magazine — sommaire',
         'mag_pages' => 'Magazine — pages',
         'mag_est_hors_serie' => 'Magazine — hors-série',
+        'mag_external_url' => 'Magazine — lien en ligne',
         'bd_series_id' => 'BD — ID série',
         'bd_series_titre' => 'BD — titre série',
         'bd_kind' => 'BD — type',
@@ -103,12 +105,30 @@ final class CatalogDomainExtensions
         'mag_series_langue' => ['magazine langue', 'mag_series_langue'],
         'mag_series_pays' => ['magazine pays serie', 'magazine pays série', 'mag_series_pays'],
         'mag_series_notes' => ['magazine notes serie', 'magazine notes série', 'mag_series_notes'],
+        'mag_series_external_url' => [
+            'magazine lien serie en ligne',
+            'magazine lien série en ligne',
+            'magazine lien serie',
+            'magazine lien série',
+            'mag_series_external_url',
+            'magazine url serie',
+            'magazine url série',
+        ],
         'mag_numero' => ['magazine numero', 'magazine numéro', 'mag_numero'],
         'mag_numero_ordre' => ['magazine ordre', 'mag_numero_ordre'],
         'mag_date_parution' => ['magazine date parution', 'mag_date_parution'],
         'mag_sommaire' => ['magazine sommaire', 'mag_sommaire'],
         'mag_pages' => ['magazine pages', 'mag_pages'],
         'mag_est_hors_serie' => ['magazine hors serie', 'magazine hors-série', 'mag_est_hors_serie'],
+        'mag_external_url' => [
+            'magazine lien en ligne',
+            'magazine lien numero',
+            'magazine lien numéro',
+            'magazine lien',
+            'mag_external_url',
+            'magazine url',
+            'magazine url numero',
+        ],
         'bd_series_id' => ['bd id serie', 'bd id série', 'bd_series_id', 'series_id bd'],
         'bd_series_titre' => ['bd titre serie', 'bd titre série', 'bd_series_titre', 'serie bd'],
         'bd_kind' => ['bd type', 'bd kind', 'bd_kind', 'type bd'],
@@ -388,30 +408,63 @@ final class CatalogDomainExtensions
             'mag_est_hors_serie',
             (string) ($data['mag_est_hors_serie'] ?? '')
         )) ? 1 : 0;
+        $externalUrl = MagazineRepository::externalUrlColumnExists()
+            ? MagazineExternalUrl::sanitize(self::cellIfImported(
+                $data,
+                $importSet,
+                'mag_external_url',
+                (string) ($data['mag_external_url'] ?? '')
+            ))
+            : '';
 
         $stmt = $db->prepare('SELECT 1 FROM oeuvre_magazine WHERE oeuvre_id = ? LIMIT 1');
         $stmt->execute([$oeuvreId]);
         if ($stmt->fetchColumn()) {
-            $db->prepare(
-                'UPDATE oeuvre_magazine SET series_id = ?, numero = ?, numero_ordre = ?,
-                 date_parution = ?, sommaire = ?, pages = ?, est_hors_serie = ?
-                 WHERE oeuvre_id = ?'
-            )->execute([
-                $seriesId, $numero, $numeroOrdre,
-                $dateParution !== '' ? $dateParution : null,
-                $sommaire, $pages, $horsSerie, $oeuvreId,
-            ]);
+            if (MagazineRepository::externalUrlColumnExists()) {
+                $db->prepare(
+                    'UPDATE oeuvre_magazine SET series_id = ?, numero = ?, numero_ordre = ?,
+                     date_parution = ?, sommaire = ?, pages = ?, est_hors_serie = ?, external_url = ?
+                     WHERE oeuvre_id = ?'
+                )->execute([
+                    $seriesId, $numero, $numeroOrdre,
+                    $dateParution !== '' ? $dateParution : null,
+                    $sommaire, $pages, $horsSerie, $externalUrl, $oeuvreId,
+                ]);
+            } else {
+                $db->prepare(
+                    'UPDATE oeuvre_magazine SET series_id = ?, numero = ?, numero_ordre = ?,
+                     date_parution = ?, sommaire = ?, pages = ?, est_hors_serie = ?
+                     WHERE oeuvre_id = ?'
+                )->execute([
+                    $seriesId, $numero, $numeroOrdre,
+                    $dateParution !== '' ? $dateParution : null,
+                    $sommaire, $pages, $horsSerie, $oeuvreId,
+                ]);
+            }
         } else {
-            $db->prepare(
-                'INSERT INTO oeuvre_magazine (
-                    oeuvre_id, series_id, numero, numero_ordre, date_parution,
-                    sommaire, pages, est_hors_serie
-                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-            )->execute([
-                $oeuvreId, $seriesId, $numero, $numeroOrdre,
-                $dateParution !== '' ? $dateParution : null,
-                $sommaire, $pages, $horsSerie,
-            ]);
+            if (MagazineRepository::externalUrlColumnExists()) {
+                $db->prepare(
+                    'INSERT INTO oeuvre_magazine (
+                        oeuvre_id, series_id, numero, numero_ordre, date_parution,
+                        sommaire, pages, est_hors_serie, external_url
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                )->execute([
+                    $oeuvreId, $seriesId, $numero, $numeroOrdre,
+                    $dateParution !== '' ? $dateParution : null,
+                    $sommaire, $pages, $horsSerie, $externalUrl,
+                ]);
+            } else {
+                $db->prepare(
+                    'INSERT INTO oeuvre_magazine (
+                        oeuvre_id, series_id, numero, numero_ordre, date_parution,
+                        sommaire, pages, est_hors_serie
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+                )->execute([
+                    $oeuvreId, $seriesId, $numero, $numeroOrdre,
+                    $dateParution !== '' ? $dateParution : null,
+                    $sommaire, $pages, $horsSerie,
+                ]);
+            }
         }
     }
 
@@ -604,6 +657,12 @@ final class CatalogDomainExtensions
                 'mag_series_notes',
                 (string) ($data['mag_series_notes'] ?? '')
             ),
+            'external_url' => self::cellIfImported(
+                $data,
+                $importSet,
+                'mag_series_external_url',
+                (string) ($data['mag_series_external_url'] ?? '')
+            ),
         ];
 
         $seriesRepo = new SeriesRepository();
@@ -615,7 +674,8 @@ final class CatalogDomainExtensions
                 $hasMeta = $seriesTitre !== ''
                     || $payload['tags'] !== ''
                     || $payload['categories'] !== ''
-                    || $payload['rating_scale'] !== '';
+                    || $payload['rating_scale'] !== ''
+                    || $payload['external_url'] !== '';
                 if ($hasMeta) {
                     if ($payload['titre'] === '') {
                         $payload['titre'] = (string) ($existing['titre'] ?? '');

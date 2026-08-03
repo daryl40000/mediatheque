@@ -136,6 +136,27 @@ final class MagazineRepository
         return false;
     }
 
+    public static function externalUrlColumnExists(): bool
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        $stmt = Database::getInstance()->query('PRAGMA table_info(oeuvre_magazine)');
+        if ($stmt === false) {
+            return $cache = false;
+        }
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $column) {
+            if (($column['name'] ?? '') === 'external_url') {
+                return $cache = true;
+            }
+        }
+
+        return $cache = false;
+    }
+
     public static function normalizePossessionFilter(string $raw): string
     {
         $raw = strtolower(trim($raw));

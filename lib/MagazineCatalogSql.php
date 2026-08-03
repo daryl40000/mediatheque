@@ -3,7 +3,20 @@ declare(strict_types=1);
 namespace Moncine;
 final class MagazineCatalogSql {
     public static function selectCatalogIssueRow(): string {
-        return 'o.id AS oeuvre_id, o.titre, o.poster_url, om.series_id, om.numero, om.numero_ordre, om.date_parution, om.sommaire, om.pages, om.est_hors_serie, om.stored_object_id, s.titre AS series_titre, s.publication_type, s.editeur, s.issn, s.poster_url AS series_poster_url, s.tags AS series_tags, s.categories AS series_categories';
+        $external = MagazineRepository::externalUrlColumnExists()
+            ? ', om.external_url'
+            : ', \'\' AS external_url';
+        $seriesExternal = SeriesRepository::externalUrlColumnExists()
+            ? ', s.external_url AS series_external_url'
+            : ', \'\' AS series_external_url';
+
+        return 'o.id AS oeuvre_id, o.titre, o.poster_url, om.series_id, om.numero, om.numero_ordre,'
+            . ' om.date_parution, om.sommaire, om.pages, om.est_hors_serie, om.stored_object_id'
+            . $external
+            . ', s.titre AS series_titre, s.publication_type, s.editeur, s.issn,'
+            . ' s.poster_url AS series_poster_url, s.tags AS series_tags,'
+            . ' s.categories AS series_categories, s.notes AS series_notes'
+            . $seriesExternal;
     }
     public static function filterParamsForSql(string $sql, array $params): array {
         return \Moncine\Repository\SqlNamedParams::filter($sql, $params);

@@ -67,6 +67,30 @@ final class SeriesRepository
         return false;
     }
 
+    public static function externalUrlColumnExists(): bool
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+        if (!self::tableExists()) {
+            return $cache = false;
+        }
+
+        $stmt = Database::getInstance()->query('PRAGMA table_info(series)');
+        if ($stmt === false) {
+            return $cache = false;
+        }
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (($row['name'] ?? '') === 'external_url') {
+                return $cache = true;
+            }
+        }
+
+        return $cache = false;
+    }
+
     /**
      * Catégories déjà utilisées sur des séries magazine (pour autocomplétion).
      *
@@ -229,12 +253,17 @@ final class SeriesRepository
         $ratingParam = self::ratingScaleColumnExists()
             ? [MagazineRatingScale::normalize($data['rating_scale'] ?? null)]
             : [];
+        $externalSql = self::externalUrlColumnExists() ? ', external_url' : '';
+        $externalValue = self::externalUrlColumnExists() ? ', ?' : '';
+        $externalParam = self::externalUrlColumnExists()
+            ? [MagazineExternalUrl::sanitize((string) ($data['external_url'] ?? ''))]
+            : [];
 
         $this->db->prepare(
             'INSERT INTO series (
                 media_domain, titre, publication_type, poster_url, editeur, issn,
-                langue, pays, date_debut, date_fin, notes, tags' . $categoriesSql . $ratingSql . ', created_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . $categoriesValue . $ratingValue . ', datetime(\'now\'))'
+                langue, pays, date_debut, date_fin, notes, tags' . $categoriesSql . $ratingSql . $externalSql . ', created_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . $categoriesValue . $ratingValue . $externalValue . ', datetime(\'now\'))'
         )->execute([
             $domain,
             $titre,
@@ -250,6 +279,7 @@ final class SeriesRepository
             MagazineSeriesTag::normalizeInput((string) ($data['tags'] ?? '')),
             ...$categoriesParam,
             ...$ratingParam,
+            ...$externalParam,
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -293,12 +323,17 @@ final class SeriesRepository
         $ratingParam = self::ratingScaleColumnExists()
             ? [MagazineRatingScale::normalize($data['rating_scale'] ?? null)]
             : [];
+        $externalSql = self::externalUrlColumnExists() ? ', external_url' : '';
+        $externalValue = self::externalUrlColumnExists() ? ', ?' : '';
+        $externalParam = self::externalUrlColumnExists()
+            ? [MagazineExternalUrl::sanitize((string) ($data['external_url'] ?? ''))]
+            : [];
 
         $this->db->prepare(
             'INSERT INTO series (
                 id, media_domain, titre, publication_type, poster_url, editeur, issn,
-                langue, pays, date_debut, date_fin, notes, tags' . $categoriesSql . $ratingSql . ', created_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . $categoriesValue . $ratingValue . ', datetime(\'now\'))'
+                langue, pays, date_debut, date_fin, notes, tags' . $categoriesSql . $ratingSql . $externalSql . ', created_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . $categoriesValue . $ratingValue . $externalValue . ', datetime(\'now\'))'
         )->execute([
             $id,
             $domain,
@@ -315,6 +350,7 @@ final class SeriesRepository
             MagazineSeriesTag::normalizeInput((string) ($data['tags'] ?? '')),
             ...$categoriesParam,
             ...$ratingParam,
+            ...$externalParam,
         ]);
 
         $max = (int) $this->db->query('SELECT COALESCE(MAX(id), 0) FROM series')->fetchColumn();
@@ -391,6 +427,10 @@ final class SeriesRepository
         if (self::ratingScaleColumnExists()) {
             $setParts[] = 'rating_scale = ?';
             $params[] = $ratingScaleValue;
+        }
+        if (self::externalUrlColumnExists() && array_key_exists('external_url', $data)) {
+            $setParts[] = 'external_url = ?';
+            $params[] = MagazineExternalUrl::sanitize((string) $data['external_url']);
         }
 
         $setParts[] = 'updated_at = datetime(\'now\')';

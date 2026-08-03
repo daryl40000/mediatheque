@@ -76,6 +76,13 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::MAGAZINE);
                             · <span class="magazine-tag">Hors-série</span>
                         <?php endif; ?>
                     </p>
+                    <?php
+                    $externalUrl = Moncine\MagazineExternalUrl::resolveIssueUrl($issue, [
+                        'external_url' => (string) ($issue['series_external_url'] ?? ''),
+                        'notes' => (string) ($issue['series_notes'] ?? ''),
+                    ]);
+                    require MONCINE_ROOT . '/templates/_magazine_external_link.php';
+                    ?>
                 </header>
 
                 <dl class="film-facts">

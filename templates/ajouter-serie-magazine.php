@@ -151,6 +151,12 @@ $backLabel = $isWishlist
                 <label for="notes">Notes</label>
                 <textarea name="notes" id="notes" rows="3"><?= Moncine\View::escape((string) ($series['notes'] ?? '')) ?></textarea>
 
+                <label for="external_url">Lien « consulter en ligne » (URL HTTPS)</label>
+                <input type="url" name="external_url" id="external_url" maxlength="500"
+                       placeholder="https://…"
+                       value="<?= Moncine\View::escape((string) ($series['external_url'] ?? '')) ?>">
+                <p class="hint">Page de la revue sur un site externe (facultatif).</p>
+
                 <button type="submit" class="btn btn-secondary">Créer la série</button>
             </form>
         </div>

@@ -112,6 +112,15 @@
                     $seriesCategories = Moncine\MagazineSeriesCategory::parseList((string) ($issue['series_categories'] ?? ''));
                     require MONCINE_ROOT . '/templates/_magazine_series_categories_display.php';
                     ?>
+                    <p>
+                        <?php
+                        $externalUrl = Moncine\MagazineExternalUrl::resolveIssueUrl($issue, [
+                            'external_url' => (string) ($issue['series_external_url'] ?? ''),
+                            'notes' => (string) ($issue['series_notes'] ?? ''),
+                        ]);
+                        require MONCINE_ROOT . '/templates/_magazine_external_link.php';
+                        ?>
+                    </p>
                 </header>
 
                 <?php if (($issue['statut'] ?? '') === Moncine\LibraryStatut::COLLECTION && !Moncine\MagazineSupport::isPossessed($issue)): ?>

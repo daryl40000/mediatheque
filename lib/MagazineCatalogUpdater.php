@@ -47,6 +47,13 @@ final class MagazineCatalogUpdater { public function __construct(private readonl
         $sommaire = trim((string) ($data['sommaire'] ?? $issue['sommaire'] ?? ''));
         $pages = max(0, (int) ($data['pages'] ?? $issue['pages'] ?? 0));
         $posterUrl = SecureUrl::sanitizePosterUrl(trim((string) ($data['poster_url'] ?? $issue['poster_url'] ?? '')));
+        $externalUrl = MagazineRepository::externalUrlColumnExists()
+            ? MagazineExternalUrl::sanitize((string) (
+                array_key_exists('external_url', $data)
+                    ? $data['external_url']
+                    : ($issue['external_url'] ?? '')
+            ))
+            : '';
 
         $titleError = $this->validator->validateCatalogIssueTitleUnique($titre, $oeuvreId);
         if ($titleError !== null) {
@@ -60,20 +67,38 @@ final class MagazineCatalogUpdater { public function __construct(private readonl
                 'poster_url' => $posterUrl,
             ], ['titre', 'poster_url']);
 
-            $this->db->prepare(
-                'UPDATE oeuvre_magazine SET
-                    numero = ?, numero_ordre = ?, date_parution = ?, sommaire = ?,
-                    pages = ?, est_hors_serie = ?
-                 WHERE oeuvre_id = ?'
-            )->execute([
-                $numero,
-                $numeroOrdre,
-                $dateParution !== '' ? $dateParution : null,
-                $sommaire,
-                $pages,
-                $horsSerie ? 1 : 0,
-                $oeuvreId,
-            ]);
+            if (MagazineRepository::externalUrlColumnExists()) {
+                $this->db->prepare(
+                    'UPDATE oeuvre_magazine SET
+                        numero = ?, numero_ordre = ?, date_parution = ?, sommaire = ?,
+                        pages = ?, est_hors_serie = ?, external_url = ?
+                     WHERE oeuvre_id = ?'
+                )->execute([
+                    $numero,
+                    $numeroOrdre,
+                    $dateParution !== '' ? $dateParution : null,
+                    $sommaire,
+                    $pages,
+                    $horsSerie ? 1 : 0,
+                    $externalUrl,
+                    $oeuvreId,
+                ]);
+            } else {
+                $this->db->prepare(
+                    'UPDATE oeuvre_magazine SET
+                        numero = ?, numero_ordre = ?, date_parution = ?, sommaire = ?,
+                        pages = ?, est_hors_serie = ?
+                     WHERE oeuvre_id = ?'
+                )->execute([
+                    $numero,
+                    $numeroOrdre,
+                    $dateParution !== '' ? $dateParution : null,
+                    $sommaire,
+                    $pages,
+                    $horsSerie ? 1 : 0,
+                    $oeuvreId,
+                ]);
+            }
 
             $this->db->commit();
             MagazineIssueFts::upsert($oeuvreId);
@@ -126,6 +151,13 @@ final class MagazineCatalogUpdater { public function __construct(private readonl
         $sommaire = trim((string) ($data['sommaire'] ?? $issue['sommaire'] ?? ''));
         $pages = max(0, (int) ($data['pages'] ?? $issue['pages'] ?? 0));
         $posterUrl = trim((string) ($data['poster_url'] ?? $issue['poster_url'] ?? ''));
+        $externalUrl = MagazineRepository::externalUrlColumnExists()
+            ? MagazineExternalUrl::sanitize((string) (
+                array_key_exists('external_url', $data)
+                    ? $data['external_url']
+                    : ($issue['external_url'] ?? '')
+            ))
+            : '';
 
         $titleError = $this->validator->validateCatalogIssueTitleUnique($titre, $oeuvreId);
         if ($titleError !== null) {
@@ -146,21 +178,40 @@ final class MagazineCatalogUpdater { public function __construct(private readonl
                 $storedObjectId = (int) $issue['stored_object_id'];
             }
 
-            $this->db->prepare(
-                'UPDATE oeuvre_magazine SET
-                    numero = ?, numero_ordre = ?, date_parution = ?, sommaire = ?,
-                    pages = ?, est_hors_serie = ?, stored_object_id = ?
-                 WHERE oeuvre_id = ?'
-            )->execute([
-                $numero,
-                $numeroOrdre,
-                $dateParution !== '' ? $dateParution : null,
-                $sommaire,
-                $pages,
-                $horsSerie ? 1 : 0,
-                $storedObjectId,
-                $oeuvreId,
-            ]);
+            if (MagazineRepository::externalUrlColumnExists()) {
+                $this->db->prepare(
+                    'UPDATE oeuvre_magazine SET
+                        numero = ?, numero_ordre = ?, date_parution = ?, sommaire = ?,
+                        pages = ?, est_hors_serie = ?, stored_object_id = ?, external_url = ?
+                     WHERE oeuvre_id = ?'
+                )->execute([
+                    $numero,
+                    $numeroOrdre,
+                    $dateParution !== '' ? $dateParution : null,
+                    $sommaire,
+                    $pages,
+                    $horsSerie ? 1 : 0,
+                    $storedObjectId,
+                    $externalUrl,
+                    $oeuvreId,
+                ]);
+            } else {
+                $this->db->prepare(
+                    'UPDATE oeuvre_magazine SET
+                        numero = ?, numero_ordre = ?, date_parution = ?, sommaire = ?,
+                        pages = ?, est_hors_serie = ?, stored_object_id = ?
+                     WHERE oeuvre_id = ?'
+                )->execute([
+                    $numero,
+                    $numeroOrdre,
+                    $dateParution !== '' ? $dateParution : null,
+                    $sommaire,
+                    $pages,
+                    $horsSerie ? 1 : 0,
+                    $storedObjectId,
+                    $oeuvreId,
+                ]);
+            }
 
             if (array_key_exists('support_papier', $data) || array_key_exists('support_physique', $data)) {
                 $hasPaper = array_key_exists('support_papier', $data)

@@ -81,6 +81,14 @@ $catalogPage = (int) ($catalogPage ?? 1);
         <label for="oeuvre_mag_sommaire">Sommaire</label>
         <textarea name="sommaire" id="oeuvre_mag_sommaire" rows="5"><?= Moncine\View::escape((string) ($issue['sommaire'] ?? '')) ?></textarea>
 
+        <label for="oeuvre_mag_external_url">Lien « consulter en ligne » (URL HTTPS)</label>
+        <input type="url" name="external_url" id="oeuvre_mag_external_url" maxlength="500"
+               placeholder="https://www.abandonware-magazines.org/affiche_mag.php?mag=…&amp;num=…"
+               value="<?= Moncine\View::escape((string) ($issue['external_url'] ?? '')) ?>">
+        <p class="hint">
+            Lien vers ce numéro consultable en ligne (ex. Abandonware Magazines). Facultatif.
+        </p>
+
         <button type="submit" class="btn btn-primary">Enregistrer les modifications</button>
     </form>
 </details>

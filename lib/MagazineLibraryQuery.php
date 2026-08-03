@@ -492,9 +492,17 @@ final class MagazineLibraryQuery {
             'SELECT b.id AS bib_id, b.statut, b.support_physique, b.user_id, b.foyer_id,
                     o.id AS oeuvre_id, o.titre, o.poster_url,
                     om.series_id, om.numero, om.numero_ordre, om.date_parution, om.sommaire,
-                    om.pages, om.est_hors_serie, om.stored_object_id,
+                    om.pages, om.est_hors_serie, om.stored_object_id'
+                    . (MagazineRepository::externalUrlColumnExists()
+                        ? ', om.external_url'
+                        : ', \'\' AS external_url')
+                    . ',
                     s.titre AS series_titre, s.publication_type, s.editeur, s.issn, s.poster_url AS series_poster_url,
-                    s.tags AS series_tags, s.categories AS series_categories,
+                    s.tags AS series_tags, s.categories AS series_categories, s.notes AS series_notes'
+                    . (SeriesRepository::externalUrlColumnExists()
+                        ? ', s.external_url AS series_external_url'
+                        : ', \'\' AS series_external_url')
+                    . ',
                     (SELECT COUNT(*) FROM bibliotheque bw
                      WHERE bw.oeuvre_id = o.id
                        AND bw.statut = :wishlist_check

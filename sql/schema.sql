@@ -418,6 +418,7 @@ CREATE TABLE IF NOT EXISTS series (
     tags TEXT NOT NULL DEFAULT '',
     categories TEXT NOT NULL DEFAULT '',
     rating_scale TEXT DEFAULT NULL,
+    external_url TEXT NOT NULL DEFAULT '',
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT NULL
 );
@@ -437,7 +438,8 @@ CREATE TABLE IF NOT EXISTS oeuvre_magazine (
     pages INTEGER NOT NULL DEFAULT 0,
     est_hors_serie INTEGER NOT NULL DEFAULT 0,
     stored_object_id INTEGER DEFAULT NULL REFERENCES stored_objects(id) ON DELETE SET NULL,
-    pdf_text_preview TEXT NOT NULL DEFAULT ''
+    pdf_text_preview TEXT NOT NULL DEFAULT '',
+    external_url TEXT NOT NULL DEFAULT ''
 );
 
 CREATE INDEX IF NOT EXISTS idx_oeuvre_magazine_series ON oeuvre_magazine(series_id);

@@ -76,6 +76,12 @@ $supplementsAvailable = Moncine\MagazineIssueSupplementRepository::isAvailable()
                     <label for="popover_edit_sommaire">Sommaire</label>
                     <textarea name="sommaire" id="popover_edit_sommaire" rows="5"><?= Moncine\View::escape((string) ($issue['sommaire'] ?? '')) ?></textarea>
 
+                    <label for="popover_edit_external_url">Lien « consulter en ligne » (URL HTTPS)</label>
+                    <input type="url" name="external_url" id="popover_edit_external_url" maxlength="500"
+                           placeholder="https://www.abandonware-magazines.org/affiche_mag.php?mag=…&amp;num=…"
+                           value="<?= Moncine\View::escape((string) ($issue['external_url'] ?? '')) ?>">
+                    <p class="hint">Lien vers ce numéro sur un site externe (facultatif).</p>
+
                     <label for="popover_edit_cover">Nouvelle couverture</label>
                     <input type="file" name="cover_file" id="popover_edit_cover" accept="image/jpeg,image/png,image/webp">
 

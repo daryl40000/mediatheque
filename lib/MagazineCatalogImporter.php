@@ -122,6 +122,17 @@ final class MagazineCatalogImporter
                 }
             } else {
                 $result['series_reused']++;
+                // Complète le lien ABM s’il manquait (séries créées avant cette fonctionnalité).
+                if (
+                    !$dryRun
+                    && $abmMagId > 0
+                    && SeriesRepository::externalUrlColumnExists()
+                    && MagazineExternalUrl::sanitize((string) ($seriesRow['external_url'] ?? '')) === ''
+                ) {
+                    $abmUrl = MagazineExternalUrl::abmSeriesUrl($abmMagId);
+                    $seriesRepo->update((int) $seriesRow['id'], ['external_url' => $abmUrl]);
+                    $seriesRow['external_url'] = $abmUrl;
+                }
                 if (!$dryRun && $downloadCovers) {
                     $logoUrl = self::normalizePosterUrl((string) ($serie['logo_url'] ?? ''));
                     $seriesPoster = trim((string) ($seriesRow['poster_url'] ?? ''));
@@ -178,6 +189,22 @@ final class MagazineCatalogImporter
 
                 if ($existing !== null && $skipExisting) {
                     $result['issues_skipped']++;
+                    // Complète le lien « consulter en ligne » s’il manquait.
+                    if (!$dryRun && MagazineRepository::externalUrlColumnExists()) {
+                        $existingUrl = MagazineExternalUrl::sanitize(
+                            (string) ($existing['external_url'] ?? '')
+                        );
+                        if ($existingUrl === '') {
+                            $fillPayload = $this->issuePayloadFromExport($seriesRow, $issue);
+                            $fillUrl = (string) ($fillPayload['external_url'] ?? '');
+                            if ($fillUrl !== '') {
+                                $magRepo->updateCatalogByOeuvreId(
+                                    (int) ($existing['oeuvre_id'] ?? 0),
+                                    ['external_url' => $fillUrl]
+                                );
+                            }
+                        }
+                    }
                     if ($downloadCovers && $this->issueNeedsCoverDownload($existing, $coverUrl)) {
                         $this->tryCacheIssueCover(
                             $catalogAdmin,
@@ -376,6 +403,8 @@ final class MagazineCatalogImporter
             'publication_type' => 'mensuel',
             'poster_url' => $logoUrl,
             'notes' => self::abmNotesForMagazineId($abmMagId),
+            // Remplit le bouton « Consulter en ligne » vers la page revue ABM.
+            'external_url' => MagazineExternalUrl::abmSeriesUrl($abmMagId),
         ], MediaDomain::MAGAZINE);
     }
 
@@ -403,6 +432,13 @@ final class MagazineCatalogImporter
             'est_hors_serie' => $horsSerie,
             'poster_url' => self::normalizePosterUrl((string) ($issue['cover_url'] ?? '')),
             'series_titre' => (string) ($seriesRow['titre'] ?? ''),
+            // Lien direct vers le numéro sur Abandonware Magazines (si IDs connus).
+            'external_url' => MagazineExternalUrl::abmIssueUrl(
+                self::parseAbmMagazineIdFromNotes(
+                    (string) ($seriesRow['notes'] ?? '')
+                ) ?: (int) ($issue['abm_magazine_id'] ?? 0),
+                (int) ($issue['abm_issue_id'] ?? 0)
+            ),
         ];
     }
 

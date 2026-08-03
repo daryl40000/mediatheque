@@ -41,6 +41,7 @@ final class CatalogMagazineSheets
         'categories' => 'Catégories',
         'rating_scale' => 'Notes sur',
         'poster_url' => 'Logo (URL)',
+        'external_url' => 'Lien en ligne (URL)',
     ];
 
     /** @var array<string, list<string>> */
@@ -59,6 +60,15 @@ final class CatalogMagazineSheets
         'categories' => ['categories', 'catégories', 'category'],
         'rating_scale' => ['notes sur', 'rating_scale', 'echelle', 'échelle', 'note max'],
         'poster_url' => ['logo', 'logo url', 'poster_url', 'affiche'],
+        'external_url' => [
+            'lien en ligne',
+            'lien en ligne (url)',
+            'lien',
+            'external_url',
+            'url',
+            'lien serie',
+            'lien série',
+        ],
     ];
 
     /** @var array<string, string> */
@@ -183,6 +193,7 @@ final class CatalogMagazineSheets
         $db = Database::getInstance();
         $hasCategories = SeriesRepository::categoriesColumnExists();
         $hasRating = SeriesRepository::ratingScaleColumnExists();
+        $hasExternalUrl = SeriesRepository::externalUrlColumnExists();
 
         $select = 'id, titre, publication_type, editeur, issn, langue, pays,
                    date_debut, date_fin, notes, tags, poster_url';
@@ -191,6 +202,9 @@ final class CatalogMagazineSheets
         }
         if ($hasRating) {
             $select .= ', rating_scale';
+        }
+        if ($hasExternalUrl) {
+            $select .= ', external_url';
         }
 
         $stmt = $db->prepare(
@@ -216,6 +230,7 @@ final class CatalogMagazineSheets
                 $hasCategories ? (string) ($series['categories'] ?? '') : '',
                 $hasRating ? (string) ($series['rating_scale'] ?? '') : '',
                 (string) ($series['poster_url'] ?? ''),
+                $hasExternalUrl ? (string) ($series['external_url'] ?? '') : '',
             ];
         }
 
@@ -421,6 +436,9 @@ final class CatalogMagazineSheets
                     'rating_scale' => ImportFilmRows::getCell($row, $map, 'rating_scale'),
                     'poster_url' => SecureUrl::sanitizePosterUrl(
                         ImportFilmRows::getCell($row, $map, 'poster_url')
+                    ),
+                    'external_url' => MagazineExternalUrl::sanitize(
+                        ImportFilmRows::getCell($row, $map, 'external_url')
                     ),
                 ];
 

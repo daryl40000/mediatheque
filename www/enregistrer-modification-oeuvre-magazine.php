@@ -46,6 +46,7 @@ $result = (new MagazineRepository())->updateCatalogByOeuvreId($oeuvreId, [
     'est_hors_serie' => FormCheckbox::isChecked($_POST, 'est_hors_serie'),
     'sommaire' => (string) ($_POST['sommaire'] ?? ''),
     'poster_url' => (string) ($_POST['poster_url'] ?? ''),
+    'external_url' => (string) ($_POST['external_url'] ?? ''),
 ]);
 
 if ($result !== true) {

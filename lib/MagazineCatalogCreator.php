@@ -41,6 +41,9 @@ final class MagazineCatalogCreator { public function __construct(private readonl
         $dateParution = trim((string) ($data['date_parution'] ?? ''));
         $annee = max(0, (int) ($data['annee'] ?? 0));
         $posterUrl = SecureUrl::sanitizePosterUrl((string) ($data['poster_url'] ?? ''));
+        $externalUrl = MagazineRepository::externalUrlColumnExists()
+            ? MagazineExternalUrl::sanitize((string) ($data['external_url'] ?? ''))
+            : '';
 
         $this->db->beginTransaction();
         try {
@@ -53,21 +56,40 @@ final class MagazineCatalogCreator { public function __construct(private readonl
                 'media_domain' => MediaDomain::MAGAZINE,
             ]);
 
-            $this->db->prepare(
-                'INSERT INTO oeuvre_magazine (
-                    oeuvre_id, series_id, numero, numero_ordre, date_parution,
-                    sommaire, pages, est_hors_serie
-                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
-            )->execute([
-                $oeuvreId,
-                $seriesId,
-                $numero,
-                $numeroOrdre,
-                $dateParution !== '' ? $dateParution : null,
-                trim((string) ($data['sommaire'] ?? '')),
-                max(0, (int) ($data['pages'] ?? 0)),
-                $horsSerie ? 1 : 0,
-            ]);
+            if (MagazineRepository::externalUrlColumnExists()) {
+                $this->db->prepare(
+                    'INSERT INTO oeuvre_magazine (
+                        oeuvre_id, series_id, numero, numero_ordre, date_parution,
+                        sommaire, pages, est_hors_serie, external_url
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                )->execute([
+                    $oeuvreId,
+                    $seriesId,
+                    $numero,
+                    $numeroOrdre,
+                    $dateParution !== '' ? $dateParution : null,
+                    trim((string) ($data['sommaire'] ?? '')),
+                    max(0, (int) ($data['pages'] ?? 0)),
+                    $horsSerie ? 1 : 0,
+                    $externalUrl,
+                ]);
+            } else {
+                $this->db->prepare(
+                    'INSERT INTO oeuvre_magazine (
+                        oeuvre_id, series_id, numero, numero_ordre, date_parution,
+                        sommaire, pages, est_hors_serie
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)'
+                )->execute([
+                    $oeuvreId,
+                    $seriesId,
+                    $numero,
+                    $numeroOrdre,
+                    $dateParution !== '' ? $dateParution : null,
+                    trim((string) ($data['sommaire'] ?? '')),
+                    max(0, (int) ($data['pages'] ?? 0)),
+                    $horsSerie ? 1 : 0,
+                ]);
+            }
 
             $this->db->commit();
             MagazineIssueFts::upsert($oeuvreId);
@@ -138,22 +160,46 @@ final class MagazineCatalogCreator { public function __construct(private readonl
                 'media_domain' => MediaDomain::MAGAZINE,
             ]);
 
-            $this->db->prepare(
-                'INSERT INTO oeuvre_magazine (
-                    oeuvre_id, series_id, numero, numero_ordre, date_parution,
-                    sommaire, pages, est_hors_serie, stored_object_id
-                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
-            )->execute([
-                $oeuvreId,
-                $seriesId,
-                $numero,
-                $numeroOrdre,
-                $dateParution !== '' ? $dateParution : null,
-                $sommaire,
-                $pages,
-                $horsSerie ? 1 : 0,
-                isset($data['stored_object_id']) ? (int) $data['stored_object_id'] : null,
-            ]);
+            $externalUrl = MagazineRepository::externalUrlColumnExists()
+                ? MagazineExternalUrl::sanitize((string) ($data['external_url'] ?? ''))
+                : '';
+
+            if (MagazineRepository::externalUrlColumnExists()) {
+                $this->db->prepare(
+                    'INSERT INTO oeuvre_magazine (
+                        oeuvre_id, series_id, numero, numero_ordre, date_parution,
+                        sommaire, pages, est_hors_serie, stored_object_id, external_url
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                )->execute([
+                    $oeuvreId,
+                    $seriesId,
+                    $numero,
+                    $numeroOrdre,
+                    $dateParution !== '' ? $dateParution : null,
+                    $sommaire,
+                    $pages,
+                    $horsSerie ? 1 : 0,
+                    isset($data['stored_object_id']) ? (int) $data['stored_object_id'] : null,
+                    $externalUrl,
+                ]);
+            } else {
+                $this->db->prepare(
+                    'INSERT INTO oeuvre_magazine (
+                        oeuvre_id, series_id, numero, numero_ordre, date_parution,
+                        sommaire, pages, est_hors_serie, stored_object_id
+                     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)'
+                )->execute([
+                    $oeuvreId,
+                    $seriesId,
+                    $numero,
+                    $numeroOrdre,
+                    $dateParution !== '' ? $dateParution : null,
+                    $sommaire,
+                    $pages,
+                    $horsSerie ? 1 : 0,
+                    isset($data['stored_object_id']) ? (int) $data['stored_object_id'] : null,
+                ]);
+            }
 
             $bibId = (new BibliothequeRepository())->insert($userId, $foyerId, $oeuvreId, [
                 'statut' => $statut,

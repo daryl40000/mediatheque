@@ -88,6 +88,10 @@
                 </div>
             </div>
             <p>
+                <?php
+                $externalUrl = Moncine\MagazineExternalUrl::resolveSeriesUrl($series);
+                require MONCINE_ROOT . '/templates/_magazine_external_link.php';
+                ?>
                 <a href="/ajouter-numero-magazine.php?series_id=<?= $seriesId ?>&statut=<?= Moncine\View::escape($statut) ?>"
                    class="btn btn-accent">Ajouter un numéro</a>
                 <a href="/modifier-serie-magazine.php?series_id=<?= $seriesId ?>"

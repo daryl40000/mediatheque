@@ -356,11 +356,22 @@ Pour **migrer ou sauvegarder** tout le catalogue (tous médias), utilisez la pag
 | **ODS** (recommandé) | Feuille `Catalogue` + feuilles `SeriesMagazines`, `MagazineSubjects`, `MagazineSubjectLinks`, `MagazineSupplements`, `MagazineSupplementLinks` |
 | **CSV** | Numéros + métadonnées de série dénormalisées (`Magazine — titre série`, `Magazine — notes sur`, tags…) ; **pas** les sujets / pages / notes (préférez l’ODS) |
 
-**Conservé à l’aller-retour ODS :** échelle de notation, tags/catégories de série, sujets, lien jeu/film, **page PDF**, **note** de test, métadonnées des suppléments.
+**Conservé à l’aller-retour ODS :** échelle de notation, tags/catégories de série, **liens en ligne** (série + numéro), sujets, lien jeu/film, **page PDF**, **note** de test, métadonnées des suppléments.
 
 **Hors tableur :** fichiers PDF et affiches locales (ZIP affiches à part ; recharger les PDF si besoin).
 
 L’export JSON ABM (`/export-catalogue-magazines.php`) reste un canal **léger** (séries + numéros uniquement) — pas un backup des sujets/notes.
+
+### Liens « consulter en ligne »
+
+Sur chaque **série** et chaque **numéro**, vous pouvez enregistrer une adresse web (HTTPS) vers la revue ou le numéro consultable en ligne (ex. [Abandonware Magazines](https://www.abandonware-magazines.org/)).
+
+- Formulaire **Modifier la série** / **modifier la fiche catalogue** du numéro.
+- Bouton **Consulter en ligne** sur la page série, la fiche catalogue et la fiche numéro (si un lien est renseigné).
+- À l’**import ABM**, le lien série (`affiche_mag.php?mag=…`) et le lien numéro (`…&num=…`) sont remplis automatiquement quand les identifiants ABM sont connus.
+- Export/import catalogue : colonnes CSV `Magazine — lien série en ligne` / `Magazine — lien en ligne` ; colonne `Lien en ligne (URL)` sur la feuille ODS `SeriesMagazines`.
+
+Migration **074** : colonnes `external_url` sur `series` et `oeuvre_magazine`.
 
 ### Dates de parution
 

@@ -112,6 +112,8 @@ Page : **`/import-catalogue-magazines.php`** (administrateur connecté).
 
 Les séries et numéros sont créés **uniquement au catalogue** — pas dans votre bibliothèque personnelle. Les utilisateurs pourront ensuite ajouter les numéros via le catalogue.
 
+À l’import, un lien **Consulter en ligne** est rempli automatiquement vers Abandonware Magazines (page de la revue et page du numéro), quand les identifiants ABM sont connus. Vous pouvez aussi les saisir ou les corriger à la main, et ils sont inclus dans l’export/import catalogue (CSV / ODS).
+
 Options :
 
 | Option | Effet |
