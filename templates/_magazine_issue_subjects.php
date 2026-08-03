@@ -22,6 +22,7 @@ $bibId = (int) ($issue['bib_id'] ?? 0);
 $subjectDetached = $subjectDetached ?? false;
 $subjectPageUpdated = $subjectPageUpdated ?? false;
 $subjectScoreUpdated = $subjectScoreUpdated ?? false;
+$subjectMetaUpdated = $subjectMetaUpdated ?? false;
 $subjectTargetSupplementId = (int) ($subjectTargetSupplementId ?? 0);
 $ratingScale = Moncine\MagazineRatingScale::normalize($ratingScale ?? null);
 $catalogMediaLinkAvailable = $catalogMediaLinkAvailable ?? false;
@@ -38,12 +39,13 @@ $subjectsInfoParts = [
         : 'Associez un sujet testé ou traité dans ce numéro (jeu, voiture, matériel, dossier, interview…).',
     'Indiquez la page du PDF pour ouvrir l’article au bon endroit depuis la fiche d’un jeu. '
         . 'Quand la page est connue, elle s’affiche sous la vignette (ex. p.42) ; '
-        . 'le crayon permet de la saisir ou de la modifier.',
+        . 'les boutons p. et ★ ouvrent un même formulaire pour page et note.',
 ];
 if ($ratingScale !== null) {
     $subjectsInfoParts[] = 'Les notes des tests utilisent l’échelle de la série (« '
         . Moncine\MagazineRatingScale::label($ratingScale)
-        . ' ») ; elles sont aussi converties sur 100 pour les moyennes.';
+        . ' ») ; vous pouvez les saisir à l’ajout du sujet ou plus tard sous la vignette. '
+        . 'Elles sont aussi converties sur 100 pour les moyennes.';
 }
 if ($parutionYear > 0) {
     $subjectsInfoParts[] = 'Choisissez l’année affichée sur le tag (par défaut celle du numéro : '
@@ -81,6 +83,9 @@ if ($hasSingleTag) {
     <?php endif; ?>
     <?php if ($subjectScoreUpdated): ?>
         <p class="alert alert-success">Note du test enregistrée.</p>
+    <?php endif; ?>
+    <?php if ($subjectMetaUpdated): ?>
+        <p class="alert alert-success">Page et note enregistrées.</p>
     <?php endif; ?>
     <?php if ($subjectError !== ''): ?>
         <p class="alert alert-warning"><?= Moncine\View::escape($subjectError) ?></p>
@@ -197,8 +202,29 @@ if ($hasSingleTag) {
                    value="" placeholder="Ex. 42" inputmode="numeric">
             <p class="hint">
                 Numéro de page du fichier PDF (pas forcément celui imprimé sur le papier).
-                Laissez vide si inconnu — vous pourrez le remplir plus tard avec le crayon sous chaque sujet.
+                Laissez vide si inconnu — vous pourrez le remplir plus tard sous chaque sujet.
             </p>
+
+            <?php if ($ratingScale !== null): ?>
+                <?php $attachScoreMax = Moncine\MagazineRatingScale::maxValue($ratingScale); ?>
+                <div class="magazine-subject-form__score-wrap" data-attach-score-wrap hidden>
+                    <label for="attach_score">Note du test (optionnel)</label>
+                    <input type="number" name="score" id="attach_score"
+                           min="0"
+                           max="<?= Moncine\View::escape((string) $attachScoreMax) ?>"
+                           step="0.5"
+                           value=""
+                           placeholder="Ex. 8 ou 3,5"
+                           inputmode="decimal"
+                           data-attach-score-input
+                           disabled>
+                    <p class="hint">
+                        Échelle de la série :
+                        <strong><?= Moncine\View::escape(Moncine\MagazineRatingScale::label($ratingScale)) ?></strong>
+                        (demi-points acceptés). Visible uniquement pour la catégorie <strong>Test</strong>.
+                    </p>
+                </div>
+            <?php endif; ?>
 
             <button type="submit" class="btn btn-accent">Ajouter le sujet</button>
         </form>

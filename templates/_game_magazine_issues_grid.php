@@ -1,6 +1,7 @@
 <?php
 /**
- * Grille de couvertures magazine liées à un jeu, avec tags sous chaque vignette.
+ * Grille des magazines liés à un jeu ou un film.
+ * Couverture + titre de revue bien visibles (pas seulement au survol).
  *
  * @var list<array<string, mixed>> $magazineCoverageRows
  */
@@ -9,7 +10,7 @@ if ($magazineCoverageRows === []) {
     return;
 }
 ?>
-<div class="magazine-issues-grid magazine-issues-grid--game-coverage" role="list">
+<div class="magazine-issues-grid magazine-issues-grid--media-coverage" role="list">
     <?php foreach ($magazineCoverageRows as $row): ?>
         <?php
         $navUrl = trim((string) ($row['issue_nav_url'] ?? ''));
@@ -21,11 +22,18 @@ if ($magazineCoverageRows === []) {
             }
             $posterSrc = Moncine\View::posterSrc($poster !== '' ? $poster : null);
         }
-        $seriesTitre = (string) ($row['series_titre'] ?? '');
-        $numero = (string) ($row['numero'] ?? '');
-        $issueTitle = $seriesTitre;
+        $seriesTitre = trim((string) ($row['series_titre'] ?? ''));
+        $numero = trim((string) ($row['numero'] ?? ''));
+        $isHorsSerie = !empty($row['est_hors_serie']);
+        $numeroLabel = '';
         if ($numero !== '') {
-            $issueTitle = trim($issueTitle . ($issueTitle !== '' ? ' — ' : '') . 'n°' . $numero);
+            $numeroLabel = ($isHorsSerie ? 'HS ' : 'n°') . $numero;
+        } elseif ($isHorsSerie) {
+            $numeroLabel = 'Hors-série';
+        }
+        $issueTitle = $seriesTitre;
+        if ($numeroLabel !== '') {
+            $issueTitle = trim($issueTitle . ($issueTitle !== '' ? ' — ' : '') . $numeroLabel);
         }
         $categoryLabels = array_values(array_filter(
             is_array($row['category_labels'] ?? null) ? $row['category_labels'] : [],
@@ -35,20 +43,23 @@ if ($magazineCoverageRows === []) {
             $categoryLabels = [(string) $row['category_label']];
         }
         $inLibrary = !empty($row['in_library']);
-        // Date de parution déjà formatée (ex. « juin 2024 ») côté MagazineGameLink.
         $dateLabel = trim((string) ($row['date_label'] ?? ''));
-        $hoverLabel = $issueTitle;
-        if ($dateLabel !== '') {
-            $hoverLabel = trim($issueTitle . ($issueTitle !== '' ? ' — ' : '') . $dateLabel);
+        $pdfUrl = trim((string) ($row['pdf_url'] ?? ''));
+        $articlePage = Moncine\MagazineSubjectRepository::normalizePage($row['article_page'] ?? 0);
+        $scoreDisplay = trim((string) ($row['score_display'] ?? ''));
+        $scoreStars = is_array($row['score_stars'] ?? null) ? $row['score_stars'] : [];
+        $scorePercent = $row['score_percent'] ?? null;
+        $cardClass = 'magazine-issue-card magazine-issue-card--media-coverage';
+        if (!$inLibrary) {
+            $cardClass .= ' magazine-issue-card--unowned';
         }
         ?>
-        <article class="magazine-issue-card magazine-issue-card--coverage-tags<?= $inLibrary ? '' : ' magazine-issue-card--unowned' ?>"
-                 role="listitem">
+        <article class="<?= Moncine\View::escape($cardClass) ?>" role="listitem">
             <?php if ($navUrl !== ''): ?>
                 <a href="<?= Moncine\View::escape($navUrl) ?>"
                    class="magazine-issue-card__cover-link"
-                   title="<?= Moncine\View::escape($hoverLabel) ?>"
-                   aria-label="<?= Moncine\View::escape($hoverLabel) ?>">
+                   title="<?= Moncine\View::escape($issueTitle) ?>"
+                   aria-label="<?= Moncine\View::escape($issueTitle) ?>">
             <?php else: ?>
                 <span class="magazine-issue-card__cover-link magazine-issue-card__cover-link--static">
             <?php endif; ?>
@@ -67,80 +78,75 @@ if ($magazineCoverageRows === []) {
                 </span>
             <?php endif; ?>
 
-            <?php if ($categoryLabels !== []): ?>
-                <div class="magazine-issue-card__tags">
-                    <?php foreach ($categoryLabels as $categoryLabel): ?>
-                        <span class="magazine-tag magazine-tag--subject"><?= Moncine\View::escape((string) $categoryLabel) ?></span>
-                    <?php endforeach; ?>
-                </div>
-            <?php endif; ?>
-
-            <?php
-            $pdfUrl = trim((string) ($row['pdf_url'] ?? ''));
-            $articlePage = Moncine\MagazineSubjectRepository::normalizePage($row['article_page'] ?? 0);
-            $scoreDisplay = trim((string) ($row['score_display'] ?? ''));
-            $scoreStars = is_array($row['score_stars'] ?? null) ? $row['score_stars'] : [];
-            $scorePercent = $row['score_percent'] ?? null;
-            ?>
-            <?php if ($pdfUrl !== '' || $scoreDisplay !== ''): ?>
-                <div class="magazine-issue-card__footer magazine-issue-card__footer--coverage">
-                    <?php if ($scoreDisplay !== ''): ?>
-                        <?php if ($scoreStars !== []): ?>
-                            <span class="magazine-issue-card__score magazine-issue-card__score--stars"
-                                  title="<?= Moncine\View::escape($scoreDisplay
-                                      . ($scorePercent !== null
-                                          ? ' · ≈ ' . Moncine\MagazineRatingScale::formatNumber((float) $scorePercent) . '/100'
-                                          : '')) ?>">
-                                <?php foreach ($scoreStars as $starPart): ?>
-                                    <span class="magazine-subject-strip__star magazine-subject-strip__star--<?= Moncine\View::escape((string) $starPart) ?>"
-                                          aria-hidden="true"></span>
-                                <?php endforeach; ?>
-                                <span class="visually-hidden"><?= Moncine\View::escape($scoreDisplay) ?></span>
-                            </span>
-                        <?php else: ?>
-                            <span class="magazine-issue-card__score"
-                                  title="<?= $scorePercent !== null
-                                      ? '≈ ' . Moncine\View::escape(Moncine\MagazineRatingScale::formatNumber((float) $scorePercent)) . '/100'
-                                      : Moncine\View::escape($scoreDisplay) ?>">
-                                <?= Moncine\View::escape($scoreDisplay) ?>
-                            </span>
-                        <?php endif; ?>
+            <div class="magazine-issue-card__body magazine-issue-card__body--media-coverage">
+                <h3 class="magazine-issue-card__title magazine-issue-card__title--media-coverage">
+                    <?php if ($navUrl !== ''): ?>
+                        <a href="<?= Moncine\View::escape($navUrl) ?>" class="magazine-issue-card__title-link">
                     <?php endif; ?>
-                    <?php if ($pdfUrl !== ''): ?>
-                        <a href="<?= Moncine\View::escape($pdfUrl) ?>"
-                           class="btn btn-accent btn-sm magazine-issue-card__pdf"
-                           target="_blank"
-                           rel="noopener"
-                           title="<?= $articlePage > 0
-                               ? 'Ouvrir le PDF à la page ' . $articlePage
-                               : 'Ouvrir le PDF' ?>">
-                            PDF<?= $articlePage > 0 ? ' p.' . $articlePage : '' ?>
+                        <?php if ($seriesTitre !== ''): ?>
+                            <span class="magazine-issue-card__series"><?= Moncine\View::escape($seriesTitre) ?></span>
+                        <?php endif; ?>
+                        <?php if ($numeroLabel !== ''): ?>
+                            <span class="magazine-issue-card__numero"><?= Moncine\View::escape($numeroLabel) ?></span>
+                        <?php endif; ?>
+                        <?php if ($seriesTitre === '' && $numeroLabel === ''): ?>
+                            <span class="magazine-issue-card__series">Magazine</span>
+                        <?php endif; ?>
+                    <?php if ($navUrl !== ''): ?>
                         </a>
                     <?php endif; ?>
-                </div>
-            <?php endif; ?>
+                </h3>
 
-            <?php // Bulle au survol : mois et année de parution du numéro. ?>
-            <?php if ($dateLabel !== '' || $scoreDisplay !== ''): ?>
-                <div class="collection-grid__hover-bubble" aria-hidden="true">
-                    <div class="collection-grid__caption">
-                        <?php if ($issueTitle !== ''): ?>
-                            <strong class="magazine-issue-card__bubble-title"><?= Moncine\View::escape($issueTitle) ?></strong>
-                        <?php endif; ?>
-                        <?php if ($dateLabel !== ''): ?>
-                            <span class="collection-grid__meta"><?= Moncine\View::escape($dateLabel) ?></span>
-                        <?php endif; ?>
+                <?php if ($dateLabel !== ''): ?>
+                    <p class="magazine-issue-card__meta hint"><?= Moncine\View::escape($dateLabel) ?></p>
+                <?php endif; ?>
+
+                <?php if ($categoryLabels !== []): ?>
+                    <div class="magazine-issue-card__tags">
+                        <?php foreach ($categoryLabels as $categoryLabel): ?>
+                            <span class="magazine-tag magazine-tag--subject"><?= Moncine\View::escape((string) $categoryLabel) ?></span>
+                        <?php endforeach; ?>
+                    </div>
+                <?php endif; ?>
+
+                <?php if ($pdfUrl !== '' || $scoreDisplay !== ''): ?>
+                    <div class="magazine-issue-card__footer magazine-issue-card__footer--coverage">
                         <?php if ($scoreDisplay !== ''): ?>
-                            <span class="collection-grid__meta">
-                                Note <?= Moncine\View::escape($scoreDisplay) ?>
-                                <?php if ($scorePercent !== null): ?>
-                                    · ≈ <?= Moncine\View::escape(Moncine\MagazineRatingScale::formatNumber((float) $scorePercent)) ?>/100
-                                <?php endif; ?>
-                            </span>
+                            <?php if ($scoreStars !== []): ?>
+                                <span class="magazine-issue-card__score magazine-issue-card__score--stars"
+                                      title="<?= Moncine\View::escape($scoreDisplay
+                                          . ($scorePercent !== null
+                                              ? ' · ≈ ' . Moncine\MagazineRatingScale::formatNumber((float) $scorePercent) . '/100'
+                                              : '')) ?>">
+                                    <?php foreach ($scoreStars as $starPart): ?>
+                                        <span class="magazine-subject-strip__star magazine-subject-strip__star--<?= Moncine\View::escape((string) $starPart) ?>"
+                                              aria-hidden="true"></span>
+                                    <?php endforeach; ?>
+                                    <span class="visually-hidden"><?= Moncine\View::escape($scoreDisplay) ?></span>
+                                </span>
+                            <?php else: ?>
+                                <span class="magazine-issue-card__score"
+                                      title="<?= $scorePercent !== null
+                                          ? '≈ ' . Moncine\View::escape(Moncine\MagazineRatingScale::formatNumber((float) $scorePercent)) . '/100'
+                                          : Moncine\View::escape($scoreDisplay) ?>">
+                                    <?= Moncine\View::escape($scoreDisplay) ?>
+                                </span>
+                            <?php endif; ?>
+                        <?php endif; ?>
+                        <?php if ($pdfUrl !== ''): ?>
+                            <a href="<?= Moncine\View::escape($pdfUrl) ?>"
+                               class="btn btn-accent btn-sm magazine-issue-card__pdf"
+                               target="_blank"
+                               rel="noopener"
+                               title="<?= $articlePage > 0
+                                   ? 'Ouvrir le PDF à la page ' . $articlePage
+                                   : 'Ouvrir le PDF' ?>">
+                                PDF<?= $articlePage > 0 ? ' p.' . $articlePage : '' ?>
+                            </a>
                         <?php endif; ?>
                     </div>
-                </div>
-            <?php endif; ?>
+                <?php endif; ?>
+            </div>
         </article>
     <?php endforeach; ?>
 </div>

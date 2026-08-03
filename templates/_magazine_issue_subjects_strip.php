@@ -153,10 +153,10 @@ $subjectGroups = $buildSubjectGroups($stripSubjects, $stripGroupByCategory);
                                 </span>
                             <?php endif; ?>
 
-                            <div class="magazine-subject-strip__page"
-                                 data-subject-page
+                            <div class="magazine-subject-strip__meta"
+                                 data-subject-meta
                                  onclick="event.stopPropagation()">
-                                <div class="magazine-subject-strip__page-view">
+                                <div class="magazine-subject-strip__meta-view">
                                     <?php if ($articlePage > 0): ?>
                                         <?php if ($pdfUrl !== ''): ?>
                                             <a href="<?= Moncine\View::escape($pdfUrl) ?>"
@@ -173,28 +173,59 @@ $subjectGroups = $buildSubjectGroups($stripSubjects, $stripGroupByCategory);
                                             </span>
                                         <?php endif; ?>
                                     <?php endif; ?>
+
+                                    <?php if ($showTestScore && $testScore !== null): ?>
+                                        <?php if ($scoreStars !== []): ?>
+                                            <span class="magazine-subject-strip__stars"
+                                                  title="<?= Moncine\View::escape($scoreDisplay) ?>"
+                                                  aria-label="<?= Moncine\View::escape('Note ' . $scoreDisplay) ?>">
+                                                <?php foreach ($scoreStars as $starPart): ?>
+                                                    <span class="magazine-subject-strip__star magazine-subject-strip__star--<?= Moncine\View::escape($starPart) ?>"
+                                                          aria-hidden="true"></span>
+                                                <?php endforeach; ?>
+                                            </span>
+                                        <?php else: ?>
+                                            <span class="magazine-subject-strip__score-num"
+                                                  title="<?= Moncine\View::escape($scoreDisplay) ?>">
+                                                <?= Moncine\View::escape($scoreDisplay) ?>
+                                            </span>
+                                        <?php endif; ?>
+                                    <?php endif; ?>
+
                                     <button type="button"
                                             class="magazine-subject-strip__meta-edit magazine-subject-strip__meta-edit--page"
-                                            data-subject-page-toggle
-                                            title="<?= Moncine\View::escape($pageEditLabel) ?>"
-                                            aria-label="<?= Moncine\View::escape($pageEditLabel . ' pour ' . $displayLabel) ?>"
+                                            data-subject-meta-toggle
+                                            title="<?= Moncine\View::escape($showTestScore ? 'Modifier page / note' : $pageEditLabel) ?>"
+                                            aria-label="<?= Moncine\View::escape(($showTestScore ? 'Modifier page et note' : $pageEditLabel) . ' pour ' . $displayLabel) ?>"
                                             aria-expanded="false"
                                             aria-controls="<?= Moncine\View::escape($pageInputId) ?>_form">
                                         <span class="magazine-subject-strip__meta-edit-label" aria-hidden="true">p.</span>
                                     </button>
+                                    <?php if ($showTestScore): ?>
+                                        <button type="button"
+                                                class="magazine-subject-strip__meta-edit magazine-subject-strip__meta-edit--score"
+                                                data-subject-meta-toggle
+                                                title="<?= Moncine\View::escape($scoreEditLabel) ?>"
+                                                aria-label="<?= Moncine\View::escape($scoreEditLabel . ' pour ' . $displayLabel) ?>"
+                                                aria-expanded="false"
+                                                aria-controls="<?= Moncine\View::escape($pageInputId) ?>_form">
+                                            <span class="magazine-subject-strip__meta-edit-label" aria-hidden="true">★</span>
+                                        </button>
+                                    <?php endif; ?>
                                 </div>
 
                                 <form method="post"
                                       action="/traiter-sujets-numero-magazine.php"
-                                      class="magazine-subject-strip__page-form"
+                                      class="magazine-subject-strip__meta-form"
                                       id="<?= Moncine\View::escape($pageInputId) ?>_form">
                                     <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
                                     <input type="hidden" name="bib_id" value="<?= (int) $bibId ?>">
                                     <?php if ($subjectTargetSupplementId > 0): ?>
                                         <input type="hidden" name="supplement_id" value="<?= $subjectTargetSupplementId ?>">
                                     <?php endif; ?>
-                                    <input type="hidden" name="action" value="update_page">
+                                    <input type="hidden" name="action" value="update_meta">
                                     <input type="hidden" name="subject_id" value="<?= $subjectId ?>">
+
                                     <label class="visually-hidden" for="<?= Moncine\View::escape($pageInputId) ?>">
                                         Page dans le PDF
                                     </label>
@@ -206,59 +237,11 @@ $subjectGroups = $buildSubjectGroups($stripSubjects, $stripGroupByCategory);
                                            max="9999"
                                            step="1"
                                            value="<?= $articlePage > 0 ? $articlePage : '' ?>"
-                                           placeholder="—"
+                                           placeholder="page"
                                            inputmode="numeric"
                                            title="Page dans le PDF">
-                                    <button type="submit"
-                                            class="btn btn-secondary btn-sm magazine-subject-strip__page-save"
-                                            title="Enregistrer la page">OK</button>
-                                </form>
-                            </div>
 
-                            <?php if ($showTestScore): ?>
-                                <div class="magazine-subject-strip__score"
-                                     data-subject-score
-                                     onclick="event.stopPropagation()">
-                                    <div class="magazine-subject-strip__score-view">
-                                        <?php if ($testScore !== null): ?>
-                                            <?php if ($scoreStars !== []): ?>
-                                                <span class="magazine-subject-strip__stars"
-                                                      title="<?= Moncine\View::escape($scoreDisplay) ?>"
-                                                      aria-label="<?= Moncine\View::escape('Note ' . $scoreDisplay) ?>">
-                                                    <?php foreach ($scoreStars as $starPart): ?>
-                                                        <span class="magazine-subject-strip__star magazine-subject-strip__star--<?= Moncine\View::escape($starPart) ?>"
-                                                              aria-hidden="true"></span>
-                                                    <?php endforeach; ?>
-                                                </span>
-                                            <?php else: ?>
-                                                <span class="magazine-subject-strip__score-num"
-                                                      title="<?= Moncine\View::escape($scoreDisplay) ?>">
-                                                    <?= Moncine\View::escape($scoreDisplay) ?>
-                                                </span>
-                                            <?php endif; ?>
-                                        <?php endif; ?>
-                                        <button type="button"
-                                                class="magazine-subject-strip__meta-edit magazine-subject-strip__meta-edit--score"
-                                                data-subject-score-toggle
-                                                title="<?= Moncine\View::escape($scoreEditLabel) ?>"
-                                                aria-label="<?= Moncine\View::escape($scoreEditLabel . ' pour ' . $displayLabel) ?>"
-                                                aria-expanded="false"
-                                                aria-controls="<?= Moncine\View::escape($scoreInputId) ?>_form">
-                                            <span class="magazine-subject-strip__meta-edit-label" aria-hidden="true">★</span>
-                                        </button>
-                                    </div>
-
-                                    <form method="post"
-                                          action="/traiter-sujets-numero-magazine.php"
-                                          class="magazine-subject-strip__score-form"
-                                          id="<?= Moncine\View::escape($scoreInputId) ?>_form">
-                                        <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
-                                        <input type="hidden" name="bib_id" value="<?= (int) $bibId ?>">
-                                        <?php if ($subjectTargetSupplementId > 0): ?>
-                                            <input type="hidden" name="supplement_id" value="<?= $subjectTargetSupplementId ?>">
-                                        <?php endif; ?>
-                                        <input type="hidden" name="action" value="update_score">
-                                        <input type="hidden" name="subject_id" value="<?= $subjectId ?>">
+                                    <?php if ($showTestScore): ?>
                                         <label class="visually-hidden" for="<?= Moncine\View::escape($scoreInputId) ?>">
                                             Note du test
                                         </label>
@@ -270,15 +253,16 @@ $subjectGroups = $buildSubjectGroups($stripSubjects, $stripGroupByCategory);
                                                max="<?= Moncine\View::escape((string) $stripScoreMax) ?>"
                                                step="0.5"
                                                value="<?= $testScore !== null ? Moncine\View::escape(rtrim(rtrim(number_format($testScore, 1, '.', ''), '0'), '.')) : '' ?>"
-                                               placeholder="—"
+                                               placeholder="note"
                                                inputmode="decimal"
                                                title="Note (<?= Moncine\View::escape(Moncine\MagazineRatingScale::label($stripRatingScale)) ?>)">
-                                        <button type="submit"
-                                                class="btn btn-secondary btn-sm magazine-subject-strip__page-save"
-                                                title="Enregistrer la note">OK</button>
-                                    </form>
-                                </div>
-                            <?php endif; ?>
+                                    <?php endif; ?>
+
+                                    <button type="submit"
+                                            class="btn btn-secondary btn-sm magazine-subject-strip__page-save"
+                                            title="<?= $showTestScore ? 'Enregistrer page et note' : 'Enregistrer la page' ?>">OK</button>
+                                </form>
+                            </div>
 
                             <form method="post"
                                   action="/traiter-sujets-numero-magazine.php"

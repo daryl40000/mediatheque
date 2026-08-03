@@ -53,8 +53,8 @@ document.addEventListener('DOMContentLoaded', () => {
     runInit('gameShelfHoverPreviews', initGameShelfHoverPreviews);
     runInit('collectionGridHoverBubbles', initCollectionGridHoverBubbles);
     runInit('magazineSubjectStripHoverBubbles', initMagazineSubjectStripHoverBubbles);
-    runInit('magazineSubjectPageEdit', initMagazineSubjectPageEdit);
-    runInit('magazineSubjectScoreEdit', initMagazineSubjectScoreEdit);
+    runInit('magazineSubjectMetaEdit', initMagazineSubjectMetaEdit);
+    runInit('magazineSubjectAttachScoreField', initMagazineSubjectAttachScoreField);
     runInit('shareLinkCopy', initShareLinkCopy);
     runInit('steamImportMapping', initSteamImportMapping);
     runInit('catalogOeuvreMerge', initCatalogOeuvreMerge);
@@ -2608,45 +2608,11 @@ function initMagazineSubjectStripHoverBubbles() {
 }
 
 /**
- * Crayon sous une vignette sujet : affiche / masque le champ « page PDF ».
- * Un seul formulaire ouvert à la fois.
+ * Sous une vignette sujet : un formulaire combiné (page + note si test).
+ * Les boutons « p. » et « ★ » ouvrent le même formulaire.
  */
-function initMagazineSubjectPageEdit() {
-    initMagazineSubjectInlineEdit({
-        rootSelector: '[data-subject-page]',
-        toggleSelector: '[data-subject-page-toggle]',
-        formSelector: '.magazine-subject-strip__page-form',
-        inputSelector: '.magazine-subject-strip__page-input',
-        editingClass: 'is-editing',
-    });
-}
-
-/**
- * Crayon sous un test : affiche / masque le champ note.
- */
-function initMagazineSubjectScoreEdit() {
-    initMagazineSubjectInlineEdit({
-        rootSelector: '[data-subject-score]',
-        toggleSelector: '[data-subject-score-toggle]',
-        formSelector: '.magazine-subject-strip__score-form',
-        inputSelector: '.magazine-subject-strip__score-input',
-        editingClass: 'is-editing',
-    });
-}
-
-/**
- * Bascule affichage / formulaire sous une vignette (page ou note).
- *
- * @param {{
- *   rootSelector: string,
- *   toggleSelector: string,
- *   formSelector: string,
- *   inputSelector: string,
- *   editingClass: string
- * }} options
- */
-function initMagazineSubjectInlineEdit(options) {
-    const roots = document.querySelectorAll(options.rootSelector);
+function initMagazineSubjectMetaEdit() {
+    const roots = document.querySelectorAll('[data-subject-meta]');
     if (roots.length === 0) {
         return;
     }
@@ -2656,41 +2622,81 @@ function initMagazineSubjectInlineEdit(options) {
             if (root === except) {
                 return;
             }
-            root.classList.remove(options.editingClass);
-            const btn = root.querySelector(options.toggleSelector);
-            if (btn) {
+            root.classList.remove('is-editing');
+            root.querySelectorAll('[data-subject-meta-toggle]').forEach((btn) => {
                 btn.setAttribute('aria-expanded', 'false');
-            }
+            });
         });
     };
 
     roots.forEach((root) => {
-        const toggle = root.querySelector(options.toggleSelector);
-        const form = root.querySelector(options.formSelector);
-        const input = root.querySelector(options.inputSelector);
-        if (!toggle || !form) {
+        const form = root.querySelector('.magazine-subject-strip__meta-form');
+        const toggles = root.querySelectorAll('[data-subject-meta-toggle]');
+        if (!form || toggles.length === 0) {
             return;
         }
 
-        toggle.addEventListener('click', (event) => {
-            event.preventDefault();
-            event.stopPropagation();
-            const willOpen = !root.classList.contains(options.editingClass);
-            closeAll(willOpen ? root : null);
-            root.classList.toggle(options.editingClass, willOpen);
-            toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
-            if (willOpen && input) {
-                input.focus();
-                input.select();
+        const openForm = (focusScore) => {
+            closeAll(root);
+            root.classList.add('is-editing');
+            toggles.forEach((btn) => btn.setAttribute('aria-expanded', 'true'));
+            const pageInput = root.querySelector('.magazine-subject-strip__page-input');
+            const scoreInput = root.querySelector('.magazine-subject-strip__score-input');
+            const focusTarget = focusScore && scoreInput ? scoreInput : pageInput;
+            if (focusTarget) {
+                focusTarget.focus();
+                focusTarget.select();
             }
+        };
+
+        toggles.forEach((toggle) => {
+            toggle.addEventListener('click', (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                const willOpen = !root.classList.contains('is-editing');
+                if (!willOpen) {
+                    closeAll(null);
+                    return;
+                }
+                const focusScore = toggle.classList.contains('magazine-subject-strip__meta-edit--score');
+                openForm(focusScore);
+            });
         });
     });
 
     document.addEventListener('keydown', (event) => {
-        if (event.key !== 'Escape') {
+        if (event.key === 'Escape') {
+            closeAll(null);
+        }
+    });
+}
+
+/**
+ * Affiche le champ « note » à l’ajout d’un sujet quand la catégorie est Test.
+ */
+function initMagazineSubjectAttachScoreField() {
+    document.querySelectorAll('[data-attach-score-wrap]').forEach((wrap) => {
+        const form = wrap.closest('form');
+        if (!form) {
             return;
         }
-        closeAll(null);
+        const categorySelect = form.querySelector('#attach_category');
+        const scoreInput = wrap.querySelector('[data-attach-score-input], #attach_score');
+        if (!categorySelect || !scoreInput) {
+            return;
+        }
+
+        const syncVisibility = () => {
+            const isTest = String(categorySelect.value || '').toLowerCase() === 'test';
+            wrap.hidden = !isTest;
+            scoreInput.disabled = !isTest;
+            if (!isTest) {
+                scoreInput.value = '';
+            }
+        };
+
+        categorySelect.addEventListener('change', syncVisibility);
+        syncVisibility();
     });
 }
 

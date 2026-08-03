@@ -80,48 +80,61 @@ if ($action === 'detach') {
     exit;
 }
 
-if ($action === 'update_page') {
+// Mise à jour page et/ou note en une seule validation (formulaire combiné).
+if ($action === 'update_meta' || $action === 'update_page' || $action === 'update_score') {
     $subjectId = (int) ($_POST['subject_id'] ?? 0);
-    $page = MagazineSubjectRepository::normalizePage($_POST['page'] ?? 0);
-    $result = $supplementId > 0
-        ? $subjectRepo->updateSupplementLinkPage($supplementId, $subjectId, $page)
-        : $subjectRepo->updateLinkPage($oeuvreId, $subjectId, $page);
-    if ($result !== true) {
-        header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode((string) $result));
-        exit;
-    }
-    header('Location: ' . $returnUrl . '&subject_page=1');
-    exit;
-}
-
-if ($action === 'update_score') {
-    $subjectId = (int) ($_POST['subject_id'] ?? 0);
-    $seriesId = (int) ($issue['series_id'] ?? 0);
-    $seriesRow = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE) ?? [];
-    $ratingScale = MagazineRatingScale::normalize($seriesRow['rating_scale'] ?? null);
-    $parsed = MagazineRatingScale::parseScore($_POST['score'] ?? '', $ratingScale);
-    if (is_string($parsed)) {
-        header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode($parsed));
-        exit;
-    }
     $subject = $subjectRepo->findById($subjectId);
     if ($subject === null) {
         header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode('Sujet introuvable.'));
         exit;
     }
+
     $category = MagazineSubject::normalizeCategory((string) ($subject['category'] ?? ''));
-    if ($category !== MagazineSubject::TEST) {
+    $seriesId = (int) ($issue['series_id'] ?? 0);
+    $seriesRow = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE) ?? [];
+    $ratingScale = MagazineRatingScale::normalize($seriesRow['rating_scale'] ?? null);
+
+    $touchesPage = $action === 'update_meta' || $action === 'update_page' || array_key_exists('page', $_POST);
+    $touchesScore = $action === 'update_meta' || $action === 'update_score' || array_key_exists('score', $_POST);
+
+    if ($touchesPage) {
+        $page = MagazineSubjectRepository::normalizePage($_POST['page'] ?? 0);
+        $pageResult = $supplementId > 0
+            ? $subjectRepo->updateSupplementLinkPage($supplementId, $subjectId, $page)
+            : $subjectRepo->updateLinkPage($oeuvreId, $subjectId, $page);
+        if ($pageResult !== true) {
+            header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode((string) $pageResult));
+            exit;
+        }
+    }
+
+    if ($touchesScore && $category === MagazineSubject::TEST) {
+        if ($ratingScale === null) {
+            // Pas d’échelle sur la série : on ignore le champ note.
+        } else {
+            $parsed = MagazineRatingScale::parseScore($_POST['score'] ?? '', $ratingScale);
+            if (is_string($parsed)) {
+                header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode($parsed));
+                exit;
+            }
+            $scoreResult = $supplementId > 0
+                ? $subjectRepo->updateSupplementLinkScore($supplementId, $subjectId, $parsed)
+                : $subjectRepo->updateLinkScore($oeuvreId, $subjectId, $parsed);
+            if ($scoreResult !== true) {
+                header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode((string) $scoreResult));
+                exit;
+            }
+        }
+    } elseif ($touchesScore && $category !== MagazineSubject::TEST && $action === 'update_score') {
         header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode('La note est réservée aux tests.'));
         exit;
     }
-    $result = $supplementId > 0
-        ? $subjectRepo->updateSupplementLinkScore($supplementId, $subjectId, $parsed)
-        : $subjectRepo->updateLinkScore($oeuvreId, $subjectId, $parsed);
-    if ($result !== true) {
-        header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode((string) $result));
-        exit;
-    }
-    header('Location: ' . $returnUrl . '&subject_score=1');
+
+    $savedScore = $touchesScore && $category === MagazineSubject::TEST && $ratingScale !== null;
+    $flash = ($touchesPage && $savedScore)
+        ? 'subject_meta=1'
+        : ($savedScore ? 'subject_score=1' : 'subject_page=1');
+    header('Location: ' . $returnUrl . '&' . $flash);
     exit;
 }
 
@@ -214,6 +227,29 @@ $result = $supplementId > 0
 if ($result !== true) {
     header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode((string) $result));
     exit;
+}
+
+// Note saisie dès la création (tests uniquement, si la série a une échelle).
+$attachCategory = MagazineSubject::normalizeCategory((string) ($prepared['category'] ?? ''));
+if ($attachCategory === MagazineSubject::TEST && array_key_exists('score', $_POST)) {
+    $seriesRowForScore = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE) ?? $series;
+    $ratingScale = MagazineRatingScale::normalize($seriesRowForScore['rating_scale'] ?? null);
+    if ($ratingScale !== null) {
+        $parsedScore = MagazineRatingScale::parseScore($_POST['score'] ?? '', $ratingScale);
+        if (is_string($parsedScore)) {
+            header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode($parsedScore));
+            exit;
+        }
+        if ($parsedScore !== null) {
+            $scoreResult = $supplementId > 0
+                ? $subjectRepo->updateSupplementLinkScore($supplementId, $subjectId, $parsedScore)
+                : $subjectRepo->updateLinkScore($oeuvreId, $subjectId, $parsedScore);
+            if ($scoreResult !== true) {
+                header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode((string) $scoreResult));
+                exit;
+            }
+        }
+    }
 }
 
 if ($subjectId > 0 && $catalogOeuvreId > 0 && MagazineGameLink::isAvailable()) {

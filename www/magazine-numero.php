@@ -58,6 +58,7 @@ $subjectSaved = isset($_GET['subject']);
 $subjectDetached = isset($_GET['subject_detached']);
 $subjectPageUpdated = isset($_GET['subject_page']);
 $subjectScoreUpdated = isset($_GET['subject_score']);
+$subjectMetaUpdated = isset($_GET['subject_meta']);
 $subjectError = (string) ($_GET['subject_error'] ?? '');
 
 $oeuvreId = (int) ($issue['oeuvre_id'] ?? 0);
@@ -104,6 +105,7 @@ View::render('magazine-numero', [
     'subjectDetached' => $subjectDetached,
     'subjectPageUpdated' => $subjectPageUpdated,
     'subjectScoreUpdated' => $subjectScoreUpdated,
+    'subjectMetaUpdated' => $subjectMetaUpdated,
     'subjectError' => $subjectError,
     'issueSubjects' => $issueSubjects,
     'offeredSubjects' => $offeredSubjects,
