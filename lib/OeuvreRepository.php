@@ -352,6 +352,9 @@ final class OeuvreRepository
         }
         if ($magTable) {
             $joins .= ' LEFT JOIN oeuvre_magazine om ON om.oeuvre_id = o.id';
+            if (SeriesRepository::tableExists()) {
+                $joins .= ' LEFT JOIN series s_mag ON s_mag.id = om.series_id';
+            }
         }
         if ($bdTable) {
             $joins .= ' LEFT JOIN oeuvre_bd ob ON ob.oeuvre_id = o.id'
@@ -373,6 +376,23 @@ final class OeuvreRepository
                 . ' om.numero_ordre AS mag_numero_ordre, om.date_parution AS mag_date_parution,'
                 . ' om.sommaire AS mag_sommaire, om.pages AS mag_pages,'
                 . ' om.est_hors_serie AS mag_est_hors_serie';
+            if (SeriesRepository::tableExists()) {
+                $select .= ', s_mag.titre AS mag_series_titre,'
+                    . ' s_mag.publication_type AS mag_series_publication_type,'
+                    . ' s_mag.editeur AS mag_series_editeur,'
+                    . ' s_mag.tags AS mag_series_tags,'
+                    . ' s_mag.poster_url AS mag_series_poster_url,'
+                    . ' s_mag.issn AS mag_series_issn,'
+                    . ' s_mag.langue AS mag_series_langue,'
+                    . ' s_mag.pays AS mag_series_pays,'
+                    . ' s_mag.notes AS mag_series_notes';
+                $select .= SeriesRepository::categoriesColumnExists()
+                    ? ', s_mag.categories AS mag_series_categories'
+                    : ', \'\' AS mag_series_categories';
+                $select .= SeriesRepository::ratingScaleColumnExists()
+                    ? ', s_mag.rating_scale AS mag_series_rating_scale'
+                    : ', \'\' AS mag_series_rating_scale';
+            }
         }
         if ($bdTable) {
             $select .= ', ob.series_id AS bd_series_id, s_bd.titre AS bd_series_titre,'

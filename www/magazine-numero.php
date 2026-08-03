@@ -10,12 +10,15 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\MagazineGameLink;
 use Moncine\MagazineIssueSupplementRepository;
 use Moncine\MagazineSubjectCatalogLink;
+use Moncine\MagazineRatingScale;
 use Moncine\MagazineRepository;
 use Moncine\MagazineSeriesTag;
 use Moncine\MagazineSubject;
 use Moncine\MagazineSubjectRepository;
+use Moncine\MediaDomain;
 use Moncine\MediaDomainGuards;
 use Moncine\PublicationType;
+use Moncine\SeriesRepository;
 use Moncine\UserContext;
 use Moncine\View;
 
@@ -54,6 +57,7 @@ if (isset($_GET['popover']) && in_array((string) $_GET['popover'], $allowedPopov
 $subjectSaved = isset($_GET['subject']);
 $subjectDetached = isset($_GET['subject_detached']);
 $subjectPageUpdated = isset($_GET['subject_page']);
+$subjectScoreUpdated = isset($_GET['subject_score']);
 $subjectError = (string) ($_GET['subject_error'] ?? '');
 
 $oeuvreId = (int) ($issue['oeuvre_id'] ?? 0);
@@ -61,6 +65,8 @@ $seriesForSubjects = [
     'id' => (int) ($issue['series_id'] ?? 0),
     'tags' => (string) ($issue['series_tags'] ?? ''),
 ];
+$seriesRow = (new SeriesRepository())->findById((int) ($issue['series_id'] ?? 0), MediaDomain::MAGAZINE);
+$ratingScale = MagazineRatingScale::normalize($seriesRow['rating_scale'] ?? null);
 $parutionYear = MagazineSubject::parutionYearFromIssue($issue);
 $defaultSubjectYear = MagazineSubject::defaultSubjectYearFromIssue($issue);
 $subjectYearChoices = MagazineSubject::subjectYearChoices($defaultSubjectYear);
@@ -97,6 +103,7 @@ View::render('magazine-numero', [
     'subjectSaved' => $subjectSaved,
     'subjectDetached' => $subjectDetached,
     'subjectPageUpdated' => $subjectPageUpdated,
+    'subjectScoreUpdated' => $subjectScoreUpdated,
     'subjectError' => $subjectError,
     'issueSubjects' => $issueSubjects,
     'offeredSubjects' => $offeredSubjects,
@@ -104,6 +111,7 @@ View::render('magazine-numero', [
     'subjectsAvailable' => MagazineSubjectRepository::isAvailable(),
     'seriesTags' => $seriesTags,
     'forcedTag' => $forcedTag,
+    'ratingScale' => $ratingScale,
     'parutionYear' => $parutionYear,
     'defaultSubjectYear' => $defaultSubjectYear,
     'subjectYearChoices' => $subjectYearChoices,

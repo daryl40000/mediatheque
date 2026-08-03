@@ -45,6 +45,7 @@ $result = $repo->update($seriesId, [
     'notes' => (string) ($_POST['notes'] ?? ''),
     'tags' => MagazineSeriesTag::normalizeFromPost($_POST['tags'] ?? ''),
     'categories' => MagazineSeriesCategory::normalizeFromPost($_POST['categories'] ?? ''),
+    'rating_scale' => (string) ($_POST['rating_scale'] ?? ''),
 ]);
 
 if ($result !== true) {

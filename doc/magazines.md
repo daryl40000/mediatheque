@@ -136,6 +136,18 @@ Le texte des 6 premières pages de chaque supplément est **indexé** et fusionn
 Tables : `magazine_issue_supplement` (migration **070**), `magazine_supplement_subject` (sujets du supplément, migration **072**).  
 Chemin fichier : `…/{revue}-{numero}-id{oeuvreId}-supp-{uniq}.pdf`.
 
+### Notation des tests
+
+Sur **Modifier la série**, indiquez **notes sur combien ?** (plafond libre : 5, 6, 10, 20, 50, 100… — laisser vide = pas de notation).
+
+Sous chaque vignette **Test** (fiche numéro ou supplément) :
+
+1. Cliquez sur le **crayon** pour saisir la note (demi-points acceptés, ex. `3,5`).
+2. Affichage : **étoiles** si l’échelle est inférieure à 10 ; sinon pastille (`8/10`, `42/50`, `75 %` si sur 100).
+3. Au survol, la bulle rappelle aussi la note convertie **sur 100** (règle de trois) pour de futures moyennes.
+
+Migration **073** : `series.rating_scale` (plafond entier), colonnes `score` sur les liens sujet.
+
 ### Après l’import (traitement différé)
 
 Pour ne pas bloquer le navigateur sur les gros fichiers, le post-traitement s’exécute en fin de requête HTTP :
@@ -231,7 +243,11 @@ Classe : `lib/UploadLimits.php` — alerte dans les formulaires si les limites P
 | `lib/MagazineSubjectFts.php` | Index FTS5 du catalogue de sujets |
 | `lib/MagazineFtsQuery.php` | Construction des requêtes MATCH |
 | `templates/_magazine_issue_subjects.php` | Formulaire sujets sur fiche numéro |
-| `templates/_magazine_issue_subjects_strip.php` | Vignettes sujets : **une rangée par type** d’article, pastille de page + crayon (**0.8.5**) |
+| `templates/_magazine_issue_subjects_strip.php` | Vignettes sujets : **une rangée par type** d’article, pastille de page + crayon, **note de test** (**0.8.5** / **0.8.6**) |
+| `templates/_magazine_series_rating_scale_field.php` | Notes sur combien ? (plafond libre des tests) |
+| `lib/CatalogMagazineSheets.php` | Feuilles ODS catalogue : séries, sujets, liens, suppléments (**0.8.6**) |
+| `lib/MagazineRatingScale.php` | Échelle de notation et affichage des notes (**0.8.6**) |
+| `lib/MagazineRatingScale.php` | Plafond libre, conversion sur 100, étoiles si &lt; 10 |
 | `templates/_magazine_series_tags_field.php` | Badges tags sur fiche série |
 | `templates/_magazine_delete_button.php` | Formulaire suppression (mode fiche) |
 | `templates/_magazine_wishlist_button.php` | Bouton / badge envies |
@@ -330,6 +346,21 @@ Alimentation du **catalogue partagé** (séries + numéros) depuis [Abandonware 
 | 6. Exporter | **`/export-catalogue-magazines.php`** (JSON admin) |
 
 Guide détaillé : [doc/import-abm.md](import-abm.md).
+
+### Export / import catalogue global (admin, **0.8.6**)
+
+Pour **migrer ou sauvegarder** tout le catalogue (tous médias), utilisez la page **Importer** → section catalogue admin.
+
+| Format | Contenu magazines |
+|--------|-------------------|
+| **ODS** (recommandé) | Feuille `Catalogue` + feuilles `SeriesMagazines`, `MagazineSubjects`, `MagazineSubjectLinks`, `MagazineSupplements`, `MagazineSupplementLinks` |
+| **CSV** | Numéros + métadonnées de série dénormalisées (`Magazine — titre série`, `Magazine — notes sur`, tags…) ; **pas** les sujets / pages / notes (préférez l’ODS) |
+
+**Conservé à l’aller-retour ODS :** échelle de notation, tags/catégories de série, sujets, lien jeu/film, **page PDF**, **note** de test, métadonnées des suppléments.
+
+**Hors tableur :** fichiers PDF et affiches locales (ZIP affiches à part ; recharger les PDF si besoin).
+
+L’export JSON ABM (`/export-catalogue-magazines.php`) reste un canal **léger** (séries + numéros uniquement) — pas un backup des sujets/notes.
 
 ### Dates de parution
 

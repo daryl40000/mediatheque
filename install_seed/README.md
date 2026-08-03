@@ -11,6 +11,8 @@ Ce dossier sert à **préremplir Moncine automatiquement** lors d’une **instal
 
 Vous pouvez ne fournir que le CSV, seulement le ZIP, ou les deux.
 
+> **Note (0.8.6) :** la graine d’install lit un **CSV** (feuille Catalogue seule). Pour une migration magazines complète (sujets, pages, notes), utilisez plutôt l’import **ODS catalogue** depuis `/import.php` après installation.
+
 ## Où placer les fichiers ?
 
 **Option A — dans le paquet** (avant de construire / installer YunoHost) :

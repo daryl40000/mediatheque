@@ -46,6 +46,19 @@ final class ImportOds
 
         $result = ['imported' => 0, 'vues' => 0, 'errors' => []];
 
+        // Séries magazines d’abord : les numéros du catalogue y font référence.
+        $seriesMagTable = $this->findTable($tables, [
+            'seriesmagazines',
+            'series magazines',
+            'series_magazines',
+            'magazines series',
+        ]);
+        if ($seriesMagTable !== null) {
+            [$header, $rows] = $seriesMagTable;
+            $seriesResult = CatalogMagazineSheets::importSeriesSheet($rows, $header);
+            $result['errors'] = array_merge($result['errors'], $seriesResult['errors']);
+        }
+
         $catalogTable = $this->findTable($tables, ['catalogue', 'catalog']);
         if ($catalogTable !== null) {
             [$header, $rows] = $catalogTable;
@@ -68,6 +81,55 @@ final class ImportOds
             $histResult = $this->runner->importHistoriqueSheet($rows, $header);
             $result['vues'] += $histResult['vues'];
             $result['errors'] = array_merge($result['errors'], $histResult['errors']);
+        }
+
+        // Sujets + liens après les œuvres (IDs catalogue déjà présents).
+        $subjectsTable = $this->findTable($tables, [
+            'magazinesubjects',
+            'magazine subjects',
+            'magazine_subjects',
+            'sujets magazines',
+        ]);
+        if ($subjectsTable !== null) {
+            [$header, $rows] = $subjectsTable;
+            $subjectsResult = CatalogMagazineSheets::importSubjectsSheet($rows, $header);
+            $result['errors'] = array_merge($result['errors'], $subjectsResult['errors']);
+        }
+
+        $subjectLinksTable = $this->findTable($tables, [
+            'magazinesubjectlinks',
+            'magazine subject links',
+            'magazine_subject_links',
+            'liens sujets magazines',
+        ]);
+        if ($subjectLinksTable !== null) {
+            [$header, $rows] = $subjectLinksTable;
+            $linksResult = CatalogMagazineSheets::importSubjectLinksSheet($rows, $header);
+            $result['errors'] = array_merge($result['errors'], $linksResult['errors']);
+        }
+
+        $supplementsTable = $this->findTable($tables, [
+            'magazinesupplements',
+            'magazine supplements',
+            'magazine_supplements',
+            'supplements magazines',
+        ]);
+        if ($supplementsTable !== null) {
+            [$header, $rows] = $supplementsTable;
+            $suppResult = CatalogMagazineSheets::importSupplementsSheet($rows, $header);
+            $result['errors'] = array_merge($result['errors'], $suppResult['errors']);
+        }
+
+        $suppLinksTable = $this->findTable($tables, [
+            'magazinesupplementlinks',
+            'magazine supplement links',
+            'magazine_supplement_links',
+            'liens supplements magazines',
+        ]);
+        if ($suppLinksTable !== null) {
+            [$header, $rows] = $suppLinksTable;
+            $suppLinksResult = CatalogMagazineSheets::importSupplementLinksSheet($rows, $header);
+            $result['errors'] = array_merge($result['errors'], $suppLinksResult['errors']);
         }
 
         return $result;

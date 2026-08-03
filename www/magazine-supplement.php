@@ -10,12 +10,15 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\MagazineGameLink;
 use Moncine\MagazineIssueSupplementRepository;
 use Moncine\MagazineSubjectCatalogLink;
+use Moncine\MagazineRatingScale;
 use Moncine\MagazineRepository;
 use Moncine\MagazineSeriesTag;
 use Moncine\MagazineSubject;
 use Moncine\MagazineSubjectRepository;
+use Moncine\MediaDomain;
 use Moncine\MediaDomainGuards;
 use Moncine\PublicationType;
+use Moncine\SeriesRepository;
 use Moncine\UserContext;
 use Moncine\View;
 
@@ -55,12 +58,15 @@ if ($issue === null || $supplement === null) {
 $subjectSaved = isset($_GET['subject']);
 $subjectDetached = isset($_GET['subject_detached']);
 $subjectPageUpdated = isset($_GET['subject_page']);
+$subjectScoreUpdated = isset($_GET['subject_score']);
 $subjectError = (string) ($_GET['subject_error'] ?? '');
 
 $seriesForSubjects = [
     'id' => (int) ($issue['series_id'] ?? 0),
     'tags' => (string) ($issue['series_tags'] ?? ''),
 ];
+$seriesRow = (new SeriesRepository())->findById((int) ($issue['series_id'] ?? 0), MediaDomain::MAGAZINE);
+$ratingScale = MagazineRatingScale::normalize($seriesRow['rating_scale'] ?? null);
 $parutionYear = MagazineSubject::parutionYearFromIssue($issue);
 $defaultSubjectYear = MagazineSubject::defaultSubjectYearFromIssue($issue);
 $subjectYearChoices = MagazineSubject::subjectYearChoices($defaultSubjectYear);
@@ -91,6 +97,7 @@ View::render('magazine-supplement', [
     'subjectSaved' => $subjectSaved,
     'subjectDetached' => $subjectDetached,
     'subjectPageUpdated' => $subjectPageUpdated,
+    'subjectScoreUpdated' => $subjectScoreUpdated,
     'subjectError' => $subjectError,
     'issueSubjects' => $issueSubjects,
     'offeredSubjects' => $offeredSubjects,
@@ -98,6 +105,7 @@ View::render('magazine-supplement', [
     'subjectsAvailable' => MagazineSubjectRepository::hasSupplementSubjectTable(),
     'seriesTags' => $seriesTags,
     'forcedTag' => $forcedTag,
+    'ratingScale' => $ratingScale,
     'parutionYear' => $parutionYear,
     'defaultSubjectYear' => $defaultSubjectYear,
     'subjectYearChoices' => $subjectYearChoices,

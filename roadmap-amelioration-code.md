@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-08-03 (version **0.8.5** — fiche supplément / sujets par type)  
+**Dernière mise à jour :** 2026-08-03 (version **0.8.6** — notes tests / export catalogue ODS)
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif

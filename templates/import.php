@@ -82,7 +82,8 @@ $csvMaxMo = (int) (MONCINE_CSV_MAX_BYTES / 1024 / 1024);
                 <span class="info-tooltip" tabindex="0" aria-label="Réinitialisation du catalogue">
                     <span class="info-tooltip__icon" aria-hidden="true">i</span>
                     <span class="info-tooltip__popup" role="tooltip">
-                        Migration depuis une autre instance : cochez avec un export « CSV catalogue ».
+                        Migration depuis une autre instance : cochez avec un export « ODS catalogue »
+                        (recommandé pour les magazines) ou « CSV catalogue ».
                         Supprime toutes les œuvres et recrée les ID du fichier.
                         Sans cette case, les films existants sont mis à jour sans changer leurs numéros.
                     </span>
@@ -160,7 +161,9 @@ $csvMaxMo = (int) (MONCINE_CSV_MAX_BYTES / 1024 / 1024);
     $infoHtml = 'Toutes les œuvres partagées (titre, synopsis, TMDB, affiche…). '
         . 'Importez ce fichier sur une autre instance <strong>avant</strong> les exports bibliothèque. '
         . 'Conservez la colonne <strong>ID catalogue</strong> (mêmes numéros que les fichiers '
-        . '<code>posters/123.jpg</code>).';
+        . '<code>posters/123.jpg</code>). '
+        . 'Pour les magazines (séries, sujets, page PDF, notes de test), préférez l’<strong>ODS</strong> '
+        . '(feuilles supplémentaires) ; le CSV conserve les infos de série sur chaque numéro.';
     $infoAria = 'Export catalogue administrateur';
     require MONCINE_ROOT . '/templates/_heading_with_info.php';
     unset($infoHtml, $infoAria);
@@ -196,6 +199,11 @@ $csvMaxMo = (int) (MONCINE_CSV_MAX_BYTES / 1024 / 1024);
         <details class="import-columns-help">
             <summary>Colonnes export catalogue</summary>
             <p class="import-columns-help__body"><?= Moncine\View::escape(Moncine\CatalogExportSchema::columnLabelsText()) ?></p>
+            <p class="import-columns-help__body hint">
+                ODS : feuilles <code>SeriesMagazines</code>, <code>MagazineSubjects</code>,
+                <code>MagazineSubjectLinks</code>, <code>MagazineSupplements</code>,
+                <code>MagazineSupplementLinks</code> (sujets, pages, notes ; PDF à recharger à part).
+            </p>
         </details>
     <?php endif; ?>
 </section>

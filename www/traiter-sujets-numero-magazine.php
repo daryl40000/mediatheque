@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\MagazineIssueSupplementRepository;
 use Moncine\MagazineRepository;
 use Moncine\MagazineGameLink;
+use Moncine\MagazineRatingScale;
 use Moncine\MagazineSeriesCategory;
 use Moncine\MagazineSubject;
 use Moncine\MagazineSubjectCatalogLink;
@@ -90,6 +91,37 @@ if ($action === 'update_page') {
         exit;
     }
     header('Location: ' . $returnUrl . '&subject_page=1');
+    exit;
+}
+
+if ($action === 'update_score') {
+    $subjectId = (int) ($_POST['subject_id'] ?? 0);
+    $seriesId = (int) ($issue['series_id'] ?? 0);
+    $seriesRow = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE) ?? [];
+    $ratingScale = MagazineRatingScale::normalize($seriesRow['rating_scale'] ?? null);
+    $parsed = MagazineRatingScale::parseScore($_POST['score'] ?? '', $ratingScale);
+    if (is_string($parsed)) {
+        header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode($parsed));
+        exit;
+    }
+    $subject = $subjectRepo->findById($subjectId);
+    if ($subject === null) {
+        header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode('Sujet introuvable.'));
+        exit;
+    }
+    $category = MagazineSubject::normalizeCategory((string) ($subject['category'] ?? ''));
+    if ($category !== MagazineSubject::TEST) {
+        header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode('La note est réservée aux tests.'));
+        exit;
+    }
+    $result = $supplementId > 0
+        ? $subjectRepo->updateSupplementLinkScore($supplementId, $subjectId, $parsed)
+        : $subjectRepo->updateLinkScore($oeuvreId, $subjectId, $parsed);
+    if ($result !== true) {
+        header('Location: ' . $returnUrl . '&subject_error=' . rawurlencode((string) $result));
+        exit;
+    }
+    header('Location: ' . $returnUrl . '&subject_score=1');
     exit;
 }
 

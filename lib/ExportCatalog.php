@@ -45,9 +45,21 @@ final class ExportCatalog
             $rows[] = CatalogExportSchema::rowToExport($oeuvre);
         }
 
-        ExportSpreadsheet::sendOds([
+        // Feuilles magazines : séries (rating_scale, tags…), sujets, liens (page/note),
+        // suppléments (métadonnées sans PDF).
+        $sheets = [
             CatalogExportSchema::SHEET_CATALOGUE => $rows,
-        ], ExportSpreadsheet::buildFilename('moncine-catalogue', 'ods'));
+            CatalogMagazineSheets::SHEET_SERIES => CatalogMagazineSheets::buildSeriesRows(),
+            CatalogMagazineSheets::SHEET_SUBJECTS => CatalogMagazineSheets::buildSubjectRows(),
+            CatalogMagazineSheets::SHEET_SUBJECT_LINKS => CatalogMagazineSheets::buildSubjectLinkRows(),
+            CatalogMagazineSheets::SHEET_SUPPLEMENTS => CatalogMagazineSheets::buildSupplementRows(),
+            CatalogMagazineSheets::SHEET_SUPPLEMENT_LINKS => CatalogMagazineSheets::buildSupplementLinkRows(),
+        ];
+
+        ExportSpreadsheet::sendOds(
+            $sheets,
+            ExportSpreadsheet::buildFilename('moncine-catalogue', 'ods')
+        );
     }
 
     /** Archive ZIP des affiches locales référencées par le catalogue. */

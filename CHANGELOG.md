@@ -13,6 +13,30 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.6] — 2026-08-03
+
+**Magazines — notes des tests · export/import catalogue global complet**
+
+### Ajouté
+
+- **Séries magazines** : **notes sur combien ?** (plafond libre : 5, 6, 10, 20, 50, 100…) pour les notes des tests.
+- **Tests** : saisie de la note sous la vignette (demi-points) ; affichage en **étoiles** si l’échelle est &lt; 10, sinon pastille (`8/10`, `42/50`, `75 %`) ; conversion sur **100** (règle de trois) pour de futures moyennes.
+- **Fiche jeu / film** : sur la liste des magazines liés, affichage de la **note de chaque test** et de la **moyenne presse** (/100) ; page `/film-magazines.php`.
+- **Export/import catalogue admin (ODS)** : feuilles `SeriesMagazines`, `MagazineSubjects`, `MagazineSubjectLinks`, `MagazineSupplements`, `MagazineSupplementLinks` — séries (échelle, tags…), sujets, **page PDF**, **note**, métadonnées suppléments. Le CSV conserve les infos de série sur chaque numéro.
+
+### Modifié
+
+- Sous les vignettes Test : boutons distincts **p.** (page PDF) et **★** (note).
+- Import magazine : recréation automatique de la série (comme la BD) si absente.
+
+### Technique
+
+- Migration **073** (`series.rating_scale`, `score` sur liens sujet numéro / supplément) ; `MagazineRatingScale`.
+- `CatalogMagazineSheets` ; extensions `mag_series_*` dans `CatalogDomainExtensions` ; `MagazineGameLink` (score / moyenne).
+- Tests `CatalogMagazineExportImportTest`, `MagazineRatingScaleTest`.
+
+---
+
 ## [0.8.5] — 2026-08-03
 
 **Magazines — fiche supplément · sujets par type · ouverture PDF rapide**

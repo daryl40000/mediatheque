@@ -47,6 +47,26 @@ final class SeriesRepository
         return false;
     }
 
+    public static function ratingScaleColumnExists(): bool
+    {
+        if (!self::tableExists()) {
+            return false;
+        }
+
+        $stmt = Database::getInstance()->query('PRAGMA table_info(series)');
+        if ($stmt === false) {
+            return false;
+        }
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (($row['name'] ?? '') === 'rating_scale') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     /**
      * Catégories déjà utilisées sur des séries magazine (pour autocomplétion).
      *
@@ -204,12 +224,17 @@ final class SeriesRepository
         $categoriesParam = self::categoriesColumnExists()
             ? [MagazineSeriesCategory::normalizeInput((string) ($data['categories'] ?? ''))]
             : [];
+        $ratingSql = self::ratingScaleColumnExists() ? ', rating_scale' : '';
+        $ratingValue = self::ratingScaleColumnExists() ? ', ?' : '';
+        $ratingParam = self::ratingScaleColumnExists()
+            ? [MagazineRatingScale::normalize($data['rating_scale'] ?? null)]
+            : [];
 
         $this->db->prepare(
             'INSERT INTO series (
                 media_domain, titre, publication_type, poster_url, editeur, issn,
-                langue, pays, date_debut, date_fin, notes, tags' . $categoriesSql . ', created_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . $categoriesValue . ', datetime(\'now\'))'
+                langue, pays, date_debut, date_fin, notes, tags' . $categoriesSql . $ratingSql . ', created_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . $categoriesValue . $ratingValue . ', datetime(\'now\'))'
         )->execute([
             $domain,
             $titre,
@@ -224,6 +249,7 @@ final class SeriesRepository
             trim((string) ($data['notes'] ?? '')),
             MagazineSeriesTag::normalizeInput((string) ($data['tags'] ?? '')),
             ...$categoriesParam,
+            ...$ratingParam,
         ]);
 
         return (int) $this->db->lastInsertId();
@@ -262,12 +288,17 @@ final class SeriesRepository
         $categoriesParam = self::categoriesColumnExists()
             ? [MagazineSeriesCategory::normalizeInput((string) ($data['categories'] ?? ''))]
             : [];
+        $ratingSql = self::ratingScaleColumnExists() ? ', rating_scale' : '';
+        $ratingValue = self::ratingScaleColumnExists() ? ', ?' : '';
+        $ratingParam = self::ratingScaleColumnExists()
+            ? [MagazineRatingScale::normalize($data['rating_scale'] ?? null)]
+            : [];
 
         $this->db->prepare(
             'INSERT INTO series (
                 id, media_domain, titre, publication_type, poster_url, editeur, issn,
-                langue, pays, date_debut, date_fin, notes, tags' . $categoriesSql . ', created_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . $categoriesValue . ', datetime(\'now\'))'
+                langue, pays, date_debut, date_fin, notes, tags' . $categoriesSql . $ratingSql . ', created_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . $categoriesValue . $ratingValue . ', datetime(\'now\'))'
         )->execute([
             $id,
             $domain,
@@ -283,6 +314,7 @@ final class SeriesRepository
             trim((string) ($data['notes'] ?? '')),
             MagazineSeriesTag::normalizeInput((string) ($data['tags'] ?? '')),
             ...$categoriesParam,
+            ...$ratingParam,
         ]);
 
         $max = (int) $this->db->query('SELECT COALESCE(MAX(id), 0) FROM series')->fetchColumn();
@@ -319,41 +351,24 @@ final class SeriesRepository
             ? MagazineSeriesCategory::normalizeInput((string) $data['categories'])
             : (string) ($series['categories'] ?? '');
 
-        if (self::categoriesColumnExists()) {
-            $this->db->prepare(
-                'UPDATE series SET
-                    titre = ?, publication_type = ?, poster_url = ?, editeur = ?, issn = ?,
-                    langue = ?, pays = ?, date_debut = ?, date_fin = ?, notes = ?, tags = ?, categories = ?,
-                    updated_at = datetime(\'now\')
-                 WHERE id = ?'
-            )->execute([
-                $titre,
-                PublicationType::normalize((string) ($data['publication_type'] ?? $series['publication_type'] ?? '')),
-                trim((string) ($data['poster_url'] ?? $series['poster_url'] ?? '')),
-                trim((string) ($data['editeur'] ?? $series['editeur'] ?? '')),
-                trim((string) ($data['issn'] ?? $series['issn'] ?? '')),
-                trim((string) ($data['langue'] ?? $series['langue'] ?? '')),
-                trim((string) ($data['pays'] ?? $series['pays'] ?? '')),
-                self::nullableDate((string) ($data['date_debut'] ?? $series['date_debut'] ?? '')),
-                self::nullableDate((string) ($data['date_fin'] ?? $series['date_fin'] ?? '')),
-                trim((string) ($data['notes'] ?? $series['notes'] ?? '')),
-                array_key_exists('tags', $data)
-                    ? MagazineSeriesTag::normalizeInput((string) $data['tags'])
-                    : (string) ($series['tags'] ?? ''),
-                $categoriesValue,
-                $id,
-            ]);
+        $ratingScaleValue = array_key_exists('rating_scale', $data)
+            ? MagazineRatingScale::normalize($data['rating_scale'] ?? null)
+            : MagazineRatingScale::normalize($series['rating_scale'] ?? null);
 
-            return true;
-        }
-
-        $this->db->prepare(
-            'UPDATE series SET
-                titre = ?, publication_type = ?, poster_url = ?, editeur = ?, issn = ?,
-                langue = ?, pays = ?, date_debut = ?, date_fin = ?, notes = ?, tags = ?,
-                updated_at = datetime(\'now\')
-             WHERE id = ?'
-        )->execute([
+        $setParts = [
+            'titre = ?',
+            'publication_type = ?',
+            'poster_url = ?',
+            'editeur = ?',
+            'issn = ?',
+            'langue = ?',
+            'pays = ?',
+            'date_debut = ?',
+            'date_fin = ?',
+            'notes = ?',
+            'tags = ?',
+        ];
+        $params = [
             $titre,
             PublicationType::normalize((string) ($data['publication_type'] ?? $series['publication_type'] ?? '')),
             trim((string) ($data['poster_url'] ?? $series['poster_url'] ?? '')),
@@ -367,8 +382,23 @@ final class SeriesRepository
             array_key_exists('tags', $data)
                 ? MagazineSeriesTag::normalizeInput((string) $data['tags'])
                 : (string) ($series['tags'] ?? ''),
-            $id,
-        ]);
+        ];
+
+        if (self::categoriesColumnExists()) {
+            $setParts[] = 'categories = ?';
+            $params[] = $categoriesValue;
+        }
+        if (self::ratingScaleColumnExists()) {
+            $setParts[] = 'rating_scale = ?';
+            $params[] = $ratingScaleValue;
+        }
+
+        $setParts[] = 'updated_at = datetime(\'now\')';
+        $params[] = $id;
+
+        $this->db->prepare(
+            'UPDATE series SET ' . implode(', ', $setParts) . ' WHERE id = ?'
+        )->execute($params);
 
         return true;
     }

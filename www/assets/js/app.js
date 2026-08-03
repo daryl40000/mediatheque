@@ -54,6 +54,7 @@ document.addEventListener('DOMContentLoaded', () => {
     runInit('collectionGridHoverBubbles', initCollectionGridHoverBubbles);
     runInit('magazineSubjectStripHoverBubbles', initMagazineSubjectStripHoverBubbles);
     runInit('magazineSubjectPageEdit', initMagazineSubjectPageEdit);
+    runInit('magazineSubjectScoreEdit', initMagazineSubjectScoreEdit);
     runInit('shareLinkCopy', initShareLinkCopy);
     runInit('steamImportMapping', initSteamImportMapping);
     runInit('catalogOeuvreMerge', initCatalogOeuvreMerge);
@@ -2611,7 +2612,41 @@ function initMagazineSubjectStripHoverBubbles() {
  * Un seul formulaire ouvert à la fois.
  */
 function initMagazineSubjectPageEdit() {
-    const roots = document.querySelectorAll('[data-subject-page]');
+    initMagazineSubjectInlineEdit({
+        rootSelector: '[data-subject-page]',
+        toggleSelector: '[data-subject-page-toggle]',
+        formSelector: '.magazine-subject-strip__page-form',
+        inputSelector: '.magazine-subject-strip__page-input',
+        editingClass: 'is-editing',
+    });
+}
+
+/**
+ * Crayon sous un test : affiche / masque le champ note.
+ */
+function initMagazineSubjectScoreEdit() {
+    initMagazineSubjectInlineEdit({
+        rootSelector: '[data-subject-score]',
+        toggleSelector: '[data-subject-score-toggle]',
+        formSelector: '.magazine-subject-strip__score-form',
+        inputSelector: '.magazine-subject-strip__score-input',
+        editingClass: 'is-editing',
+    });
+}
+
+/**
+ * Bascule affichage / formulaire sous une vignette (page ou note).
+ *
+ * @param {{
+ *   rootSelector: string,
+ *   toggleSelector: string,
+ *   formSelector: string,
+ *   inputSelector: string,
+ *   editingClass: string
+ * }} options
+ */
+function initMagazineSubjectInlineEdit(options) {
+    const roots = document.querySelectorAll(options.rootSelector);
     if (roots.length === 0) {
         return;
     }
@@ -2621,8 +2656,8 @@ function initMagazineSubjectPageEdit() {
             if (root === except) {
                 return;
             }
-            root.classList.remove('is-editing');
-            const btn = root.querySelector('[data-subject-page-toggle]');
+            root.classList.remove(options.editingClass);
+            const btn = root.querySelector(options.toggleSelector);
             if (btn) {
                 btn.setAttribute('aria-expanded', 'false');
             }
@@ -2630,9 +2665,9 @@ function initMagazineSubjectPageEdit() {
     };
 
     roots.forEach((root) => {
-        const toggle = root.querySelector('[data-subject-page-toggle]');
-        const form = root.querySelector('.magazine-subject-strip__page-form');
-        const input = root.querySelector('.magazine-subject-strip__page-input');
+        const toggle = root.querySelector(options.toggleSelector);
+        const form = root.querySelector(options.formSelector);
+        const input = root.querySelector(options.inputSelector);
         if (!toggle || !form) {
             return;
         }
@@ -2640,9 +2675,9 @@ function initMagazineSubjectPageEdit() {
         toggle.addEventListener('click', (event) => {
             event.preventDefault();
             event.stopPropagation();
-            const willOpen = !root.classList.contains('is-editing');
+            const willOpen = !root.classList.contains(options.editingClass);
             closeAll(willOpen ? root : null);
-            root.classList.toggle('is-editing', willOpen);
+            root.classList.toggle(options.editingClass, willOpen);
             toggle.setAttribute('aria-expanded', willOpen ? 'true' : 'false');
             if (willOpen && input) {
                 input.focus();

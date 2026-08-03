@@ -91,6 +91,7 @@ final class View
             'modifier-jeu',
             'jeu',
             'jeu-magazines',
+            'film-magazines',
             'jeu-livres',
             'livres',
             'livres-envies',
@@ -606,6 +607,17 @@ final class View
     public static function gameMagazinesUrl(int $oeuvreId, int $bibId = 0): string
     {
         return GameUrls::gameMagazinesUrl($oeuvreId, $bibId);
+    }
+
+    /** Liste des magazines qui traitent un film catalogue. */
+    public static function filmMagazinesUrl(int $oeuvreId, int $bibId = 0): string
+    {
+        $params = ['oeuvre_id' => max(0, $oeuvreId)];
+        if ($bibId > 0) {
+            $params['id'] = $bibId;
+        }
+
+        return '/film-magazines.php?' . http_build_query($params);
     }
 
     public static function gameLivresUrl(int $oeuvreId, int $bibId = 0): string

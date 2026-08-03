@@ -15,6 +15,8 @@ if ($stripSubjects === []) {
 
 $stripGroupByCategory = $stripGroupByCategory ?? true;
 $subjectTargetSupplementId = (int) ($subjectTargetSupplementId ?? 0);
+$stripRatingScale = Moncine\MagazineRatingScale::normalize($ratingScale ?? null);
+$stripScoreMax = Moncine\MagazineRatingScale::maxValue($stripRatingScale);
 
 /**
  * Construit les groupes à afficher : une entrée = une rangée (éventuellement sans label).
@@ -103,6 +105,24 @@ $subjectGroups = $buildSubjectGroups($stripSubjects, $stripGroupByCategory);
                         : '';
                     $pageEditLabel = $articlePage > 0 ? 'Modifier la page' : 'Indiquer la page';
                     $pageInputId = 'subject_page_' . $subjectId;
+
+                    $subjectCategory = Moncine\MagazineSubject::normalizeCategory((string) ($subject['category'] ?? ''));
+                    $showTestScore = $stripRatingScale !== null
+                        && $subjectCategory === Moncine\MagazineSubject::TEST;
+                    $testScore = $showTestScore && array_key_exists('score', $subject) && $subject['score'] !== null
+                        ? (float) $subject['score']
+                        : null;
+                    $scoreDisplay = $testScore !== null
+                        ? Moncine\MagazineRatingScale::formatDisplay($testScore, $stripRatingScale)
+                        : '';
+                    $scorePercent = $testScore !== null
+                        ? Moncine\MagazineRatingScale::toPercent($testScore, $stripRatingScale)
+                        : null;
+                    $scoreStars = $testScore !== null
+                        ? Moncine\MagazineRatingScale::starParts($testScore, $stripRatingScale)
+                        : [];
+                    $scoreEditLabel = $testScore !== null ? 'Modifier la note' : 'Indiquer la note';
+                    $scoreInputId = 'subject_score_' . $subjectId;
                     ?>
                     <li class="<?= $itemClass ?>" role="listitem">
                         <article class="magazine-subject-strip__card">
@@ -154,17 +174,13 @@ $subjectGroups = $buildSubjectGroups($stripSubjects, $stripGroupByCategory);
                                         <?php endif; ?>
                                     <?php endif; ?>
                                     <button type="button"
-                                            class="magazine-subject-strip__page-edit"
+                                            class="magazine-subject-strip__meta-edit magazine-subject-strip__meta-edit--page"
                                             data-subject-page-toggle
                                             title="<?= Moncine\View::escape($pageEditLabel) ?>"
                                             aria-label="<?= Moncine\View::escape($pageEditLabel . ' pour ' . $displayLabel) ?>"
                                             aria-expanded="false"
                                             aria-controls="<?= Moncine\View::escape($pageInputId) ?>_form">
-                                        <svg class="magazine-subject-strip__page-edit-icon" viewBox="0 0 24 24"
-                                             aria-hidden="true" focusable="false">
-                                            <path fill="currentColor"
-                                                  d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04a1 1 0 0 0 0-1.41l-2.34-2.34a1 1 0 0 0-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/>
-                                        </svg>
+                                        <span class="magazine-subject-strip__meta-edit-label" aria-hidden="true">p.</span>
                                     </button>
                                 </div>
 
@@ -199,6 +215,71 @@ $subjectGroups = $buildSubjectGroups($stripSubjects, $stripGroupByCategory);
                                 </form>
                             </div>
 
+                            <?php if ($showTestScore): ?>
+                                <div class="magazine-subject-strip__score"
+                                     data-subject-score
+                                     onclick="event.stopPropagation()">
+                                    <div class="magazine-subject-strip__score-view">
+                                        <?php if ($testScore !== null): ?>
+                                            <?php if ($scoreStars !== []): ?>
+                                                <span class="magazine-subject-strip__stars"
+                                                      title="<?= Moncine\View::escape($scoreDisplay) ?>"
+                                                      aria-label="<?= Moncine\View::escape('Note ' . $scoreDisplay) ?>">
+                                                    <?php foreach ($scoreStars as $starPart): ?>
+                                                        <span class="magazine-subject-strip__star magazine-subject-strip__star--<?= Moncine\View::escape($starPart) ?>"
+                                                              aria-hidden="true"></span>
+                                                    <?php endforeach; ?>
+                                                </span>
+                                            <?php else: ?>
+                                                <span class="magazine-subject-strip__score-num"
+                                                      title="<?= Moncine\View::escape($scoreDisplay) ?>">
+                                                    <?= Moncine\View::escape($scoreDisplay) ?>
+                                                </span>
+                                            <?php endif; ?>
+                                        <?php endif; ?>
+                                        <button type="button"
+                                                class="magazine-subject-strip__meta-edit magazine-subject-strip__meta-edit--score"
+                                                data-subject-score-toggle
+                                                title="<?= Moncine\View::escape($scoreEditLabel) ?>"
+                                                aria-label="<?= Moncine\View::escape($scoreEditLabel . ' pour ' . $displayLabel) ?>"
+                                                aria-expanded="false"
+                                                aria-controls="<?= Moncine\View::escape($scoreInputId) ?>_form">
+                                            <span class="magazine-subject-strip__meta-edit-label" aria-hidden="true">★</span>
+                                        </button>
+                                    </div>
+
+                                    <form method="post"
+                                          action="/traiter-sujets-numero-magazine.php"
+                                          class="magazine-subject-strip__score-form"
+                                          id="<?= Moncine\View::escape($scoreInputId) ?>_form">
+                                        <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                                        <input type="hidden" name="bib_id" value="<?= (int) $bibId ?>">
+                                        <?php if ($subjectTargetSupplementId > 0): ?>
+                                            <input type="hidden" name="supplement_id" value="<?= $subjectTargetSupplementId ?>">
+                                        <?php endif; ?>
+                                        <input type="hidden" name="action" value="update_score">
+                                        <input type="hidden" name="subject_id" value="<?= $subjectId ?>">
+                                        <label class="visually-hidden" for="<?= Moncine\View::escape($scoreInputId) ?>">
+                                            Note du test
+                                        </label>
+                                        <input type="number"
+                                               class="magazine-subject-strip__score-input"
+                                               name="score"
+                                               id="<?= Moncine\View::escape($scoreInputId) ?>"
+                                               min="0"
+                                               max="<?= Moncine\View::escape((string) $stripScoreMax) ?>"
+                                               step="0.5"
+                                               value="<?= $testScore !== null ? Moncine\View::escape(rtrim(rtrim(number_format($testScore, 1, '.', ''), '0'), '.')) : '' ?>"
+                                               placeholder="—"
+                                               inputmode="decimal"
+                                               title="Note (<?= Moncine\View::escape(Moncine\MagazineRatingScale::label($stripRatingScale)) ?>)">
+                                        <button type="submit"
+                                                class="btn btn-secondary btn-sm magazine-subject-strip__page-save"
+                                                title="Enregistrer la note">OK</button>
+                                    </form>
+                                </div>
+                            <?php endif; ?>
+
                             <form method="post"
                                   action="/traiter-sujets-numero-magazine.php"
                                   class="magazine-subject-strip__detach"
@@ -225,6 +306,14 @@ $subjectGroups = $buildSubjectGroups($stripSubjects, $stripGroupByCategory);
                             <div class="magazine-subject-strip__bubble collection-grid__hover-bubble" aria-hidden="true">
                                 <div class="collection-grid__caption">
                                     <strong class="magazine-subject-strip__bubble-title"><?= Moncine\View::escape($displayLabel) ?></strong>
+                                    <?php if ($scoreDisplay !== ''): ?>
+                                        <span class="hint magazine-subject-strip__bubble-meta">
+                                            Note <?= Moncine\View::escape($scoreDisplay) ?>
+                                            <?php if ($scorePercent !== null): ?>
+                                                · ≈ <?= Moncine\View::escape(Moncine\MagazineRatingScale::formatNumber($scorePercent)) ?>/100
+                                            <?php endif; ?>
+                                        </span>
+                                    <?php endif; ?>
                                     <?php if ($mediaSubtitle !== ''): ?>
                                         <span class="hint magazine-subject-strip__bubble-meta"><?= Moncine\View::escape($mediaSubtitle) ?></span>
                                     <?php endif; ?>

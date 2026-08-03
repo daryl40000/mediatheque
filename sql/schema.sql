@@ -417,6 +417,7 @@ CREATE TABLE IF NOT EXISTS series (
     notes TEXT DEFAULT '',
     tags TEXT NOT NULL DEFAULT '',
     categories TEXT NOT NULL DEFAULT '',
+    rating_scale TEXT DEFAULT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     updated_at TEXT DEFAULT NULL
 );
@@ -465,6 +466,7 @@ CREATE TABLE IF NOT EXISTS magazine_supplement_subject (
     supplement_id INTEGER NOT NULL REFERENCES magazine_issue_supplement(id) ON DELETE CASCADE,
     subject_id INTEGER NOT NULL REFERENCES magazine_subject(id) ON DELETE CASCADE,
     page INTEGER NOT NULL DEFAULT 0,
+    score REAL DEFAULT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (supplement_id, subject_id)
 );
@@ -642,6 +644,7 @@ CREATE TABLE IF NOT EXISTS oeuvre_magazine_subject (
     oeuvre_id INTEGER NOT NULL REFERENCES oeuvres(id) ON DELETE CASCADE,
     subject_id INTEGER NOT NULL REFERENCES magazine_subject(id) ON DELETE CASCADE,
     page INTEGER NOT NULL DEFAULT 0,
+    score REAL DEFAULT NULL,
     created_at TEXT NOT NULL DEFAULT (datetime('now')),
     PRIMARY KEY (oeuvre_id, subject_id)
 );

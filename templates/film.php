@@ -148,6 +148,15 @@ $sagaFilms = $sagaFilms ?? [];
                     </section>
                 <?php endif; ?>
 
+                <?php
+                $magazineIssueCount = (int) ($magazineIssueCount ?? 0);
+                $livreBookCount = 0;
+                $oeuvreId = (int) ($oeuvreId ?? ($film['oeuvre_id'] ?? 0));
+                $bibId = (int) ($filmId ?? ($film['id'] ?? 0));
+                $magazinesListUrl = Moncine\View::filmMagazinesUrl($oeuvreId, $bibId);
+                require MONCINE_ROOT . '/templates/_game_magazines_link.php';
+                ?>
+
                 <?php if (!empty($showTmdbEnrich)): ?>
                     <?php require MONCINE_ROOT . '/templates/_enrich_film_panel.php'; ?>
                 <?php endif; ?>

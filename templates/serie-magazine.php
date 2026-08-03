@@ -73,6 +73,15 @@
                         </p>
                     <?php endif; ?>
                     <?php require MONCINE_ROOT . '/templates/_magazine_series_categories_display.php'; ?>
+                    <?php
+                    $seriesRatingScale = Moncine\MagazineRatingScale::normalize($series['rating_scale'] ?? null);
+                    if ($seriesRatingScale !== null):
+                    ?>
+                        <p class="hint">
+                            Notation des tests :
+                            <span class="magazine-tag magazine-tag--series"><?= Moncine\View::escape(Moncine\MagazineRatingScale::label($seriesRatingScale)) ?></span>
+                        </p>
+                    <?php endif; ?>
                     <?php if (trim((string) ($series['notes'] ?? '')) !== ''): ?>
                         <p class="hint"><?= nl2br(Moncine\View::escape((string) $series['notes'])) ?></p>
                     <?php endif; ?>

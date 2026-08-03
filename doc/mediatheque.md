@@ -132,7 +132,7 @@ Voir `.gitignore` :
 
 Points essentiels :
 
-- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.8.5**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
+- **Médiathèque** = nom produit (version dans `MONCINE_PACKAGE_VERSION`, actuellement **0.8.6**) ; **`Moncine\`** + **`MONCINE_*`** + **`moncine.db`** = identifiants code **à ne pas renommer** avant la phase M7.
 
 ### Catalogue admin (0.7.15+)
 
@@ -142,6 +142,7 @@ Page **`/catalogue.php`** (administrateur) :
 - **Suppression groupée** : cases à cocher + bouton « Supprimer la sélection » (structure HTML corrigée en **0.7.17**).
 - Après suppression, la **pagination** est conservée (retour page 1 évité).
 - Depuis **0.7.18** : pages **Compte** (`/parametres.php`) et **Importer** (`/import.php`) compactes — aide contextuelle via icône « i » (composant `info-tooltip`). Connexion par **e-mail ou pseudo**.
+- Depuis **0.8.6** : export **ODS catalogue** multi-feuilles (séries magazines, sujets, pages, notes) — voir [magazines.md](magazines.md) §14. Préférez l’ODS au CSV pour une migration magazines complète.
 
 Depuis **0.7.16** : après **ajout** d’une œuvre (film ou jeu), redirection vers la **fiche catalogue** (`/oeuvre.php` ou `/oeuvre-jeu.php`).
 

@@ -6496,6 +6496,55 @@ span.magazine-subject-strip__page-num {
     height: 0.95rem;
 }
 
+/* Boutons distincts : page (p.) vs note (★). */
+.magazine-subject-strip__meta-edit {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0;
+    min-width: 1.35rem;
+    min-height: 1.35rem;
+    padding: 0.12rem 0.28rem;
+    border: 1px solid color-mix(in srgb, var(--media-accent) 28%, var(--border));
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--media-accent) 8%, var(--surface));
+    color: var(--muted);
+    cursor: pointer;
+    line-height: 1;
+    font-size: 0.68rem;
+    font-weight: 700;
+}
+
+.magazine-subject-strip__meta-edit:hover,
+.magazine-subject-strip__meta-edit:focus-visible {
+    color: var(--text);
+    background: color-mix(in srgb, var(--media-accent) 16%, var(--surface));
+    border-color: color-mix(in srgb, var(--media-accent) 45%, var(--border));
+}
+
+.magazine-subject-strip__meta-edit--page .magazine-subject-strip__meta-edit-label {
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.02em;
+}
+
+.magazine-subject-strip__meta-edit--score {
+    border-color: color-mix(in srgb, #f0c14b 45%, var(--border));
+    background: color-mix(in srgb, #f0c14b 12%, var(--surface));
+    color: #e8c85a;
+}
+
+.magazine-subject-strip__meta-edit--score:hover,
+.magazine-subject-strip__meta-edit--score:focus-visible {
+    color: #ffe08a;
+    background: color-mix(in srgb, #f0c14b 22%, var(--surface));
+    border-color: color-mix(in srgb, #f0c14b 60%, var(--border));
+}
+
+.magazine-subject-strip__meta-edit-label {
+    display: block;
+    line-height: 1;
+}
+
 .magazine-subject-strip__page-form {
     display: none;
     flex-wrap: wrap;
@@ -6539,9 +6588,137 @@ span.magazine-subject-strip__page-num {
     text-decoration: underline;
 }
 
+/* Note de test (échelle série) : étoiles ou pastille + crayon. */
+.magazine-subject-strip__score {
+    margin-top: 0.25rem;
+    min-height: 1.35rem;
+}
+
+.magazine-subject-strip__score-view {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.2rem;
+}
+
+.magazine-subject-strip__score.is-editing .magazine-subject-strip__score-view {
+    display: none;
+}
+
+.magazine-subject-strip__stars {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.08rem;
+    line-height: 1;
+}
+
+.magazine-subject-strip__star {
+    display: inline-block;
+    width: 0.72rem;
+    height: 0.72rem;
+    background: color-mix(in srgb, var(--muted) 35%, transparent);
+    clip-path: polygon(50% 0%, 61% 35%, 98% 35%, 68% 57%, 79% 91%, 50% 70%, 21% 91%, 32% 57%, 2% 35%, 39% 35%);
+}
+
+.magazine-subject-strip__star--full {
+    background: #f0c14b;
+}
+
+.magazine-subject-strip__star--half {
+    background: linear-gradient(
+        90deg,
+        #f0c14b 0%,
+        #f0c14b 50%,
+        color-mix(in srgb, var(--muted) 35%, transparent) 50%,
+        color-mix(in srgb, var(--muted) 35%, transparent) 100%
+    );
+}
+
+.magazine-subject-strip__score-num {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.2rem;
+    padding: 0.14rem 0.4rem;
+    font-size: 0.78rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    color: color-mix(in srgb, var(--media-accent) 20%, #ffe9a8);
+    background: color-mix(in srgb, #f0c14b 14%, var(--surface));
+    border: 1px solid color-mix(in srgb, #f0c14b 40%, var(--border));
+    border-radius: 999px;
+}
+
+.magazine-subject-strip__score-form {
+    display: none;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: center;
+    gap: 0.25rem;
+}
+
+.magazine-subject-strip__score.is-editing .magazine-subject-strip__score-form {
+    display: flex;
+}
+
+.magazine-subject-strip__score-input {
+    width: 3.5rem;
+    padding: 0.15rem 0.3rem;
+    font-size: 0.8rem;
+    text-align: center;
+}
+
 .magazine-issue-card__footer--coverage {
     margin-top: 0.35rem;
     justify-content: center;
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.magazine-issue-card__score {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 2.2rem;
+    padding: 0.14rem 0.4rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    line-height: 1.2;
+    color: color-mix(in srgb, var(--media-accent) 20%, #ffe9a8);
+    background: color-mix(in srgb, #f0c14b 14%, var(--surface));
+    border: 1px solid color-mix(in srgb, #f0c14b 40%, var(--border));
+    border-radius: 999px;
+}
+
+.magazine-issue-card__score--stars {
+    gap: 0.06rem;
+    min-width: 0;
+    padding: 0.2rem 0.35rem;
+}
+
+.game-magazines-average {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.45rem 0.75rem;
+    margin: 0.35rem 0 0;
+}
+
+.game-magazines-average__value {
+    font-size: 1.35rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in srgb, #f0c14b 35%, var(--text));
+}
+
+.game-magazines-average__label {
+    font-size: 0.9rem;
+    color: var(--muted);
 }
 
 .magazine-subject-strip__bubble {

@@ -1,6 +1,6 @@
 # Structure de la base de données — Médiathèque
 
-**Version : 0.8.5** · **Moteur :** SQLite (`data/moncine.db`) · **Schéma de référence :** [`sql/schema.sql`](../sql/schema.sql)
+**Version : 0.8.6** · **Moteur :** SQLite (`data/moncine.db`) · **Schéma de référence :** [`sql/schema.sql`](../sql/schema.sql)
 
 Ce document décrit **comment la base est organisée** : quelles tables existent, à quoi elles servent, et comment elles sont reliées entre elles. Il complète la doc fonctionnelle par domaine ([jeux.md](jeux.md), [magazines.md](magazines.md)).
 
@@ -185,12 +185,12 @@ Une ligne par fin enregistrée : `bibliotheque_id`, `user_id`, `completed_at`. V
 
 | Table | Rôle |
 |-------|------|
-| `series` | Revue (titre, éditeur, tags, affiche, dates de parution…) |
+| `series` | Revue (titre, éditeur, tags, catégories, **rating_scale** échelle des tests, affiche…) |
 | `oeuvre_magazine` | Numéro : `series_id`, `numero`, date, sommaire, PDF (`stored_object_id`) |
 | `series_bibliotheque` | Série suivie en collection ou envies (niveau **série**, pas numéro) |
 | `magazine_subject` | Sujet normalisé (test, preview, interview…) |
-| `oeuvre_magazine_subject` | Lien N↔N numéro ↔ sujet (`page` = page PDF, **071**) |
-| `magazine_supplement_subject` | Lien N↔N supplément ↔ sujet (`page`, **072**) |
+| `oeuvre_magazine_subject` | Lien N↔N numéro ↔ sujet (`page` PDF **071**, `score` note test **073**) |
+| `magazine_supplement_subject` | Lien N↔N supplément ↔ sujet (`page` **072**, `score` **073**) |
 | `magazine_subject.catalog_oeuvre_id` | Lien optionnel vers un **jeu** ou un **film** catalogue (pont magazine ↔ catalogue) — voir [pont-magazine-jeu.md](pont-magazine-jeu.md) |
 
 Recherche plein texte (FTS) : migration **038** — voir [magazines.md](magazines.md).
@@ -305,6 +305,10 @@ Liste complète : voir [`sql/schema.sql`](../sql/schema.sql).
 | 061 | `061_game_manual_playtime.sql` | Temps de jeu manuel (`bibliotheque.manual_playtime_minutes`) |
 | 063 | `063_oeuvre_store_links.sql` | Liens catalogue GOG / Epic (`oeuvre_store_links`) |
 | 064 | `064_utilisateur_pseudo_login.sql` | Index unique pseudo connexion (`utilisateurs.pseudo`) — **0.7.18** |
+| 070 | `070_magazine_issue_supplement.sql` | Suppléments PDF d’un numéro |
+| 071 | `071_magazine_subject_link_page.sql` | Page PDF sur lien sujet ↔ numéro |
+| 072 | `072_magazine_supplement_subject.sql` | Sujets rattachés à un supplément |
+| 073 | `073_magazine_rating_scale.sql` | Échelle de notation série + `score` sur liens (**0.8.6**) |
 
 Migration transversale multi-médias : **030** (`media_domain` sur `oeuvres`).
 

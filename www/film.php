@@ -12,6 +12,7 @@ use Moncine\FilmListContext;
 use Moncine\FilmRepository;
 use Moncine\HistoriqueRepository;
 use Moncine\LibraryStatut;
+use Moncine\MagazineGameLink;
 use Moncine\MediaDomain;
 use Moncine\OeuvreEanRepository;
 use Moncine\SocialRessentiService;
@@ -116,6 +117,9 @@ if ($isWishlistFilm && WishlistTargetRepository::tableExists()) {
 $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
 $canManageCatalog = UserContext::canManageCatalog();
+$magazineIssueCount = ($oeuvreId > 0 && MagazineGameLink::isAvailable())
+    ? (new MagazineGameLink())->countIssueCoverageForGame($oeuvreId, $userId, $foyerId)
+    : 0;
 $sagaFilms = [];
 $sagaName = trim((string) ($film['saga'] ?? ''));
 if ($sagaName !== '' && $repo->usesCatalogModel() && $oeuvreId > 0) {
@@ -169,4 +173,6 @@ View::render('film', [
     'catalogEanSuggestion' => $catalogEanSuggestion,
     'wishlistTargets' => $wishlistTargets,
     'catalogEansForOeuvre' => $catalogEansForOeuvre,
+    'magazineIssueCount' => $magazineIssueCount,
+    'oeuvreId' => $oeuvreId,
 ]);

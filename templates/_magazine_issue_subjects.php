@@ -21,7 +21,9 @@
 $bibId = (int) ($issue['bib_id'] ?? 0);
 $subjectDetached = $subjectDetached ?? false;
 $subjectPageUpdated = $subjectPageUpdated ?? false;
+$subjectScoreUpdated = $subjectScoreUpdated ?? false;
 $subjectTargetSupplementId = (int) ($subjectTargetSupplementId ?? 0);
+$ratingScale = Moncine\MagazineRatingScale::normalize($ratingScale ?? null);
 $catalogMediaLinkAvailable = $catalogMediaLinkAvailable ?? false;
 $catalogMediaDomainChoices = $catalogMediaDomainChoices ?? MagazineSubjectCatalogLink::linkableMediaDomainChoices();
 $hasMultipleTags = count($seriesTags) > 1;
@@ -38,6 +40,11 @@ $subjectsInfoParts = [
         . 'Quand la page est connue, elle s’affiche sous la vignette (ex. p.42) ; '
         . 'le crayon permet de la saisir ou de la modifier.',
 ];
+if ($ratingScale !== null) {
+    $subjectsInfoParts[] = 'Les notes des tests utilisent l’échelle de la série (« '
+        . Moncine\MagazineRatingScale::label($ratingScale)
+        . ' ») ; elles sont aussi converties sur 100 pour les moyennes.';
+}
 if ($parutionYear > 0) {
     $subjectsInfoParts[] = 'Choisissez l’année affichée sur le tag (par défaut celle du numéro : '
         . (int) $parutionYear . ').';
@@ -71,6 +78,9 @@ if ($hasSingleTag) {
     <?php endif; ?>
     <?php if ($subjectPageUpdated): ?>
         <p class="alert alert-success">Page de l’article enregistrée.</p>
+    <?php endif; ?>
+    <?php if ($subjectScoreUpdated): ?>
+        <p class="alert alert-success">Note du test enregistrée.</p>
     <?php endif; ?>
     <?php if ($subjectError !== ''): ?>
         <p class="alert alert-warning"><?= Moncine\View::escape($subjectError) ?></p>

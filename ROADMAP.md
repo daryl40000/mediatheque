@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.8.5** (2026-08-03)  
+**Version actuelle : 0.8.6** (2026-08-03)  
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -43,6 +43,11 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.8.6** — Notes tests magazines + export/import catalogue (2026-08-03)
+
+- Échelle de notation libre par série ; notes sous les vignettes Test ; moyenne presse sur fiche jeu/film.
+- Export ODS catalogue multi-feuilles (séries, sujets, page, note, suppléments) ; CSV enrichi pour les séries.
 
 ### ✅ **0.8.5** — Fiche supplément + sujets par type (2026-08-03)
 
@@ -761,4 +766,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.8.5** — 2026-08-03 (fiche supplément, sujets par type, badge PDF).*
+*Dernière mise à jour : **0.8.6** — 2026-08-03 (notes tests magazines, export/import ODS catalogue).*

@@ -60,6 +60,8 @@ $posterSrc = Moncine\View::seriesPosterSrc($series);
         require MONCINE_ROOT . '/templates/_magazine_series_categories_field.php';
         ?>
 
+        <?php require MONCINE_ROOT . '/templates/_magazine_series_rating_scale_field.php'; ?>
+
         <label for="cover_file">Logo ou couverture type (JPEG, PNG, WebP)</label>
         <input type="file" name="cover_file" id="cover_file" accept="image/jpeg,image/png,image/webp">
         <p class="hint">Image affichée dans la liste « Mes magazines ». Sans logo dédié, la couverture du numéro 1 est utilisée automatiquement.</p>

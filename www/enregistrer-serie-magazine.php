@@ -91,6 +91,7 @@ $result = (new SeriesRepository())->create([
     'notes' => (string) ($_POST['notes'] ?? ''),
     'tags' => MagazineSeriesTag::normalizeFromPost($_POST['tags'] ?? ''),
     'categories' => MagazineSeriesCategory::normalizeFromPost($_POST['categories'] ?? ''),
+    'rating_scale' => (string) ($_POST['rating_scale'] ?? ''),
 ], MediaDomain::MAGAZINE);
 
 if (!is_int($result)) {

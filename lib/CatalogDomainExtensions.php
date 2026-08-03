@@ -26,6 +26,17 @@ final class CatalogDomainExtensions
         'jeu_is_remake' => 'Jeu — remake',
         'jeu_original_game_oeuvre_id' => 'Jeu — ID jeu d\'origine',
         'mag_series_id' => 'Magazine — ID série',
+        'mag_series_titre' => 'Magazine — titre série',
+        'mag_series_publication_type' => 'Magazine — type publication',
+        'mag_series_editeur' => 'Magazine — éditeur série',
+        'mag_series_tags' => 'Magazine — tags série',
+        'mag_series_categories' => 'Magazine — catégories série',
+        'mag_series_rating_scale' => 'Magazine — notes sur',
+        'mag_series_poster_url' => 'Magazine — logo série',
+        'mag_series_issn' => 'Magazine — ISSN',
+        'mag_series_langue' => 'Magazine — langue',
+        'mag_series_pays' => 'Magazine — pays série',
+        'mag_series_notes' => 'Magazine — notes série',
         'mag_numero' => 'Magazine — numéro',
         'mag_numero_ordre' => 'Magazine — ordre',
         'mag_date_parution' => 'Magazine — date parution',
@@ -68,6 +79,30 @@ final class CatalogDomainExtensions
         'jeu_is_remake' => ['jeu remake', 'jeu_is_remake', 'remake'],
         'jeu_original_game_oeuvre_id' => ['jeu id jeu origine', 'jeu_original_game_oeuvre_id', 'original_game_oeuvre_id'],
         'mag_series_id' => ['magazine id serie', 'magazine id série', 'mag_series_id', 'series_id magazine'],
+        'mag_series_titre' => ['magazine titre serie', 'magazine titre série', 'mag_series_titre', 'serie magazine'],
+        'mag_series_publication_type' => [
+            'magazine type publication',
+            'mag_series_publication_type',
+            'magazine periodicite',
+        ],
+        'mag_series_editeur' => ['magazine editeur serie', 'magazine éditeur série', 'mag_series_editeur'],
+        'mag_series_tags' => ['magazine tags serie', 'magazine tags série', 'mag_series_tags'],
+        'mag_series_categories' => [
+            'magazine categories serie',
+            'magazine catégories série',
+            'mag_series_categories',
+        ],
+        'mag_series_rating_scale' => [
+            'magazine notes sur',
+            'mag_series_rating_scale',
+            'magazine echelle',
+            'magazine échelle',
+        ],
+        'mag_series_poster_url' => ['magazine logo serie', 'magazine logo série', 'mag_series_poster_url'],
+        'mag_series_issn' => ['magazine issn', 'mag_series_issn'],
+        'mag_series_langue' => ['magazine langue', 'mag_series_langue'],
+        'mag_series_pays' => ['magazine pays serie', 'magazine pays série', 'mag_series_pays'],
+        'mag_series_notes' => ['magazine notes serie', 'magazine notes série', 'mag_series_notes'],
         'mag_numero' => ['magazine numero', 'magazine numéro', 'mag_numero'],
         'mag_numero_ordre' => ['magazine ordre', 'mag_numero_ordre'],
         'mag_date_parution' => ['magazine date parution', 'mag_date_parution'],
@@ -320,24 +355,12 @@ final class CatalogDomainExtensions
      */
     private static function importMagazineRow(int $oeuvreId, array $data, ?array $importSet): void
     {
-        $seriesId = max(0, (int) self::cellIfImported(
-            $data,
-            $importSet,
-            'mag_series_id',
-            (string) ($data['mag_series_id'] ?? '0')
-        ));
+        $seriesId = self::ensureMagazineSeriesId($data, $importSet);
         if ($seriesId <= 0) {
             return;
         }
 
         $db = Database::getInstance();
-        $stmt = $db->prepare('SELECT 1 FROM series WHERE id = ? LIMIT 1');
-        $stmt->execute([$seriesId]);
-        if (!$stmt->fetchColumn()) {
-            throw new \RuntimeException(
-                'Série magazine ID ' . $seriesId . ' introuvable pour l’œuvre ' . $oeuvreId . '.'
-            );
-        }
 
         $numero = self::cellIfImported($data, $importSet, 'mag_numero', (string) ($data['mag_numero'] ?? ''));
         $numeroOrdre = (float) self::cellIfImported(
@@ -496,6 +519,149 @@ final class CatalogDomainExtensions
                 $genre,
             ]);
         }
+    }
+
+    /**
+     * Crée ou retrouve la série magazine (comme la BD) pour un import « replace ».
+     *
+     * @param array<string, mixed> $data
+     * @param array<string, int>|null $importSet
+     */
+    private static function ensureMagazineSeriesId(array $data, ?array $importSet): int
+    {
+        $seriesId = max(0, (int) self::cellIfImported(
+            $data,
+            $importSet,
+            'mag_series_id',
+            (string) ($data['mag_series_id'] ?? '0')
+        ));
+        $seriesTitre = self::cellIfImported(
+            $data,
+            $importSet,
+            'mag_series_titre',
+            (string) ($data['mag_series_titre'] ?? '')
+        );
+
+        $payload = [
+            'titre' => $seriesTitre,
+            'publication_type' => self::cellIfImported(
+                $data,
+                $importSet,
+                'mag_series_publication_type',
+                (string) ($data['mag_series_publication_type'] ?? '')
+            ),
+            'editeur' => self::cellIfImported(
+                $data,
+                $importSet,
+                'mag_series_editeur',
+                (string) ($data['mag_series_editeur'] ?? '')
+            ),
+            'tags' => self::cellIfImported(
+                $data,
+                $importSet,
+                'mag_series_tags',
+                (string) ($data['mag_series_tags'] ?? '')
+            ),
+            'categories' => self::cellIfImported(
+                $data,
+                $importSet,
+                'mag_series_categories',
+                (string) ($data['mag_series_categories'] ?? '')
+            ),
+            'rating_scale' => self::cellIfImported(
+                $data,
+                $importSet,
+                'mag_series_rating_scale',
+                (string) ($data['mag_series_rating_scale'] ?? '')
+            ),
+            'poster_url' => self::cellIfImported(
+                $data,
+                $importSet,
+                'mag_series_poster_url',
+                (string) ($data['mag_series_poster_url'] ?? '')
+            ),
+            'issn' => self::cellIfImported(
+                $data,
+                $importSet,
+                'mag_series_issn',
+                (string) ($data['mag_series_issn'] ?? '')
+            ),
+            'langue' => self::cellIfImported(
+                $data,
+                $importSet,
+                'mag_series_langue',
+                (string) ($data['mag_series_langue'] ?? '')
+            ),
+            'pays' => self::cellIfImported(
+                $data,
+                $importSet,
+                'mag_series_pays',
+                (string) ($data['mag_series_pays'] ?? '')
+            ),
+            'notes' => self::cellIfImported(
+                $data,
+                $importSet,
+                'mag_series_notes',
+                (string) ($data['mag_series_notes'] ?? '')
+            ),
+        ];
+
+        $seriesRepo = new SeriesRepository();
+
+        if ($seriesId > 0) {
+            $existing = $seriesRepo->findById($seriesId, MediaDomain::MAGAZINE);
+            if ($existing !== null) {
+                // Enrichir si l’export apporte des métadonnées (CSV sans feuille SeriesMagazines).
+                $hasMeta = $seriesTitre !== ''
+                    || $payload['tags'] !== ''
+                    || $payload['categories'] !== ''
+                    || $payload['rating_scale'] !== '';
+                if ($hasMeta) {
+                    if ($payload['titre'] === '') {
+                        $payload['titre'] = (string) ($existing['titre'] ?? '');
+                    }
+                    $seriesRepo->update($seriesId, $payload);
+                }
+
+                return $seriesId;
+            }
+
+            $any = Database::getInstance()->prepare('SELECT media_domain FROM series WHERE id = ? LIMIT 1');
+            $any->execute([$seriesId]);
+            $otherDomain = $any->fetchColumn();
+            if ($otherDomain !== false) {
+                throw new \RuntimeException(
+                    'Série ID ' . $seriesId . ' existe déjà pour le domaine « ' . $otherDomain . ' ».'
+                );
+            }
+
+            if ($seriesTitre === '') {
+                $seriesTitre = 'Série magazine #' . $seriesId;
+                $payload['titre'] = $seriesTitre;
+            }
+            $created = $seriesRepo->createWithId($seriesId, $payload, MediaDomain::MAGAZINE);
+            if (!is_int($created)) {
+                throw new \RuntimeException((string) $created);
+            }
+
+            return $created;
+        }
+
+        if ($seriesTitre === '') {
+            return 0;
+        }
+
+        $byTitle = $seriesRepo->findByTitre($seriesTitre, MediaDomain::MAGAZINE);
+        if ($byTitle !== null) {
+            return (int) $byTitle['id'];
+        }
+
+        $created = $seriesRepo->create($payload, MediaDomain::MAGAZINE);
+        if (!is_int($created)) {
+            throw new \RuntimeException((string) $created);
+        }
+
+        return $created;
     }
 
     /**

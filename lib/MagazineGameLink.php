@@ -138,10 +138,12 @@ final class MagazineGameLink
             'SELECT ms.id AS subject_id, ms.category, ms.label, ms.detail, ms.parution_year,
                     oms.oeuvre_id AS issue_oeuvre_id,'
             . (MagazineSubjectRepository::hasPageColumn() ? ' oms.page AS article_page,' : ' 0 AS article_page,')
+            . (MagazineSubjectRepository::hasScoreColumn() ? ' oms.score AS test_score,' : ' NULL AS test_score,')
             . ' om.numero, om.numero_ordre, om.date_parution, om.stored_object_id,
                     s.titre AS series_titre, s.publication_type,
-                    s.poster_url AS series_poster_url,
-                    o_issue.poster_url,
+                    s.poster_url AS series_poster_url,'
+            . (SeriesRepository::ratingScaleColumnExists() ? ' s.rating_scale,' : ' NULL AS rating_scale,')
+            . ' o_issue.poster_url,
                     b.id AS bib_id
              FROM magazine_subject ms
              INNER JOIN oeuvre_magazine_subject oms ON oms.subject_id = ms.id
@@ -189,6 +191,8 @@ final class MagazineGameLink
                     (string) ($row['detail'] ?? ''),
                     (int) ($row['parution_year'] ?? 0)
                 );
+                $row['rating_scale'] = MagazineRatingScale::normalize($row['rating_scale'] ?? null);
+                $row['test_score'] = self::normalizeCoverageScore($row['test_score'] ?? null, $category);
                 $grouped[$issueOeuvreId] = $row;
                 continue;
             }
@@ -214,6 +218,30 @@ final class MagazineGameLink
             );
             if ($candidatePage > 0 && ($currentPage <= 0 || $candidatePage < $currentPage)) {
                 $grouped[$issueOeuvreId]['article_page'] = $candidatePage;
+            }
+
+            // Préférer la note d’un sujet « Test » (échelle de la série).
+            if (($grouped[$issueOeuvreId]['rating_scale'] ?? null) === null) {
+                $grouped[$issueOeuvreId]['rating_scale'] = MagazineRatingScale::normalize(
+                    $row['rating_scale'] ?? null
+                );
+            }
+            $candidateScore = self::normalizeCoverageScore($row['test_score'] ?? null, $category);
+            if ($candidateScore !== null) {
+                $existingScore = $grouped[$issueOeuvreId]['test_score'] ?? null;
+                $existingIsTest = in_array(
+                    MagazineSubject::TEST,
+                    is_array($grouped[$issueOeuvreId]['categories'] ?? null)
+                        ? $grouped[$issueOeuvreId]['categories']
+                        : [],
+                    true
+                );
+                if ($existingScore === null || ($category === MagazineSubject::TEST && !$existingIsTest)) {
+                    $grouped[$issueOeuvreId]['test_score'] = $candidateScore;
+                    $grouped[$issueOeuvreId]['rating_scale'] = MagazineRatingScale::normalize(
+                        $row['rating_scale'] ?? ($grouped[$issueOeuvreId]['rating_scale'] ?? null)
+                    );
+                }
             }
         }
 
@@ -261,6 +289,10 @@ final class MagazineGameLink
                 $offerRow['category'] = MagazineSubject::JEUX_OFFERTS;
                 $offerRow['category_label'] = MagazineSubject::label(MagazineSubject::JEUX_OFFERTS);
                 $offerRow['category_labels'] = [$offerRow['category_label']];
+                $offerRow['test_score'] = null;
+                $offerRow['score_display'] = '';
+                $offerRow['score_percent'] = null;
+                $offerRow['score_stars'] = [];
                 $offered[] = $offerRow;
             }
 
@@ -378,7 +410,83 @@ final class MagazineGameLink
             ? View::mediaObjectUrl($storedObjectId, $articlePage)
             : '';
 
+        $ratingScale = MagazineRatingScale::normalize($row['rating_scale'] ?? null);
+        $testScore = array_key_exists('test_score', $row) && $row['test_score'] !== null && $row['test_score'] !== ''
+            ? (float) $row['test_score']
+            : null;
+        // Afficher la note seulement si un test est bien présent sur ce numéro.
+        $categories = is_array($row['categories'] ?? null) ? $row['categories'] : [];
+        $hasTest = in_array(MagazineSubject::TEST, $categories, true)
+            || MagazineSubject::normalizeCategory((string) ($row['category'] ?? '')) === MagazineSubject::TEST;
+        if (!$hasTest) {
+            $testScore = null;
+        }
+
+        $row['rating_scale'] = $ratingScale;
+        $row['test_score'] = $testScore;
+        $row['score_display'] = $testScore !== null
+            ? MagazineRatingScale::formatDisplay($testScore, $ratingScale)
+            : '';
+        $row['score_percent'] = $testScore !== null
+            ? MagazineRatingScale::toPercent($testScore, $ratingScale)
+            : null;
+        $row['score_stars'] = $testScore !== null
+            ? MagazineRatingScale::starParts($testScore, $ratingScale)
+            : [];
+
         return $row;
+    }
+
+    /**
+     * Note d’un test uniquement (les autres catégories n’ont pas de score utile).
+     */
+    private static function normalizeCoverageScore(mixed $raw, string $category): ?float
+    {
+        if (MagazineSubject::normalizeCategory($category) !== MagazineSubject::TEST) {
+            return null;
+        }
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+        if (!is_numeric($raw)) {
+            return null;
+        }
+
+        return (float) $raw;
+    }
+
+    /**
+     * Moyenne des notes presse (déjà converties sur 100) pour une liste de couvertures.
+     *
+     * @param list<array<string, mixed>> $rows
+     * @return array{average: float|null, count: int}
+     */
+    public static function averageScorePercent(array $rows): array
+    {
+        $values = [];
+        foreach ($rows as $row) {
+            if (!is_array($row)) {
+                continue;
+            }
+            $percent = $row['score_percent'] ?? null;
+            if ($percent === null || $percent === '') {
+                continue;
+            }
+            if (!is_numeric($percent)) {
+                continue;
+            }
+            $values[] = (float) $percent;
+        }
+
+        $count = count($values);
+        if ($count === 0) {
+            return ['average' => null, 'count' => 0];
+        }
+
+        return [
+            'average' => round(array_sum($values) / $count, 1),
+            'count' => $count,
+        ];
     }
 
     /**

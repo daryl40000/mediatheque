@@ -63,6 +63,58 @@ final class MagazineSubjectRepository
         return $cache = false;
     }
 
+    /** Colonne score sur oeuvre_magazine_subject (migration 073). */
+    public static function hasScoreColumn(): bool
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        if (!self::tableExists()) {
+            return $cache = false;
+        }
+
+        $stmt = Database::getInstance()->query('PRAGMA table_info(oeuvre_magazine_subject)');
+        if ($stmt === false) {
+            return $cache = false;
+        }
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $col) {
+            if (($col['name'] ?? '') === 'score') {
+                return $cache = true;
+            }
+        }
+
+        return $cache = false;
+    }
+
+    /** Colonne score sur magazine_supplement_subject (migration 073). */
+    public static function hasSupplementScoreColumn(): bool
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+
+        if (!self::hasSupplementSubjectTable()) {
+            return $cache = false;
+        }
+
+        $stmt = Database::getInstance()->query('PRAGMA table_info(magazine_supplement_subject)');
+        if ($stmt === false) {
+            return $cache = false;
+        }
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $col) {
+            if (($col['name'] ?? '') === 'score') {
+                return $cache = true;
+            }
+        }
+
+        return $cache = false;
+    }
+
     /** Normalise un numéro de page PDF (0 = non renseigné). */
     public static function normalizePage(int|string|null $page): int
     {
@@ -365,6 +417,7 @@ final class MagazineSubjectRepository
         $stmt = $this->db->prepare(
             'SELECT ' . self::selectSubjectColumns('ms')
             . (self::hasPageColumn() ? ', oms.page' : ', 0 AS page')
+            . (self::hasScoreColumn() ? ', oms.score' : ', NULL AS score')
             . ', oms.created_at AS linked_at
              FROM oeuvre_magazine_subject oms
              INNER JOIN magazine_subject ms ON ms.id = oms.subject_id
@@ -387,7 +440,9 @@ final class MagazineSubjectRepository
 
         $stmt = $this->db->prepare(
             'SELECT ' . self::selectSubjectColumns('ms')
-            . ', mss.page, mss.created_at AS linked_at
+            . ', mss.page'
+            . (self::hasSupplementScoreColumn() ? ', mss.score' : ', NULL AS score')
+            . ', mss.created_at AS linked_at
              FROM magazine_supplement_subject mss
              INNER JOIN magazine_subject ms ON ms.id = mss.subject_id
              WHERE mss.supplement_id = ?
@@ -443,6 +498,38 @@ final class MagazineSubjectRepository
             'UPDATE magazine_supplement_subject SET page = ? WHERE supplement_id = ? AND subject_id = ?'
         );
         $stmt->execute([$page, $supplementId, $subjectId]);
+
+        if ($stmt->rowCount() <= 0) {
+            $check = $this->db->prepare(
+                'SELECT 1 FROM magazine_supplement_subject WHERE supplement_id = ? AND subject_id = ? LIMIT 1'
+            );
+            $check->execute([$supplementId, $subjectId]);
+            if ($check->fetchColumn() === false) {
+                return 'Ce sujet n’est pas lié à ce supplément.';
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Met à jour la note d’un test rattaché à un supplément.
+     *
+     * @return true|string
+     */
+    public function updateSupplementLinkScore(int $supplementId, int $subjectId, ?float $score): bool|string
+    {
+        if (!self::hasSupplementSubjectTable() || $supplementId <= 0 || $subjectId <= 0) {
+            return 'Supplément ou sujet invalide.';
+        }
+        if (!self::hasSupplementScoreColumn()) {
+            return 'La colonne score n’est pas encore disponible (migration 073).';
+        }
+
+        $stmt = $this->db->prepare(
+            'UPDATE magazine_supplement_subject SET score = ? WHERE supplement_id = ? AND subject_id = ?'
+        );
+        $stmt->execute([$score, $supplementId, $subjectId]);
 
         if ($stmt->rowCount() <= 0) {
             $check = $this->db->prepare(
@@ -534,6 +621,38 @@ final class MagazineSubjectRepository
 
         if ($stmt->rowCount() <= 0) {
             // SQLite peut renvoyer 0 si la valeur est identique : vérifier que le lien existe.
+            $check = $this->db->prepare(
+                'SELECT 1 FROM oeuvre_magazine_subject WHERE oeuvre_id = ? AND subject_id = ? LIMIT 1'
+            );
+            $check->execute([$oeuvreId, $subjectId]);
+            if ($check->fetchColumn() === false) {
+                return 'Ce sujet n’est pas lié à ce numéro.';
+            }
+        }
+
+        return true;
+    }
+
+    /**
+     * Met à jour la note d’un test rattaché à un numéro.
+     *
+     * @return true|string
+     */
+    public function updateLinkScore(int $oeuvreId, int $subjectId, ?float $score): bool|string
+    {
+        if (!self::tableExists() || $oeuvreId <= 0 || $subjectId <= 0) {
+            return 'Sujet ou numéro invalide.';
+        }
+        if (!self::hasScoreColumn()) {
+            return 'La colonne score n’est pas encore disponible (migration 073).';
+        }
+
+        $stmt = $this->db->prepare(
+            'UPDATE oeuvre_magazine_subject SET score = ? WHERE oeuvre_id = ? AND subject_id = ?'
+        );
+        $stmt->execute([$score, $oeuvreId, $subjectId]);
+
+        if ($stmt->rowCount() <= 0) {
             $check = $this->db->prepare(
                 'SELECT 1 FROM oeuvre_magazine_subject WHERE oeuvre_id = ? AND subject_id = ? LIMIT 1'
             );
@@ -738,6 +857,11 @@ final class MagazineSubjectRepository
         $row['usage_count'] = (int) ($row['usage_count'] ?? 0);
         $row['catalog_oeuvre_id'] = (int) ($row['catalog_oeuvre_id'] ?? 0);
         $row['page'] = self::normalizePage($row['page'] ?? 0);
+        if (array_key_exists('score', $row) && $row['score'] !== null && $row['score'] !== '') {
+            $row['score'] = (float) $row['score'];
+        } else {
+            $row['score'] = null;
+        }
 
         return $row;
     }
