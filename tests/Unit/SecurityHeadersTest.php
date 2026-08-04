@@ -21,11 +21,16 @@ final class SecurityHeadersTest extends TestCase
         $this->assertTrue(SecurityHeaders::isHttpsRequest());
     }
 
-    public function testIsHttpsRequestDetectsForwardedProto(): void
+    public function testIsHttpsRequestIgnoresForwardedProtoWithoutTrustProxy(): void
     {
+        if (!defined('MONCINE_TRUST_PROXY') || MONCINE_TRUST_PROXY) {
+            $this->markTestSkipped('Nécessite MONCINE_TRUST_PROXY=false (défaut des tests).');
+        }
+
         unset($_SERVER['HTTPS']);
         $_SERVER['HTTP_X_FORWARDED_PROTO'] = 'https';
-        $this->assertTrue(SecurityHeaders::isHttpsRequest());
+        $_SERVER['SERVER_PORT'] = '8080';
+        $this->assertFalse(SecurityHeaders::isHttpsRequest());
     }
 
     public function testIsHttpsRequestFalseOnPlainHttp(): void

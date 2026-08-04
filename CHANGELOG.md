@@ -13,6 +13,28 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.8] — 2026-08-04
+
+**Sécurité · moyenne presse sur fiches jeu / film**
+
+### Ajouté
+
+- **Fiches jeu / film** (collection et catalogue) : **note moyenne presse** (/100) alignée à droite du titre, calculée à partir des notes de tests magazines.
+
+### Sécurité
+
+- **Partages visiteurs** : en-têtes anti-fuite (`Referrer-Policy: no-referrer`, `noindex`, `no-store`) sur **toutes** les pages `/partage-*.php`.
+- **Proxy** : `X-Forwarded-Proto` (HTTPS / cookie Secure / HSTS) aligné sur `MONCINE_TRUST_PROXY`, comme les IP.
+- **Pièces jointes jeux** : liste blanche d’extensions / MIME ; SVG et HTML refusés ; pas d’affichage inline pour SVG.
+- **Onglets média** : bascule en POST + CSRF ; liens de navigation inter-onglets avec jeton CSRF.
+- **Secrets** : `.gitignore` élargi (IGDB, Steam, GOG, `.keys/`, backups) ; doc [securite.md](doc/securite.md) (permissions `data/`, affiches publiques volontaires).
+
+### Corrigé
+
+- PHPStan : test `!$dryRun` superflu dans `MagazineCatalogImporter` (après le branchement simulation).
+
+---
+
 ## [0.8.7] — 2026-08-03
 
 **Magazines — liens « consulter en ligne » (série + numéro)**

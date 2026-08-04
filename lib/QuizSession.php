@@ -33,7 +33,7 @@ final class QuizSession
         session_start([
             'cookie_httponly' => true,
             'cookie_samesite' => 'Lax',
-            'cookie_secure' => self::isHttpsRequest(),
+            'cookie_secure' => RequestHttps::isSecure(),
         ]);
     }
 
@@ -69,7 +69,7 @@ final class QuizSession
             return false;
         }
 
-        if (!is_dir($path) && !@mkdir($path, 0775, true) && !@mkdir($path, 0750, true)) {
+        if (!is_dir($path) && !@mkdir($path, 0700, true) && !@mkdir($path, 0750, true)) {
             return false;
         }
 
@@ -84,20 +84,6 @@ final class QuizSession
         }
 
         return $written;
-    }
-
-    private static function isHttpsRequest(): bool
-    {
-        if (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off') {
-            return true;
-        }
-
-        $forwarded = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '';
-        if (is_string($forwarded) && strtolower($forwarded) === 'https') {
-            return true;
-        }
-
-        return isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443;
     }
 
     /**

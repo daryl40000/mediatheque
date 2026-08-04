@@ -323,17 +323,13 @@ final class MediaDomainGuards
             return;
         }
 
-        header(
-            'Location: /set-media-domain.php?domain='
-            . rawurlencode(MediaDomain::FILM)
-            . '&redirect='
-            . rawurlencode(MediaDomain::collectionPath(MediaDomain::FILM))
-        );
+        MediaContext::set(MediaDomain::FILM);
+        header('Location: ' . SafeRedirect::path(MediaDomain::collectionPath(MediaDomain::FILM)));
         exit;
     }
 
     /**
-     * URL interne pour basculer d’onglet média puis ouvrir une page.
+     * URL pour basculer d’onglet média puis ouvrir une page (jeton CSRF inclus).
      * Si $redirectPath est null, conserve l’URL demandée (path + query).
      */
     public static function mediaDomainSwitchUrl(
@@ -343,10 +339,11 @@ final class MediaDomainGuards
     ): string {
         $target = $redirectPath ?? self::currentRequestUri($fallbackPath);
 
-        return '/set-media-domain.php?domain='
-            . rawurlencode(MediaDomain::normalize($targetDomain))
-            . '&redirect='
-            . rawurlencode(SafeRedirect::path($target));
+        return '/set-media-domain.php?' . http_build_query([
+            'domain' => MediaDomain::normalize($targetDomain),
+            'redirect' => SafeRedirect::path($target),
+            Csrf::FIELD_NAME => Csrf::getToken(),
+        ]);
     }
 
     /** Redirige vers l’onglet Magazines si la page magazine est ouverte depuis un autre domaine. */
@@ -356,7 +353,8 @@ final class MediaDomainGuards
             return;
         }
 
-        header('Location: ' . self::mediaDomainSwitchUrl(MediaDomain::MAGAZINE, $redirectPath, '/magazines.php'));
+        MediaContext::set(MediaDomain::MAGAZINE);
+        header('Location: ' . SafeRedirect::path($redirectPath ?? self::currentRequestUri('/magazines.php')));
         exit;
     }
 
@@ -367,7 +365,8 @@ final class MediaDomainGuards
             return;
         }
 
-        header('Location: ' . self::mediaDomainSwitchUrl(MediaDomain::JEU, $redirectPath, '/jeux.php'));
+        MediaContext::set(MediaDomain::JEU);
+        header('Location: ' . SafeRedirect::path($redirectPath ?? self::currentRequestUri('/jeux.php')));
         exit;
     }
 
@@ -378,7 +377,8 @@ final class MediaDomainGuards
             return;
         }
 
-        header('Location: ' . self::mediaDomainSwitchUrl(MediaDomain::BD, $redirectPath, '/bd.php'));
+        MediaContext::set(MediaDomain::BD);
+        header('Location: ' . SafeRedirect::path($redirectPath ?? self::currentRequestUri('/bd.php')));
         exit;
     }
 
@@ -389,7 +389,8 @@ final class MediaDomainGuards
             return;
         }
 
-        header('Location: ' . self::mediaDomainSwitchUrl(MediaDomain::LIVRE, $redirectPath, '/livres.php'));
+        MediaContext::set(MediaDomain::LIVRE);
+        header('Location: ' . SafeRedirect::path($redirectPath ?? self::currentRequestUri('/livres.php')));
         exit;
     }
 

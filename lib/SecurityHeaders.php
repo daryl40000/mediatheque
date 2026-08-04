@@ -11,12 +11,20 @@ namespace Moncine;
 
 final class SecurityHeaders
 {
+    /** Pages avec jeton de partage dans l’URL : pas d’indexation / cache, Referer restreint. */
     private const SHARE_PATHS = [
         '/partage.php',
         '/partage-film.php',
+        '/partage-jeux.php',
+        '/partage-jeu.php',
+        '/partage-bd.php',
+        '/partage-serie-bd.php',
+        '/partage-album-bd.php',
+        '/partage-magazines.php',
+        '/partage-serie-magazine.php',
     ];
 
-    /** Pages avec jeton sensible dans l’URL ou après redirection : ne pas fuiter le Referer. */
+    /** Pages avec jeton sensible dans l’URL : ne pas fuiter le Referer. */
     private const NO_REFERRER_PATHS = [
         '/confirmer-inscription.php',
         '/confirmer-email.php',
@@ -34,15 +42,17 @@ final class SecurityHeaders
         header('Permissions-Policy: geolocation=(), microphone=(), camera=()');
 
         $path = self::currentPath();
+        $isSharePath = in_array($path, self::SHARE_PATHS, true);
+        $noReferrer = $isSharePath || in_array($path, self::NO_REFERRER_PATHS, true);
         header(
-            in_array($path, self::NO_REFERRER_PATHS, true)
+            $noReferrer
                 ? 'Referrer-Policy: no-referrer'
                 : 'Referrer-Policy: strict-origin-when-cross-origin'
         );
 
         self::sendContentSecurityPolicy();
         self::sendStrictTransportSecurityIfHttps();
-        if (in_array($path, self::SHARE_PATHS, true)) {
+        if ($isSharePath) {
             self::sendShareVisitorHeaders();
         }
     }
@@ -86,16 +96,7 @@ final class SecurityHeaders
 
     public static function isHttpsRequest(): bool
     {
-        if (!empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off') {
-            return true;
-        }
-
-        $forwarded = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '';
-        if (is_string($forwarded) && strtolower($forwarded) === 'https') {
-            return true;
-        }
-
-        return isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443;
+        return RequestHttps::isSecure();
     }
 
     private static function currentPath(): string

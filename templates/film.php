@@ -83,15 +83,18 @@ $sagaFilms = $sagaFilms ?? [];
                 <?php endif; ?>
 
                 <header class="film-detail__heading game-detail__heading">
-                    <h1 class="game-detail__title-row">
-                        <span><?= Moncine\View::escape((string) ($film['titre'] ?? '')) ?></span>
-                        <?php if ((int) ($film['annee'] ?? 0) > 0): ?>
-                            <span class="film-year">(<?= (int) $film['annee'] ?>)</span>
-                        <?php endif; ?>
-                        <?php if (!$isWishlist || !empty($monRessenti)): ?>
-                            <?php require MONCINE_ROOT . '/templates/_game_detail_ressenti_title.php'; ?>
-                        <?php endif; ?>
-                    </h1>
+                    <div class="game-detail__title-bar game-detail__title-bar--with-press">
+                        <h1 class="game-detail__title-row">
+                            <span><?= Moncine\View::escape((string) ($film['titre'] ?? '')) ?></span>
+                            <?php if ((int) ($film['annee'] ?? 0) > 0): ?>
+                                <span class="film-year">(<?= (int) $film['annee'] ?>)</span>
+                            <?php endif; ?>
+                            <?php if (!$isWishlist || !empty($monRessenti)): ?>
+                                <?php require MONCINE_ROOT . '/templates/_game_detail_ressenti_title.php'; ?>
+                            <?php endif; ?>
+                        </h1>
+                        <?php require MONCINE_ROOT . '/templates/_magazine_press_average_title.php'; ?>
+                    </div>
                     <?php if (trim((string) ($film['titre_original'] ?? '')) !== ''): ?>
                         <p class="film-original-title" lang="und">
                             <?= Moncine\View::escape((string) $film['titre_original']) ?>

@@ -130,6 +130,10 @@ final class GameAttachmentRepository
             finfo_close($finfo);
         }
         $mime = is_string($mime) && $mime !== '' ? $mime : 'application/octet-stream';
+        $mimeError = self::validateUploadType($originalName, $mime);
+        if ($mimeError !== null) {
+            return $mimeError;
+        }
 
         $relative = self::buildRelativePath($oeuvreId, $originalName);
         if ($relative === false) {
@@ -219,6 +223,67 @@ final class GameAttachmentRepository
         $stmt->execute([$oeuvreId, MediaDomain::JEU]);
 
         return (bool) $stmt->fetchColumn();
+    }
+
+    /**
+     * Extensions autorisées pour manuels / images disque (pas de SVG / HTML).
+     *
+     * @var list<string>
+     */
+    private const ALLOWED_EXTENSIONS = [
+        'pdf', 'zip', '7z', 'rar', 'iso', 'img', 'bin', 'cue', 'nrg', 'gz', 'tar', 'tgz',
+    ];
+
+    /**
+     * MIME acceptés (octet-stream seulement avec une extension sûre).
+     *
+     * @var list<string>
+     */
+    private const ALLOWED_MIMES = [
+        'application/pdf',
+        'application/zip',
+        'application/x-zip-compressed',
+        'application/x-7z-compressed',
+        'application/vnd.rar',
+        'application/x-rar-compressed',
+        'application/x-iso9660-image',
+        'application/octet-stream',
+        'application/gzip',
+        'application/x-gzip',
+        'application/x-tar',
+        'application/x-gtar',
+        'application/x-compressed-tar',
+    ];
+
+    /** @var list<string> */
+    private const BLOCKED_MIMES = [
+        'image/svg+xml',
+        'text/html',
+        'application/xhtml+xml',
+        'text/javascript',
+        'application/javascript',
+        'application/x-javascript',
+        'text/jscript',
+    ];
+
+    /** Rejette les types dangereux (SVG, HTML, scripts). */
+    public static function validateUploadType(string $originalName, string $mime): ?string
+    {
+        $mime = StoredObjectDelivery::normalizeMime($mime);
+        if (in_array($mime, self::BLOCKED_MIMES, true)) {
+            return 'Type de fichier non autorisé (SVG, HTML et scripts interdits).';
+        }
+
+        $ext = strtolower((string) pathinfo($originalName, PATHINFO_EXTENSION));
+        if ($ext === '' || !in_array($ext, self::ALLOWED_EXTENSIONS, true)) {
+            return 'Extension non autorisée. Formats acceptés : PDF, ZIP, 7Z, RAR, ISO/IMG et archives.';
+        }
+
+        if (!in_array($mime, self::ALLOWED_MIMES, true)) {
+            return 'Type MIME non autorisé pour les pièces jointes jeux.';
+        }
+
+        return null;
     }
 
     /** @return array<string, mixed> */

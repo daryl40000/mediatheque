@@ -9,9 +9,11 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\CatalogAdmin;
 use Moncine\CatalogListContext;
+use Moncine\MagazineGameLink;
 use Moncine\MediaDomain;
 use Moncine\OeuvreEanRepository;
 use Moncine\TmdbConfig;
+use Moncine\UserContext;
 use Moncine\View;
 
 CatalogAdmin::denyUnlessCatalogAvailable();
@@ -87,6 +89,17 @@ $oeuvreEans = (new OeuvreEanRepository())->listForOeuvre($oeuvreId);
 $library = $detail['library'];
 $libraryBibId = $library !== null ? (int) ($library['id'] ?? 0) : null;
 
+$magazineIssues = MagazineGameLink::isAvailable()
+    ? (new MagazineGameLink())->listIssueCoverageForGame(
+        $oeuvreId,
+        UserContext::currentUserId(),
+        UserContext::currentFoyerId()
+    )
+    : [];
+$magazinePressStats = MagazineGameLink::averageScorePercent($magazineIssues);
+$magazinePressAverage = $magazinePressStats['average'];
+$magazinePressScoreCount = (int) $magazinePressStats['count'];
+
 $mergeMessage = '';
 $mergeError = '';
 if (isset($_GET['merge_ok']) && (string) $_GET['merge_ok'] === '1') {
@@ -130,4 +143,6 @@ View::render('oeuvre', [
     'updated' => isset($_GET['updated']) && (string) $_GET['updated'] === '1',
     'mergeMessage' => $mergeMessage,
     'mergeError' => $mergeError,
+    'magazinePressAverage' => $magazinePressAverage,
+    'magazinePressScoreCount' => $magazinePressScoreCount,
 ]);

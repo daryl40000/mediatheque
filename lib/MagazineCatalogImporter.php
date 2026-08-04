@@ -190,7 +190,8 @@ final class MagazineCatalogImporter
                 if ($existing !== null && $skipExisting) {
                     $result['issues_skipped']++;
                     // Complète le lien « consulter en ligne » s’il manquait.
-                    if (!$dryRun && MagazineRepository::externalUrlColumnExists()) {
+                    // (Ici dry_run est déjà exclu plus haut : on est en import réel.)
+                    if (MagazineRepository::externalUrlColumnExists()) {
                         $existingUrl = MagazineExternalUrl::sanitize(
                             (string) ($existing['external_url'] ?? '')
                         );

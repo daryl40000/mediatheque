@@ -92,7 +92,7 @@ $completionCount = (int) ($completionCount ?? 0);
 
             <div class="film-detail__body game-detail__body">
                 <header class="film-detail__heading game-detail__heading">
-                    <div class="game-detail__title-bar">
+                    <div class="game-detail__title-bar game-detail__title-bar--with-press">
                         <h1 class="game-detail__title-row">
                             <span><?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? '')) ?></span>
                             <?php if (!empty($game['is_extension'])): ?>
@@ -113,6 +113,7 @@ $completionCount = (int) ($completionCount ?? 0);
                                 <span class="film-year">(<?= (int) $game['annee'] ?>)</span>
                             <?php endif; ?>
                         </h1>
+                        <?php require MONCINE_ROOT . '/templates/_magazine_press_average_title.php'; ?>
                     </div>
                     <?php
                     $franchiseName = Moncine\GameRelatedSections::resolveFranchiseName(

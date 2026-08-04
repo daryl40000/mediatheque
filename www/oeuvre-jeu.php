@@ -225,9 +225,17 @@ if ($library !== null) {
     );
 }
 
-$magazineIssueCount = MagazineGameLink::isAvailable()
-    ? (new MagazineGameLink())->countIssueCoverageForGame($oeuvreId, UserContext::currentUserId(), UserContext::currentFoyerId())
-    : 0;
+$magazineIssues = MagazineGameLink::isAvailable()
+    ? (new MagazineGameLink())->listIssueCoverageForGame(
+        $oeuvreId,
+        UserContext::currentUserId(),
+        UserContext::currentFoyerId()
+    )
+    : [];
+$magazineIssueCount = count($magazineIssues);
+$magazinePressStats = MagazineGameLink::averageScorePercent($magazineIssues);
+$magazinePressAverage = $magazinePressStats['average'];
+$magazinePressScoreCount = (int) $magazinePressStats['count'];
 
 $livreBookCount = LivreGameLink::isAvailable()
     ? (new LivreGameLink())->countBooksForGame($oeuvreId)
@@ -303,6 +311,8 @@ View::render('oeuvre-jeu', [
         ? (new GameFranchiseRepository())->listKnownSagas()
         : [],
     'magazineIssueCount' => $magazineIssueCount,
+    'magazinePressAverage' => $magazinePressAverage,
+    'magazinePressScoreCount' => $magazinePressScoreCount,
     'livreBookCount' => $livreBookCount,
     'attachments' => $attachments,
     'gameCompletions' => $gameCompletions,

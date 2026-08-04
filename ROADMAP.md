@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.8.7** (2026-08-03)  
+**Version actuelle : 0.8.8** (2026-08-04)
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -43,6 +43,11 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.8.8** — Sécurité + moyenne presse sur fiches (2026-08-04)
+
+- Durcissement : en-têtes anti-fuite sur tous les partages, proxy HTTPS aligné, CSRF onglets, liste blanche pièces jointes jeux, secrets gitignorés.
+- Fiches jeu / film : note moyenne presse (/100) à droite du titre.
 
 ### ✅ **0.8.7** — Liens « consulter en ligne » magazines (2026-08-03)
 
@@ -770,4 +775,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.8.7** — 2026-08-03 (liens « consulter en ligne » magazines).*
+*Dernière mise à jour : **0.8.8** — 2026-08-04 (sécurité + moyenne presse fiches).*

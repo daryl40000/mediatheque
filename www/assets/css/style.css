@@ -66,7 +66,15 @@ body {
     text-decoration: none;
     font-size: 0.9rem;
     font-weight: 500;
+    font-family: inherit;
+    cursor: pointer;
     transition: background 0.2s ease, border-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease, transform 0.15s ease;
+}
+
+.media-domain-tabs__form {
+    display: inline-flex;
+    margin: 0;
+    padding: 0;
 }
 
 /* Pastille de couleur propre à chaque onglet */
@@ -5634,8 +5642,47 @@ td .game-linux-badge--plain {
     margin: 0;
 }
 
+.game-detail__title-bar--with-press {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.4rem 1rem;
+    width: 100%;
+}
+
 .game-detail__title-bar .game-detail__title-row {
     margin: 0;
+}
+
+.game-detail__title-bar--with-press .game-detail__title-row {
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+/* Moyenne presse magazines : même ligne que le titre, calée à droite */
+.game-detail__press-average {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    justify-content: center;
+    flex: 0 0 auto;
+    margin: 0 0 0 auto;
+    text-align: right;
+    line-height: 1.15;
+}
+
+.game-detail__press-average__value {
+    font-size: 1.35rem;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: color-mix(in srgb, #f0c14b 35%, var(--text));
+}
+
+.game-detail__press-average__label {
+    font-size: 0.75rem;
+    color: var(--muted);
+    white-space: nowrap;
 }
 
 .game-detail__title-ressenti {

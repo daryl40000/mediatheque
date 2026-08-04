@@ -117,9 +117,13 @@ if ($isWishlistFilm && WishlistTargetRepository::tableExists()) {
 $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
 $canManageCatalog = UserContext::canManageCatalog();
-$magazineIssueCount = ($oeuvreId > 0 && MagazineGameLink::isAvailable())
-    ? (new MagazineGameLink())->countIssueCoverageForGame($oeuvreId, $userId, $foyerId)
-    : 0;
+$magazineIssues = ($oeuvreId > 0 && MagazineGameLink::isAvailable())
+    ? (new MagazineGameLink())->listIssueCoverageForGame($oeuvreId, $userId, $foyerId)
+    : [];
+$magazineIssueCount = count($magazineIssues);
+$magazinePressStats = MagazineGameLink::averageScorePercent($magazineIssues);
+$magazinePressAverage = $magazinePressStats['average'];
+$magazinePressScoreCount = (int) $magazinePressStats['count'];
 $sagaFilms = [];
 $sagaName = trim((string) ($film['saga'] ?? ''));
 if ($sagaName !== '' && $repo->usesCatalogModel() && $oeuvreId > 0) {
@@ -174,5 +178,7 @@ View::render('film', [
     'wishlistTargets' => $wishlistTargets,
     'catalogEansForOeuvre' => $catalogEansForOeuvre,
     'magazineIssueCount' => $magazineIssueCount,
+    'magazinePressAverage' => $magazinePressAverage,
+    'magazinePressScoreCount' => $magazinePressScoreCount,
     'oeuvreId' => $oeuvreId,
 ]);

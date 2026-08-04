@@ -103,6 +103,9 @@ $magazineIssues = MagazineGameLink::isAvailable()
     ? (new MagazineGameLink())->listIssueCoverageForGame((int) ($game['oeuvre_id'] ?? 0), $userId, $foyerId)
     : [];
 $magazineIssueCount = count($magazineIssues);
+$magazinePressStats = MagazineGameLink::averageScorePercent($magazineIssues);
+$magazinePressAverage = $magazinePressStats['average'];
+$magazinePressScoreCount = (int) $magazinePressStats['count'];
 
 $livreBookCount = LivreGameLink::isAvailable()
     ? (new LivreGameLink())->countBooksForGame((int) ($game['oeuvre_id'] ?? 0))
@@ -222,6 +225,8 @@ View::render('jeu', [
     'game' => $game,
     'magazineCoverage' => $magazineIssues,
     'magazineIssueCount' => $magazineIssueCount,
+    'magazinePressAverage' => $magazinePressAverage,
+    'magazinePressScoreCount' => $magazinePressScoreCount,
     'livreBookCount' => $livreBookCount,
     'baseGame' => $baseGame,
     'extensions' => $extensions,

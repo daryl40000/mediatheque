@@ -132,5 +132,6 @@ final class MediaDomainTest extends TestCase
         );
         $this->assertStringContainsString('domain=magazine', $url);
         $this->assertStringContainsString('redirect=%2Fmagazine-numero.php%3Fid%3D42', $url);
+        $this->assertStringContainsString('csrf_token=', $url);
     }
 }

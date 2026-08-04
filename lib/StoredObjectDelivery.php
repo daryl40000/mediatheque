@@ -9,7 +9,7 @@ namespace Moncine;
 
 final class StoredObjectDelivery
 {
-    /** Types affichables en inline dans le navigateur (admin). */
+    /** Types affichables en inline dans le navigateur (pas de SVG : risque XSS). */
     private const INLINE_MIME_PREFIXES = [
         'image/',
     ];
@@ -17,6 +17,15 @@ final class StoredObjectDelivery
     private const INLINE_MIME_EXACT = [
         'application/pdf',
         'text/plain',
+    ];
+
+    private const INLINE_MIME_BLOCKED = [
+        'image/svg+xml',
+        'text/html',
+        'application/xhtml+xml',
+        'text/javascript',
+        'application/javascript',
+        'application/x-javascript',
     ];
 
     public static function normalizeMime(string $mime): string
@@ -29,6 +38,9 @@ final class StoredObjectDelivery
     public static function isInlineSafe(string $mime): bool
     {
         $mime = self::normalizeMime($mime);
+        if (in_array($mime, self::INLINE_MIME_BLOCKED, true)) {
+            return false;
+        }
         if (in_array($mime, self::INLINE_MIME_EXACT, true)) {
             return true;
         }

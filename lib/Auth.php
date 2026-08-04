@@ -187,7 +187,8 @@ final class Auth
             return true;
         }
 
-        // Jaquettes locales (/poster.php ou /posters/123.jpg) — lecture publique (partage visiteur).
+        // Jaquettes locales (/poster.php ou /posters/…) — publiques volontairement
+        // (liens de partage visiteurs). Les PDF restent derrière media-object.php.
         if ($path === '/poster.php' || str_starts_with($path, '/posters/')) {
             return true;
         }

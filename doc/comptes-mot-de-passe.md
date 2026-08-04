@@ -41,7 +41,7 @@ La réinitialisation utilise la fonction PHP `mail()`. Sur YunoHost, configurez 
 |----------|------|
 | `MONCINE_MAIL_FROM` | Adresse expéditeur (ex. `moncine@votredomaine.fr`) |
 | `MONCINE_BASE_URL` | URL publique de l’app (ex. `https://moncine.example.net`) si le lien dans l’e-mail est incorrect |
-| `MONCINE_TRUST_PROXY` | Mettre `1` derrière Nginx/YunoHost pour que le limiteur de tentatives utilise la vraie IP client (`X-Real-IP` / `X-Forwarded-For`). Sans cela, seule `REMOTE_ADDR` est utilisée. |
+| `MONCINE_TRUST_PROXY` | Mettre `1` derrière Nginx/YunoHost pour que le limiteur de tentatives utilise la vraie IP client (`X-Real-IP` / `X-Forwarded-For`) **et** pour détecter HTTPS via `X-Forwarded-Proto` (cookie Secure, HSTS). Sans cela, seule `REMOTE_ADDR` / HTTPS direct est utilisé. |
 | `MONCINE_DATA_PATH` | Dossier des données (base SQLite, clés, `auth_rate_limit/`) |
 
 Sans serveur mail fonctionnel, les utilisateurs peuvent demander à l’admin un **Réinit. MDP** depuis la page Comptes.

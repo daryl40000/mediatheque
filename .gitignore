@@ -9,12 +9,19 @@ IDEES.md
 /data/moncine.db-journal
 /data/moncine.db-wal
 /data/moncine.db-shm
+/data/moncine.db.bak*
 /data/omdb_api_key.txt
 /data/tmdb_api_key.txt
+/data/steam_api_key.txt
+/data/igdb_credentials.json
+/data/gog_credentials.json
+/data/.keys/
 /data/sessions/*
 !/data/sessions/.gitkeep
 /data/auth_rate_limit/
 /data/media/
+/data/backups/
+/data/snapshots/
 
 # Graine d’installation : déposer CSV/ZIP ici sans les versionner
 /install_seed/*.zip

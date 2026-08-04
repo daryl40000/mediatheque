@@ -3,7 +3,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 [![Tests](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml/badge.svg)](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml)
 
-**Version : 0.8.7**
+**Version : 0.8.8**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -24,6 +24,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. Depuis 
 | [doc/livres.md](doc/livres.md) | Livres : collection, sagas, lectures, pont jeux (**0.8.1**) |
 | [doc/jeux.md](doc/jeux.md) | Jeux vidéo : collection, pont magazine, Linux, recherche/filtres |
 | [doc/partage-visiteur.md](doc/partage-visiteur.md) | Liens lecture seule : recherche, filtres, colonnes notes (**0.7.0**) |
+| [doc/securite.md](doc/securite.md) | Hébergement : permissions `data/`, secrets, proxy, affiches vs PDF |
 | [doc/pont-magazine-jeu.md](doc/pont-magazine-jeu.md) | Pont magazine ↔ jeux : lien catalogue, homonymes, admin |
 | [doc/import-musique.md](doc/import-musique.md) | **Spécification** import musique (vinyles, CD — phase M8) |
 | [doc/import-gog.md](doc/import-gog.md) | **Spécification** import bibliothèque GOG (à implémenter) |
@@ -75,6 +76,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.8.8** | Sécurité (partages, proxy, CSRF onglets, uploads) ; moyenne presse sur fiches jeu/film |
 | **0.8.7** | Magazines : liens « consulter en ligne » (série + numéro), rempli à l’import ABM, export/import catalogue |
 | **0.8.6** | Magazines : notes des tests, moyenne presse, export/import ODS catalogue (sujets, page, note) |
 | **0.8.5** | Magazines : fiche supplément, sujets par type, badge PDF sous couverture |
@@ -350,7 +352,7 @@ php lib/cli/migrate.php   # contrôle des migrations (appliquées au prochain ac
 | `MONCINE_DATA_PATH` | Dossier des données (base, clés API, affiches) |
 | `MONCINE_MEDIA_PATH` | Fichiers volumineux (PDF, exports…) |
 | `MONCINE_BASE_URL` | URL publique (e-mails) |
-| `MONCINE_TRUST_PROXY` | `1` derrière Nginx/YunoHost |
+| `MONCINE_TRUST_PROXY` | `1` derrière Nginx/YunoHost (IP client + détection HTTPS) |
 | `MONCINE_MAIL_FROM` | Expéditeur des e-mails |
 
 *(Les noms `MONCINE_*` sont conservés volontairement — voir [doc/conventions-techniques.md](doc/conventions-techniques.md).)*

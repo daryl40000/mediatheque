@@ -16,15 +16,7 @@ final class AppUrl
             return rtrim($configured, '/');
         }
 
-        $https = !empty($_SERVER['HTTPS']) && strtolower((string) $_SERVER['HTTPS']) !== 'off';
-        $forwarded = $_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '';
-        if (is_string($forwarded) && strtolower($forwarded) === 'https') {
-            $https = true;
-        }
-        if (isset($_SERVER['SERVER_PORT']) && (int) $_SERVER['SERVER_PORT'] === 443) {
-            $https = true;
-        }
-
+        $https = RequestHttps::isSecure();
         $host = (string) ($_SERVER['HTTP_HOST'] ?? 'localhost');
         $scheme = $https ? 'https' : 'http';
 

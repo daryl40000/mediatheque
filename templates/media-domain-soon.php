@@ -1,9 +1,10 @@
 <?php
 /** @var string $domain */
 use Moncine\MediaDomain;
+use Moncine\MediaDomainGuards;
 
 $label = MediaDomain::label($domain);
-$filmUrl = '/set-media-domain.php?domain=film&redirect=' . rawurlencode('/films.php');
+$filmUrl = MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::FILM, '/films.php');
 $implementedLabels = array_values(array_filter(
     MediaDomain::choices(),
     static fn (string $key): bool => MediaDomain::isCollectionImplemented($key),

@@ -24,7 +24,17 @@ Classes principales : `ShareLinkService`, `ShareLinkRepository`, `ShareLinkFilmR
 | Films | `/partage.php?t=…` | `/partage-film.php?t=…&id=…` |
 | Jeux | `/partage-jeux.php?t=…` | `/partage-jeu.php?t=…&id=…` |
 
-Les jaquettes/affiches passent par `/poster.php` (accès autorisé pour les œuvres visibles via un lien actif — voir **0.6.7**).
+Les jaquettes/affiches passent par `/poster.php` (accès **public** volontaire — voir ci-dessous et **0.6.7**).
+
+### Affiches publiques (choix produit)
+
+Les images locales (`/poster.php`, `/posters/…`) sont **accessibles sans connexion** pour que les liens de partage affichent les jaquettes. Les noms de fichiers sont souvent prévisibles (ex. `123.jpg`).
+
+- **Accepté** si vous considérez les pochettes comme non sensibles (cas le plus courant).
+- Les **PDF magazines** restent protégés (`/media-object.php` exige une connexion et un droit foyer).
+- Ne publiez pas les URLs de partage (`?t=…`) sur un forum public : le jeton donne accès à votre liste.
+
+Les pages `/partage-*.php` envoient `Referrer-Policy: no-referrer`, `noindex` et `Cache-Control: no-store` pour limiter la fuite du jeton et l’indexation.
 
 ---
 
