@@ -428,6 +428,19 @@ CREATE UNIQUE INDEX IF NOT EXISTS idx_series_domain_titre
 
 CREATE INDEX IF NOT EXISTS idx_series_media_domain ON series(media_domain);
 
+CREATE TABLE IF NOT EXISTS magazine_series_rating_period (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    series_id INTEGER NOT NULL REFERENCES series(id) ON DELETE CASCADE,
+    from_numero_ordre REAL NOT NULL,
+    to_numero_ordre REAL DEFAULT NULL,
+    rating_scale TEXT NOT NULL,
+    sort_order INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_msrp_series
+    ON magazine_series_rating_period(series_id, sort_order, from_numero_ordre);
+
 CREATE TABLE IF NOT EXISTS oeuvre_magazine (
     oeuvre_id INTEGER PRIMARY KEY REFERENCES oeuvres(id) ON DELETE CASCADE,
     series_id INTEGER NOT NULL REFERENCES series(id) ON DELETE CASCADE,

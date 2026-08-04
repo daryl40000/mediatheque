@@ -122,6 +122,7 @@ View::render('maintenance-catalogue', [
     'wideLayout' => true,
     'stats' => $maintenance->dashboardStats(),
     'duplicateTitleGroups' => $maintenance->findDuplicateGroupsByTitle(),
+    'duplicateGameGroups' => $maintenance->findDuplicateGroupsByGameTitle(),
     'duplicateTmdbGroups' => $maintenance->findDuplicateGroupsByTmdb(),
     'duplicateMagazineGroups' => $maintenance->findDuplicateMagazineIssueGroups(),
     'incompleteOeuvres' => $maintenance->findIncompleteOeuvres(),

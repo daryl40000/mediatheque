@@ -6223,6 +6223,63 @@ td .game-linux-badge--plain {
     max-width: 36rem;
 }
 
+.magazine-rating-periods {
+    margin: 0 0 1.25rem;
+    max-width: 40rem;
+}
+
+.magazine-rating-periods__label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.magazine-rating-periods__rows {
+    display: flex;
+    flex-direction: column;
+    gap: 0.65rem;
+    margin: 0.75rem 0;
+}
+
+.magazine-rating-periods__row {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: flex-end;
+}
+
+.magazine-rating-periods__field {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+    margin: 0;
+    min-width: 5.5rem;
+    flex: 1 1 5.5rem;
+}
+
+.magazine-rating-periods__field--scale {
+    flex: 1 1 6.5rem;
+}
+
+.magazine-rating-periods__caption {
+    font-size: 0.85rem;
+    opacity: 0.85;
+}
+
+.magazine-rating-periods__remove {
+    flex-shrink: 0;
+    min-width: 2.25rem;
+}
+
+.magazine-rating-summary__periods {
+    list-style: none;
+    padding: 0;
+    margin: 0.35rem 0 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+}
+
 .magazine-series-tags-field__label {
     display: block;
     font-weight: 600;

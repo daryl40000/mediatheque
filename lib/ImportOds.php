@@ -59,6 +59,19 @@ final class ImportOds
             $result['errors'] = array_merge($result['errors'], $seriesResult['errors']);
         }
 
+        $ratingPeriodsTable = $this->findTable($tables, [
+            'magazineratingperiods',
+            'magazine rating periods',
+            'magazine_rating_periods',
+            'periodes notation magazines',
+            'périodes notation magazines',
+        ]);
+        if ($ratingPeriodsTable !== null) {
+            [$header, $rows] = $ratingPeriodsTable;
+            $periodsResult = CatalogMagazineSheets::importRatingPeriodsSheet($rows, $header);
+            $result['errors'] = array_merge($result['errors'], $periodsResult['errors']);
+        }
+
         $catalogTable = $this->findTable($tables, ['catalogue', 'catalog']);
         if ($catalogTable !== null) {
             [$header, $rows] = $catalogTable;

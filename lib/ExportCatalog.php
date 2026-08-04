@@ -50,6 +50,7 @@ final class ExportCatalog
         $sheets = [
             CatalogExportSchema::SHEET_CATALOGUE => $rows,
             CatalogMagazineSheets::SHEET_SERIES => CatalogMagazineSheets::buildSeriesRows(),
+            CatalogMagazineSheets::SHEET_RATING_PERIODS => CatalogMagazineSheets::buildRatingPeriodRows(),
             CatalogMagazineSheets::SHEET_SUBJECTS => CatalogMagazineSheets::buildSubjectRows(),
             CatalogMagazineSheets::SHEET_SUBJECT_LINKS => CatalogMagazineSheets::buildSubjectLinkRows(),
             CatalogMagazineSheets::SHEET_SUPPLEMENTS => CatalogMagazineSheets::buildSupplementRows(),

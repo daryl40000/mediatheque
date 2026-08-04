@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\MagazineGameLink;
 use Moncine\MagazineIssueSupplementRepository;
 use Moncine\MagazineSubjectCatalogLink;
+use Moncine\MagazineRatingPeriod;
 use Moncine\MagazineRatingScale;
 use Moncine\MagazineRepository;
 use Moncine\MagazineSeriesTag;
@@ -67,7 +68,11 @@ $seriesForSubjects = [
     'tags' => (string) ($issue['series_tags'] ?? ''),
 ];
 $seriesRow = (new SeriesRepository())->findById((int) ($issue['series_id'] ?? 0), MediaDomain::MAGAZINE);
-$ratingScale = MagazineRatingScale::normalize($seriesRow['rating_scale'] ?? null);
+$ratingScale = MagazineRatingPeriod::resolve(
+    MagazineRatingScale::normalize($seriesRow['rating_scale'] ?? null),
+    MagazineRatingPeriod::listForSeries((int) ($issue['series_id'] ?? 0)),
+    (float) ($issue['numero_ordre'] ?? 0)
+);
 $parutionYear = MagazineSubject::parutionYearFromIssue($issue);
 $defaultSubjectYear = MagazineSubject::defaultSubjectYearFromIssue($issue);
 $subjectYearChoices = MagazineSubject::subjectYearChoices($defaultSubjectYear);

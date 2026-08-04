@@ -138,15 +138,22 @@ Chemin fichier : `…/{revue}-{numero}-id{oeuvreId}-supp-{uniq}.pdf`.
 
 ### Notation des tests
 
-Sur **Modifier la série**, indiquez **notes sur combien ?** (plafond libre : 5, 6, 10, 20, 50, 100… — laisser vide = pas de notation).
+Sur **modifier la série** :
+
+1. Indiquez **notes sur combien ?** (plafond par défaut : 5, 6, 10, 20, 50, 100… — laisser vide = pas de notation hors période).
+2. Optionnel : ajoutez des **périodes** si le barème a changé selon les numéros
+   (ex. du 1 au 92 → sur 5 ; du 93 au 110 → sur 100 ; au-delà → sur 20).
+   Laissez « Au n° » vide pour « jusqu’à la fin ». Les plages ne doivent pas se chevaucher.
+
+Sur chaque **numéro**, l’échelle utilisée est celle de la période qui contient son ordre de numéro ; sinon l’échelle par défaut de la série.
 
 Sous chaque vignette **Test** (fiche numéro ou supplément) :
 
 1. Cliquez sur le **crayon** pour saisir la note (demi-points acceptés, ex. `3,5`).
 2. Affichage : **étoiles** si l’échelle est inférieure à 10 ; sinon pastille (`8/10`, `42/50`, `75 %` si sur 100).
-3. Au survol, la bulle rappelle aussi la note convertie **sur 100** (règle de trois) pour de futures moyennes.
+3. Au survol, la bulle rappelle aussi la note convertie **sur 100** (règle de trois) pour les moyennes presse.
 
-Migration **073** : `series.rating_scale` (plafond entier), colonnes `score` sur les liens sujet.
+Migrations : **073** (`series.rating_scale`, colonnes `score` sur les liens sujet), **075** (`magazine_series_rating_period`).
 
 ### Après l’import (traitement différé)
 
@@ -244,10 +251,10 @@ Classe : `lib/UploadLimits.php` — alerte dans les formulaires si les limites P
 | `lib/MagazineFtsQuery.php` | Construction des requêtes MATCH |
 | `templates/_magazine_issue_subjects.php` | Formulaire sujets sur fiche numéro |
 | `templates/_magazine_issue_subjects_strip.php` | Vignettes sujets : **une rangée par type** d’article, pastille de page + crayon, **note de test** (**0.8.5** / **0.8.6**) |
-| `templates/_magazine_series_rating_scale_field.php` | Notes sur combien ? (plafond libre des tests) |
-| `lib/CatalogMagazineSheets.php` | Feuilles ODS catalogue : séries, sujets, liens, suppléments (**0.8.6**) |
-| `lib/MagazineRatingScale.php` | Échelle de notation et affichage des notes (**0.8.6**) |
-| `lib/MagazineRatingScale.php` | Plafond libre, conversion sur 100, étoiles si &lt; 10 |
+| `templates/_magazine_series_rating_scale_field.php` | Notes sur combien ? + périodes par plage de numéros |
+| `lib/CatalogMagazineSheets.php` | Feuilles ODS catalogue : séries, périodes, sujets, liens, suppléments |
+| `lib/MagazineRatingScale.php` | Échelle de notation et affichage des notes |
+| `lib/MagazineRatingPeriod.php` | Périodes d’échelle par plage de numéros |
 | `templates/_magazine_series_tags_field.php` | Badges tags sur fiche série |
 | `templates/_magazine_delete_button.php` | Formulaire suppression (mode fiche) |
 | `templates/_magazine_wishlist_button.php` | Bouton / badge envies |
@@ -353,10 +360,10 @@ Pour **migrer ou sauvegarder** tout le catalogue (tous médias), utilisez la pag
 
 | Format | Contenu magazines |
 |--------|-------------------|
-| **ODS** (recommandé) | Feuille `Catalogue` + feuilles `SeriesMagazines`, `MagazineSubjects`, `MagazineSubjectLinks`, `MagazineSupplements`, `MagazineSupplementLinks` |
+| **ODS** (recommandé) | Feuille `Catalogue` + feuilles `SeriesMagazines`, `MagazineRatingPeriods`, `MagazineSubjects`, `MagazineSubjectLinks`, `MagazineSupplements`, `MagazineSupplementLinks` |
 | **CSV** | Numéros + métadonnées de série dénormalisées (`Magazine — titre série`, `Magazine — notes sur`, tags…) ; **pas** les sujets / pages / notes (préférez l’ODS) |
 
-**Conservé à l’aller-retour ODS :** échelle de notation, tags/catégories de série, **liens en ligne** (série + numéro), sujets, lien jeu/film, **page PDF**, **note** de test, métadonnées des suppléments.
+**Conservé à l’aller-retour ODS :** échelle de notation (défaut + périodes), tags/catégories de série, **liens en ligne** (série + numéro), sujets, lien jeu/film, **page PDF**, **note** de test, métadonnées des suppléments.
 
 **Hors tableur :** fichiers PDF et affiches locales (ZIP affiches à part ; recharger les PDF si besoin).
 

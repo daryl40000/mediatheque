@@ -42,7 +42,7 @@ $subjectsInfoParts = [
         . 'les boutons p. et ★ ouvrent un même formulaire pour page et note.',
 ];
 if ($ratingScale !== null) {
-    $subjectsInfoParts[] = 'Les notes des tests utilisent l’échelle de la série (« '
+    $subjectsInfoParts[] = 'Les notes des tests utilisent l’échelle de ce numéro (« '
         . Moncine\MagazineRatingScale::label($ratingScale)
         . ' ») ; vous pouvez les saisir à l’ajout du sujet ou plus tard sous la vignette. '
         . 'Elles sont aussi converties sur 100 pour les moyennes.';
@@ -219,7 +219,7 @@ if ($hasSingleTag) {
                            data-attach-score-input
                            disabled>
                     <p class="hint">
-                        Échelle de la série :
+                        Échelle pour ce numéro :
                         <strong><?= Moncine\View::escape(Moncine\MagazineRatingScale::label($ratingScale)) ?></strong>
                         (demi-points acceptés). Visible uniquement pour la catégorie <strong>Test</strong>.
                     </p>

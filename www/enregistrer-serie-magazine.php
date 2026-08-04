@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\Csrf;
 use Moncine\LibraryStatut;
+use Moncine\MagazineRatingPeriod;
 use Moncine\MagazineRepository;
 use Moncine\MagazineSeriesCategory;
 use Moncine\MagazineSeriesTag;
@@ -79,6 +80,17 @@ if ($action === 'from_catalog') {
     exit;
 }
 
+$periodsParsed = MagazineRatingPeriod::parseFromPost($_POST);
+if (is_string($periodsParsed)) {
+    $params = http_build_query([
+        'error' => $periodsParsed,
+        'titre' => (string) ($_POST['titre'] ?? ''),
+        'statut' => $statut,
+    ]);
+    header('Location: /ajouter-serie-magazine.php?' . $params);
+    exit;
+}
+
 $result = (new SeriesRepository())->create([
     'titre' => (string) ($_POST['titre'] ?? ''),
     'publication_type' => (string) ($_POST['publication_type'] ?? ''),
@@ -103,6 +115,19 @@ if (!is_int($result)) {
     ]);
     header('Location: /ajouter-serie-magazine.php?' . $params);
     exit;
+}
+
+if (MagazineRatingPeriod::tableExists() && $periodsParsed !== []) {
+    $periodsResult = MagazineRatingPeriod::replaceForSeries($result, $periodsParsed);
+    if ($periodsResult !== true) {
+        $params = http_build_query([
+            'error' => (string) $periodsResult,
+            'titre' => (string) ($_POST['titre'] ?? ''),
+            'statut' => $statut,
+        ]);
+        header('Location: /ajouter-serie-magazine.php?' . $params);
+        exit;
+    }
 }
 
 $magRepo = new MagazineRepository();

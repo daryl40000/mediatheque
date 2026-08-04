@@ -42,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     runInit('catalogGameTitleAutocomplete', initCatalogGameTitleAutocomplete);
     runInit('magazineSubjectAutocompleteFields', initMagazineSubjectAutocompleteFields);
     runInit('magazineSeriesTagsField', initMagazineSeriesTagsField);
+    runInit('magazineRatingPeriodsField', initMagazineRatingPeriodsField);
     runInit('magazineSeriesCategoryFilter', initMagazineSeriesCategoryFilter);
     runInit('magazineSeriesCatalogAutocomplete', initMagazineSeriesCatalogAutocomplete);
     runInit('magazineIssueCatalogAutocomplete', initMagazineIssueCatalogAutocomplete);
@@ -1880,6 +1881,75 @@ function initLivreGameLinksFields() {
         }
 
         syncVisibility();
+    });
+}
+
+/**
+ * Périodes d’échelle magazine : ajouter / retirer des lignes du formulaire série.
+ */
+function initMagazineRatingPeriodsField() {
+    document.querySelectorAll('[data-rating-periods]').forEach((root) => {
+        if (root.dataset.ratingPeriodsReady === '1') {
+            return;
+        }
+        root.dataset.ratingPeriodsReady = '1';
+
+        const rowsWrap = root.querySelector('.magazine-rating-periods__rows');
+        const addBtn = root.querySelector('[data-rating-period-add]');
+        if (!rowsWrap || !addBtn) {
+            return;
+        }
+
+        const createEmptyRow = () => {
+            const row = document.createElement('div');
+            row.className = 'magazine-rating-periods__row';
+            row.setAttribute('data-rating-period-row', '');
+            row.innerHTML = [
+                '<label class="magazine-rating-periods__field">',
+                '<span class="visually-hidden">Du numéro</span>',
+                '<span class="magazine-rating-periods__caption" aria-hidden="true">Du n°</span>',
+                '<input type="number" name="rating_period_from[]" min="0" step="0.5" inputmode="decimal" placeholder="1" value="">',
+                '</label>',
+                '<label class="magazine-rating-periods__field">',
+                '<span class="visually-hidden">Au numéro</span>',
+                '<span class="magazine-rating-periods__caption" aria-hidden="true">Au n°</span>',
+                '<input type="number" name="rating_period_to[]" min="0" step="0.5" inputmode="decimal" placeholder="fin" value="">',
+                '</label>',
+                '<label class="magazine-rating-periods__field magazine-rating-periods__field--scale">',
+                '<span class="visually-hidden">Notes sur</span>',
+                '<span class="magazine-rating-periods__caption" aria-hidden="true">Notes sur</span>',
+                '<input type="number" name="rating_period_scale[]" min="1" step="1" inputmode="numeric" placeholder="5" value="">',
+                '</label>',
+                '<button type="button" class="btn btn-secondary btn-sm magazine-rating-periods__remove" title="Retirer cette période" aria-label="Retirer cette période">×</button>',
+            ].join('');
+            return row;
+        };
+
+        addBtn.addEventListener('click', (event) => {
+            event.preventDefault();
+            rowsWrap.appendChild(createEmptyRow());
+        });
+
+        root.addEventListener('click', (event) => {
+            const target = event.target instanceof Element ? event.target : null;
+            const removeBtn = target?.closest('.magazine-rating-periods__remove');
+            if (!removeBtn || !root.contains(removeBtn)) {
+                return;
+            }
+            event.preventDefault();
+            const row = removeBtn.closest('[data-rating-period-row]');
+            if (!row) {
+                return;
+            }
+            const allRows = rowsWrap.querySelectorAll('[data-rating-period-row]');
+            if (allRows.length <= 1) {
+                row.querySelectorAll('input').forEach((input) => {
+                    input.value = '';
+                });
+                return;
+            }
+            row.remove();
+        });
     });
 }
 

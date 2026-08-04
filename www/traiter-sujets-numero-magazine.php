@@ -10,6 +10,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 use Moncine\MagazineIssueSupplementRepository;
 use Moncine\MagazineRepository;
 use Moncine\MagazineGameLink;
+use Moncine\MagazineRatingPeriod;
 use Moncine\MagazineRatingScale;
 use Moncine\MagazineSeriesCategory;
 use Moncine\MagazineSubject;
@@ -92,7 +93,11 @@ if ($action === 'update_meta' || $action === 'update_page' || $action === 'updat
     $category = MagazineSubject::normalizeCategory((string) ($subject['category'] ?? ''));
     $seriesId = (int) ($issue['series_id'] ?? 0);
     $seriesRow = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE) ?? [];
-    $ratingScale = MagazineRatingScale::normalize($seriesRow['rating_scale'] ?? null);
+    $ratingScale = MagazineRatingPeriod::resolve(
+        MagazineRatingScale::normalize($seriesRow['rating_scale'] ?? null),
+        MagazineRatingPeriod::listForSeries($seriesId),
+        (float) ($issue['numero_ordre'] ?? 0)
+    );
 
     $touchesPage = $action === 'update_meta' || $action === 'update_page' || array_key_exists('page', $_POST);
     $touchesScore = $action === 'update_meta' || $action === 'update_score' || array_key_exists('score', $_POST);
@@ -229,11 +234,15 @@ if ($result !== true) {
     exit;
 }
 
-// Note saisie dès la création (tests uniquement, si la série a une échelle).
+// Note saisie dès la création (tests uniquement, si ce numéro a une échelle).
 $attachCategory = MagazineSubject::normalizeCategory((string) ($prepared['category'] ?? ''));
 if ($attachCategory === MagazineSubject::TEST && array_key_exists('score', $_POST)) {
     $seriesRowForScore = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE) ?? $series;
-    $ratingScale = MagazineRatingScale::normalize($seriesRowForScore['rating_scale'] ?? null);
+    $ratingScale = MagazineRatingPeriod::resolve(
+        MagazineRatingScale::normalize($seriesRowForScore['rating_scale'] ?? null),
+        MagazineRatingPeriod::listForSeries($seriesId),
+        (float) ($issue['numero_ordre'] ?? 0)
+    );
     if ($ratingScale !== null) {
         $parsedScore = MagazineRatingScale::parseScore($_POST['score'] ?? '', $ratingScale);
         if (is_string($parsedScore)) {

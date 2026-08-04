@@ -14,6 +14,7 @@ final class CatalogMaintenance
     public const DUPLICATE_GROUP_TITLE = 'title';
     public const DUPLICATE_GROUP_TMDB = 'tmdb';
     public const DUPLICATE_GROUP_MAGAZINE = 'magazine';
+    public const DUPLICATE_GROUP_GAME = 'game';
 
     private PDO $db;
 
@@ -34,6 +35,7 @@ final class CatalogMaintenance
      *   duplicate_title_groups: int,
      *   duplicate_tmdb_groups: int,
      *   duplicate_magazine_groups: int,
+     *   duplicate_game_groups: int,
      *   incomplete_count: int,
      *   orphan_posters: int,
      *   invalid_tmdb_count: int
@@ -46,6 +48,7 @@ final class CatalogMaintenance
             'duplicate_title_groups' => count($this->findDuplicateGroupsByTitle()),
             'duplicate_tmdb_groups' => count($this->findDuplicateGroupsByTmdb()),
             'duplicate_magazine_groups' => count($this->findDuplicateMagazineIssueGroups()),
+            'duplicate_game_groups' => count($this->findDuplicateGroupsByGameTitle()),
             'incomplete_count' => count($this->findIncompleteOeuvres()),
             'orphan_posters' => count($this->findOrphanPosterFiles()),
             'invalid_tmdb_count' => count($this->findDuplicateTmdbOeuvreIds()),
@@ -91,6 +94,77 @@ final class CatalogMaintenance
                 'key' => $key,
                 'titre' => (string) ($first['titre'] ?? ''),
                 'realisateur' => (string) ($first['realisateur'] ?? ''),
+                'ids' => $ids,
+                'count' => count($ids),
+                'oeuvres' => $this->oeuvreSummariesForIds($ids),
+            ];
+        }
+
+        usort($out, static fn (array $a, array $b): int => $b['count'] <=> $a['count']);
+
+        return $out;
+    }
+
+    /**
+     * Doublons jeux : même titre « normalisé » (casse, accents, article Joybase en fin).
+     *
+     * Ex. « Dig - The… » et « The Dig » → même groupe.
+     *
+     * @return list<array{
+     *   key: string,
+     *   titre: string,
+     *   ids: list<int>,
+     *   count: int,
+     *   oeuvres: list<array<string, mixed>>
+     * }>
+     */
+    public function findDuplicateGroupsByGameTitle(): array
+    {
+        if (!GameRepository::isAvailable()) {
+            return [];
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT o.id, o.titre, o.annee, oj.studio, oj.editeur
+             FROM oeuvres o
+             INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id
+             WHERE o.media_domain = ?
+             ORDER BY o.id ASC'
+        );
+        $stmt->execute([MediaDomain::JEU]);
+
+        /** @var array<string, list<array<string, mixed>>> $groups */
+        $groups = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $titre = trim((string) ($row['titre'] ?? ''));
+            $key = JoybaseJoystickTestsImporter::matchKey($titre);
+            if ($key === '') {
+                continue;
+            }
+            $groups[$key][] = $row;
+        }
+
+        $dismissed = $this->loadDismissedGroupKeys(self::DUPLICATE_GROUP_GAME);
+        $out = [];
+        foreach ($groups as $key => $items) {
+            if (count($items) < 2 || isset($dismissed[$key])) {
+                continue;
+            }
+            $ids = array_values(array_map(static fn (array $r): int => (int) ($r['id'] ?? 0), $items));
+            // Titre d’affichage : préférer la forme « naturelle » (article en tête) si présente.
+            $displayTitle = (string) ($items[0]['titre'] ?? '');
+            foreach ($items as $item) {
+                $candidate = trim((string) ($item['titre'] ?? ''));
+                $canonical = JoybaseJoystickTestsImporter::canonicalizeJoybaseTitle($candidate);
+                if ($candidate !== '' && $canonical === $candidate) {
+                    $displayTitle = $candidate;
+                    break;
+                }
+            }
+
+            $out[] = [
+                'key' => $key,
+                'titre' => $displayTitle,
                 'ids' => $ids,
                 'count' => count($ids),
                 'oeuvres' => $this->oeuvreSummariesForIds($ids),
@@ -234,10 +308,12 @@ final class CatalogMaintenance
             'SELECT o.id, o.titre, o.realisateur, o.annee, o.poster_url, o.tmdb_id, o.media_domain, o.synopsis,
                 om.numero AS mag_numero, om.est_hors_serie AS mag_est_hors_serie,
                 s.titre AS mag_series_titre,
+                oj.studio AS game_studio, oj.editeur AS game_editeur,
                 (SELECT COUNT(*) FROM bibliotheque b WHERE b.oeuvre_id = o.id) AS library_count
              FROM oeuvres o
              LEFT JOIN oeuvre_magazine om ON om.oeuvre_id = o.id
              LEFT JOIN series s ON s.id = om.series_id
+             LEFT JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id
              WHERE o.id IN (' . $placeholders . ')
              ORDER BY o.id ASC'
         );
@@ -266,6 +342,10 @@ final class CatalogMaintenance
         $realisateur = trim((string) ($oeuvre['realisateur'] ?? ''));
         if ($realisateur !== '') {
             $parts[] = $realisateur;
+        }
+        $studio = trim((string) ($oeuvre['game_studio'] ?? ''));
+        if ($studio !== '') {
+            $parts[] = $studio;
         }
         $annee = (int) ($oeuvre['annee'] ?? 0);
         if ($annee > 0) {
@@ -368,6 +448,7 @@ final class CatalogMaintenance
             self::DUPLICATE_GROUP_TITLE,
             self::DUPLICATE_GROUP_TMDB,
             self::DUPLICATE_GROUP_MAGAZINE,
+            self::DUPLICATE_GROUP_GAME,
         ], true)) {
             return 'Type de doublon invalide.';
         }
@@ -429,6 +510,7 @@ final class CatalogMaintenance
         $this->db->beginTransaction();
         try {
             $this->mergeOeuvreMetadata($keep, $remove);
+            $this->fillEmptyGameMetaOnMerge($keepId, $removeId);
             $this->reassignBibliothequeEntries($keepId, $removeId);
             if (GameSteamAppIdMapRepository::isAvailable()) {
                 (new GameSteamAppIdMapRepository())->reassignOnOeuvreMerge($keepId, $removeId);
@@ -560,6 +642,40 @@ final class CatalogMaintenance
 
         $this->db->prepare('UPDATE oeuvre_jeu SET steam_appid = ? WHERE oeuvre_id = ?')
             ->execute([$removeAppid, $keepId]);
+    }
+
+    /** Complète studio / éditeur vides de la fiche conservée avec ceux du doublon. */
+    private function fillEmptyGameMetaOnMerge(int $keepId, int $removeId): void
+    {
+        if (!GameRepository::isAvailable() || $keepId <= 0 || $removeId <= 0) {
+            return;
+        }
+
+        $stmt = $this->db->prepare(
+            'SELECT oeuvre_id, studio, editeur FROM oeuvre_jeu WHERE oeuvre_id IN (?, ?)'
+        );
+        $stmt->execute([$keepId, $removeId]);
+        $byId = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $byId[(int) ($row['oeuvre_id'] ?? 0)] = $row;
+        }
+        if (!isset($byId[$keepId], $byId[$removeId])) {
+            return;
+        }
+
+        $keepStudio = trim((string) ($byId[$keepId]['studio'] ?? ''));
+        $keepEditeur = trim((string) ($byId[$keepId]['editeur'] ?? ''));
+        $removeStudio = trim((string) ($byId[$removeId]['studio'] ?? ''));
+        $removeEditeur = trim((string) ($byId[$removeId]['editeur'] ?? ''));
+        $newStudio = $keepStudio !== '' ? $keepStudio : $removeStudio;
+        $newEditeur = $keepEditeur !== '' ? $keepEditeur : $removeEditeur;
+        if ($newStudio === $keepStudio && $newEditeur === $keepEditeur) {
+            return;
+        }
+
+        $this->db->prepare(
+            'UPDATE oeuvre_jeu SET studio = ?, editeur = ? WHERE oeuvre_id = ?'
+        )->execute([$newStudio, $newEditeur, $keepId]);
     }
 
     private function relocatePosterFile(int $fromId, int $toId, string $posterUrl): void

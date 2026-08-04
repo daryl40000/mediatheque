@@ -13,6 +13,22 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.9] — 2026-08-04
+
+**Magazines — périodes d’échelle · import Joybase · doublons jeux**
+
+### Ajouté
+
+- **Échelles de notation par plages de numéros** sur une série magazine (ex. n°1–139 sur 100, puis sur 10) : saisie sur la fiche série, résolution automatique sur chaque numéro, export/import ODS (`MagazineRatingPeriods`).
+- **Import ponctuel Joybase → tests Joystick** (`lib/cli/joybase-import-joystick-tests.php`) : feuille Tests, création/réutilisation des fiches jeu, sujets, pages et notes ; normalisation des titres du type `Dig - The…` → `The Dig`.
+- **Maintenance catalogue** : détection des **doublons jeux** (titre normalisé, y compris style Joybase) avec fusion et « conserver toutes les fiches ».
+
+### Technique
+
+- Migration **075** (`magazine_series_rating_period`) ; `MagazineRatingPeriod` ; tests unitaires et d’intégration.
+
+---
+
 ## [0.8.8] — 2026-08-04
 
 **Sécurité · moyenne presse sur fiches jeu / film**

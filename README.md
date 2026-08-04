@@ -3,7 +3,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 [![Tests](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml/badge.svg)](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml)
 
-**Version : 0.8.8**
+**Version : 0.8.9**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -76,6 +76,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.8.9** | Magazines : périodes d’échelle par numéros ; import Joybase Joystick ; doublons jeux en maintenance |
 | **0.8.8** | Sécurité (partages, proxy, CSRF onglets, uploads) ; moyenne presse sur fiches jeu/film |
 | **0.8.7** | Magazines : liens « consulter en ligne » (série + numéro), rempli à l’import ABM, export/import catalogue |
 | **0.8.6** | Magazines : notes des tests, moyenne presse, export/import ODS catalogue (sujets, page, note) |

@@ -2,9 +2,9 @@
 /**
  * Feuilles secondaires ODS du catalogue global — séries, sujets et liens magazines.
  *
- * Objectif : un aller-retour export → import ne perde pas rating_scale, tags,
- * sujets, page PDF ni note de test. Les fichiers PDF (numéro / supplément)
- * restent hors tableur (comme les affiches ZIP).
+ * Objectif : un aller-retour export → import ne perde pas rating_scale, périodes
+ * d’échelle, tags, sujets, page PDF ni note de test. Les fichiers PDF (numéro /
+ * supplément) restent hors tableur (comme les affiches ZIP).
  */
 
 declare(strict_types=1);
@@ -16,6 +16,8 @@ use PDO;
 final class CatalogMagazineSheets
 {
     public const SHEET_SERIES = 'SeriesMagazines';
+
+    public const SHEET_RATING_PERIODS = 'MagazineRatingPeriods';
 
     public const SHEET_SUBJECTS = 'MagazineSubjects';
 
@@ -42,6 +44,22 @@ final class CatalogMagazineSheets
         'rating_scale' => 'Notes sur',
         'poster_url' => 'Logo (URL)',
         'external_url' => 'Lien en ligne (URL)',
+    ];
+
+    /** @var array<string, string> */
+    public const RATING_PERIOD_COLUMNS = [
+        'series_id' => 'ID série',
+        'from_numero' => 'Du numéro',
+        'to_numero' => 'Au numéro',
+        'rating_scale' => 'Notes sur',
+    ];
+
+    /** @var array<string, list<string>> */
+    public const RATING_PERIOD_COLUMN_ALIASES = [
+        'series_id' => ['id serie', 'id série', 'series_id', 'serie id', 'id'],
+        'from_numero' => ['du numero', 'du numéro', 'from', 'from_numero', 'debut', 'début'],
+        'to_numero' => ['au numero', 'au numéro', 'to', 'to_numero', 'fin'],
+        'rating_scale' => ['notes sur', 'rating_scale', 'echelle', 'échelle', 'note max'],
     ];
 
     /** @var array<string, list<string>> */
@@ -157,6 +175,12 @@ final class CatalogMagazineSheets
     }
 
     /** @return list<string> */
+    public static function ratingPeriodHeaders(): array
+    {
+        return array_values(self::RATING_PERIOD_COLUMNS);
+    }
+
+    /** @return list<string> */
     public static function subjectHeaders(): array
     {
         return array_values(self::SUBJECT_COLUMNS);
@@ -231,6 +255,39 @@ final class CatalogMagazineSheets
                 $hasRating ? (string) ($series['rating_scale'] ?? '') : '',
                 (string) ($series['poster_url'] ?? ''),
                 $hasExternalUrl ? (string) ($series['external_url'] ?? '') : '',
+            ];
+        }
+
+        return $rows;
+    }
+
+    /**
+     * Périodes d’échelle de notation (plages de numéros).
+     *
+     * @return list<list<string>>
+     */
+    public static function buildRatingPeriodRows(): array
+    {
+        $rows = [self::ratingPeriodHeaders()];
+        if (!MagazineRatingPeriod::tableExists()) {
+            return $rows;
+        }
+
+        $stmt = Database::getInstance()->query(
+            'SELECT series_id, from_numero_ordre, to_numero_ordre, rating_scale
+             FROM magazine_series_rating_period
+             ORDER BY series_id ASC, sort_order ASC, from_numero_ordre ASC, id ASC'
+        );
+
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $period) {
+            $toRaw = $period['to_numero_ordre'] ?? null;
+            $rows[] = [
+                (string) (int) ($period['series_id'] ?? 0),
+                MagazineRatingScale::formatNumber((float) ($period['from_numero_ordre'] ?? 0)),
+                ($toRaw === null || $toRaw === '')
+                    ? ''
+                    : MagazineRatingScale::formatNumber((float) $toRaw),
+                (string) ($period['rating_scale'] ?? ''),
             ];
         }
 
@@ -469,6 +526,99 @@ final class CatalogMagazineSheets
             } catch (\Throwable $e) {
                 $errors[] = 'SeriesMagazines ligne ' . $line . ' : ' . $e->getMessage();
             }
+        }
+
+        return ['imported' => $imported, 'errors' => $errors];
+    }
+
+    /**
+     * Remplace les périodes d’échelle pour chaque série présente dans la feuille.
+     *
+     * @param list<list<string|null>> $dataRows
+     * @param list<string|null> $header
+     * @return array{imported: int, errors: list<string>}
+     */
+    public static function importRatingPeriodsSheet(array $dataRows, array $header): array
+    {
+        if (!MagazineRatingPeriod::tableExists()) {
+            return ['imported' => 0, 'errors' => ['Table des périodes d’échelle indisponible (migration 075).']];
+        }
+
+        $map = ImportFilmRows::mapHeaders($header, self::RATING_PERIOD_COLUMN_ALIASES);
+        if (!isset($map['series_id']) || !isset($map['from_numero']) || !isset($map['rating_scale'])) {
+            return [
+                'imported' => 0,
+                'errors' => [
+                    'Feuille MagazineRatingPeriods : colonnes « ID série », « Du numéro » et « Notes sur » requises.',
+                ],
+            ];
+        }
+
+        /** @var array<int, list<array{from_numero_ordre: float, to_numero_ordre: float|null, rating_scale: string}>> $bySeries */
+        $bySeries = [];
+        $errors = [];
+        $line = 1;
+
+        foreach ($dataRows as $row) {
+            $line++;
+            if (ImportFilmRows::isEmptyRow($row)) {
+                continue;
+            }
+
+            $seriesId = self::intFromMap($row, $map, 'series_id');
+            if ($seriesId <= 0) {
+                $errors[] = 'MagazineRatingPeriods ligne ' . $line . ' : ID série obligatoire.';
+                continue;
+            }
+
+            $fromRaw = ImportFilmRows::getCell($row, $map, 'from_numero');
+            $toRaw = ImportFilmRows::getCell($row, $map, 'to_numero');
+            $scaleRaw = ImportFilmRows::getCell($row, $map, 'rating_scale');
+
+            if ($fromRaw === '' || !is_numeric(str_replace(',', '.', $fromRaw))) {
+                $errors[] = 'MagazineRatingPeriods ligne ' . $line . ' : numéro de début invalide.';
+                continue;
+            }
+            $from = (float) str_replace(',', '.', $fromRaw);
+            $to = null;
+            if ($toRaw !== '') {
+                if (!is_numeric(str_replace(',', '.', $toRaw))) {
+                    $errors[] = 'MagazineRatingPeriods ligne ' . $line . ' : numéro de fin invalide.';
+                    continue;
+                }
+                $to = (float) str_replace(',', '.', $toRaw);
+                if ($to < $from) {
+                    $errors[] = 'MagazineRatingPeriods ligne ' . $line . ' : la fin doit être ≥ au début.';
+                    continue;
+                }
+            }
+
+            $scale = MagazineRatingScale::normalize($scaleRaw);
+            if ($scale === null) {
+                $errors[] = 'MagazineRatingPeriods ligne ' . $line . ' : échelle invalide.';
+                continue;
+            }
+
+            $bySeries[$seriesId][] = [
+                'from_numero_ordre' => $from,
+                'to_numero_ordre' => $to,
+                'rating_scale' => $scale,
+            ];
+        }
+
+        $imported = 0;
+        $repo = new SeriesRepository();
+        foreach ($bySeries as $seriesId => $periods) {
+            if ($repo->findById($seriesId, MediaDomain::MAGAZINE) === null) {
+                $errors[] = 'MagazineRatingPeriods : série ' . $seriesId . ' introuvable (magazine).';
+                continue;
+            }
+            $result = MagazineRatingPeriod::replaceForSeries($seriesId, $periods);
+            if ($result !== true) {
+                $errors[] = 'MagazineRatingPeriods série ' . $seriesId . ' : ' . (string) $result;
+                continue;
+            }
+            $imported += count($periods);
         }
 
         return ['imported' => $imported, 'errors' => $errors];

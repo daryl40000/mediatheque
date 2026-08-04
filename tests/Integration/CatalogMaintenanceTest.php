@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace Moncine\Tests\Integration;
 
+use Moncine\Auth;
 use Moncine\BibliothequeRepository;
 use Moncine\CatalogMaintenance;
 use Moncine\Database;
@@ -335,5 +336,54 @@ final class CatalogMaintenanceTest extends MoncineTestCase
         foreach ($groupsAfter as $group) {
             $this->assertNotSame($groupKey, (string) ($group['key'] ?? ''));
         }
+    }
+
+    public function testFindDuplicateGroupsByGameTitleMatchesJoybaseArticleForm(): void
+    {
+        (new SchemaMigrator(Database::getInstance()))->runPendingMigrations();
+        if (!GameRepository::isAvailable()) {
+            $this->markTestSkipped('Module jeux non disponible.');
+        }
+
+        $this->loginAsAdmin();
+        MediaContext::set(MediaDomain::JEU);
+
+        $suffix = uniqid('gamedup_', true);
+        $gameRepo = new GameRepository();
+        $idNatural = $gameRepo->createCatalogOnly([
+            'titre' => 'The Dig ' . $suffix,
+            'annee' => 1995,
+            'studio' => 'LucasArts',
+            'platform' => GamePlatform::PC,
+        ]);
+        $idJoybase = $gameRepo->createCatalogOnly([
+            'titre' => 'Dig ' . $suffix . ' - The…',
+            'annee' => 1995,
+            'studio' => '',
+            'editeur' => 'LucasArts',
+            'platform' => GamePlatform::PC,
+        ]);
+        $this->assertIsInt($idNatural);
+        $this->assertIsInt($idJoybase);
+
+        $groups = (new CatalogMaintenance())->findDuplicateGroupsByGameTitle();
+        $found = null;
+        foreach ($groups as $group) {
+            $ids = $group['ids'] ?? [];
+            if (in_array($idNatural, $ids, true) && in_array($idJoybase, $ids, true)) {
+                $found = $group;
+                break;
+            }
+        }
+        $this->assertNotNull($found, 'The Dig et Dig - The… doivent former un groupe de doublons.');
+        $this->assertGreaterThanOrEqual(2, (int) ($found['count'] ?? 0));
+
+        $merge = (new CatalogMaintenance())->mergeOeuvres($idNatural, $idJoybase, Auth::currentUserId());
+        $this->assertTrue($merge === true);
+        $this->assertNull((new OeuvreRepository())->findById($idJoybase));
+        $keep = (new GameRepository())->findCatalogByOeuvreId($idNatural);
+        $this->assertNotNull($keep);
+        $this->assertSame('LucasArts', (string) ($keep['studio'] ?? ''));
+        $this->assertSame('LucasArts', (string) ($keep['editeur'] ?? ''));
     }
 }

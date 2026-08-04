@@ -2,6 +2,7 @@
 /**
  * @var array<string, int> $stats
  * @var list<array<string, mixed>> $duplicateTitleGroups
+ * @var list<array<string, mixed>> $duplicateGameGroups
  * @var list<array<string, mixed>> $duplicateTmdbGroups
  * @var list<array<string, mixed>> $duplicateMagazineGroups
  * @var list<array<string, mixed>> $incompleteOeuvres
@@ -24,6 +25,7 @@
             <p class="hint"><a href="/maintenance-medias.php">Stockage médias (PDF, exports…) →</a>
                 · <a href="/maintenance-magazine-sujets.php">Sujets magazines (nettoyage) →</a>
                 · <a href="/maintenance-magazine-jeux-liens.php">Liens magazine ↔ jeux →</a>
+                · <a href="#doublons-jeux">Doublons jeux →</a>
                 · <a href="/plateformes-jeux.php">Plateformes jeux →</a>
                 · <a href="/import-catalogue-magazines.php">Import catalogue magazines (JSON) →</a></p>
         </div>
@@ -54,6 +56,10 @@
             <li class="catalog-maintenance-stat<?= (int) ($stats['duplicate_magazine_groups'] ?? 0) > 0 ? ' catalog-maintenance-stat--warn' : '' ?>">
                 <span class="catalog-maintenance-stat__value"><?= (int) ($stats['duplicate_magazine_groups'] ?? 0) ?></span>
                 <span class="catalog-maintenance-stat__label">Doublons magazines</span>
+            </li>
+            <li class="catalog-maintenance-stat<?= (int) ($stats['duplicate_game_groups'] ?? 0) > 0 ? ' catalog-maintenance-stat--warn' : '' ?>">
+                <span class="catalog-maintenance-stat__value"><?= (int) ($stats['duplicate_game_groups'] ?? 0) ?></span>
+                <span class="catalog-maintenance-stat__label">Doublons jeux</span>
             </li>
             <li class="catalog-maintenance-stat">
                 <span class="catalog-maintenance-stat__value"><?= (int) $stats['incomplete_count'] ?></span>
@@ -125,6 +131,72 @@
                     $dismissGroupType = Moncine\CatalogMaintenance::DUPLICATE_GROUP_TITLE;
                     $dismissGroupKey = (string) ($group['key'] ?? '');
                     $dismissFormSuffix = 'title_' . $dismissGroupKey;
+                    require MONCINE_ROOT . '/templates/_catalog_maintenance_dismiss_duplicate.php';
+                    ?>
+                </article>
+            <?php endforeach; ?>
+        <?php endif; ?>
+    </section>
+
+    <section class="catalog-maintenance-panel" id="doublons-jeux">
+        <h2>Doublons jeux (titre normalisé)</h2>
+        <p class="hint">
+            Regroupe les fiches jeu au titre équivalent malgré la casse, les accents, ou le style Joybase
+            (ex. <em>Dig - The…</em> et <em>The Dig</em>).
+            Choisissez la fiche à conserver (souvent celle avec affiche / studio / bibliothèque), puis fusionnez.
+            Les liens magazine ↔ jeu et les entrées en bibliothèque sont repris automatiquement.
+        </p>
+        <?php if (($duplicateGameGroups ?? []) === []): ?>
+            <p class="alert alert-info">Aucun doublon de titre détecté parmi les jeux.</p>
+        <?php else: ?>
+            <?php foreach ($duplicateGameGroups as $group): ?>
+                <article class="catalog-maintenance-duplicate">
+                    <h3>
+                        <?= Moncine\View::escape((string) ($group['titre'] ?? '')) ?>
+                        <span class="hint">(<?= (int) ($group['count'] ?? 0) ?> fiches)</span>
+                    </h3>
+                    <?php
+                    $oeuvres = $group['oeuvres'] ?? [];
+                    require MONCINE_ROOT . '/templates/_catalog_maintenance_duplicate_oeuvres.php';
+                    ?>
+                    <form method="post" class="catalog-maintenance-merge-form import-form">
+                        <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                        <input type="hidden" name="action" value="merge_oeuvres">
+                        <label for="keep_game_<?= Moncine\View::escape((string) ($group['key'] ?? '')) ?>">Conserver</label>
+                        <select name="keep_id" id="keep_game_<?= Moncine\View::escape((string) ($group['key'] ?? '')) ?>" required>
+                            <?php foreach ($oeuvres as $oeuvre): ?>
+                                <option value="<?= (int) ($oeuvre['id'] ?? 0) ?>">
+                                    <?= Moncine\View::escape(Moncine\CatalogMaintenance::mergeOptionLabel($oeuvre)) ?>
+                                </option>
+                            <?php endforeach; ?>
+                            <?php if ($oeuvres === []): ?>
+                                <?php foreach ($group['ids'] as $id): ?>
+                                    <option value="<?= (int) $id ?>">#<?= (int) $id ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                        <label for="remove_game_<?= Moncine\View::escape((string) ($group['key'] ?? '')) ?>">Fusionner (supprimer)</label>
+                        <select name="remove_id" id="remove_game_<?= Moncine\View::escape((string) ($group['key'] ?? '')) ?>" required>
+                            <?php foreach ($oeuvres as $oeuvre): ?>
+                                <option value="<?= (int) ($oeuvre['id'] ?? 0) ?>">
+                                    <?= Moncine\View::escape(Moncine\CatalogMaintenance::mergeOptionLabel($oeuvre)) ?>
+                                </option>
+                            <?php endforeach; ?>
+                            <?php if ($oeuvres === []): ?>
+                                <?php foreach ($group['ids'] as $id): ?>
+                                    <option value="<?= (int) $id ?>">#<?= (int) $id ?></option>
+                                <?php endforeach; ?>
+                            <?php endif; ?>
+                        </select>
+                        <button type="submit" class="btn btn-primary btn-sm"
+                                onclick="return confirm('Fusionner ces deux fiches jeu ? Les bibliothèques et liens magazines seront conservés.');">
+                            Fusionner
+                        </button>
+                    </form>
+                    <?php
+                    $dismissGroupType = Moncine\CatalogMaintenance::DUPLICATE_GROUP_GAME;
+                    $dismissGroupKey = (string) ($group['key'] ?? '');
+                    $dismissFormSuffix = 'game_' . $dismissGroupKey;
                     require MONCINE_ROOT . '/templates/_catalog_maintenance_dismiss_duplicate.php';
                     ?>
                 </article>

@@ -26,6 +26,12 @@ $oeuvres = is_array($oeuvres ?? null) ? $oeuvres : [];
                 <?php if (trim((string) ($oeuvre['realisateur'] ?? '')) !== ''): ?>
                     <span class="hint">· <?= Moncine\View::escape((string) $oeuvre['realisateur']) ?></span>
                 <?php endif; ?>
+                <?php if (trim((string) ($oeuvre['game_studio'] ?? '')) !== ''): ?>
+                    <span class="hint">· <?= Moncine\View::escape((string) $oeuvre['game_studio']) ?></span>
+                <?php endif; ?>
+                <?php if (trim((string) ($oeuvre['game_editeur'] ?? '')) !== ''): ?>
+                    <span class="hint">· éd. <?= Moncine\View::escape((string) $oeuvre['game_editeur']) ?></span>
+                <?php endif; ?>
                 <?php if ((int) ($oeuvre['annee'] ?? 0) > 0): ?>
                     <span class="hint">· <?= (int) $oeuvre['annee'] ?></span>
                 <?php endif; ?>

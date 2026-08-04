@@ -140,6 +140,7 @@ final class MagazineGameLink
             . (MagazineSubjectRepository::hasPageColumn() ? ' oms.page AS article_page,' : ' 0 AS article_page,')
             . (MagazineSubjectRepository::hasScoreColumn() ? ' oms.score AS test_score,' : ' NULL AS test_score,')
             . ' om.numero, om.numero_ordre, om.date_parution, om.stored_object_id,
+                    om.series_id,
                     s.titre AS series_titre, s.publication_type,
                     s.poster_url AS series_poster_url,'
             . (SeriesRepository::ratingScaleColumnExists() ? ' s.rating_scale,' : ' NULL AS rating_scale,')
@@ -179,6 +180,8 @@ final class MagazineGameLink
             if (!isset($grouped[$issueOeuvreId])) {
                 $row['subject_id'] = (int) ($row['subject_id'] ?? 0);
                 $row['bib_id'] = (int) ($row['bib_id'] ?? 0);
+                $row['series_id'] = (int) ($row['series_id'] ?? 0);
+                $row['numero_ordre'] = (float) ($row['numero_ordre'] ?? 0);
                 $row['parution_year'] = (int) ($row['parution_year'] ?? 0);
                 $row['stored_object_id'] = (int) ($row['stored_object_id'] ?? 0);
                 $row['article_page'] = MagazineSubjectRepository::normalizePage($row['article_page'] ?? 0);
@@ -191,6 +194,7 @@ final class MagazineGameLink
                     (string) ($row['detail'] ?? ''),
                     (int) ($row['parution_year'] ?? 0)
                 );
+                // Échelle série par défaut ; résolue par période juste après le groupement.
                 $row['rating_scale'] = MagazineRatingScale::normalize($row['rating_scale'] ?? null);
                 $row['test_score'] = self::normalizeCoverageScore($row['test_score'] ?? null, $category);
                 $grouped[$issueOeuvreId] = $row;
@@ -220,7 +224,7 @@ final class MagazineGameLink
                 $grouped[$issueOeuvreId]['article_page'] = $candidatePage;
             }
 
-            // Préférer la note d’un sujet « Test » (échelle de la série).
+            // Préférer la note d’un sujet « Test » (échelle résolue ensuite).
             if (($grouped[$issueOeuvreId]['rating_scale'] ?? null) === null) {
                 $grouped[$issueOeuvreId]['rating_scale'] = MagazineRatingScale::normalize(
                     $row['rating_scale'] ?? null
@@ -243,6 +247,21 @@ final class MagazineGameLink
                     );
                 }
             }
+        }
+
+        $periodMap = MagazineRatingPeriod::mapForSeriesIds(
+            array_map(
+                static fn (array $row): int => (int) ($row['series_id'] ?? 0),
+                array_values($grouped)
+            )
+        );
+        foreach ($grouped as $issueOeuvreId => $row) {
+            $seriesId = (int) ($row['series_id'] ?? 0);
+            $grouped[$issueOeuvreId]['rating_scale'] = MagazineRatingPeriod::resolve(
+                MagazineRatingScale::normalize($row['rating_scale'] ?? null),
+                $periodMap[$seriesId] ?? [],
+                (float) ($row['numero_ordre'] ?? 0)
+            );
         }
 
         $rows = [];

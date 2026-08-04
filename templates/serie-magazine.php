@@ -75,12 +75,29 @@
                     <?php require MONCINE_ROOT . '/templates/_magazine_series_categories_display.php'; ?>
                     <?php
                     $seriesRatingScale = Moncine\MagazineRatingScale::normalize($series['rating_scale'] ?? null);
-                    if ($seriesRatingScale !== null):
+                    $seriesRatingPeriods = Moncine\MagazineRatingPeriod::listForSeries($seriesId);
+                    if ($seriesRatingScale !== null || $seriesRatingPeriods !== []):
                     ?>
-                        <p class="hint">
-                            Notation des tests :
-                            <span class="magazine-tag magazine-tag--series"><?= Moncine\View::escape(Moncine\MagazineRatingScale::label($seriesRatingScale)) ?></span>
-                        </p>
+                        <div class="hint magazine-rating-summary">
+                            <p>
+                                Notation des tests :
+                                <?php if ($seriesRatingScale !== null): ?>
+                                    <span class="magazine-tag magazine-tag--series"><?= Moncine\View::escape(Moncine\MagazineRatingScale::label($seriesRatingScale)) ?></span>
+                                    <?php if ($seriesRatingPeriods !== []): ?>
+                                        <span class="hint">(par défaut hors période)</span>
+                                    <?php endif; ?>
+                                <?php endif; ?>
+                            </p>
+                            <?php if ($seriesRatingPeriods !== []): ?>
+                                <ul class="magazine-rating-summary__periods">
+                                    <?php foreach ($seriesRatingPeriods as $periodRow): ?>
+                                        <li>
+                                            <span class="magazine-tag magazine-tag--series"><?= Moncine\View::escape(Moncine\MagazineRatingPeriod::formatLabel($periodRow)) ?></span>
+                                        </li>
+                                    <?php endforeach; ?>
+                                </ul>
+                            <?php endif; ?>
+                        </div>
                     <?php endif; ?>
                     <?php if (trim((string) ($series['notes'] ?? '')) !== ''): ?>
                         <p class="hint"><?= nl2br(Moncine\View::escape((string) $series['notes'])) ?></p>

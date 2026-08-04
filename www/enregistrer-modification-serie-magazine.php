@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\Csrf;
+use Moncine\MagazineRatingPeriod;
 use Moncine\MagazineSeriesCategory;
 use Moncine\MagazineSeriesTag;
 use Moncine\MediaDomainGuards;
@@ -33,6 +34,13 @@ if ($series === null) {
     exit;
 }
 
+$periodsParsed = MagazineRatingPeriod::parseFromPost($_POST);
+if (is_string($periodsParsed)) {
+    $params = http_build_query(['error' => $periodsParsed]);
+    header('Location: ' . $redirectBase . '&' . $params);
+    exit;
+}
+
 $result = $repo->update($seriesId, [
     'titre' => (string) ($_POST['titre'] ?? ''),
     'publication_type' => (string) ($_POST['publication_type'] ?? ''),
@@ -53,6 +61,15 @@ if ($result !== true) {
     $params = http_build_query(['error' => (string) $result]);
     header('Location: ' . $redirectBase . '&' . $params);
     exit;
+}
+
+if (MagazineRatingPeriod::tableExists()) {
+    $periodsResult = MagazineRatingPeriod::replaceForSeries($seriesId, $periodsParsed);
+    if ($periodsResult !== true) {
+        $params = http_build_query(['error' => (string) $periodsResult]);
+        header('Location: ' . $redirectBase . '&' . $params);
+        exit;
+    }
 }
 
 if (

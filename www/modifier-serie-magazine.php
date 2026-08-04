@@ -8,6 +8,7 @@ declare(strict_types=1);
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\LibraryStatut;
+use Moncine\MagazineRatingPeriod;
 use Moncine\MagazineRepository;
 use Moncine\MediaDomain;
 use Moncine\MediaDomainGuards;
@@ -43,6 +44,7 @@ View::render('modifier-serie-magazine', [
     'pageTitle' => 'Modifier — ' . (string) ($series['titre'] ?? ''),
     'publicationTypes' => PublicationType::choices(),
     'series' => $series,
+    'ratingPeriods' => MagazineRatingPeriod::listForSeries($seriesId),
     'error' => (string) ($_GET['error'] ?? ''),
     'saved' => isset($_GET['saved']),
     'seriesInLibrary' => $seriesInLibrary,

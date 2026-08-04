@@ -99,7 +99,7 @@ final class MagazineRatingScale
     {
         $scale = self::normalize($scale);
         if ($scale === null) {
-            return 'Cette série n’a pas d’échelle de notation.';
+            return 'Ce numéro n’a pas d’échelle de notation.';
         }
 
         if ($raw === null || (is_string($raw) && trim($raw) === '')) {
