@@ -106,9 +106,10 @@ final class CatalogMaintenance
     }
 
     /**
-     * Doublons jeux : même titre « normalisé » (casse, accents, article Joybase en fin).
-     *
-     * Ex. « Dig - The… » et « The Dig » → même groupe.
+     * Doublons jeux : même titre « normalisé » (casse, accents, article Joybase en fin),
+     * titre court = racine d’un titre avec sous-titre + même année
+     * (ex. « Track Attack » et « Track Attack: Changes Everything », 1996),
+     * ou même identifiant IGDB (preuve forte de doublon).
      *
      * @return list<array{
      *   key: string,
@@ -124,8 +125,10 @@ final class CatalogMaintenance
             return [];
         }
 
+        $hasIgdb = GameRepository::hasIgdbColumns();
+        $igdbSelect = $hasIgdb ? ', oj.igdb_id' : '';
         $stmt = $this->db->prepare(
-            'SELECT o.id, o.titre, o.annee, oj.studio, oj.editeur
+            'SELECT o.id, o.titre, o.annee, oj.studio, oj.editeur' . $igdbSelect . '
              FROM oeuvres o
              INNER JOIN oeuvre_jeu oj ON oj.oeuvre_id = o.id
              WHERE o.media_domain = ?
@@ -133,37 +136,164 @@ final class CatalogMaintenance
         );
         $stmt->execute([MediaDomain::JEU]);
 
-        /** @var array<string, list<array<string, mixed>>> $groups */
-        $groups = [];
+        /** @var list<array{id: int, titre: string, annee: int, full_key: string, root_key: string, igdb_id: int}> $games */
+        $games = [];
         foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $id = (int) ($row['id'] ?? 0);
             $titre = trim((string) ($row['titre'] ?? ''));
-            $key = JoybaseJoystickTestsImporter::matchKey($titre);
-            if ($key === '') {
+            if ($id <= 0 || $titre === '') {
                 continue;
             }
-            $groups[$key][] = $row;
+            $fullKey = JoybaseJoystickTestsImporter::matchKey($titre);
+            if ($fullKey === '') {
+                continue;
+            }
+            $rootTitle = self::gameTitleRoot($titre);
+            $rootKey = JoybaseJoystickTestsImporter::matchKey($rootTitle);
+            $games[] = [
+                'id' => $id,
+                'titre' => $titre,
+                'annee' => (int) ($row['annee'] ?? 0),
+                'full_key' => $fullKey,
+                'root_key' => $rootKey !== '' ? $rootKey : $fullKey,
+                'igdb_id' => $hasIgdb ? (int) ($row['igdb_id'] ?? 0) : 0,
+            ];
+        }
+
+        $n = count($games);
+        if ($n < 2) {
+            return [];
+        }
+
+        // Union-Find : relie les jeux du même groupe de doublons.
+        $parent = range(0, $n - 1);
+        $find = static function (int $i) use (&$parent, &$find): int {
+            if ($parent[$i] !== $i) {
+                $parent[$i] = $find($parent[$i]);
+            }
+
+            return $parent[$i];
+        };
+        $union = static function (int $a, int $b) use (&$parent, $find): void {
+            $ra = $find($a);
+            $rb = $find($b);
+            if ($ra !== $rb) {
+                $parent[$rb] = $ra;
+            }
+        };
+
+        /** @var array<string, list<int>> $byFull */
+        $byFull = [];
+        /** @var array<string, list<int>> $byRootYear */
+        $byRootYear = [];
+        /** @var array<int, list<int>> $byIgdb */
+        $byIgdb = [];
+        foreach ($games as $i => $game) {
+            $byFull[$game['full_key']][] = $i;
+            // Titres avec sous-titre (racine ≠ titre complet), indexés racine + année.
+            if (
+                $game['root_key'] !== $game['full_key']
+                && mb_strlen($game['root_key']) >= 6
+                && $game['annee'] > 0
+            ) {
+                $byRootYear[$game['root_key'] . '|' . $game['annee']][] = $i;
+            }
+            if ($game['igdb_id'] > 0) {
+                $byIgdb[$game['igdb_id']][] = $i;
+            }
+        }
+
+        // 1) Même titre normalisé exact → doublon.
+        foreach ($byFull as $indexes) {
+            for ($k = 1, $c = count($indexes); $k < $c; $k++) {
+                $union($indexes[0], $indexes[$k]);
+            }
+        }
+
+        // 2) Titre court = racine d’un titre long, même année
+        //    (Track Attack / Track Attack: Changes Everything).
+        //    Évite de coller deux extensions (Morrowind / Tribunal) : aucune n’est
+        //    égale à la racine seule.
+        foreach ($games as $i => $game) {
+            if ($game['annee'] <= 0 || mb_strlen($game['full_key']) < 6) {
+                continue;
+            }
+            $bucket = $byRootYear[$game['full_key'] . '|' . $game['annee']] ?? [];
+            foreach ($bucket as $j) {
+                $union($i, $j);
+            }
+        }
+
+        // 3) Même identifiant IGDB → doublon (preuve forte, même si les titres diffèrent).
+        foreach ($byIgdb as $indexes) {
+            if (count($indexes) < 2) {
+                continue;
+            }
+            for ($k = 1, $c = count($indexes); $k < $c; $k++) {
+                $union($indexes[0], $indexes[$k]);
+            }
+        }
+
+        /** @var array<int, list<int>> $clusters */
+        $clusters = [];
+        foreach ($games as $i => $_) {
+            $clusters[$find($i)][] = $i;
         }
 
         $dismissed = $this->loadDismissedGroupKeys(self::DUPLICATE_GROUP_GAME);
         $out = [];
-        foreach ($groups as $key => $items) {
-            if (count($items) < 2 || isset($dismissed[$key])) {
+        foreach ($clusters as $indexes) {
+            if (count($indexes) < 2) {
                 continue;
             }
-            $ids = array_values(array_map(static fn (array $r): int => (int) ($r['id'] ?? 0), $items));
-            // Titre d’affichage : préférer la forme « naturelle » (article en tête) si présente.
-            $displayTitle = (string) ($items[0]['titre'] ?? '');
-            foreach ($items as $item) {
-                $candidate = trim((string) ($item['titre'] ?? ''));
-                $canonical = JoybaseJoystickTestsImporter::canonicalizeJoybaseTitle($candidate);
-                if ($candidate !== '' && $canonical === $candidate) {
-                    $displayTitle = $candidate;
-                    break;
+            $ids = [];
+            $titles = [];
+            $fullKeys = [];
+            $rootKeys = [];
+            $years = [];
+            $igdbIds = [];
+            foreach ($indexes as $i) {
+                $ids[] = $games[$i]['id'];
+                $titles[] = $games[$i]['titre'];
+                $fullKeys[$games[$i]['full_key']] = true;
+                $rootKeys[$games[$i]['root_key']] = true;
+                if ($games[$i]['annee'] > 0) {
+                    $years[$games[$i]['annee']] = true;
+                }
+                if ($games[$i]['igdb_id'] > 0) {
+                    $igdbIds[$games[$i]['igdb_id']] = true;
                 }
             }
+            sort($ids);
+            ksort($fullKeys);
+            ksort($rootKeys);
+            ksort($years);
+            ksort($igdbIds);
+            // Clé stable pour « ce n’est pas un doublon » (dismiss).
+            if (count($fullKeys) === 1) {
+                // Même titre exact → ancienne clé (= matchKey) pour compatibilité.
+                $stableKey = (string) array_key_first($fullKeys);
+            } elseif (count($igdbIds) === 1) {
+                $stableKey = 'igdb:' . (string) array_key_first($igdbIds);
+            } else {
+                $stableKey = implode('+', array_keys($rootKeys));
+                if ($years !== []) {
+                    $stableKey .= '|' . implode(',', array_keys($years));
+                }
+                if ($igdbIds !== []) {
+                    $stableKey .= '|igdb:' . implode(',', array_keys($igdbIds));
+                }
+            }
+            if (isset($dismissed[$stableKey])) {
+                continue;
+            }
+
+            // Affichage : titre le plus court (souvent la forme de base).
+            usort($titles, static fn (string $a, string $b): int => mb_strlen($a) <=> mb_strlen($b));
+            $displayTitle = $titles[0] ?? '';
 
             $out[] = [
-                'key' => $key,
+                'key' => $stableKey,
                 'titre' => $displayTitle,
                 'ids' => $ids,
                 'count' => count($ids),
@@ -174,6 +304,27 @@ final class CatalogMaintenance
         usort($out, static fn (array $a, array $b): int => $b['count'] <=> $a['count']);
 
         return $out;
+    }
+
+    /**
+     * Racine de titre jeu (avant sous-titre après « : » / tiret).
+     * Ex. « Track Attack: Changes Everything » → « Track Attack ».
+     */
+    public static function gameTitleRoot(string $title): string
+    {
+        $title = JoybaseJoystickTestsImporter::canonicalizeJoybaseTitle(trim($title));
+        if ($title === '') {
+            return '';
+        }
+
+        foreach ([': ', ' - ', ' — ', ' – ', ':'] as $separator) {
+            $pos = mb_strpos($title, $separator);
+            if ($pos !== false && $pos >= 3) {
+                return trim(mb_substr($title, 0, $pos));
+            }
+        }
+
+        return $title;
     }
 
     /**
@@ -636,12 +787,30 @@ final class CatalogMaintenance
 
         $removeAppid = (int) ($byOeuvre[$removeId] ?? 0);
         $keepAppid = (int) ($byOeuvre[$keepId] ?? 0);
-        if ($removeAppid <= 0 || $keepAppid > 0) {
+
+        // Libérer l’AppID de la fiche à supprimer avant tout transfert :
+        // l’index UNIQUE (steam_appid > 0) interdit deux fiches avec le même numéro.
+        if ($removeAppid > 0) {
+            $this->db->prepare('UPDATE oeuvre_jeu SET steam_appid = 0 WHERE oeuvre_id = ?')
+                ->execute([$removeId]);
+        }
+
+        if ($removeAppid <= 0) {
             return;
         }
 
-        $this->db->prepare('UPDATE oeuvre_jeu SET steam_appid = ? WHERE oeuvre_id = ?')
-            ->execute([$removeAppid, $keepId]);
+        if ($keepAppid <= 0) {
+            $this->db->prepare('UPDATE oeuvre_jeu SET steam_appid = ? WHERE oeuvre_id = ?')
+                ->execute([$removeAppid, $keepId]);
+
+            return;
+        }
+
+        // La fiche conservée a déjà un AppID : on le garde, et on mémorise
+        // celui du doublon dans la table de correspondance (si différent).
+        if ($removeAppid !== $keepAppid && GameSteamAppIdMapRepository::isAvailable()) {
+            (new GameSteamAppIdMapRepository())->upsert($removeAppid, $keepId, 0, 'merge');
+        }
     }
 
     /** Complète studio / éditeur vides de la fiche conservée avec ceux du doublon. */

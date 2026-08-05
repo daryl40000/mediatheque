@@ -11,6 +11,7 @@ use Moncine\Database;
 use Moncine\FoyerRepository;
 use Moncine\GamePlatform;
 use Moncine\GameRepository;
+use Moncine\GameSchema;
 use Moncine\HistoriqueRepository;
 use Moncine\MagazineGameLink;
 use Moncine\MagazineRepository;
@@ -385,5 +386,161 @@ final class CatalogMaintenanceTest extends MoncineTestCase
         $this->assertNotNull($keep);
         $this->assertSame('LucasArts', (string) ($keep['studio'] ?? ''));
         $this->assertSame('LucasArts', (string) ($keep['editeur'] ?? ''));
+    }
+
+    public function testFindDuplicateGroupsByGameTitleMatchesRootWithSubtitleSameYear(): void
+    {
+        (new SchemaMigrator(Database::getInstance()))->runPendingMigrations();
+        if (!GameRepository::isAvailable()) {
+            $this->markTestSkipped('Module jeux non disponible.');
+        }
+
+        $this->loginAsAdmin();
+        MediaContext::set(MediaDomain::JEU);
+
+        $suffix = uniqid('track_', true);
+        $gameRepo = new GameRepository();
+        $idShort = $gameRepo->createCatalogOnly([
+            'titre' => 'Track Attack ' . $suffix,
+            'annee' => 1996,
+            'studio' => 'Studio A',
+            'platform' => GamePlatform::PC,
+        ]);
+        $idLong = $gameRepo->createCatalogOnly([
+            'titre' => 'Track Attack ' . $suffix . ': Changes Everything',
+            'annee' => 1996,
+            'studio' => 'Studio B',
+            'platform' => GamePlatform::PC,
+        ]);
+        // Même racine mais autre année → ne doit pas être dans le groupe.
+        $idOtherYear = $gameRepo->createCatalogOnly([
+            'titre' => 'Track Attack ' . $suffix . ': Remaster',
+            'annee' => 2020,
+            'studio' => '',
+            'platform' => GamePlatform::PC,
+        ]);
+        $this->assertIsInt($idShort);
+        $this->assertIsInt($idLong);
+        $this->assertIsInt($idOtherYear);
+
+        $groups = (new CatalogMaintenance())->findDuplicateGroupsByGameTitle();
+        $found = null;
+        foreach ($groups as $group) {
+            $ids = $group['ids'] ?? [];
+            if (in_array($idShort, $ids, true) && in_array($idLong, $ids, true)) {
+                $found = $group;
+                break;
+            }
+        }
+        $this->assertNotNull(
+            $found,
+            'Track Attack et Track Attack: Changes Everything (même année) doivent former un groupe.'
+        );
+        $this->assertNotContains(
+            $idOtherYear,
+            $found['ids'] ?? [],
+            'La variante d’une autre année ne doit pas être regroupée.'
+        );
+    }
+
+    public function testGameTitleRootStripsSubtitle(): void
+    {
+        $this->assertSame(
+            'Track Attack',
+            CatalogMaintenance::gameTitleRoot('Track Attack: Changes Everything')
+        );
+        $this->assertSame(
+            'Half-Life',
+            CatalogMaintenance::gameTitleRoot('Half-Life - Opposing Force')
+        );
+        $this->assertSame('Doom', CatalogMaintenance::gameTitleRoot('Doom'));
+    }
+
+    public function testFindDuplicateGroupsByGameTitleMatchesSameIgdbId(): void
+    {
+        (new SchemaMigrator(Database::getInstance()))->runPendingMigrations();
+        if (!GameRepository::isAvailable() || !GameRepository::hasIgdbColumns()) {
+            $this->markTestSkipped('Module jeux / colonnes IGDB non disponibles.');
+        }
+
+        $this->loginAsAdmin();
+        MediaContext::set(MediaDomain::JEU);
+
+        $suffix = uniqid('igdbdup_', true);
+        $igdbId = 900000 + (crc32($suffix) % 50000);
+        $gameRepo = new GameRepository();
+        $idA = $gameRepo->createCatalogOnly([
+            'titre' => 'Nom catalogue A ' . $suffix,
+            'annee' => 2001,
+            'studio' => 'Studio A',
+            'platform' => GamePlatform::PC,
+        ]);
+        $idB = $gameRepo->createCatalogOnly([
+            'titre' => 'Tout autre titre B ' . $suffix,
+            'annee' => 1999,
+            'studio' => 'Studio B',
+            'platform' => GamePlatform::PC,
+        ]);
+        $this->assertIsInt($idA);
+        $this->assertIsInt($idB);
+
+        $db = Database::getInstance();
+        $db->prepare('UPDATE oeuvre_jeu SET igdb_id = ? WHERE oeuvre_id = ?')->execute([$igdbId, $idA]);
+        $db->prepare('UPDATE oeuvre_jeu SET igdb_id = ? WHERE oeuvre_id = ?')->execute([$igdbId, $idB]);
+
+        $groups = (new CatalogMaintenance())->findDuplicateGroupsByGameTitle();
+        $found = null;
+        foreach ($groups as $group) {
+            $ids = $group['ids'] ?? [];
+            if (in_array($idA, $ids, true) && in_array($idB, $ids, true)) {
+                $found = $group;
+                break;
+            }
+        }
+        $this->assertNotNull(
+            $found,
+            'Deux fiches au même igdb_id doivent former un groupe de doublons malgré des titres différents.'
+        );
+        $this->assertSame('igdb:' . $igdbId, (string) ($found['key'] ?? ''));
+    }
+
+    public function testMergeOeuvresTransfersSteamAppIdWithoutUniqueConflict(): void
+    {
+        (new SchemaMigrator(Database::getInstance()))->runPendingMigrations();
+        if (!GameRepository::isAvailable() || !GameSchema::hasSteamAppIdColumn()) {
+            $this->markTestSkipped('Module jeux / steam_appid non disponible.');
+        }
+
+        $adminId = $this->loginAsAdmin();
+        MediaContext::set(MediaDomain::JEU);
+
+        $suffix = uniqid('steammerge_', true);
+        $steamAppid = 800000 + (crc32($suffix) % 50000);
+        $gameRepo = new GameRepository();
+        $keepId = $gameRepo->createCatalogOnly([
+            'titre' => 'Jeu keep steam ' . $suffix,
+            'annee' => 2010,
+            'platform' => GamePlatform::PC,
+        ]);
+        $removeId = $gameRepo->createCatalogOnly([
+            'titre' => 'Jeu remove steam ' . $suffix,
+            'annee' => 2010,
+            'platform' => GamePlatform::PC,
+        ]);
+        $this->assertIsInt($keepId);
+        $this->assertIsInt($removeId);
+
+        // La fiche à supprimer a l’AppID ; la conservée non → transfert à la fusion.
+        $gameRepo->setSteamAppId($removeId, $steamAppid);
+
+        $result = (new CatalogMaintenance())->mergeOeuvres($keepId, $removeId, $adminId);
+        $this->assertTrue($result === true, is_string($result) ? $result : 'fusion échouée');
+        $this->assertNull((new OeuvreRepository())->findById($removeId));
+
+        $stmt = Database::getInstance()->prepare(
+            'SELECT steam_appid FROM oeuvre_jeu WHERE oeuvre_id = ?'
+        );
+        $stmt->execute([$keepId]);
+        $this->assertSame($steamAppid, (int) $stmt->fetchColumn());
     }
 }

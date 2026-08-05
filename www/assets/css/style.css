@@ -6384,6 +6384,16 @@ td .game-linux-badge--plain {
     border-radius: 0 6px 6px 0;
 }
 
+.magazine-subject-strip__row-count {
+    display: inline;
+    margin-left: 0.15rem;
+    font-weight: 600;
+    letter-spacing: 0;
+    text-transform: none;
+    font-variant-numeric: tabular-nums;
+    opacity: 0.72;
+}
+
 .magazine-subject-strip__list {
     display: flex;
     flex-wrap: nowrap;

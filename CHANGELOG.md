@@ -13,6 +13,22 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.10] — 2026-08-05
+
+**Doublons jeux · compteurs rubriques magazines**
+
+### Amélioré
+
+- **Maintenance catalogue — doublons jeux** : détection aussi pour un titre court et sa variante avec sous-titre la même année (ex. `Track Attack` / `Track Attack: Changes Everything`), et pour le **même identifiant IGDB**.
+- **Fusion de fiches jeu** : plus d’échec UNIQUE sur `steam_appid` (libération puis transfert / mémorisation).
+- **Fiches numéro magazine** : nombre d’articles à côté de chaque rubrique (Test, Preview, Dossier…).
+
+### Technique
+
+- Tests d’intégration couverture racine+année, IGDB et fusion Steam.
+
+---
+
 ## [0.8.9] — 2026-08-04
 
 **Magazines — périodes d’échelle · import Joybase · doublons jeux**

@@ -72,7 +72,14 @@ $subjectGroups = $buildSubjectGroups($stripSubjects, $stripGroupByCategory);
         ?>
         <section class="magazine-subject-strip__row<?= $rowLabel === '' ? ' magazine-subject-strip__row--no-label' : '' ?>">
             <?php if ($rowLabel !== ''): ?>
-                <h3 class="magazine-subject-strip__row-label"><?= Moncine\View::escape($rowLabel) ?></h3>
+                <?php $rowCount = count($rowSubjects); ?>
+                <h3 class="magazine-subject-strip__row-label">
+                    <?= Moncine\View::escape($rowLabel) ?>
+                    <span class="magazine-subject-strip__row-count"
+                          aria-label="<?= $rowCount ?> article<?= $rowCount > 1 ? 's' : '' ?>">
+                        (<?= $rowCount ?>)
+                    </span>
+                </h3>
             <?php endif; ?>
             <ul class="magazine-subject-strip__list" role="list">
                 <?php foreach ($rowSubjects as $subject): ?>

@@ -142,7 +142,10 @@
         <h2>Doublons jeux (titre normalisé)</h2>
         <p class="hint">
             Regroupe les fiches jeu au titre équivalent malgré la casse, les accents, ou le style Joybase
-            (ex. <em>Dig - The…</em> et <em>The Dig</em>).
+            (ex. <em>Dig - The…</em> et <em>The Dig</em>),
+            un titre court et sa variante avec sous-titre la même année
+            (ex. <em>Track Attack</em> et <em>Track Attack: Changes Everything</em>, 1996),
+            ou le même identifiant IGDB (même s’ils ont des titres différents).
             Choisissez la fiche à conserver (souvent celle avec affiche / studio / bibliothèque), puis fusionnez.
             Les liens magazine ↔ jeu et les entrées en bibliothèque sont repris automatiquement.
         </p>
