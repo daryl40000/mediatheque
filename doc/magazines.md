@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.7.25** · **Date : 2026-07-19**
+**Version : 0.8.11** · **Date : 2026-08-06**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -20,6 +20,8 @@ L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **nu
 | Profil ami — numéro | `/utilisateur-numero-magazine.php?id=…&bib_id=…` | Fiche numéro sans PDF partagé (**0.3.2**) |
 | Recherche par sujet | `/magazines-recherche.php` | Tests, previews, dossiers dans **toutes** les séries (**0.4.0**) |
 | Fiche sujet | `/magazine-sujet.php?id=…` | Numéros et séries concernés par un sujet (**0.4.0**) |
+| Statistiques d’une série | `/stats-serie-magazine.php?series_id=…` | Pages / sujets dans le temps ; **sujets d’une année** + export PDF (**0.8.11**) |
+| Export sujets filtrés | `/imprimer-stats-sujets-serie-magazine.php` | PDF (navigateur) de la liste catégorie + année (**0.8.11**) |
 
 Paramètres utiles sur la liste série :
 
@@ -200,6 +202,12 @@ Migration : `sql/migrations/038_magazine_fts.sql`.
 
 **Statistiques** (`/statistiques.php`, onglet Magazines) : nombre de **PDF possédés** et **espace disque** total (Go), calculés depuis `stored_objects.size_bytes` à l’import.
 
+**Statistiques d’une série** (`/stats-serie-magazine.php`, bouton **Statistiques** sur la fiche série) :
+
+- graphiques d’évolution (pages, sujets par année / par numéro) ;
+- section **Sujets d’une année** (**0.8.11**) : choisir un type (Test, Preview, Dossier…) et une année de **parution du numéro** → vignettes avec page PDF cliquable et note des tests ;
+- bouton **Exporter en PDF** → `/imprimer-stats-sujets-serie-magazine.php` (tableau numéro / titre / page / note).
+
 **Export PDF** (`/imprimer-serie-magazine.php`) : depuis la page série, bouton **Exporter en PDF** — liste textuelle (sans couvertures) avec colonne **Possession** : Non possédé, Papier, PDF, Papier + PDF. Mêmes filtres et tri que la page série ; enregistrement via « Imprimer / Enregistrer en PDF » du navigateur.
 
 ---
@@ -251,6 +259,10 @@ Classe : `lib/UploadLimits.php` — alerte dans les formulaires si les limites P
 | `lib/MagazineFtsQuery.php` | Construction des requêtes MATCH |
 | `templates/_magazine_issue_subjects.php` | Formulaire sujets sur fiche numéro |
 | `templates/_magazine_issue_subjects_strip.php` | Vignettes sujets : **une rangée par type** d’article, pastille de page + crayon, **note de test** (**0.8.5** / **0.8.6**) |
+| `lib/MagazineSeriesStats.php` | Stats d’évolution d’une série + liste sujets par catégorie/année |
+| `templates/stats-serie-magazine.php` | Page stats série (graphiques + filtre sujets) |
+| `templates/_magazine_series_stats_subject_vignettes.php` | Vignettes lecture seule (stats) |
+| `www/imprimer-stats-sujets-serie-magazine.php` | Export PDF de la liste filtrée |
 | `templates/_magazine_series_rating_scale_field.php` | Notes sur combien ? + périodes par plage de numéros |
 | `lib/CatalogMagazineSheets.php` | Feuilles ODS catalogue : séries, périodes, sujets, liens, suppléments |
 | `lib/MagazineRatingScale.php` | Échelle de notation et affichage des notes |

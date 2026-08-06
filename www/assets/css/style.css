@@ -3873,6 +3873,75 @@ body.page-wide .container--wide:has(> .game-detail-page) {
     margin-bottom: 1.25rem;
 }
 
+.series-stats-subjects__form {
+    margin: 1rem 0 1.25rem;
+}
+
+.series-stats-subjects__fields {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem 1.25rem;
+    align-items: flex-end;
+}
+
+.series-stats-subjects__fields label {
+    display: block;
+    margin-bottom: 0.35rem;
+    font-size: 0.9rem;
+}
+
+.series-stats-subjects__actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+.series-stats-subjects__result-label {
+    margin: 0 0 0.85rem;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 0.75rem;
+    align-items: center;
+}
+
+.series-stats-subjects__export {
+    margin-left: auto;
+}
+
+.series-stats-subjects__strip .series-stats-subjects__list {
+    flex-wrap: wrap;
+    overflow-x: visible;
+}
+
+.series-stats-subjects__caption {
+    margin: 0.35rem 0 0;
+    max-width: 5.75rem;
+    font-size: 0.72rem;
+    line-height: 1.25;
+    text-align: center;
+}
+
+.series-stats-subjects__title {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: 600;
+}
+
+.series-stats-subjects__issue {
+    display: block;
+    margin-top: 0.1rem;
+    color: var(--muted, #666);
+    text-decoration: none;
+}
+
+a.series-stats-subjects__issue:hover {
+    text-decoration: underline;
+    color: var(--media-accent, var(--accent));
+}
+
 .series-stats-legend {
     display: flex;
     flex-wrap: wrap;

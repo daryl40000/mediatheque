@@ -913,6 +913,16 @@ final class View
         return MagazineUrls::magazineSeriesStatsUrl($seriesId, $statut);
     }
 
+    /** Version imprimable des sujets filtrés (catégorie + année) sur les stats série. */
+    public static function magazineSeriesStatsSubjectsPrintUrl(
+        int $seriesId,
+        string $category,
+        int $year,
+        string $statut = LibraryStatut::COLLECTION
+    ): string {
+        return MagazineUrls::magazineSeriesStatsSubjectsPrintUrl($seriesId, $category, $year, $statut);
+    }
+
     public static function magazineIssueUrl(int $bibId): string
     {
         return MagazineUrls::magazineIssueUrl($bibId);

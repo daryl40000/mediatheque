@@ -202,6 +202,88 @@ final class MagazinePrintListService
     }
 
     /**
+     * Version imprimable des sujets d’une série filtrés par catégorie + année de parution.
+     *
+     * @param array<string, mixed> $query
+     * @return array<string, mixed>|null null si paramètres / série invalides
+     */
+    public function viewDataForSeriesStatsSubjectsPrint(array $query): ?array
+    {
+        if (!MagazineSeriesStats::isAvailable()) {
+            return null;
+        }
+
+        $seriesId = (int) ($query['series_id'] ?? 0);
+        $category = MagazineSubject::normalizeCategory((string) ($query['category'] ?? ''));
+        $year = (int) ($query['year'] ?? 0);
+        $statut = LibraryStatut::normalize((string) ($query['statut'] ?? LibraryStatut::COLLECTION));
+
+        if ($seriesId <= 0 || $year < 1900 || $year > 2100) {
+            return null;
+        }
+        if ($category === '' || !isset(MagazineSubject::choices()[$category])) {
+            return null;
+        }
+
+        $series = $this->series->findById($seriesId, MediaDomain::MAGAZINE);
+        if ($series === null) {
+            return null;
+        }
+
+        $subjects = (new MagazineSeriesStats())->listSubjectsByCategoryAndYear(
+            $seriesId,
+            $category,
+            $year
+        );
+
+        $categoryLabel = MagazineSubject::label($category);
+        $showScores = $category === MagazineSubject::TEST;
+        $rows = [];
+        foreach ($subjects as $subject) {
+            $page = MagazineSubjectRepository::normalizePage($subject['page'] ?? 0);
+            $score = array_key_exists('score', $subject) && $subject['score'] !== null
+                ? (float) $subject['score']
+                : null;
+            $ratingScale = MagazineRatingScale::normalize($subject['rating_scale'] ?? null);
+            $scoreDisplay = '';
+            if ($showScores && $score !== null && $ratingScale !== null) {
+                $scoreDisplay = MagazineRatingScale::formatDisplay($score, $ratingScale);
+            }
+
+            $rows[] = [
+                'issue_label' => (string) ($subject['issue_label'] ?? '—'),
+                'display_label' => (string) ($subject['display_label'] ?? ''),
+                'page' => $page,
+                'score_display' => $scoreDisplay,
+            ];
+        }
+
+        $backParams = [
+            'series_id' => $seriesId,
+            'category' => $category,
+            'year' => $year,
+        ];
+        if ($statut !== LibraryStatut::COLLECTION) {
+            $backParams['statut'] = $statut;
+        }
+
+        return [
+            'layout' => 'print',
+            'pageTitle' => $categoryLabel . ' ' . $year . ' — ' . (string) ($series['titre'] ?? 'Série'),
+            'backUrl' => '/stats-serie-magazine.php?' . http_build_query($backParams) . '#sujets-annee',
+            'series' => $series,
+            'rows' => $rows,
+            'category' => $category,
+            'categoryLabel' => $categoryLabel,
+            'year' => $year,
+            'showScores' => $showScores,
+            'totalCount' => count($rows),
+            'publicationTypeLabel' => PublicationType::label((string) ($series['publication_type'] ?? '')),
+            'statut' => $statut,
+        ];
+    }
+
+    /**
      * @param array<string, mixed> $query
      *
      * @return array{

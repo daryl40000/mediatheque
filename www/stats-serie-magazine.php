@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\LibraryStatut;
 use Moncine\MagazineSeriesStats;
+use Moncine\MagazineSubject;
 use Moncine\MediaDomain;
 use Moncine\MediaDomainGuards;
 use Moncine\PublicationType;
@@ -39,9 +40,39 @@ if ($series === null) {
     exit;
 }
 
-$stats = MagazineSeriesStats::isAvailable()
-    ? (new MagazineSeriesStats())->getDashboard($seriesId)
-    : null;
+$statsService = MagazineSeriesStats::isAvailable() ? new MagazineSeriesStats() : null;
+$stats = $statsService !== null ? $statsService->getDashboard($seriesId) : null;
+
+// Filtre « afficher les sujets d’une année » (catégorie + année de parution du numéro).
+$filterCategory = MagazineSubject::normalizeCategory((string) ($_GET['category'] ?? ''));
+$filterYear = (int) ($_GET['year'] ?? 0);
+$subjectCategoryChoices = MagazineSubject::choicesForSeries((string) ($series['categories'] ?? ''));
+if ($filterCategory !== '' && !isset($subjectCategoryChoices[$filterCategory])) {
+    $filterCategory = '';
+}
+$availableYears = $statsService !== null ? $statsService->listParutionYears($seriesId) : [];
+if ($filterYear > 0 && !in_array($filterYear, $availableYears, true)) {
+    // Année demandée hors liste : on laisse quand même tenter (numéros sans année absents).
+    if ($filterYear < 1900 || $filterYear > 2100) {
+        $filterYear = 0;
+    }
+}
+
+$filteredSubjects = [];
+$filterActive = false;
+if (
+    $statsService !== null
+    && $filterCategory !== ''
+    && $filterYear >= 1900
+    && $filterYear <= 2100
+) {
+    $filterActive = true;
+    $filteredSubjects = $statsService->listSubjectsByCategoryAndYear(
+        $seriesId,
+        $filterCategory,
+        $filterYear
+    );
+}
 
 View::render('stats-serie-magazine', [
     'pageTitle' => 'Statistiques — ' . (string) ($series['titre'] ?? 'Série'),
@@ -49,5 +80,11 @@ View::render('stats-serie-magazine', [
     'statut' => $statut,
     'publicationTypeLabel' => PublicationType::label((string) ($series['publication_type'] ?? '')),
     'stats' => $stats,
+    'subjectCategoryChoices' => $subjectCategoryChoices,
+    'availableYears' => $availableYears,
+    'filterCategory' => $filterCategory,
+    'filterYear' => $filterYear,
+    'filterActive' => $filterActive,
+    'filteredSubjects' => $filteredSubjects,
     'wideLayout' => true,
 ]);

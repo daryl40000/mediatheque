@@ -46,6 +46,14 @@ final class MagazineSeriesStatsTest extends MoncineTestCase
             '/stats-serie-magazine.php?series_id=12&statut=wishlist',
             View::magazineSeriesStatsUrl(12, LibraryStatut::WISHLIST)
         );
+        $this->assertSame(
+            '/imprimer-stats-sujets-serie-magazine.php?series_id=12&category=test&year=2020',
+            View::magazineSeriesStatsSubjectsPrintUrl(12, MagazineSubject::TEST, 2020)
+        );
+        $this->assertSame(
+            '/imprimer-stats-sujets-serie-magazine.php?series_id=12&category=dossier&year=1998&statut=wishlist',
+            View::magazineSeriesStatsSubjectsPrintUrl(12, MagazineSubject::DOSSIER, 1998, LibraryStatut::WISHLIST)
+        );
     }
 
     public function testDashboardPagesAndSubjectsByYear(): void
@@ -155,6 +163,99 @@ final class MagazineSeriesStatsTest extends MoncineTestCase
         $this->assertSame(1, $byIssue[1]['categories'][MagazineSubject::TEST]);
         $this->assertSame('n°3', $byIssue[2]['numero_label']);
         $this->assertSame(1, $byIssue[2]['categories'][MagazineSubject::SOLUCE]);
+    }
+
+    public function testListSubjectsByCategoryAndYear(): void
+    {
+        $this->assertTrue(MagazineSeriesStats::isAvailable());
+        $this->assertTrue(MagazineSubjectRepository::isAvailable());
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $seriesRepo = new SeriesRepository();
+        $magRepo = new MagazineRepository();
+        $subjectRepo = new MagazineSubjectRepository();
+
+        $seriesId = $seriesRepo->create([
+            'titre' => 'Stats Filtre Année',
+            'publication_type' => PublicationType::MENSUEL,
+            'rating_scale' => '10',
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesId);
+
+        $bib2020 = $magRepo->createIssueWithLibrary($seriesId, [
+            'numero' => '10',
+            'numero_ordre' => 10,
+            'date_parution' => '2020-05-01',
+            'pages' => 100,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $bib2021 = $magRepo->createIssueWithLibrary($seriesId, [
+            'numero' => '20',
+            'numero_ordre' => 20,
+            'date_parution' => '2021-05-01',
+            'pages' => 100,
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($bib2020);
+        $this->assertIsInt($bib2021);
+
+        $issue2020 = $magRepo->findIssueByBibId($bib2020, $userId, $foyerId);
+        $issue2021 = $magRepo->findIssueByBibId($bib2021, $userId, $foyerId);
+        $this->assertNotNull($issue2020);
+        $this->assertNotNull($issue2021);
+        $series = $seriesRepo->findById($seriesId, MediaDomain::MAGAZINE);
+        $this->assertNotNull($series);
+
+        $this->attachSubject($subjectRepo, $series, $issue2020, MagazineSubject::TEST, 'Alpha Test', 2020);
+        $this->attachSubject($subjectRepo, $series, $issue2020, MagazineSubject::DOSSIER, 'Dossier X', 2020);
+        $this->attachSubject($subjectRepo, $series, $issue2021, MagazineSubject::TEST, 'Beta Test', 2021);
+
+        // Page + note sur le test 2020
+        $subjects2020 = $subjectRepo->listForOeuvre((int) $issue2020['oeuvre_id']);
+        $testSubject = null;
+        foreach ($subjects2020 as $row) {
+            if (($row['category'] ?? '') === MagazineSubject::TEST) {
+                $testSubject = $row;
+                break;
+            }
+        }
+        $this->assertNotNull($testSubject);
+        $subjectId = (int) ($testSubject['id'] ?? 0);
+        $oeuvreId = (int) $issue2020['oeuvre_id'];
+        if (MagazineSubjectRepository::hasPageColumn()) {
+            $this->assertTrue($subjectRepo->updateLinkPage($oeuvreId, $subjectId, 42) === true);
+        }
+        if (MagazineSubjectRepository::hasScoreColumn()) {
+            $this->assertTrue($subjectRepo->updateLinkScore($oeuvreId, $subjectId, 8.5) === true);
+        }
+
+        $stats = new MagazineSeriesStats();
+        $years = $stats->listParutionYears($seriesId);
+        $this->assertSame([2021, 2020], $years);
+
+        $tests2020 = $stats->listSubjectsByCategoryAndYear($seriesId, MagazineSubject::TEST, 2020);
+        $this->assertCount(1, $tests2020);
+        $this->assertSame('Alpha Test', (string) ($tests2020[0]['label'] ?? ''));
+        $this->assertSame('n°10', (string) ($tests2020[0]['issue_label'] ?? ''));
+        if (MagazineSubjectRepository::hasPageColumn()) {
+            $this->assertSame(42, (int) ($tests2020[0]['page'] ?? 0));
+        }
+        if (MagazineSubjectRepository::hasScoreColumn()) {
+            $this->assertSame(8.5, (float) ($tests2020[0]['score'] ?? 0));
+        }
+        $this->assertSame('10', (string) ($tests2020[0]['rating_scale'] ?? ''));
+
+        $dossiers2020 = $stats->listSubjectsByCategoryAndYear($seriesId, MagazineSubject::DOSSIER, 2020);
+        $this->assertCount(1, $dossiers2020);
+        $this->assertSame('Dossier X', (string) ($dossiers2020[0]['label'] ?? ''));
+
+        $tests2021 = $stats->listSubjectsByCategoryAndYear($seriesId, MagazineSubject::TEST, 2021);
+        $this->assertCount(1, $tests2021);
+        $this->assertSame('Beta Test', (string) ($tests2021[0]['label'] ?? ''));
+
+        $this->assertSame(
+            [],
+            $stats->listSubjectsByCategoryAndYear($seriesId, MagazineSubject::SOLUCE, 2020)
+        );
     }
 
     /**

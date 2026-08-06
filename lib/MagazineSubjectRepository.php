@@ -842,6 +842,12 @@ final class MagazineSubjectRepository
     }
 
     /** @param array<string, mixed> $row */
+    public function hydrateSubjectRowPublic(array $row): array
+    {
+        return $this->hydrateSubjectRow($row);
+    }
+
+    /** @param array<string, mixed> $row */
     private function hydrateSubjectRow(array $row): array
     {
         $category = MagazineSubject::normalizeCategory((string) ($row['category'] ?? ''));

@@ -6,11 +6,23 @@
  * @var string $statut
  * @var string|null $publicationTypeLabel
  * @var array<string, mixed>|null $stats
+ * @var array<string, string> $subjectCategoryChoices
+ * @var list<int> $availableYears
+ * @var string $filterCategory
+ * @var int $filterYear
+ * @var bool $filterActive
+ * @var list<array<string, mixed>> $filteredSubjects
  */
 $series = $series ?? null;
 $statut = $statut ?? Moncine\LibraryStatut::COLLECTION;
 $stats = $stats ?? null;
 $publicationTypeLabel = $publicationTypeLabel ?? '';
+$subjectCategoryChoices = $subjectCategoryChoices ?? Moncine\MagazineSubject::choices();
+$availableYears = $availableYears ?? [];
+$filterCategory = $filterCategory ?? '';
+$filterYear = (int) ($filterYear ?? 0);
+$filterActive = (bool) ($filterActive ?? false);
+$filteredSubjects = $filteredSubjects ?? [];
 ?>
 <section class="stats-page series-stats-page">
     <?php if ($series === null): ?>
@@ -164,6 +176,98 @@ $publicationTypeLabel = $publicationTypeLabel ?? '';
                 </p>
             </article>
         </div>
+
+        <section class="stats-panel series-stats-subjects" id="sujets-annee">
+            <h2>Sujets d’une année</h2>
+            <p class="hint">
+                Affichez tous les <strong>tests</strong>, <strong>dossiers</strong>, <strong>soluces</strong>…
+                parus dans les numéros d’une année (selon la date de parution du numéro).
+                Cliquez sur <strong>p.N</strong> pour ouvrir le PDF à la bonne page ;
+                la note apparaît sous les tests.
+            </p>
+            <form method="get" action="/stats-serie-magazine.php" class="series-stats-subjects__form">
+                <input type="hidden" name="series_id" value="<?= $seriesId ?>">
+                <?php if ($statut !== Moncine\LibraryStatut::COLLECTION): ?>
+                    <input type="hidden" name="statut" value="<?= Moncine\View::escape($statut) ?>">
+                <?php endif; ?>
+                <div class="series-stats-subjects__fields">
+                    <div>
+                        <label for="stats_subject_category">Type d’article</label>
+                        <select name="category" id="stats_subject_category" required>
+                            <option value="">— Choisir —</option>
+                            <?php foreach ($subjectCategoryChoices as $catKey => $catLabel): ?>
+                                <option value="<?= Moncine\View::escape((string) $catKey) ?>"
+                                    <?= $filterCategory === (string) $catKey ? ' selected' : '' ?>>
+                                    <?= Moncine\View::escape((string) $catLabel) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="stats_subject_year">Année de parution</label>
+                        <select name="year" id="stats_subject_year" required>
+                            <option value="">— Choisir —</option>
+                            <?php foreach ($availableYears as $yearOption): ?>
+                                <?php $yearOption = (int) $yearOption; ?>
+                                <option value="<?= $yearOption ?>"
+                                    <?= $filterYear === $yearOption ? ' selected' : '' ?>>
+                                    <?= $yearOption ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="series-stats-subjects__actions">
+                        <button type="submit" class="btn btn-primary">Afficher</button>
+                        <?php if ($filterActive): ?>
+                            <a class="btn btn-secondary"
+                               href="<?= Moncine\View::escape(Moncine\View::magazineSeriesStatsUrl($seriesId, $statut)) ?>#sujets-annee">
+                                Effacer
+                            </a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </form>
+
+            <?php if ($filterActive): ?>
+                <?php
+                $filterCategoryLabel = (string) ($subjectCategoryChoices[$filterCategory] ?? $filterCategory);
+                $filteredCount = count($filteredSubjects);
+                ?>
+                <p class="series-stats-subjects__result-label">
+                    <strong><?= Moncine\View::escape($filterCategoryLabel) ?></strong>
+                    en <?= $filterYear ?>
+                    — <?= $filteredCount ?> résultat<?= $filteredCount > 1 ? 's' : '' ?>
+                    <?php if ($filteredCount > 0): ?>
+                        <?php
+                        $printUrl = Moncine\View::magazineSeriesStatsSubjectsPrintUrl(
+                            $seriesId,
+                            $filterCategory,
+                            $filterYear,
+                            $statut
+                        );
+                        ?>
+                        <a class="btn btn-secondary btn-sm series-stats-subjects__export"
+                           href="<?= Moncine\View::escape($printUrl) ?>"
+                           target="_blank"
+                           rel="noopener">
+                            Exporter en PDF
+                        </a>
+                    <?php endif; ?>
+                </p>
+                <?php if ($filteredSubjects === []): ?>
+                    <p class="hint">Aucun article de ce type dans les numéros de cette année.</p>
+                <?php else: ?>
+                    <div class="magazine-subject-strip series-stats-subjects__strip" role="region"
+                         aria-label="<?= Moncine\View::escape($filterCategoryLabel . ' ' . $filterYear) ?>">
+                        <?php require MONCINE_ROOT . '/templates/_magazine_series_stats_subject_vignettes.php'; ?>
+                    </div>
+                <?php endif; ?>
+            <?php elseif ($availableYears === []): ?>
+                <p class="hint">
+                    Indiquez d’abord une date de parution sur les numéros pour pouvoir filtrer par année.
+                </p>
+            <?php endif; ?>
+        </section>
 
         <section class="stats-panel">
             <h2>Évolution du nombre de pages</h2>

@@ -372,6 +372,128 @@ final class MagazineSeriesStats
         return $rows;
     }
 
+    /**
+     * Années de parution disponibles pour les numéros de la série (pour le filtre).
+     *
+     * @return list<int>
+     */
+    public function listParutionYears(int $seriesId): array
+    {
+        if (!self::isAvailable() || $seriesId <= 0) {
+            return [];
+        }
+
+        $years = [];
+        foreach ($this->fetchIssues($seriesId) as $issue) {
+            $year = $issue['year'] ?? null;
+            if (is_int($year)) {
+                $years[$year] = true;
+            }
+        }
+        $list = array_keys($years);
+        rsort($list, SORT_NUMERIC);
+
+        return $list;
+    }
+
+    /**
+     * Sujets d’une catégorie parus dans les numéros d’une année donnée
+     * (année = date de parution du numéro, comme les graphiques).
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function listSubjectsByCategoryAndYear(int $seriesId, string $category, int $year): array
+    {
+        if (
+            !self::isAvailable()
+            || !MagazineSubjectRepository::isAvailable()
+            || $seriesId <= 0
+            || $year < 1900
+            || $year > 2100
+        ) {
+            return [];
+        }
+
+        $category = MagazineSubject::normalizeCategory($category);
+        if ($category === '' || !isset(MagazineSubject::choices()[$category])) {
+            return [];
+        }
+
+        $filterValues = MagazineSubject::categoryFilterValues($category);
+        $placeholders = implode(', ', array_fill(0, count($filterValues), '?'));
+        $pageSelect = MagazineSubjectRepository::hasPageColumn() ? ', oms.page' : ', 0 AS page';
+        $scoreSelect = MagazineSubjectRepository::hasScoreColumn() ? ', oms.score' : ', NULL AS score';
+        $catalogSelect = MagazineGameLink::catalogColumnExists()
+            ? ', ms.catalog_oeuvre_id'
+            : ', 0 AS catalog_oeuvre_id';
+
+        $sql = 'SELECT ms.id, ms.category, ms.label, ms.detail, ms.parution_year, ms.created_at'
+            . $catalogSelect
+            . $pageSelect
+            . $scoreSelect
+            . ', om.oeuvre_id AS issue_oeuvre_id, om.numero, om.numero_ordre, om.date_parution,'
+            . ' om.est_hors_serie, om.stored_object_id'
+            . ' FROM oeuvre_magazine om'
+            . ' INNER JOIN oeuvre_magazine_subject oms ON oms.oeuvre_id = om.oeuvre_id'
+            . ' INNER JOIN magazine_subject ms ON ms.id = oms.subject_id'
+            . ' WHERE om.series_id = ? AND ms.category IN (' . $placeholders . ')'
+            . ' ORDER BY om.numero_ordre ASC,'
+            . ' CASE WHEN om.date_parution IS NULL OR TRIM(om.date_parution) = \'\' THEN 1 ELSE 0 END,'
+            . ' om.date_parution ASC,'
+            . ' oms.page ASC,'
+            . ' ms.label COLLATE FRENCH_NOCASE ASC';
+
+        $params = [$seriesId, ...$filterValues];
+        $stmt = $this->db->prepare($sql);
+        $stmt->execute($params);
+
+        $seriesRow = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE);
+        $defaultScale = MagazineRatingScale::normalize($seriesRow['rating_scale'] ?? null);
+        $ratingPeriods = MagazineRatingPeriod::listForSeries($seriesId);
+        $subjectRepo = new MagazineSubjectRepository();
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        $gameLink = MagazineGameLink::isAvailable() ? new MagazineGameLink() : null;
+
+        $out = [];
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) ?: [] as $row) {
+            $issueYear = self::extractYear((string) ($row['date_parution'] ?? ''));
+            if ($issueYear !== $year) {
+                continue;
+            }
+
+            $hydrated = $subjectRepo->hydrateSubjectRowPublic($row);
+            $numero = trim((string) ($row['numero'] ?? ''));
+            $isHs = !empty($row['est_hors_serie']);
+            $issueLabel = $numero !== ''
+                ? ($isHs ? 'HS ' . $numero : 'n°' . $numero)
+                : '—';
+            $numeroOrdre = (float) ($row['numero_ordre'] ?? 0);
+            $issueOeuvreId = (int) ($row['issue_oeuvre_id'] ?? 0);
+            $storedObjectId = (int) ($row['stored_object_id'] ?? 0);
+
+            $hydrated['issue_oeuvre_id'] = $issueOeuvreId;
+            $hydrated['issue_label'] = $issueLabel;
+            $hydrated['issue_nav_url'] = $issueOeuvreId > 0
+                ? View::oeuvreMagazineNavUrl($issueOeuvreId)
+                : '';
+            $hydrated['stored_object_id'] = $storedObjectId;
+            $hydrated['rating_scale'] = MagazineRatingPeriod::resolve(
+                $defaultScale,
+                $ratingPeriods,
+                $numeroOrdre
+            );
+
+            if ($gameLink !== null) {
+                $hydrated = $gameLink->enrichSubjectRow($hydrated, $userId, $foyerId);
+            }
+
+            $out[] = $hydrated;
+        }
+
+        return $out;
+    }
+
     /** Extrait l’année d’une date ISO ou d’un libellé français (« mars 2018 »). */
     public static function extractYear(?string $dateParution): ?int
     {

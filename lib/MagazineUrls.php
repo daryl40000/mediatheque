@@ -160,6 +160,37 @@ final class MagazineUrls
         return '/stats-serie-magazine.php?' . http_build_query($params);
     }
 
+    /**
+     * Version imprimable / PDF des sujets filtrés (catégorie + année) sur les stats série.
+     */
+    public static function magazineSeriesStatsSubjectsPrintUrl(
+        int $seriesId,
+        string $category,
+        int $year,
+        string $statut = LibraryStatut::COLLECTION
+    ): string {
+        if ($seriesId <= 0 || $year < 1900 || $year > 2100) {
+            return self::magazineSeriesStatsUrl($seriesId, $statut);
+        }
+
+        $category = MagazineSubject::normalizeCategory($category);
+        if ($category === '' || !isset(MagazineSubject::choices()[$category])) {
+            return self::magazineSeriesStatsUrl($seriesId, $statut);
+        }
+
+        $params = [
+            'series_id' => $seriesId,
+            'category' => $category,
+            'year' => $year,
+        ];
+        $statut = LibraryStatut::normalize($statut);
+        if ($statut !== LibraryStatut::COLLECTION) {
+            $params['statut'] = $statut;
+        }
+
+        return '/imprimer-stats-sujets-serie-magazine.php?' . http_build_query($params);
+    }
+
     public static function magazineIssueUrl(int $bibId): string
     {
         return $bibId > 0 ? '/magazine-numero.php?id=' . $bibId : '/magazines.php';

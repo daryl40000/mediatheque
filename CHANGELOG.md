@@ -13,6 +13,21 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.11] — 2026-08-06
+
+**Stats série magazine — sujets par année · export PDF**
+
+### Ajouté
+
+- **Statistiques d’une série** (`/stats-serie-magazine.php`) : filtre **type d’article** (test, preview, dossier, soluce…) + **année de parution** du numéro ; affichage en vignettes (page PDF cliquable, note des tests).
+- **Exporter en PDF** la liste filtrée (`/imprimer-stats-sujets-serie-magazine.php`) — tableau numéro / titre / page / note, via « Imprimer / Enregistrer en PDF » du navigateur.
+
+### Technique
+
+- `MagazineSeriesStats::listSubjectsByCategoryAndYear()` ; tests d’intégration.
+
+---
+
 ## [0.8.10] — 2026-08-05
 
 **Doublons jeux · compteurs rubriques magazines**
