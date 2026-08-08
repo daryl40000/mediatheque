@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.8.8** (2026-08-04)
+**Version actuelle : 0.8.12** (2026-08-08)
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -13,17 +13,17 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 ---
 
-## Où en est-on ? (synthèse 0.8.1)
+## Où en est-on ? (synthèse 0.8.12)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
-| **Films** | ✅ Production | 0.4.4+ → **0.7.6** | Complet (TMDB, sagas, quiz, partage, **ressentis**) |
-| **Jeux** | ✅ Utilisable | 0.5.0 → **0.7.17** | Complet (IGDB, sagas, Steam, prêts, magasins catalogue, `/jeu-magazines.php`) |
-| **Magazines** | ✅ Complet (M5) | 0.2.x → **0.7.17** / **0.8.0** | ABM, PDF, FTS, sujets, pont catalogue, **partage + listes imprimables** |
+| **Films** | ✅ Production | 0.4.4+ → **0.7.6** | Complet (TMDB, sagas, quiz, partage, **ressentis**, moyenne presse **0.8.8**) |
+| **Jeux** | ✅ Utilisable | 0.5.0 → **0.8.12** | Complet (IGDB, sagas, Steam, prêts, magasins, `/jeu-magazines.php`, **doublons maintenance**) |
+| **Magazines** | ✅ Complet (M5) | 0.2.x → **0.8.12** | ABM, PDF, FTS, sujets, pont catalogue, notes/échelles, **stats série + export PDF**, partage |
 | **BD / Manga** | ✅ **Livré (M2)** | **0.7.2** → **0.8.0** | Collection, envies, partage, profil, impression, **import CSV** |
 | **Livres** | ✅ **Utilisable (M3)** | **0.8.1** | Collection, envies, sagas, lectures, stats, pont jeux ([doc/livres.md](doc/livres.md)) |
 | **Musique** | ⏳ Placeholder (M8) | **0.7.8** | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles et CD physiques |
-| **Transversal** | 🔄 Partiel | **0.7.12**–**0.8.1** | Recherche globale, catalogue admin, import/export multi-médias, profil → fiches, partage, connexion pseudo, UI Compte/Import, menu mobile, PWA, CI, **PHPStan 0 alerte** |
+| **Transversal** | 🔄 Partiel | **0.7.12**–**0.8.12** | Recherche globale (dès 1 lettre), catalogue admin, import/export, profil, partage, CI, PHPStan 0 alerte |
 
 ### Phases (suivi)
 
@@ -31,8 +31,8 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 |-------|--------|----------------|-------|
 | **M0** Fondations multi-médias | ✅ Livré | 0.1.0 | — |
 | **M1** Stabilisation films | ✅ Livré | 0.4.4 | Maintenance seulement |
-| **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.7.17** | Import GOG (voir M4) |
-| **M5** Magazines | ✅ **Livré** | **0.7.17** | Maintenance ; polish ponctuel |
+| **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.7.17** (+ polish **0.8.x**) | Import GOG (voir M4) |
+| **M5** Magazines | ✅ **Livré** | **0.7.17** (+ polish **0.8.6**–**0.8.12**) | Maintenance ; polish ponctuel |
 | **Pont** Magazines ↔ Catalogue | ✅ Livré | **0.7.17** | Jeu (0.6.3) + **film** (0.7.17) |
 | **M2** BD / Manga | ✅ **Livré** | **0.8.0** | Export CSV optionnel ; suite → **M3** |
 | **M3** Livres | ✅ **Utilisable** | **0.8.1** | Import CSV / partage / imprimable optionnels |
@@ -43,6 +43,26 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.8.12** — Sujets, autocomplétion, IGDB export (2026-08-08)
+
+- Fix création de sujets magazine (plus de redirection parasite vers la recherche si autre onglet média).
+- Autocomplétion dès **1 caractère** (titres courts type « Q ») : sujets, fusion, jeux, recherche globale.
+- Export PDF stats série : colonne **IGDB** pour les jeux catalogue liés.
+
+### ✅ **0.8.11** — Stats série : sujets d’une année (2026-08-06)
+
+- Filtre type d’article + année de parution sur `/stats-serie-magazine.php` ; vignettes (page PDF, notes).
+- Export PDF de la liste filtrée.
+
+### ✅ **0.8.10** — Doublons jeux + compteurs rubriques (2026-08-05)
+
+- Doublons jeux : sous-titre + année, même IGDB ; fusion Steam sans conflit UNIQUE.
+- Compteur d’articles à côté de chaque rubrique sur les fiches numéro.
+
+### ✅ **0.8.9** — Périodes d’échelle, Joybase, doublons jeux (2026-08-04)
+
+- Échelles de notation par plages de numéros ; import Joybase → tests Joystick ; détection doublons jeux en maintenance.
 
 ### ✅ **0.8.8** — Sécurité + moyenne presse sur fiches (2026-08-04)
 
@@ -527,6 +547,7 @@ Détail complet : archives QA dans l’historique git avant cette réorganisatio
 | Sagas/extensions cliquables vers catalogue (films, jeux, BD) | **0.7.13** |
 | Liens magasins catalogue (`oeuvre_store_links`) ; recherche globale | **0.7.14** |
 | Page **Magazines** sur fiche jeu (`/jeu-magazines.php`) | **0.7.17** |
+| Doublons jeux (sous-titre + année, même IGDB) ; fusion Steam sans conflit | **0.8.9**–**0.8.10** |
 
 **Critère de sortie M4 :** ✅ atteint — collection + envies ; catalogue partagé ; pont magazine opérationnel ; parité films sur le parcours principal.
 
@@ -538,6 +559,7 @@ Détail complet : archives QA dans l’historique git avant cette réorganisatio
 | **Enrichissement auto liens magasins** (GOG/Epic) | base **0.7.14** ; saisie manuelle prioritaire | ⏳ |
 | Plateformes configurables (admin) | 0.6.5 | ✅ |
 | Flag « non prêtable » si démat | migration 049 | ✅ |
+| Maintenance doublons jeux (sous-titre / IGDB / fusion Steam) | **0.8.9**–**0.8.10** | ✅ |
 
 ---
 
@@ -562,8 +584,15 @@ Détail complet : archives QA dans l’historique git avant cette réorganisatio
 | Recherche admin catalogue (n°, série) | **0.6.1** |
 | Séries : catalogue complet, filtre possession mémorisé | **0.7.16** |
 | Sujets en bandeau vignettes ; pont catalogue jeu/**film** ; création auto | **0.7.17** |
+| Notes tests, échelle série, export ODS sujets/page/note | **0.8.6** |
+| Liens « consulter en ligne » (série / numéro) | **0.8.7** |
+| Périodes d’échelle par plages de numéros ; import Joybase Joystick | **0.8.9** |
+| Compteurs d’articles à côté des rubriques (fiche numéro) | **0.8.10** |
+| Stats série : sujets d’une année + export PDF (colonne IGDB) | **0.8.11**–**0.8.12** |
+| Fix création sujets (contexte onglet) ; autocomplétion 1 lettre | **0.8.12** |
 
-**Critère de sortie M5 :** ✅ atteint — parcours catalogue → collection aligné sur films/jeux.
+**Critère de sortie M5 :** ✅ atteint — parcours catalogue → collection aligné sur films/jeux.  
+**Polish post-M5 :** notes, périodes d’échelle, stats série, fiabilité sujets — voir **0.8.6**–**0.8.12**.
 
 ---
 
@@ -775,4 +804,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.8.8** — 2026-08-04 (sécurité + moyenne presse fiches).*
+*Dernière mise à jour : **0.8.12** — 2026-08-08 (sujets magazines, autocomplétion 1 lettre, IGDB export stats).*

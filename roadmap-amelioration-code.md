@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-08-04 (version **0.8.8** — sécurité + moyenne presse)
+**Dernière mise à jour :** 2026-08-08 (version **0.8.12** — sujets magazines, autocomplétion, IGDB export)
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif

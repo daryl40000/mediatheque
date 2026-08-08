@@ -12,6 +12,28 @@ namespace Moncine;
 use PDO;
 use ZipArchive;
 
+/**
+ * Forme du rapport renvoyé par l’import (compteurs + listes de messages).
+ *
+ * @phpstan-type JoybaseImportResult array{
+ *   dry_run: bool,
+ *   series_id: int,
+ *   series_titre: string,
+ *   rows_read: int,
+ *   linked: int,
+ *   links_updated: int,
+ *   games_created: int,
+ *   games_reused: int,
+ *   subjects_created: int,
+ *   subjects_reused: int,
+ *   scores_set: int,
+ *   scores_absent: int,
+ *   scores_skipped: int,
+ *   issues_missing: int,
+ *   errors: list<string>,
+ *   warnings: list<string>
+ * }
+ */
 final class JoybaseJoystickTestsImporter
 {
     public const DEFAULT_SERIES_TITLE = 'Joystick';
@@ -43,27 +65,11 @@ final class JoybaseJoystickTestsImporter
     }
 
     /**
-     * @return array{
-     *   dry_run: bool,
-     *   series_id: int,
-     *   series_titre: string,
-     *   rows_read: int,
-     *   linked: int,
-     *   links_updated: int,
-     *   games_created: int,
-     *   games_reused: int,
-     *   subjects_created: int,
-     *   subjects_reused: int,
-     *   scores_set: int,
-     *   scores_absent: int,
-     *   scores_skipped: int,
-     *   issues_missing: int,
-     *   errors: list<string>,
-     *   warnings: list<string>
-     * }
+     * @return JoybaseImportResult
      */
     public function importFromOds(string $odsPath): array
     {
+        /** @var JoybaseImportResult $result */
         $result = [
             'dry_run' => $this->options['dryRun'],
             'series_id' => 0,
@@ -102,13 +108,13 @@ final class JoybaseJoystickTestsImporter
         $result['series_id'] = $seriesId;
         $result['series_titre'] = (string) ($series['titre'] ?? '');
 
+        // resolveDetailTag() renvoie toujours une chaîne ; préfixe ERR: = erreur à remonter.
         $detailTag = $this->resolveDetailTag($series);
-        if (is_string($detailTag) && str_starts_with($detailTag, 'ERR:')) {
+        if (str_starts_with($detailTag, 'ERR:')) {
             $result['errors'][] = substr($detailTag, 4);
 
             return $result;
         }
-        $detailTag = (string) $detailTag;
 
         if ($this->options['setRatingPeriods'] && !$this->options['dryRun']) {
             $periodsResult = $this->ensureJoystickRatingPeriods($seriesId);
@@ -751,7 +757,10 @@ final class JoybaseJoystickTestsImporter
     }
 
     /**
-     * @param array<string, int|list<string>> $result
+     * Cherche un jeu catalogue existant ou en crée un ; met à jour les compteurs du rapport.
+     *
+     * @param JoybaseImportResult $result
+     * @param-out JoybaseImportResult $result
      */
     private function findOrCreateGame(
         string $title,
