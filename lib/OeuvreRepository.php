@@ -121,7 +121,7 @@ final class OeuvreRepository
     public function searchByTitrePrefix(string $query, int $limit = 20): array
     {
         $query = trim($query);
-        if (mb_strlen($query) < 2) {
+        if (mb_strlen($query) < 1) {
             return [];
         }
 

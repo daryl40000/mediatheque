@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.8.11** · **Date : 2026-08-06**
+**Version : 0.8.12** · **Date : 2026-08-08**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -206,7 +206,7 @@ Migration : `sql/migrations/038_magazine_fts.sql`.
 
 - graphiques d’évolution (pages, sujets par année / par numéro) ;
 - section **Sujets d’une année** (**0.8.11**) : choisir un type (Test, Preview, Dossier…) et une année de **parution du numéro** → vignettes avec page PDF cliquable et note des tests ;
-- bouton **Exporter en PDF** → `/imprimer-stats-sujets-serie-magazine.php` (tableau numéro / titre / page / note).
+- bouton **Exporter en PDF** → `/imprimer-stats-sujets-serie-magazine.php` (tableau numéro / titre / **IGDB** / page / note).
 
 **Export PDF** (`/imprimer-serie-magazine.php`) : depuis la page série, bouton **Exporter en PDF** — liste textuelle (sans couvertures) avec colonne **Possession** : Non possédé, Papier, PDF, Papier + PDF. Mêmes filtres et tri que la page série ; enregistrement via « Imprimer / Enregistrer en PDF » du navigateur.
 

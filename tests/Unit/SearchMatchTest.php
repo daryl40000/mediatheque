@@ -46,4 +46,18 @@ final class SearchMatchTest extends TestCase
         $this->assertCount(2, $filtered);
         $this->assertSame(1, $filtered[0]['id']);
     }
+
+    public function testFoldedPrefixPatternWorksForSingleCharacter(): void
+    {
+        $this->assertSame('q%', SearchMatch::foldedPrefixPattern('Q', 2));
+        $this->assertSame('a%', SearchMatch::foldedPrefixPattern('a', 2));
+        $this->assertSame('', SearchMatch::foldedPrefixPattern('', 2));
+    }
+
+    public function testMatchesSingleLetterTitle(): void
+    {
+        $this->assertTrue(SearchMatch::matches('Q', 'Q'));
+        $this->assertTrue(SearchMatch::matches('Q', 'q'));
+        $this->assertSame(0, SearchMatch::score('Q', 'q'));
+    }
 }

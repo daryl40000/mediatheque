@@ -23,7 +23,14 @@ use Moncine\UserContext;
 use Moncine\View;
 
 if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
-    header('Location: /magazines-recherche.php');
+    // Ancien comportement : redirigeait vers la recherche sujets, ce qui était déroutant
+    // quand un POST était transformé en GET (bascule d’onglet média).
+    $bibIdGet = (int) ($_GET['bib_id'] ?? $_GET['id'] ?? 0);
+    if ($bibIdGet > 0) {
+        header('Location: ' . View::magazineIssueUrl($bibIdGet));
+        exit;
+    }
+    header('Location: /magazines.php');
     exit;
 }
 

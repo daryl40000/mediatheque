@@ -124,6 +124,29 @@ final class MediaDomainTest extends TestCase
         );
     }
 
+    public function testShouldNotRedirectAfterContextSwitchOnPost(): void
+    {
+        $previous = $_SERVER['REQUEST_METHOD'] ?? null;
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+        $this->assertFalse(MediaDomainGuards::shouldRedirectAfterContextSwitch());
+
+        $_SERVER['REQUEST_METHOD'] = 'GET';
+        $this->assertTrue(MediaDomainGuards::shouldRedirectAfterContextSwitch());
+
+        if ($previous === null) {
+            unset($_SERVER['REQUEST_METHOD']);
+        } else {
+            $_SERVER['REQUEST_METHOD'] = $previous;
+        }
+    }
+
+    public function testTraiterSujetsNumeroIsMagazineOnlyPath(): void
+    {
+        $this->assertTrue(
+            MediaDomainGuards::isMagazineOnlyPath('/traiter-sujets-numero-magazine.php')
+        );
+    }
+
     public function testMediaDomainSwitchUrlPreservesExplicitPath(): void
     {
         $url = MediaDomainGuards::mediaDomainSwitchUrl(

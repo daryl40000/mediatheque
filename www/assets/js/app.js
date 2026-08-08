@@ -781,7 +781,7 @@ function attachCatalogAutocomplete(config) {
         searchUrl,
         optionSelector = '.catalog-title-autocomplete__option',
         optionIdPrefix = 'catalog-autocomplete-option',
-        minChars = 2,
+        minChars = 1,
         debounceMs = 280,
         onInputClear = () => {},
         onSelect,
@@ -1436,7 +1436,7 @@ function initMagazineSubjectAutocompleteFields() {
 
         const fetchResults = () => {
             const q = input.value.trim();
-            if (q.length < 2) {
+            if (q.length < 1) {
                 closeList();
                 return;
             }
@@ -1491,7 +1491,7 @@ function initMagazineSubjectAutocompleteFields() {
 
         if (categorySelect && categorySelect.id === 'subject_category') {
             categorySelect.addEventListener('change', () => {
-                if (input.value.trim().length >= 2) {
+                if (input.value.trim().length >= 1) {
                     fetchResults();
                 }
             });
@@ -1501,7 +1501,7 @@ function initMagazineSubjectAutocompleteFields() {
             categorySelect.addEventListener('change', () => {
                 if (!supportsMediaCatalog()) {
                     clearCatalogLink();
-                } else if (input.value.trim().length >= 2) {
+                } else if (input.value.trim().length >= 1) {
                     fetchResults();
                 }
             });
@@ -1509,7 +1509,7 @@ function initMagazineSubjectAutocompleteFields() {
 
         mediaDomainSelect?.addEventListener('change', () => {
             clearCatalogLink();
-            if (input.value.trim().length >= 2 && supportsMediaCatalog()) {
+            if (input.value.trim().length >= 1 && supportsMediaCatalog()) {
                 fetchResults();
             }
         });
@@ -2424,7 +2424,7 @@ function initGameRelationFields() {
 
             const fetchSuggestions = async () => {
                 const q = String(input.value || '').trim();
-                if (q.length < 2) {
+                if (q.length < 1) {
                     closeList();
                     return;
                 }
@@ -2953,7 +2953,7 @@ function initSteamImportMapping() {
             list,
             searchUrl,
             optionIdPrefix: 'steam-map-opt',
-            minChars: 2,
+            minChars: 1,
             onInputClear: () => {
                 oeuvreIdInput.value = '';
                 if (hint) {
@@ -3052,7 +3052,7 @@ function initCatalogOeuvreMerge() {
             list,
             searchUrl,
             optionIdPrefix: 'catalog-merge-opt',
-            minChars: 2,
+            minChars: 1,
             onInputClear: clearSelection,
             onSelect: (item) => {
                 const oeuvreId = resolveOeuvreId(item);
@@ -3441,7 +3441,7 @@ function initGlobalSearch() {
 
     const fetchResults = async () => {
         const query = input.value.trim();
-        if (query.length < 2) {
+        if (query.length < 1) {
             closePanel();
             return;
         }
@@ -3470,7 +3470,7 @@ function initGlobalSearch() {
     });
 
     input.addEventListener('focus', () => {
-        if (input.value.trim().length >= 2 && flatOptions.length > 0) {
+        if (input.value.trim().length >= 1 && flatOptions.length > 0) {
             panel.hidden = false;
             input.setAttribute('aria-expanded', 'true');
         }

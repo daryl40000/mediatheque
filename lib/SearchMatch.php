@@ -54,9 +54,13 @@ final class SearchMatch
     public static function foldedPrefixPattern(string $query, int $length = 2): string
     {
         $folded = self::fold($query);
-        if (mb_strlen($folded) < $length) {
+        $available = mb_strlen($folded);
+        if ($available < 1) {
             return '';
         }
+
+        // Pour les titres d’1 lettre (ex. « Q »), utiliser toute la requête disponible.
+        $length = max(1, min($length, $available));
 
         return LikePattern::escapeLiteral(mb_substr($folded, 0, $length)) . '%';
     }

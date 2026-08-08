@@ -25,7 +25,7 @@ final class GlobalSearch
     public function search(string $query, int $userId, int $foyerId, int $limitPerGroup = 10): array
     {
         $query = trim($query);
-        if (mb_strlen($query) < 2 || $userId <= 0) {
+        if (mb_strlen($query) < 1 || $userId <= 0) {
             return ['library' => [], 'catalog' => []];
         }
 

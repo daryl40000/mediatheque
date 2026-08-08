@@ -255,6 +255,7 @@ final class MagazinePrintListService
                 'display_label' => (string) ($subject['display_label'] ?? ''),
                 'page' => $page,
                 'score_display' => $scoreDisplay,
+                'igdb_id' => self::igdbIdFromSubject($subject),
             ];
         }
 
@@ -350,5 +351,23 @@ final class MagazinePrintListService
         $dir = strtolower($sortDir) === 'asc' ? 'croissant' : 'décroissant';
 
         return $column . ' (' . $dir . ')';
+    }
+
+    /**
+     * Identifiant IGDB du jeu catalogue lié au sujet (0 si absent / non jeu).
+     *
+     * @param array<string, mixed> $subject
+     */
+    private static function igdbIdFromSubject(array $subject): int
+    {
+        $catalogGame = $subject['catalog_game'] ?? null;
+        if (is_array($catalogGame)) {
+            $fromGame = (int) ($catalogGame['igdb_id'] ?? 0);
+            if ($fromGame > 0) {
+                return $fromGame;
+            }
+        }
+
+        return max(0, (int) ($subject['igdb_id'] ?? 0));
     }
 }

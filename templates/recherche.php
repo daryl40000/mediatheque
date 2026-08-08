@@ -7,7 +7,7 @@
 $query = trim((string) ($query ?? ''));
 $libraryResults = $libraryResults ?? [];
 $catalogResults = $catalogResults ?? [];
-$hasQuery = mb_strlen($query) >= 2;
+$hasQuery = mb_strlen($query) >= 1;
 $totalCount = count($libraryResults) + count($catalogResults);
 ?>
 <section class="global-search-page">
@@ -23,7 +23,7 @@ $totalCount = count($libraryResults) + count($catalogResults);
     </form>
 
     <?php if ($query !== '' && !$hasQuery): ?>
-        <p class="hint">Saisissez au moins 2 caractères.</p>
+        <p class="hint">Saisissez au moins 1 caractère (utile pour les titres courts comme « Q »).</p>
     <?php elseif ($hasQuery && $totalCount === 0): ?>
         <p class="hint">Aucun résultat pour « <?= Moncine\View::escape($query) ?> ».</p>
     <?php elseif ($hasQuery): ?>

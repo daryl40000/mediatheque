@@ -14,6 +14,7 @@ use Moncine\MagazineSubjectCatalogLink;
 use Moncine\MagazineSubjectRepository;
 use Moncine\MediaContext;
 use Moncine\MediaDomain;
+use Moncine\MediaDomainGuards;
 use Moncine\PublicationType;
 use Moncine\SchemaMigrator;
 use Moncine\SeriesRepository;
@@ -288,6 +289,23 @@ final class MagazineSubjectTest extends MoncineTestCase
         MediaContext::set(MediaDomain::JEU);
         $coverage = (new MagazineGameLink())->listMagazineCoverageForGame($catalogOeuvreId, $userId, $foyerId);
         $this->assertCount(1, $coverage);
+    }
+
+    public function testEnsureMagazineContextOnPostSwitchesWithoutRedirect(): void
+    {
+        MediaContext::set(MediaDomain::FILM);
+        $previous = $_SERVER['REQUEST_METHOD'] ?? null;
+        $_SERVER['REQUEST_METHOD'] = 'POST';
+
+        // Ne doit pas exit/rediriger : sinon le test s’interrompt.
+        MediaDomainGuards::ensureMagazineContext();
+        $this->assertSame(MediaDomain::MAGAZINE, MediaContext::current());
+
+        if ($previous === null) {
+            unset($_SERVER['REQUEST_METHOD']);
+        } else {
+            $_SERVER['REQUEST_METHOD'] = $previous;
+        }
     }
 
     public function testDossierAndSoluceSupportCatalogLink(): void

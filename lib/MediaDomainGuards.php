@@ -46,6 +46,7 @@ final class MediaDomainGuards
         '/enregistrer-modification-serie-magazine.php',
         '/traiter-numero-magazine.php',
         '/traiter-serie-magazine.php',
+        '/traiter-sujets-numero-magazine.php',
         '/imprimer-serie-magazine.php',
         '/imprimer-stats-sujets-serie-magazine.php',
         '/imprimer-magazines.php',
@@ -351,49 +352,55 @@ final class MediaDomainGuards
     /** Redirige vers l’onglet Magazines si la page magazine est ouverte depuis un autre domaine. */
     public static function ensureMagazineContext(?string $redirectPath = null): void
     {
-        if (MediaContext::current() === MediaDomain::MAGAZINE) {
-            return;
-        }
-
-        MediaContext::set(MediaDomain::MAGAZINE);
-        header('Location: ' . SafeRedirect::path($redirectPath ?? self::currentRequestUri('/magazines.php')));
-        exit;
+        self::ensureDomainContext(MediaDomain::MAGAZINE, $redirectPath, '/magazines.php');
     }
 
     /** Redirige vers l’onglet Jeux si la page jeu est ouverte depuis un autre domaine. */
     public static function ensureGameContext(?string $redirectPath = null): void
     {
-        if (MediaContext::current() === MediaDomain::JEU) {
-            return;
-        }
-
-        MediaContext::set(MediaDomain::JEU);
-        header('Location: ' . SafeRedirect::path($redirectPath ?? self::currentRequestUri('/jeux.php')));
-        exit;
+        self::ensureDomainContext(MediaDomain::JEU, $redirectPath, '/jeux.php');
     }
 
     /** Redirige vers l’onglet BD si la page album est ouverte depuis un autre domaine. */
     public static function ensureBdContext(?string $redirectPath = null): void
     {
-        if (MediaContext::current() === MediaDomain::BD) {
-            return;
-        }
-
-        MediaContext::set(MediaDomain::BD);
-        header('Location: ' . SafeRedirect::path($redirectPath ?? self::currentRequestUri('/bd.php')));
-        exit;
+        self::ensureDomainContext(MediaDomain::BD, $redirectPath, '/bd.php');
     }
 
     /** Redirige vers l’onglet Livres si besoin. */
     public static function ensureLivreContext(?string $redirectPath = null): void
     {
-        if (MediaContext::current() === MediaDomain::LIVRE) {
+        self::ensureDomainContext(MediaDomain::LIVRE, $redirectPath, '/livres.php');
+    }
+
+    /**
+     * Active le domaine média requis.
+     * Sur une requête POST : bascule silencieuse (pas de redirection), sinon le navigateur
+     * rejouerait en GET et perdrait le formulaire (ex. création de sujet magazine).
+     */
+    private static function ensureDomainContext(string $domain, ?string $redirectPath, string $fallbackPath): void
+    {
+        if (MediaContext::current() === $domain) {
             return;
         }
 
-        MediaContext::set(MediaDomain::LIVRE);
-        header('Location: ' . SafeRedirect::path($redirectPath ?? self::currentRequestUri('/livres.php')));
+        MediaContext::set($domain);
+
+        if (!self::shouldRedirectAfterContextSwitch()) {
+            return;
+        }
+
+        header('Location: ' . SafeRedirect::path($redirectPath ?? self::currentRequestUri($fallbackPath)));
         exit;
+    }
+
+    /**
+     * Une redirection après bascule d’onglet n’est sûre qu’en GET.
+     * (Les POST perdraient leur corps : le navigateur suit la Location en GET.)
+     */
+    public static function shouldRedirectAfterContextSwitch(): bool
+    {
+        return strtoupper((string) ($_SERVER['REQUEST_METHOD'] ?? 'GET')) !== 'POST';
     }
 
     /** Path + query de la requête courante (GET), pour reprendre la navigation après changement d’onglet. */

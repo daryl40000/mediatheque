@@ -3,7 +3,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 [![Tests](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml/badge.svg)](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml)
 
-**Version : 0.8.11**
+**Version : 0.8.12**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -76,6 +76,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.8.12** | Fix création sujets magazines ; autocomplétion 1 lettre ; IGDB dans l’export PDF stats série |
 | **0.8.11** | Stats série magazine : sujets d’une année (vignettes + export PDF) |
 | **0.8.10** | Doublons jeux améliorés (sous-titre, IGDB, fusion Steam) ; compteur par rubrique sur les numéros magazine |
 | **0.8.9** | Magazines : périodes d’échelle par numéros ; import Joybase Joystick ; doublons jeux en maintenance |

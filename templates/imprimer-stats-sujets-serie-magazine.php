@@ -39,6 +39,7 @@ $rows = $rows ?? [];
                 <tr>
                     <th class="col-narrow">N°</th>
                     <th>Titre</th>
+                    <th class="col-narrow">IGDB</th>
                     <th class="col-narrow">Page</th>
                     <?php if ($showScores): ?>
                         <th class="col-narrow">Note</th>
@@ -50,6 +51,12 @@ $rows = $rows ?? [];
                     <tr>
                         <td class="col-narrow"><?= Moncine\View::escape((string) ($row['issue_label'] ?? '')) ?></td>
                         <td><?= Moncine\View::escape((string) ($row['display_label'] ?? '')) ?></td>
+                        <td class="col-narrow">
+                            <?php
+                            $igdbId = (int) ($row['igdb_id'] ?? 0);
+                            echo $igdbId > 0 ? (string) $igdbId : '—';
+                            ?>
+                        </td>
                         <td class="col-narrow">
                             <?php
                             $page = (int) ($row['page'] ?? 0);

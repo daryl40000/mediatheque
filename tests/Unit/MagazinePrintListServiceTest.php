@@ -34,4 +34,15 @@ final class MagazinePrintListServiceTest extends TestCase
 
         $this->assertStringContainsString('non possédés', $summary);
     }
+
+    public function testIgdbIdFromSubjectUsesCatalogGame(): void
+    {
+        $method = new \ReflectionMethod(MagazinePrintListService::class, 'igdbIdFromSubject');
+        $method->setAccessible(true);
+
+        $this->assertSame(0, $method->invoke(null, []));
+        $this->assertSame(0, $method->invoke(null, ['catalog_game' => ['igdb_id' => 0]]));
+        $this->assertSame(1942, $method->invoke(null, ['catalog_game' => ['igdb_id' => 1942]]));
+        $this->assertSame(99, $method->invoke(null, ['igdb_id' => 99]));
+    }
 }

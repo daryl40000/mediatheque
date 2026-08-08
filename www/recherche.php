@@ -22,7 +22,7 @@ $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();
 
 $results = ['library' => [], 'catalog' => []];
-if (mb_strlen($query) >= 2) {
+if (mb_strlen($query) >= 1) {
     $results = (new GlobalSearch())->search($query, $userId, $foyerId, 25);
 }
 

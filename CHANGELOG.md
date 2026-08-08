@@ -13,6 +13,25 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.12] — 2026-08-08
+
+**Sujets magazines · autocomplétion · export stats IGDB**
+
+### Corrigé
+
+- **Création de sujets** sur un numéro magazine : plus de redirection parasite vers la recherche sujets quand l’onglet média actif n’était pas Magazines (POST perdu après bascule d’onglet).
+- **Autocomplétion** (sujets, fusion, jeux, recherche globale) : suggestions dès **1 caractère**, pour les titres d’une seule lettre (ex. « Q »).
+
+### Ajouté
+
+- **Export PDF** des sujets d’une année (stats série) : colonne **IGDB** (identifiant du jeu catalogue lié).
+
+### Technique
+
+- `MediaDomainGuards` : pas de redirection sur les requêtes POST ; `SearchMatch::foldedPrefixPattern` accepte les requêtes d’1 caractère.
+
+---
+
 ## [0.8.11] — 2026-08-06
 
 **Stats série magazine — sujets par année · export PDF**
