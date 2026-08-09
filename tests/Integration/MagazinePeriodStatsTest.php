@@ -9,6 +9,7 @@ use Moncine\GameRepository;
 use Moncine\LibraryStatut;
 use Moncine\MagazineGameLink;
 use Moncine\MagazinePeriodStats;
+use Moncine\MagazineRatingScale;
 use Moncine\MagazineRepository;
 use Moncine\MagazineSubject;
 use Moncine\MagazineSubjectRepository;
@@ -209,5 +210,146 @@ final class MagazinePeriodStatsTest extends MoncineTestCase
         $this->assertSame($gameOeuvreId, (int) ($dashboard['games_most'][0]['oeuvre_id'] ?? 0));
         // 1 sujet × 3 numéros = 3 mentions (pas 1).
         $this->assertSame(3, (int) ($dashboard['games_most'][0]['subject_count'] ?? 0));
+    }
+
+    public function testMonthCategoryListsTestsPreviewsDossiers(): void
+    {
+        if (!MagazinePeriodStats::isAvailable()) {
+            $this->markTestSkipped('Stats période magazines indisponibles.');
+        }
+
+        $userId = UserContext::currentUserId();
+        $foyerId = UserContext::currentFoyerId();
+        MediaContext::set(MediaDomain::MAGAZINE);
+
+        $seriesJeux = (new SeriesRepository())->create([
+            'titre' => 'Revue Mois Jeux',
+            'publication_type' => PublicationType::MENSUEL,
+            'categories' => 'Jeux vidéo',
+        ], MediaDomain::MAGAZINE);
+        $seriesCinema = (new SeriesRepository())->create([
+            'titre' => 'Revue Mois Cinema',
+            'publication_type' => PublicationType::MENSUEL,
+            'categories' => 'Cinéma',
+        ], MediaDomain::MAGAZINE);
+        $this->assertIsInt($seriesJeux);
+        $this->assertIsInt($seriesCinema);
+
+        $magRepo = new MagazineRepository();
+        $subjectRepo = new MagazineSubjectRepository();
+
+        $issueJeuxBib = $magRepo->createIssueWithLibrary($seriesJeux, [
+            'numero' => '10',
+            'numero_ordre' => 10,
+            'date_parution' => '2020-06-01',
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $issueCinemaBib = $magRepo->createIssueWithLibrary($seriesCinema, [
+            'numero' => '5',
+            'numero_ordre' => 5,
+            'date_parution' => 'juin 2020',
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $issueOtherMonthBib = $magRepo->createIssueWithLibrary($seriesJeux, [
+            'numero' => '11',
+            'numero_ordre' => 11,
+            'date_parution' => '2020-07-01',
+        ], LibraryStatut::COLLECTION, $userId, $foyerId);
+        $this->assertIsInt($issueJeuxBib);
+        $this->assertIsInt($issueCinemaBib);
+        $this->assertIsInt($issueOtherMonthBib);
+
+        $issueJeux = $magRepo->findIssueByBibId($issueJeuxBib, $userId, $foyerId);
+        $issueCinema = $magRepo->findIssueByBibId($issueCinemaBib, $userId, $foyerId);
+        $issueOtherMonth = $magRepo->findIssueByBibId($issueOtherMonthBib, $userId, $foyerId);
+        $this->assertNotNull($issueJeux);
+        $this->assertNotNull($issueCinema);
+        $this->assertNotNull($issueOtherMonth);
+
+        $test = $subjectRepo->findOrCreate(MagazineSubject::TEST, 'Jeu Test Juin', 'PC', 2020);
+        $preview = $subjectRepo->findOrCreate(MagazineSubject::PREVIEW, 'Jeu Preview Juin', 'PC', 2020);
+        $dossier = $subjectRepo->findOrCreate(MagazineSubject::DOSSIER, 'Dossier Juin', '', 2020);
+        $cinemaTest = $subjectRepo->findOrCreate(MagazineSubject::TEST, 'Film Test Juin', '', 2020);
+        $julyTest = $subjectRepo->findOrCreate(MagazineSubject::TEST, 'Jeu Test Juillet', 'PC', 2020);
+        $this->assertNotNull($test);
+        $this->assertNotNull($preview);
+        $this->assertNotNull($dossier);
+        $this->assertNotNull($cinemaTest);
+        $this->assertNotNull($julyTest);
+
+        $this->assertTrue($subjectRepo->attachToOeuvre((int) $issueJeux['oeuvre_id'], (int) $test['id']) === true);
+        $this->assertTrue($subjectRepo->attachToOeuvre((int) $issueJeux['oeuvre_id'], (int) $preview['id']) === true);
+        $this->assertTrue($subjectRepo->attachToOeuvre((int) $issueJeux['oeuvre_id'], (int) $dossier['id']) === true);
+        $this->assertTrue($subjectRepo->attachToOeuvre((int) $issueCinema['oeuvre_id'], (int) $cinemaTest['id']) === true);
+        $this->assertTrue($subjectRepo->attachToOeuvre((int) $issueOtherMonth['oeuvre_id'], (int) $julyTest['id']) === true);
+
+        $stats = new MagazinePeriodStats();
+        $result = $stats->getMonthCategorySubjects(2020, 6, 'jeux video');
+        $this->assertTrue($result['active']);
+        $this->assertSame(3, $result['total']);
+        $this->assertSame('Jeux vidéo', $result['series_category_label']);
+        $this->assertSame('Juin', $result['month_label']);
+        $this->assertCount(3, $result['groups']);
+
+        $labels = [];
+        foreach ($result['groups'] as $group) {
+            foreach ($group['subjects'] as $subject) {
+                $labels[] = (string) ($subject['label'] ?? '');
+            }
+        }
+        sort($labels);
+        $this->assertSame(['Dossier Juin', 'Jeu Preview Juin', 'Jeu Test Juin'], $labels);
+        $this->assertStringContainsString('Revue Mois Jeux', (string) ($result['groups'][0]['subjects'][0]['issue_label'] ?? ''));
+    }
+
+    public function testSortSubjectsByScorePercentRespectsDifferentScales(): void
+    {
+        $subjects = [
+            [
+                'label' => 'Sur dix moyen',
+                'score' => 8.0,
+                'rating_scale' => '10',
+                'score_percent' => MagazineRatingScale::toPercent(8.0, '10'),
+            ],
+            [
+                'label' => 'Sur cent fort',
+                'score' => 90.0,
+                'rating_scale' => '100',
+                'score_percent' => MagazineRatingScale::toPercent(90.0, '100'),
+            ],
+            [
+                'label' => 'Sans note',
+                'score' => null,
+                'rating_scale' => '10',
+                'score_percent' => null,
+            ],
+            [
+                'label' => 'Sur vingt fort',
+                'score' => 18.0,
+                'rating_scale' => '20',
+                'score_percent' => MagazineRatingScale::toPercent(18.0, '20'),
+            ],
+        ];
+
+        $sorted = MagazinePeriodStats::sortSubjectsByScorePercentDesc($subjects);
+        $labels = array_map(
+            static fn (array $row): string => (string) ($row['label'] ?? ''),
+            $sorted
+        );
+
+        // 90/100 = 90 %, 18/20 = 90 %, 8/10 = 80 %, puis sans note.
+        // À 90 % égal : alphabétique entre « Sur cent fort » et « Sur vingt fort ».
+        $this->assertSame(
+            ['Sur cent fort', 'Sur vingt fort', 'Sur dix moyen', 'Sans note'],
+            $labels
+        );
+
+        $alpha = MagazinePeriodStats::sortSubjectsAlphabetically($subjects);
+        $alphaLabels = array_map(
+            static fn (array $row): string => (string) ($row['label'] ?? ''),
+            $alpha
+        );
+        $this->assertSame(
+            ['Sans note', 'Sur cent fort', 'Sur dix moyen', 'Sur vingt fort'],
+            $alphaLabels
+        );
     }
 }

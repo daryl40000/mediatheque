@@ -3,7 +3,7 @@
  * Échelle de notation d’une série magazine (plafond libre : 5, 6, 10, 50…).
  *
  * Stockage : entier positif en texte dans series.rating_scale (NULL = pas de notation).
- * toPercent() uniformise sur 100 (règle de trois) pour de futures moyennes / stats.
+ * toPercent() uniformise sur 100 : règle de trois, ou table manuelle pour les étoiles entières.
  */
 
 declare(strict_types=1);
@@ -14,6 +14,9 @@ final class MagazineRatingScale
 {
     /** Plafond max accepté pour une échelle (évite les saisies aberrantes). */
     public const MAX_ALLOWED = 1000;
+
+    /** Plafond max pour une table d’équivalence étoiles (échelles &lt; 10). */
+    public const STAR_MAP_MAX = 9;
 
     /**
      * Normalise une valeur formulaire / BDD → chaîne du plafond (« 5 », « 50 ») ou null.
@@ -137,9 +140,16 @@ final class MagazineRatingScale
     }
 
     /**
-     * Uniformise la note sur 100 (règle de trois) pour moyennes / stats.
+     * Uniformise la note sur 100.
+     *
+     * - Échelles ≥ 10 : toujours règle de trois.
+     * - Étoiles (&lt; 10) + table d’équivalence : notes entières via la table ;
+     *   demi-étoiles ou note absente de la table → règle de trois.
+     * - Table vide / absente → règle de trois.
+     *
+     * @param array<int, float>|null $starPercentMap ex. [0 => 15.0, 1 => 40.0, …]
      */
-    public static function toPercent(?float $score, ?string $scale): ?float
+    public static function toPercent(?float $score, ?string $scale, ?array $starPercentMap = null): ?float
     {
         if ($score === null) {
             return null;
@@ -149,7 +159,151 @@ final class MagazineRatingScale
             return null;
         }
 
+        if (
+            self::usesStars($scale)
+            && $starPercentMap !== null
+            && $starPercentMap !== []
+            && self::isWholeStarScore($score)
+        ) {
+            $starKey = (int) round($score);
+            if (array_key_exists($starKey, $starPercentMap)) {
+                return round((float) $starPercentMap[$starKey], 1);
+            }
+        }
+
         return round(($score / $max) * 1000) / 10;
+    }
+
+    /** True si la note est un nombre entier d’étoiles (pas 3,5). */
+    public static function isWholeStarScore(float $score): bool
+    {
+        return abs($score - round($score)) < 0.001;
+    }
+
+    /**
+     * Lit une table JSON / tableau PHP → map int => float, ou null si vide.
+     *
+     * @return array<int, float>|null
+     */
+    public static function parseStarPercentMap(mixed $raw): ?array
+    {
+        if ($raw === null || $raw === '') {
+            return null;
+        }
+
+        if (is_string($raw)) {
+            $decoded = json_decode($raw, true);
+            if (!is_array($decoded)) {
+                return null;
+            }
+            $raw = $decoded;
+        }
+
+        if (!is_array($raw)) {
+            return null;
+        }
+
+        $map = [];
+        foreach ($raw as $key => $value) {
+            if (!is_numeric($key) || !is_numeric($value)) {
+                continue;
+            }
+            $star = (int) $key;
+            if ($star < 0 || $star > self::STAR_MAP_MAX) {
+                continue;
+            }
+            $percent = (float) $value;
+            if (!is_finite($percent) || $percent < 0.0 || $percent > 100.0) {
+                continue;
+            }
+            $map[$star] = round($percent, 1);
+        }
+
+        if ($map === []) {
+            return null;
+        }
+
+        ksort($map, SORT_NUMERIC);
+
+        return $map;
+    }
+
+    /**
+     * Encode la map pour la BDD (JSON) ou null.
+     *
+     * @param array<int, float>|null $map
+     */
+    public static function serializeStarPercentMap(?array $map): ?string
+    {
+        $map = self::parseStarPercentMap($map);
+        if ($map === null) {
+            return null;
+        }
+
+        // Clés en chaînes pour un JSON stable {"0":15,"1":40}.
+        $payload = [];
+        foreach ($map as $star => $percent) {
+            $payload[(string) $star] = $percent;
+        }
+
+        $encoded = json_encode($payload, JSON_UNESCAPED_UNICODE);
+
+        return is_string($encoded) ? $encoded : null;
+    }
+
+    /**
+     * Construit la map depuis le formulaire (star_percent[0], star_percent[1]…).
+     * Toutes les cases vides → null (règle de trois).
+     *
+     * @param array<string, mixed> $post
+     * @return array<int, float>|null
+     */
+    public static function normalizeStarPercentMapFromPost(array $post, int $maxStars = 5): ?array
+    {
+        $maxStars = max(1, min(self::STAR_MAP_MAX, $maxStars));
+        $raw = $post['star_percent'] ?? null;
+        if (!is_array($raw)) {
+            return null;
+        }
+
+        $map = [];
+        for ($star = 0; $star <= $maxStars; $star++) {
+            if (!array_key_exists((string) $star, $raw) && !array_key_exists($star, $raw)) {
+                continue;
+            }
+            $value = $raw[(string) $star] ?? $raw[$star] ?? '';
+            if (is_string($value)) {
+                $value = str_replace(',', '.', trim($value));
+                if ($value === '') {
+                    continue;
+                }
+            }
+            if (!is_numeric($value)) {
+                continue;
+            }
+            $percent = (float) $value;
+            if (!is_finite($percent) || $percent < 0.0 || $percent > 100.0) {
+                continue;
+            }
+            $map[$star] = round($percent, 1);
+        }
+
+        return $map === [] ? null : $map;
+    }
+
+    /**
+     * Extrait la map depuis une ligne série (colonne star_percent_map).
+     *
+     * @param array<string, mixed>|null $series
+     * @return array<int, float>|null
+     */
+    public static function starPercentMapFromSeries(?array $series): ?array
+    {
+        if ($series === null) {
+            return null;
+        }
+
+        return self::parseStarPercentMap($series['star_percent_map'] ?? null);
     }
 
     /** Libellé texte (ex. « 8/10 », « 75/100 », « 3,5/5 »). */

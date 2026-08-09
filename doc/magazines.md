@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.8.12** · **Date : 2026-08-08**
+**Version : 0.8.13** · **Date : 2026-08-09**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -146,6 +146,7 @@ Sur **modifier la série** :
 2. Optionnel : ajoutez des **périodes** si le barème a changé selon les numéros
    (ex. du 1 au 92 → sur 5 ; du 93 au 110 → sur 100 ; au-delà → sur 20).
    Laissez « Au n° » vide pour « jusqu’à la fin ». Les plages ne doivent pas se chevaucher.
+3. Si l’échelle est en **étoiles** (moins de 10) : optionnel, table **équivalence étoiles → %** (**0.8.13**) pour les notes **entières** (ex. 4★ = 70 %). Les demi-étoiles et les échelles à partir de 10 restent en règle de trois.
 
 Sur chaque **numéro**, l’échelle utilisée est celle de la période qui contient son ordre de numéro ; sinon l’échelle par défaut de la série.
 
@@ -153,9 +154,10 @@ Sous chaque vignette **Test** (fiche numéro ou supplément) :
 
 1. Cliquez sur le **crayon** pour saisir la note (demi-points acceptés, ex. `3,5`).
 2. Affichage : **étoiles** si l’échelle est inférieure à 10 ; sinon pastille (`8/10`, `42/50`, `75 %` si sur 100).
-3. Au survol, la bulle rappelle aussi la note convertie **sur 100** (règle de trois) pour les moyennes presse.
+3. Au survol, la bulle rappelle aussi la note convertie **sur 100** (table d’équivalence ou règle de trois) pour les moyennes presse.
+4. Cliquez sur le libellé **Test** pour basculer le tri alphabétique ↔ notes (**0.8.13**).
 
-Migrations : **073** (`series.rating_scale`, colonnes `score` sur les liens sujet), **075** (`magazine_series_rating_period`).
+Migrations : **073** (`series.rating_scale`, colonnes `score` sur les liens sujet), **075** (`magazine_series_rating_period`), **076** (`series.star_percent_map`).
 
 ### Après l’import (traitement différé)
 
@@ -200,12 +202,12 @@ Migration : `sql/migrations/038_magazine_fts.sql`.
 
 **Couvertures** : sur **Mes magazines** (collection), les numéros **non possédés** (ni papier ni PDF) s’affichent en **noir et blanc** ; les possédés et la liste **Mes envies** restent en couleur.
 
-**Statistiques** (`/statistiques.php`, onglet Magazines) : nombre de **PDF possédés** et **espace disque** total (Go), calculés depuis `stored_objects.size_bytes` à l’import.
+**Statistiques** (`/statistiques.php`, onglet Magazines) : nombre de **PDF possédés** et **espace disque** total (Go), calculés depuis `stored_objects.size_bytes` à l’import ; section **Sujets d’un mois** (**0.8.13**) : catégorie de magazine + mois + année → tests / previews / dossiers (tri A→Z ou par note).
 
 **Statistiques d’une série** (`/stats-serie-magazine.php`, bouton **Statistiques** sur la fiche série) :
 
 - graphiques d’évolution (pages, sujets par année / par numéro) ;
-- section **Sujets d’une année** (**0.8.11**) : choisir un type (Test, Preview, Dossier…) et une année de **parution du numéro** → vignettes avec page PDF cliquable et note des tests ;
+- section **Sujets d’une année** (**0.8.11**) : choisir un type (Test, Preview, Dossier…) et une année de **parution du numéro** → vignettes avec page PDF cliquable et note des tests ; tri A→Z / par note (**0.8.13**) ;
 - bouton **Exporter en PDF** → `/imprimer-stats-sujets-serie-magazine.php` (tableau numéro / titre / **IGDB** / page / note).
 
 **Export PDF** (`/imprimer-serie-magazine.php`) : depuis la page série, bouton **Exporter en PDF** — liste textuelle (sans couvertures) avec colonne **Possession** : Non possédé, Papier, PDF, Papier + PDF. Mêmes filtres et tri que la page série ; enregistrement via « Imprimer / Enregistrer en PDF » du navigateur.
@@ -375,7 +377,7 @@ Pour **migrer ou sauvegarder** tout le catalogue (tous médias), utilisez la pag
 | **ODS** (recommandé) | Feuille `Catalogue` + feuilles `SeriesMagazines`, `MagazineRatingPeriods`, `MagazineSubjects`, `MagazineSubjectLinks`, `MagazineSupplements`, `MagazineSupplementLinks` |
 | **CSV** | Numéros + métadonnées de série dénormalisées (`Magazine — titre série`, `Magazine — notes sur`, tags…) ; **pas** les sujets / pages / notes (préférez l’ODS) |
 
-**Conservé à l’aller-retour ODS :** échelle de notation (défaut + périodes), tags/catégories de série, **liens en ligne** (série + numéro), sujets, lien jeu/film, **page PDF**, **note** de test, métadonnées des suppléments.
+**Conservé à l’aller-retour ODS :** échelle de notation (défaut + périodes + **équivalence étoiles**), tags/catégories de série, **liens en ligne** (série + numéro), sujets, lien jeu/film, **page PDF**, **note** de test, métadonnées des suppléments.
 
 **Hors tableur :** fichiers PDF et affiches locales (ZIP affiches à part ; recharger les PDF si besoin).
 

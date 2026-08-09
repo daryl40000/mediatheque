@@ -19,14 +19,61 @@ $stripRatingScale = Moncine\MagazineRatingScale::normalize($ratingScale ?? null)
 $stripScoreMax = Moncine\MagazineRatingScale::maxValue($stripRatingScale);
 
 /**
- * Construit les groupes à afficher : une entrée = une rangée (éventuellement sans label).
+ * Titre utilisé pour le tri alphabétique d’une vignette sujet.
+ *
+ * @param array<string, mixed> $subject
+ */
+$subjectSortLabel = static function (array $subject): string {
+    $label = trim((string) ($subject['label'] ?? ''));
+    if ($label !== '') {
+        return $label;
+    }
+
+    return trim((string) ($subject['display_label'] ?? ''));
+};
+
+/**
+ * Tri alphabétique français (A→Z) des sujets d’une rangée.
  *
  * @param list<array<string, mixed>> $subjects
- * @return list<array{label: string, subjects: list<array<string, mixed>>}>
+ * @return list<array<string, mixed>>
  */
-$buildSubjectGroups = static function (array $subjects, bool $groupByCategory): array {
+$sortSubjectsAlphabetically = static function (array $subjects) use ($subjectSortLabel): array {
+    usort(
+        $subjects,
+        static function (array $left, array $right) use ($subjectSortLabel): int {
+            $leftLabel = $subjectSortLabel($left);
+            $rightLabel = $subjectSortLabel($right);
+            // Collator = tri « français » (accents, cédilles) si l’extension intl est dispo.
+            if (class_exists(\Collator::class)) {
+                $collator = new \Collator('fr_FR');
+                $compared = $collator->compare($leftLabel, $rightLabel);
+                if (is_int($compared) && $compared !== 0) {
+                    return $compared;
+                }
+            }
+
+            return strcasecmp($leftLabel, $rightLabel);
+        }
+    );
+
+    return $subjects;
+};
+
+/**
+ * Construit les groupes à afficher : une entrée = une rangée (éventuellement sans label).
+ * Chaque rangée est déjà triée par ordre alphabétique du titre.
+ *
+ * @param list<array<string, mixed>> $subjects
+ * @return list<array{label: string, category: string, subjects: list<array<string, mixed>>}>
+ */
+$buildSubjectGroups = static function (array $subjects, bool $groupByCategory) use ($sortSubjectsAlphabetically): array {
     if (!$groupByCategory) {
-        return [['label' => '', 'subjects' => $subjects]];
+        return [[
+            'label' => '',
+            'category' => '',
+            'subjects' => $sortSubjectsAlphabetically($subjects),
+        ]];
     }
 
     $byCategory = [];
@@ -43,7 +90,8 @@ $buildSubjectGroups = static function (array $subjects, bool $groupByCategory): 
         if (isset($byCategory[$choiceKey])) {
             $ordered[] = [
                 'label' => Moncine\MagazineSubject::label($choiceKey),
-                'subjects' => $byCategory[$choiceKey],
+                'category' => $choiceKey,
+                'subjects' => $sortSubjectsAlphabetically($byCategory[$choiceKey]),
             ];
             unset($byCategory[$choiceKey]);
         }
@@ -52,7 +100,8 @@ $buildSubjectGroups = static function (array $subjects, bool $groupByCategory): 
     foreach ($byCategory as $extraKey => $extraSubjects) {
         $ordered[] = [
             'label' => Moncine\MagazineSubject::label($extraKey),
-            'subjects' => $extraSubjects,
+            'category' => (string) $extraKey,
+            'subjects' => $sortSubjectsAlphabetically($extraSubjects),
         ];
     }
 
@@ -65,21 +114,42 @@ $subjectGroups = $buildSubjectGroups($stripSubjects, $stripGroupByCategory);
     <?php foreach ($subjectGroups as $group): ?>
         <?php
         $rowLabel = trim((string) ($group['label'] ?? ''));
+        $rowCategory = (string) ($group['category'] ?? '');
         $rowSubjects = $group['subjects'] ?? [];
+        // Rangée « Test » : le libellé devient un bouton pour basculer alpha ↔ notes.
+        $rowIsTestSortable = $rowCategory === Moncine\MagazineSubject::TEST && $rowLabel !== '';
         if ($rowSubjects === []) {
             continue;
         }
         ?>
-        <section class="magazine-subject-strip__row<?= $rowLabel === '' ? ' magazine-subject-strip__row--no-label' : '' ?>">
+        <section class="magazine-subject-strip__row<?= $rowLabel === '' ? ' magazine-subject-strip__row--no-label' : '' ?>"
+                 <?= $rowIsTestSortable ? 'data-subject-sort-row data-sort-mode="alpha"' : '' ?>>
             <?php if ($rowLabel !== ''): ?>
                 <?php $rowCount = count($rowSubjects); ?>
-                <h3 class="magazine-subject-strip__row-label">
-                    <?= Moncine\View::escape($rowLabel) ?>
-                    <span class="magazine-subject-strip__row-count"
-                          aria-label="<?= $rowCount ?> article<?= $rowCount > 1 ? 's' : '' ?>">
-                        (<?= $rowCount ?>)
-                    </span>
-                </h3>
+                <?php if ($rowIsTestSortable): ?>
+                    <h3 class="magazine-subject-strip__row-label magazine-subject-strip__row-label--sortable">
+                        <button type="button"
+                                class="magazine-subject-strip__sort-toggle"
+                                data-subject-sort-toggle
+                                aria-pressed="false"
+                                title="Cliquer pour trier par note (décroissante)"
+                                aria-label="Trier les tests : ordre alphabétique. Cliquer pour basculer vers les notes décroissantes.">
+                            <?= Moncine\View::escape($rowLabel) ?>
+                            <span class="magazine-subject-strip__row-count"
+                                  aria-label="<?= $rowCount ?> article<?= $rowCount > 1 ? 's' : '' ?>">
+                                (<?= $rowCount ?>)
+                            </span>
+                        </button>
+                    </h3>
+                <?php else: ?>
+                    <h3 class="magazine-subject-strip__row-label">
+                        <?= Moncine\View::escape($rowLabel) ?>
+                        <span class="magazine-subject-strip__row-count"
+                              aria-label="<?= $rowCount ?> article<?= $rowCount > 1 ? 's' : '' ?>">
+                            (<?= $rowCount ?>)
+                        </span>
+                    </h3>
+                <?php endif; ?>
             <?php endif; ?>
             <ul class="magazine-subject-strip__list" role="list">
                 <?php foreach ($rowSubjects as $subject): ?>
@@ -88,6 +158,7 @@ $subjectGroups = $buildSubjectGroups($stripSubjects, $stripGroupByCategory);
                     $navUrl = trim((string) ($subject['media_nav_url'] ?? Moncine\View::magazineSubjectUrl($subjectId)));
                     $posterSrc = trim((string) ($subject['media_poster_src'] ?? ''));
                     $displayLabel = (string) ($subject['display_label'] ?? '');
+                    $sortLabel = $subjectSortLabel($subject);
                     $mediaSubtitle = trim((string) ($subject['media_subtitle'] ?? ''));
                     $inLibrary = !empty($subject['media_in_library']);
                     $hasCatalog = !empty($subject['media_has_catalog']);
@@ -116,14 +187,34 @@ $subjectGroups = $buildSubjectGroups($stripSubjects, $stripGroupByCategory);
                     $subjectCategory = Moncine\MagazineSubject::normalizeCategory((string) ($subject['category'] ?? ''));
                     $showTestScore = $stripRatingScale !== null
                         && $subjectCategory === Moncine\MagazineSubject::TEST;
-                    $testScore = $showTestScore && array_key_exists('score', $subject) && $subject['score'] !== null
+                    $hasStoredScore = array_key_exists('score', $subject) && $subject['score'] !== null;
+                    $testScore = $showTestScore && $hasStoredScore
                         ? (float) $subject['score']
                         : null;
+                    // Clé de tri note (même sans échelle d’affichage) : vide = pas de note → fin de liste.
+                    $sortScoreAttr = $hasStoredScore ? (string) (float) $subject['score'] : '';
+                    // Équivalent /100 pour comparer si plusieurs échelles coexistent.
+                    $sortPercentMap = $starPercentMap ?? null;
+                    $sortPercent = $hasStoredScore
+                        ? Moncine\MagazineRatingScale::toPercent(
+                            (float) $subject['score'],
+                            $showTestScore ? $stripRatingScale : null,
+                            is_array($sortPercentMap) ? $sortPercentMap : null
+                        )
+                        : null;
+                    // Si pas d’échelle d’affichage mais note stockée : on garde au moins la note brute.
+                    $sortPercentAttr = $sortPercent !== null
+                        ? (string) $sortPercent
+                        : $sortScoreAttr;
                     $scoreDisplay = $testScore !== null
                         ? Moncine\MagazineRatingScale::formatDisplay($testScore, $stripRatingScale)
                         : '';
                     $scorePercent = $testScore !== null
-                        ? Moncine\MagazineRatingScale::toPercent($testScore, $stripRatingScale)
+                        ? Moncine\MagazineRatingScale::toPercent(
+                            $testScore,
+                            $stripRatingScale,
+                            is_array($starPercentMap ?? null) ? $starPercentMap : null
+                        )
                         : null;
                     $scoreStars = $testScore !== null
                         ? Moncine\MagazineRatingScale::starParts($testScore, $stripRatingScale)
@@ -131,7 +222,11 @@ $subjectGroups = $buildSubjectGroups($stripSubjects, $stripGroupByCategory);
                     $scoreEditLabel = $testScore !== null ? 'Modifier la note' : 'Indiquer la note';
                     $scoreInputId = 'subject_score_' . $subjectId;
                     ?>
-                    <li class="<?= $itemClass ?>" role="listitem">
+                    <li class="<?= $itemClass ?>"
+                        role="listitem"
+                        data-sort-label="<?= Moncine\View::escape(mb_strtolower($sortLabel)) ?>"
+                        data-sort-score="<?= Moncine\View::escape($sortScoreAttr) ?>"
+                        data-sort-percent="<?= Moncine\View::escape($sortPercentAttr) ?>">
                         <article class="magazine-subject-strip__card">
                             <?php if ($navUrl !== ''): ?>
                                 <a href="<?= Moncine\View::escape($navUrl) ?>"

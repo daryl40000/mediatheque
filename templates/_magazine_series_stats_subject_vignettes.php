@@ -48,8 +48,14 @@ if ($filteredSubjects === []) {
         $scoreStars = $testScore !== null
             ? Moncine\MagazineRatingScale::starParts($testScore, $subjectRatingScale)
             : [];
+        $scorePercent = Moncine\MagazinePeriodStats::subjectScorePercent($subject);
+        $sortLabel = mb_strtolower(trim((string) ($subject['label'] ?? $displayLabel)));
+        $sortPercentAttr = $scorePercent !== null ? (string) $scorePercent : '';
         ?>
-        <li class="<?= $itemClass ?>" role="listitem">
+        <li class="<?= $itemClass ?>"
+            role="listitem"
+            data-sort-label="<?= Moncine\View::escape($sortLabel) ?>"
+            data-sort-percent="<?= Moncine\View::escape($sortPercentAttr) ?>">
             <article class="magazine-subject-strip__card">
                 <?php if ($navUrl !== ''): ?>
                     <a href="<?= Moncine\View::escape($navUrl) ?>"
@@ -111,6 +117,12 @@ if ($filteredSubjects === []) {
                                 <span class="magazine-subject-strip__score-num"
                                       title="<?= Moncine\View::escape($scoreDisplay) ?>">
                                     <?= Moncine\View::escape($scoreDisplay) ?>
+                                </span>
+                            <?php endif; ?>
+                            <?php if ($scorePercent !== null && (int) ($subjectRatingScale ?? '0') !== 100): ?>
+                                <span class="series-stats-subjects__equiv hint"
+                                      title="Équivalent sur 100 pour comparer les échelles">
+                                    ≈<?= Moncine\View::escape(Moncine\MagazineRatingScale::formatNumber($scorePercent)) ?>%
                                 </span>
                             <?php endif; ?>
                         <?php endif; ?>

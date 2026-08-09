@@ -91,6 +91,30 @@ final class SeriesRepository
         return $cache = false;
     }
 
+    public static function starPercentMapColumnExists(): bool
+    {
+        static $cache = null;
+        if ($cache !== null) {
+            return $cache;
+        }
+        if (!self::tableExists()) {
+            return $cache = false;
+        }
+
+        $stmt = Database::getInstance()->query('PRAGMA table_info(series)');
+        if ($stmt === false) {
+            return $cache = false;
+        }
+
+        while ($row = $stmt->fetch(PDO::FETCH_ASSOC)) {
+            if (($row['name'] ?? '') === 'star_percent_map') {
+                return $cache = true;
+            }
+        }
+
+        return $cache = false;
+    }
+
     /**
      * Catégories déjà utilisées sur des séries magazine (pour autocomplétion).
      *
@@ -253,6 +277,15 @@ final class SeriesRepository
         $ratingParam = self::ratingScaleColumnExists()
             ? [MagazineRatingScale::normalize($data['rating_scale'] ?? null)]
             : [];
+        $starMapSql = self::starPercentMapColumnExists() ? ', star_percent_map' : '';
+        $starMapValue = self::starPercentMapColumnExists() ? ', ?' : '';
+        $starMapParam = self::starPercentMapColumnExists()
+            ? [MagazineRatingScale::serializeStarPercentMap(
+                isset($data['star_percent_map'])
+                    ? MagazineRatingScale::parseStarPercentMap($data['star_percent_map'])
+                    : null
+            )]
+            : [];
         $externalSql = self::externalUrlColumnExists() ? ', external_url' : '';
         $externalValue = self::externalUrlColumnExists() ? ', ?' : '';
         $externalParam = self::externalUrlColumnExists()
@@ -262,8 +295,8 @@ final class SeriesRepository
         $this->db->prepare(
             'INSERT INTO series (
                 media_domain, titre, publication_type, poster_url, editeur, issn,
-                langue, pays, date_debut, date_fin, notes, tags' . $categoriesSql . $ratingSql . $externalSql . ', created_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . $categoriesValue . $ratingValue . $externalValue . ', datetime(\'now\'))'
+                langue, pays, date_debut, date_fin, notes, tags' . $categoriesSql . $ratingSql . $starMapSql . $externalSql . ', created_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . $categoriesValue . $ratingValue . $starMapValue . $externalValue . ', datetime(\'now\'))'
         )->execute([
             $domain,
             $titre,
@@ -279,6 +312,7 @@ final class SeriesRepository
             MagazineSeriesTag::normalizeInput((string) ($data['tags'] ?? '')),
             ...$categoriesParam,
             ...$ratingParam,
+            ...$starMapParam,
             ...$externalParam,
         ]);
 
@@ -323,6 +357,15 @@ final class SeriesRepository
         $ratingParam = self::ratingScaleColumnExists()
             ? [MagazineRatingScale::normalize($data['rating_scale'] ?? null)]
             : [];
+        $starMapSql = self::starPercentMapColumnExists() ? ', star_percent_map' : '';
+        $starMapValue = self::starPercentMapColumnExists() ? ', ?' : '';
+        $starMapParam = self::starPercentMapColumnExists()
+            ? [MagazineRatingScale::serializeStarPercentMap(
+                isset($data['star_percent_map'])
+                    ? MagazineRatingScale::parseStarPercentMap($data['star_percent_map'])
+                    : null
+            )]
+            : [];
         $externalSql = self::externalUrlColumnExists() ? ', external_url' : '';
         $externalValue = self::externalUrlColumnExists() ? ', ?' : '';
         $externalParam = self::externalUrlColumnExists()
@@ -332,8 +375,8 @@ final class SeriesRepository
         $this->db->prepare(
             'INSERT INTO series (
                 id, media_domain, titre, publication_type, poster_url, editeur, issn,
-                langue, pays, date_debut, date_fin, notes, tags' . $categoriesSql . $ratingSql . $externalSql . ', created_at
-             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . $categoriesValue . $ratingValue . $externalValue . ', datetime(\'now\'))'
+                langue, pays, date_debut, date_fin, notes, tags' . $categoriesSql . $ratingSql . $starMapSql . $externalSql . ', created_at
+             ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?' . $categoriesValue . $ratingValue . $starMapValue . $externalValue . ', datetime(\'now\'))'
         )->execute([
             $id,
             $domain,
@@ -350,6 +393,7 @@ final class SeriesRepository
             MagazineSeriesTag::normalizeInput((string) ($data['tags'] ?? '')),
             ...$categoriesParam,
             ...$ratingParam,
+            ...$starMapParam,
             ...$externalParam,
         ]);
 
@@ -427,6 +471,12 @@ final class SeriesRepository
         if (self::ratingScaleColumnExists()) {
             $setParts[] = 'rating_scale = ?';
             $params[] = $ratingScaleValue;
+        }
+        if (self::starPercentMapColumnExists() && array_key_exists('star_percent_map', $data)) {
+            $setParts[] = 'star_percent_map = ?';
+            $params[] = MagazineRatingScale::serializeStarPercentMap(
+                MagazineRatingScale::parseStarPercentMap($data['star_percent_map'])
+            );
         }
         if (self::externalUrlColumnExists() && array_key_exists('external_url', $data)) {
             $setParts[] = 'external_url = ?';

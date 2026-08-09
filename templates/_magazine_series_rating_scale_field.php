@@ -118,3 +118,63 @@ if ($ratingPeriods === []) {
         </button>
     </p>
 </div>
+
+<?php
+// Table d’équivalence pour les étoiles entières (optionnelle).
+$starPercentMap = Moncine\MagazineRatingScale::starPercentMapFromSeries($series ?? null) ?? [];
+$starMapMax = 5;
+if ($currentRatingMax !== null && $currentRatingMax > 0 && $currentRatingMax < 10) {
+    $starMapMax = $currentRatingMax;
+}
+foreach ($ratingPeriods as $periodForMax) {
+    $periodScale = Moncine\MagazineRatingScale::normalize($periodForMax['rating_scale'] ?? null);
+    $periodMax = (int) Moncine\MagazineRatingScale::maxValue($periodScale);
+    if ($periodMax > 0 && $periodMax < 10 && $periodMax > $starMapMax) {
+        $starMapMax = $periodMax;
+    }
+}
+$showStarMap = ($currentRatingMax !== null && $currentRatingMax < 10)
+    || $starPercentMap !== [];
+foreach ($ratingPeriods as $periodForShow) {
+    $periodScaleShow = Moncine\MagazineRatingScale::normalize($periodForShow['rating_scale'] ?? null);
+    if (Moncine\MagazineRatingScale::usesStars($periodScaleShow)) {
+        $showStarMap = true;
+        break;
+    }
+}
+?>
+<div class="magazine-star-percent-map"
+     data-star-percent-map
+     data-star-map-max="<?= (int) $starMapMax ?>"
+     <?= $showStarMap ? '' : 'hidden' ?>>
+    <span class="magazine-star-percent-map__label" id="star_percent_map_label">
+        Équivalence étoiles → % (optionnel)
+    </span>
+    <p class="hint">
+        Uniquement pour les magazines notés en <strong>étoiles entières</strong> (échelle &lt; 10).
+        Remplissez ce tableau pour corriger les moyennes (ex. 0★ = 15&nbsp;%, 1★ = 40&nbsp;%…).
+        Laissez vide pour garder la règle de trois. Les demi-étoiles restent toujours en règle de trois.
+    </p>
+    <div class="magazine-star-percent-map__rows" role="group" aria-labelledby="star_percent_map_label"
+         data-star-percent-rows>
+        <?php for ($star = 0; $star <= $starMapMax; $star++): ?>
+            <?php
+            $percentVal = array_key_exists($star, $starPercentMap)
+                ? Moncine\MagazineRatingScale::formatNumber((float) $starPercentMap[$star])
+                : '';
+            ?>
+            <label class="magazine-star-percent-map__field">
+                <span class="magazine-star-percent-map__star"><?= $star ?> ★</span>
+                <input type="number"
+                       name="star_percent[<?= $star ?>]"
+                       min="0"
+                       max="100"
+                       step="0.5"
+                       inputmode="decimal"
+                       placeholder="%"
+                       value="<?= Moncine\View::escape($percentVal) ?>">
+                <span class="magazine-star-percent-map__unit" aria-hidden="true">%</span>
+            </label>
+        <?php endfor; ?>
+    </div>
+</div>

@@ -13,6 +13,27 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.13] — 2026-08-09
+
+**Stats magazines · tri des tests · équivalence étoiles · responsive sujets**
+
+### Ajouté
+
+- **Statistiques magazines** : recherche **sujets d’un mois** (catégorie de magazine + mois + année) — liste des tests, previews et dossiers regroupés par type.
+- **Tri des tests** (A→Z / par note) sur les stats **mois** et les stats **série / année**, avec comparaison en **équivalent /100**.
+- **Équivalence étoiles → %** configurable sur la fiche série (étoiles entières uniquement) pour des moyennes presse plus réalistes ; migration **076** (`series.star_percent_map`).
+- Fiche numéro : tri des tests via le libellé **Test** (alphabétique ↔ notes).
+
+### Amélioré
+
+- Bandeau sujets magazine plus **responsive** (empilement, vignettes qui s’enroulent, édition page/note sans débordement).
+
+### Technique
+
+- `MagazinePeriodStats`, `MagazineRatingScale::toPercent(..., $starPercentMap)`, export/import ODS de la map JSON.
+
+---
+
 ## [0.8.12] — 2026-08-08
 
 **Sujets magazines · autocomplétion · export stats IGDB**

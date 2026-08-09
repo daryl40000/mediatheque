@@ -25,6 +25,7 @@ $subjectScoreUpdated = $subjectScoreUpdated ?? false;
 $subjectMetaUpdated = $subjectMetaUpdated ?? false;
 $subjectTargetSupplementId = (int) ($subjectTargetSupplementId ?? 0);
 $ratingScale = Moncine\MagazineRatingScale::normalize($ratingScale ?? null);
+$starPercentMap = isset($starPercentMap) && is_array($starPercentMap) ? $starPercentMap : null;
 $catalogMediaLinkAvailable = $catalogMediaLinkAvailable ?? false;
 $catalogMediaDomainChoices = $catalogMediaDomainChoices ?? MagazineSubjectCatalogLink::linkableMediaDomainChoices();
 $hasMultipleTags = count($seriesTags) > 1;

@@ -8,6 +8,7 @@
  * @var int $pdfCount
  * @var string $pdfStorageLabel
  * @var array<string, mixed> $periodStats
+ * @var array<string, mixed> $monthBrowseStats
  */
 $mediaNav = Moncine\MediaContext::navLabels();
 $periodStats = $periodStats ?? [
@@ -28,6 +29,29 @@ $gamesMost = $periodStats['games_most'] ?? [];
 $gamesLeast = $periodStats['games_least'] ?? [];
 $seriesMostTests = $periodStats['series_most_tests'] ?? [];
 $seriesMostPreviews = $periodStats['series_most_previews'] ?? [];
+
+$monthBrowseStats = $monthBrowseStats ?? [
+    'active' => false,
+    'year' => 0,
+    'month' => 0,
+    'series_category_key' => '',
+    'series_category_label' => '',
+    'month_label' => '',
+    'total' => 0,
+    'groups' => [],
+    'year_choices' => $yearChoices,
+    'month_choices' => Moncine\MagazineSeriesStats::monthChoices(),
+    'series_category_choices' => [],
+];
+$monthBrowseActive = !empty($monthBrowseStats['active']);
+$monthBrowseYearChoices = $monthBrowseStats['year_choices'] ?? $yearChoices;
+$monthBrowseMonthChoices = $monthBrowseStats['month_choices'] ?? Moncine\MagazineSeriesStats::monthChoices();
+$monthBrowseCategoryChoices = $monthBrowseStats['series_category_choices'] ?? [];
+$monthBrowseYear = (int) ($monthBrowseStats['year'] ?? 0);
+$monthBrowseMonth = (int) ($monthBrowseStats['month'] ?? 0);
+$monthBrowseCategoryKey = (string) ($monthBrowseStats['series_category_key'] ?? '');
+$monthBrowseGroups = $monthBrowseStats['groups'] ?? [];
+$monthBrowseTotal = (int) ($monthBrowseStats['total'] ?? 0);
 ?>
 <section class="stats-page">
     <h1><?= Moncine\View::escape($mediaNav['stats']) ?></h1>
@@ -211,6 +235,130 @@ $seriesMostPreviews = $periodStats['series_most_previews'] ?? [];
                         <?php endif; ?>
                     </section>
                 </div>
+            <?php endif; ?>
+        </section>
+
+        <section class="stats-panel magazine-month-browse" id="sujets-mois" aria-labelledby="magazine-month-browse-heading">
+            <h2 id="magazine-month-browse-heading">Sujets d’un mois</h2>
+            <p class="hint">
+                Choisissez une <strong>catégorie de magazine</strong> (ex. Jeux vidéo), un <strong>mois</strong>
+                et une <strong>année</strong> pour lister tous les <strong>tests</strong>, <strong>previews</strong>
+                et <strong>dossiers</strong> parus ce mois-là (selon la date de parution du numéro).
+            </p>
+
+            <form method="get" action="/statistiques.php" class="magazine-period-stats__form import-form">
+                <div class="magazine-period-stats__fields">
+                    <div>
+                        <label for="month_series_category">Catégorie de magazine</label>
+                        <select name="month_series_category" id="month_series_category" required>
+                            <option value="">— Choisir —</option>
+                            <?php foreach ($monthBrowseCategoryChoices as $choice): ?>
+                                <?php
+                                $choiceKey = (string) ($choice['key'] ?? '');
+                                $choiceLabel = (string) ($choice['label'] ?? $choiceKey);
+                                ?>
+                                <option value="<?= Moncine\View::escape($choiceKey) ?>"
+                                    <?= $monthBrowseCategoryKey === $choiceKey ? ' selected' : '' ?>>
+                                    <?= Moncine\View::escape($choiceLabel) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="month_num">Mois</label>
+                        <select name="month_num" id="month_num" required>
+                            <option value="">—</option>
+                            <?php foreach ($monthBrowseMonthChoices as $monthNum => $monthLabel): ?>
+                                <option value="<?= (int) $monthNum ?>"
+                                    <?= $monthBrowseMonth === (int) $monthNum ? ' selected' : '' ?>>
+                                    <?= Moncine\View::escape((string) $monthLabel) ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="month_year">Année</label>
+                        <select name="month_year" id="month_year" required>
+                            <option value="">—</option>
+                            <?php foreach ($monthBrowseYearChoices as $yearOption): ?>
+                                <?php $yearOption = (int) $yearOption; ?>
+                                <option value="<?= $yearOption ?>"
+                                    <?= $monthBrowseYear === $yearOption ? ' selected' : '' ?>>
+                                    <?= $yearOption ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <div class="magazine-period-stats__actions">
+                        <button type="submit" class="btn btn-primary">Afficher</button>
+                        <?php if ($monthBrowseActive): ?>
+                            <a href="/statistiques.php#sujets-mois" class="btn btn-secondary">Effacer</a>
+                        <?php endif; ?>
+                    </div>
+                </div>
+            </form>
+
+            <?php if ($monthBrowseActive): ?>
+                <p class="magazine-period-stats__period-label">
+                    <strong><?= Moncine\View::escape((string) ($monthBrowseStats['series_category_label'] ?? '')) ?></strong>
+                    —
+                    <?= Moncine\View::escape((string) ($monthBrowseStats['month_label'] ?? '')) ?>
+                    <?= $monthBrowseYear ?>
+                    · <?= $monthBrowseTotal ?> résultat<?= $monthBrowseTotal > 1 ? 's' : '' ?>
+                </p>
+
+                <?php if ($monthBrowseTotal === 0): ?>
+                    <p class="hint">
+                        Aucun test, preview ou dossier trouvé pour cette catégorie ce mois-là.
+                    </p>
+                <?php else: ?>
+                    <?php foreach ($monthBrowseGroups as $group): ?>
+                        <?php
+                        $groupLabel = (string) ($group['label'] ?? '');
+                        $groupCategory = (string) ($group['category'] ?? '');
+                        $filteredSubjects = $group['subjects'] ?? [];
+                        $groupCount = count($filteredSubjects);
+                        $groupIsTest = $groupCategory === Moncine\MagazineSubject::TEST;
+                        if ($groupCount === 0) {
+                            continue;
+                        }
+                        ?>
+                        <section class="magazine-month-browse__group series-stats-subjects"
+                                 <?= $groupIsTest ? 'data-stats-subjects-sort data-sort-mode="alpha"' : '' ?>>
+                            <div class="magazine-month-browse__group-head">
+                                <h3 class="magazine-month-browse__group-title">
+                                    <?= Moncine\View::escape($groupLabel) ?>
+                                    <span class="hint">(<?= $groupCount ?>)</span>
+                                </h3>
+                                <?php if ($groupIsTest): ?>
+                                    <div class="magazine-month-browse__sort" role="group"
+                                         aria-label="Ordre des tests">
+                                        <button type="button"
+                                                class="btn btn-secondary btn-sm"
+                                                data-stats-sort="alpha"
+                                                aria-pressed="true">
+                                            A → Z
+                                        </button>
+                                        <button type="button"
+                                                class="btn btn-secondary btn-sm"
+                                                data-stats-sort="score"
+                                                aria-pressed="false"
+                                                title="Meilleures notes d’abord, en équivalent /100">
+                                            Par note
+                                        </button>
+                                    </div>
+                                <?php endif; ?>
+                            </div>
+                            <?php if ($groupIsTest): ?>
+                                <p class="hint magazine-month-browse__sort-hint">
+                                    « Par note » compare les notes en <strong>équivalent /100</strong>
+                                    (ex. 8/10 ≈ 80&nbsp;%, 16/20 ≈ 80&nbsp;%), pour respecter les différentes échelles.
+                                </p>
+                            <?php endif; ?>
+                            <?php require MONCINE_ROOT . '/templates/_magazine_series_stats_subject_vignettes.php'; ?>
+                        </section>
+                    <?php endforeach; ?>
+                <?php endif; ?>
             <?php endif; ?>
         </section>
     <?php endif; ?>

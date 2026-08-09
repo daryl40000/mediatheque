@@ -54,6 +54,8 @@ document.addEventListener('DOMContentLoaded', () => {
     runInit('gameShelfHoverPreviews', initGameShelfHoverPreviews);
     runInit('collectionGridHoverBubbles', initCollectionGridHoverBubbles);
     runInit('magazineSubjectStripHoverBubbles', initMagazineSubjectStripHoverBubbles);
+    runInit('magazineSubjectStripSort', initMagazineSubjectStripSort);
+    runInit('magazineStatsSubjectsSort', initMagazineStatsSubjectsSort);
     runInit('magazineSubjectMetaEdit', initMagazineSubjectMetaEdit);
     runInit('magazineSubjectAttachScoreField', initMagazineSubjectAttachScoreField);
     runInit('shareLinkCopy', initShareLinkCopy);
@@ -1949,8 +1951,95 @@ function initMagazineRatingPeriodsField() {
                 return;
             }
             row.remove();
+            syncStarPercentMapVisibility();
+        });
+
+        // Quand on ajoute une période, rafraîchir l’affichage de la table étoiles.
+        addBtn.addEventListener('click', () => {
+            // L’autre listener a déjà ajouté la ligne ; on resynchronise ensuite.
+            window.setTimeout(syncStarPercentMapVisibility, 0);
         });
     });
+
+    syncStarPercentMapVisibility();
+    document.getElementById('rating_scale')?.addEventListener('input', syncStarPercentMapVisibility);
+    document.querySelectorAll('[data-rating-periods]').forEach((root) => {
+        root.addEventListener('input', (event) => {
+            const target = event.target;
+            if (target instanceof HTMLInputElement && target.name === 'rating_period_scale[]') {
+                syncStarPercentMapVisibility();
+            }
+        });
+    });
+}
+
+/**
+ * Affiche / reconstruit la table d’équivalence étoiles → %
+ * quand une échelle &lt; 10 est utilisée (défaut ou période).
+ */
+function syncStarPercentMapVisibility() {
+    const wrap = document.querySelector('[data-star-percent-map]');
+    const rows = wrap?.querySelector('[data-star-percent-rows]');
+    if (!(wrap instanceof HTMLElement) || !(rows instanceof HTMLElement)) {
+        return;
+    }
+
+    const defaultScale = Number.parseInt(
+        String(document.getElementById('rating_scale')?.value ?? ''),
+        10
+    );
+    let maxStars = 0;
+    if (Number.isFinite(defaultScale) && defaultScale > 0 && defaultScale < 10) {
+        maxStars = defaultScale;
+    }
+    document.querySelectorAll('input[name="rating_period_scale[]"]').forEach((input) => {
+        if (!(input instanceof HTMLInputElement)) {
+            return;
+        }
+        const periodScale = Number.parseInt(input.value, 10);
+        if (Number.isFinite(periodScale) && periodScale > 0 && periodScale < 10) {
+            maxStars = Math.max(maxStars, periodScale);
+        }
+    });
+
+    const hasExistingValues = Array.from(rows.querySelectorAll('input')).some(
+        (input) => input instanceof HTMLInputElement && input.value.trim() !== ''
+    );
+    const show = maxStars > 0 || hasExistingValues;
+    wrap.hidden = !show;
+    if (!show) {
+        return;
+    }
+
+    const targetMax = maxStars > 0 ? maxStars : Number.parseInt(wrap.dataset.starMapMax || '5', 10) || 5;
+    wrap.dataset.starMapMax = String(targetMax);
+
+    // Conserver les valeurs déjà saisies.
+    /** @type {Record<string, string>} */
+    const existing = {};
+    rows.querySelectorAll('input').forEach((input) => {
+        if (!(input instanceof HTMLInputElement)) {
+            return;
+        }
+        const match = input.name.match(/star_percent\[(\d+)\]/);
+        if (match) {
+            existing[match[1]] = input.value;
+        }
+    });
+
+    rows.innerHTML = '';
+    for (let star = 0; star <= targetMax; star += 1) {
+        const label = document.createElement('label');
+        label.className = 'magazine-star-percent-map__field';
+        label.innerHTML = [
+            `<span class="magazine-star-percent-map__star">${star} ★</span>`,
+            `<input type="number" name="star_percent[${star}]" min="0" max="100" step="0.5" inputmode="decimal" placeholder="%"`
+                + (existing[String(star)] !== undefined ? ` value="${existing[String(star)]}"` : '')
+                + '>',
+            '<span class="magazine-star-percent-map__unit" aria-hidden="true">%</span>',
+        ].join('');
+        rows.appendChild(label);
+    }
 }
 
 /**
@@ -2675,6 +2764,107 @@ function initMagazineSubjectStripHoverBubbles() {
         window.addEventListener('scroll', hideBubble, { passive: true });
         window.addEventListener('resize', hideBubble);
     });
+}
+
+/**
+ * Rangée « Test » : clic sur le libellé pour basculer
+ * ordre alphabétique ↔ notes décroissantes (équivalent /100 si dispo).
+ */
+function initMagazineSubjectStripSort() {
+    document.querySelectorAll('[data-subject-sort-row]').forEach((row) => {
+        const toggle = row.querySelector('[data-subject-sort-toggle]');
+        const list = row.querySelector('.magazine-subject-strip__list');
+        if (!(toggle instanceof HTMLButtonElement) || !(list instanceof HTMLElement)) {
+            return;
+        }
+
+        toggle.addEventListener('click', () => {
+            const currentMode = row.getAttribute('data-sort-mode') === 'score' ? 'score' : 'alpha';
+            const nextMode = currentMode === 'alpha' ? 'score' : 'alpha';
+            sortMagazineSubjectItems(list, nextMode);
+
+            row.setAttribute('data-sort-mode', nextMode);
+            const byScore = nextMode === 'score';
+            toggle.setAttribute('aria-pressed', byScore ? 'true' : 'false');
+            toggle.title = byScore
+                ? 'Cliquer pour trier par ordre alphabétique'
+                : 'Cliquer pour trier par note (décroissante, équivalent /100)';
+            toggle.setAttribute(
+                'aria-label',
+                byScore
+                    ? 'Trier les tests : notes décroissantes. Cliquer pour basculer vers l’ordre alphabétique.'
+                    : 'Trier les tests : ordre alphabétique. Cliquer pour basculer vers les notes décroissantes.'
+            );
+        });
+    });
+}
+
+/**
+ * Stats « sujets d’un mois » : boutons A→Z / Par note sur le groupe Test.
+ * Le tri par note utilise l’équivalent /100 (data-sort-percent).
+ */
+function initMagazineStatsSubjectsSort() {
+    document.querySelectorAll('[data-stats-subjects-sort]').forEach((section) => {
+        const list = section.querySelector('.series-stats-subjects__list');
+        const buttons = section.querySelectorAll('[data-stats-sort]');
+        if (!(list instanceof HTMLElement) || buttons.length === 0) {
+            return;
+        }
+
+        buttons.forEach((button) => {
+            if (!(button instanceof HTMLButtonElement)) {
+                return;
+            }
+            button.addEventListener('click', () => {
+                const mode = button.getAttribute('data-stats-sort') === 'score' ? 'score' : 'alpha';
+                sortMagazineSubjectItems(list, mode);
+                section.setAttribute('data-sort-mode', mode);
+                buttons.forEach((other) => {
+                    const isActive = other.getAttribute('data-stats-sort') === mode;
+                    other.setAttribute('aria-pressed', isActive ? 'true' : 'false');
+                    other.classList.toggle('is-active', isActive);
+                });
+            });
+        });
+    });
+}
+
+/**
+ * Trie les vignettes d’une liste : alpha ou note (équivalent /100).
+ * @param {HTMLElement} list
+ * @param {'alpha'|'score'} mode
+ */
+function sortMagazineSubjectItems(list, mode) {
+    const items = Array.from(list.querySelectorAll(':scope > li'));
+
+    items.sort((left, right) => {
+        if (mode === 'score') {
+            // Préfère l’équivalent /100 ; sinon note brute (même échelle).
+            const leftRaw = left.getAttribute('data-sort-percent')
+                || left.getAttribute('data-sort-score')
+                || '';
+            const rightRaw = right.getAttribute('data-sort-percent')
+                || right.getAttribute('data-sort-score')
+                || '';
+            const leftHasScore = leftRaw !== '';
+            const rightHasScore = rightRaw !== '';
+            if (leftHasScore !== rightHasScore) {
+                return leftHasScore ? -1 : 1;
+            }
+            if (leftHasScore) {
+                const scoreDiff = Number(rightRaw) - Number(leftRaw);
+                if (scoreDiff !== 0) {
+                    return scoreDiff;
+                }
+            }
+        }
+
+        const leftLabel = left.getAttribute('data-sort-label') ?? '';
+        const rightLabel = right.getAttribute('data-sort-label') ?? '';
+        return leftLabel.localeCompare(rightLabel, 'fr', { sensitivity: 'base' });
+    });
+
+    items.forEach((item) => list.appendChild(item));
 }
 
 /**

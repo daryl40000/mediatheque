@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\Csrf;
 use Moncine\MagazineRatingPeriod;
+use Moncine\MagazineRatingScale;
 use Moncine\MagazineSeriesCategory;
 use Moncine\MagazineSeriesTag;
 use Moncine\MediaDomainGuards;
@@ -41,6 +42,14 @@ if (is_string($periodsParsed)) {
     exit;
 }
 
+$scaleMaxForMap = (int) MagazineRatingScale::maxValue(
+    MagazineRatingScale::normalize($_POST['rating_scale'] ?? null)
+);
+$starMapMax = ($scaleMaxForMap > 0 && $scaleMaxForMap < 10)
+    ? $scaleMaxForMap
+    : MagazineRatingScale::STAR_MAP_MAX;
+$starPercentMap = MagazineRatingScale::normalizeStarPercentMapFromPost($_POST, $starMapMax);
+
 $result = $repo->update($seriesId, [
     'titre' => (string) ($_POST['titre'] ?? ''),
     'publication_type' => (string) ($_POST['publication_type'] ?? ''),
@@ -54,6 +63,7 @@ $result = $repo->update($seriesId, [
     'tags' => MagazineSeriesTag::normalizeFromPost($_POST['tags'] ?? ''),
     'categories' => MagazineSeriesCategory::normalizeFromPost($_POST['categories'] ?? ''),
     'rating_scale' => (string) ($_POST['rating_scale'] ?? ''),
+    'star_percent_map' => $starPercentMap,
     'external_url' => (string) ($_POST['external_url'] ?? ''),
 ]);
 

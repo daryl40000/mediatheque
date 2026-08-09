@@ -634,6 +634,17 @@ textarea {
     }
 }
 
+/* Sujets magazine : voir aussi container queries dans style.css
+   (empilement + enroulement quand la colonne détail est étroite). */
+@media (max-width: 900px) {
+    .game-detail-page .magazine-subjects-section,
+    .game-detail-page .magazine-subject-strip,
+    .game-detail-page .magazine-subject-form {
+        min-width: 0;
+        max-width: 100%;
+    }
+}
+
 /* —— Cartes & résultats —— */
 
 .film-card--with-poster {

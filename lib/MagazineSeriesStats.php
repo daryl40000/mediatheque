@@ -449,6 +449,7 @@ final class MagazineSeriesStats
 
         $seriesRow = (new SeriesRepository())->findById($seriesId, MediaDomain::MAGAZINE);
         $defaultScale = MagazineRatingScale::normalize($seriesRow['rating_scale'] ?? null);
+        $starPercentMap = MagazineRatingScale::starPercentMapFromSeries($seriesRow);
         $ratingPeriods = MagazineRatingPeriod::listForSeries($seriesId);
         $subjectRepo = new MagazineSubjectRepository();
         $userId = UserContext::currentUserId();
@@ -484,6 +485,17 @@ final class MagazineSeriesStats
                 $numeroOrdre
             );
 
+            // Équivalent /100 (table étoiles si configurée).
+            $rawScore = array_key_exists('score', $hydrated) && $hydrated['score'] !== null
+                ? (float) $hydrated['score']
+                : null;
+            $hydrated['score_percent'] = MagazineRatingScale::toPercent(
+                $rawScore,
+                $hydrated['rating_scale'] ?? null,
+                $starPercentMap
+            );
+            $hydrated['star_percent_map'] = $starPercentMap;
+
             if ($gameLink !== null) {
                 $hydrated = $gameLink->enrichSubjectRow($hydrated, $userId, $foyerId);
             }
@@ -491,7 +503,8 @@ final class MagazineSeriesStats
             $out[] = $hydrated;
         }
 
-        return $out;
+        // Affichage par défaut : ordre alphabétique (le JS peut basculer vers les notes).
+        return MagazinePeriodStats::sortSubjectsAlphabetically($out);
     }
 
     /** Extrait l’année d’une date ISO ou d’un libellé français (« mars 2018 »). */
@@ -516,5 +529,64 @@ final class MagazineSeriesStats
         }
 
         return null;
+    }
+
+    /**
+     * Extrait le mois (1–12) d’une date de parution.
+     * Année seule (« 2018 ») → null (mois inconnu).
+     */
+    public static function extractMonth(?string $dateParution): ?int
+    {
+        $raw = trim((string) $dateParution);
+        if ($raw === '') {
+            return null;
+        }
+
+        // ISO AAAA-MM ou AAAA-MM-JJ
+        if (preg_match('/^\d{4}-(\d{2})(?:-\d{2})?/', $raw, $matches) === 1) {
+            $month = (int) $matches[1];
+
+            return ($month >= 1 && $month <= 12) ? $month : null;
+        }
+
+        // Année seule : pas de mois fiable
+        if (preg_match('/^(19|20)\d{2}$/', $raw) === 1) {
+            return null;
+        }
+
+        $filter = PublicationType::parseParutionDateFilter(mb_strtolower($raw));
+        if ($filter !== null && ($filter['month'] ?? null) !== null) {
+            $month = (int) $filter['month'];
+
+            return ($month >= 1 && $month <= 12) ? $month : null;
+        }
+
+        $normalized = PublicationType::parseParutionDateLabel($raw);
+        if ($normalized !== null && preg_match('/^\d{4}-(\d{2})/', $normalized, $matches) === 1) {
+            $month = (int) $matches[1];
+
+            return ($month >= 1 && $month <= 12) ? $month : null;
+        }
+
+        return null;
+    }
+
+    /** @return array<int, string> mois 1–12 => libellé français */
+    public static function monthChoices(): array
+    {
+        return [
+            1 => 'Janvier',
+            2 => 'Février',
+            3 => 'Mars',
+            4 => 'Avril',
+            5 => 'Mai',
+            6 => 'Juin',
+            7 => 'Juillet',
+            8 => 'Août',
+            9 => 'Septembre',
+            10 => 'Octobre',
+            11 => 'Novembre',
+            12 => 'Décembre',
+        ];
     }
 }

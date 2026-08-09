@@ -144,6 +144,9 @@ final class MagazineGameLink
                     s.titre AS series_titre, s.publication_type,
                     s.poster_url AS series_poster_url,'
             . (SeriesRepository::ratingScaleColumnExists() ? ' s.rating_scale,' : ' NULL AS rating_scale,')
+            . (SeriesRepository::starPercentMapColumnExists()
+                ? ' s.star_percent_map,'
+                : ' NULL AS star_percent_map,')
             . ' o_issue.poster_url,
                     b.id AS bib_id
              FROM magazine_subject ms
@@ -196,6 +199,9 @@ final class MagazineGameLink
                 );
                 // Échelle série par défaut ; résolue par période juste après le groupement.
                 $row['rating_scale'] = MagazineRatingScale::normalize($row['rating_scale'] ?? null);
+                $row['star_percent_map'] = MagazineRatingScale::parseStarPercentMap(
+                    $row['star_percent_map'] ?? null
+                );
                 $row['test_score'] = self::normalizeCoverageScore($row['test_score'] ?? null, $category);
                 $grouped[$issueOeuvreId] = $row;
                 continue;
@@ -447,7 +453,11 @@ final class MagazineGameLink
             ? MagazineRatingScale::formatDisplay($testScore, $ratingScale)
             : '';
         $row['score_percent'] = $testScore !== null
-            ? MagazineRatingScale::toPercent($testScore, $ratingScale)
+            ? MagazineRatingScale::toPercent(
+                $testScore,
+                $ratingScale,
+                MagazineRatingScale::parseStarPercentMap($row['star_percent_map'] ?? null)
+            )
             : null;
         $row['score_stars'] = $testScore !== null
             ? MagazineRatingScale::starParts($testScore, $ratingScale)

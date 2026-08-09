@@ -42,6 +42,7 @@ final class CatalogMagazineSheets
         'tags' => 'Tags',
         'categories' => 'Catégories',
         'rating_scale' => 'Notes sur',
+        'star_percent_map' => 'Équiv. étoiles % (JSON)',
         'poster_url' => 'Logo (URL)',
         'external_url' => 'Lien en ligne (URL)',
     ];
@@ -77,6 +78,13 @@ final class CatalogMagazineSheets
         'tags' => ['tags', 'tag', 'plateformes'],
         'categories' => ['categories', 'catégories', 'category'],
         'rating_scale' => ['notes sur', 'rating_scale', 'echelle', 'échelle', 'note max'],
+        'star_percent_map' => [
+            'equiv etoiles',
+            'équiv. étoiles % (json)',
+            'star_percent_map',
+            'equivalence etoiles',
+            'équivalence étoiles',
+        ],
         'poster_url' => ['logo', 'logo url', 'poster_url', 'affiche'],
         'external_url' => [
             'lien en ligne',
@@ -217,6 +225,7 @@ final class CatalogMagazineSheets
         $db = Database::getInstance();
         $hasCategories = SeriesRepository::categoriesColumnExists();
         $hasRating = SeriesRepository::ratingScaleColumnExists();
+        $hasStarMap = SeriesRepository::starPercentMapColumnExists();
         $hasExternalUrl = SeriesRepository::externalUrlColumnExists();
 
         $select = 'id, titre, publication_type, editeur, issn, langue, pays,
@@ -226,6 +235,9 @@ final class CatalogMagazineSheets
         }
         if ($hasRating) {
             $select .= ', rating_scale';
+        }
+        if ($hasStarMap) {
+            $select .= ', star_percent_map';
         }
         if ($hasExternalUrl) {
             $select .= ', external_url';
@@ -253,6 +265,7 @@ final class CatalogMagazineSheets
                 (string) ($series['tags'] ?? ''),
                 $hasCategories ? (string) ($series['categories'] ?? '') : '',
                 $hasRating ? (string) ($series['rating_scale'] ?? '') : '',
+                $hasStarMap ? (string) ($series['star_percent_map'] ?? '') : '',
                 (string) ($series['poster_url'] ?? ''),
                 $hasExternalUrl ? (string) ($series['external_url'] ?? '') : '',
             ];
@@ -491,6 +504,9 @@ final class CatalogMagazineSheets
                     'tags' => ImportFilmRows::getCell($row, $map, 'tags'),
                     'categories' => ImportFilmRows::getCell($row, $map, 'categories'),
                     'rating_scale' => ImportFilmRows::getCell($row, $map, 'rating_scale'),
+                    'star_percent_map' => MagazineRatingScale::parseStarPercentMap(
+                        ImportFilmRows::getCell($row, $map, 'star_percent_map')
+                    ),
                     'poster_url' => SecureUrl::sanitizePosterUrl(
                         ImportFilmRows::getCell($row, $map, 'poster_url')
                     ),

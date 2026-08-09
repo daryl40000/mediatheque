@@ -33,8 +33,9 @@ if (MediaDomain::isMagazine(MediaContext::current())) {
 
     $periodFrom = (int) ($_GET['period_from'] ?? 0);
     $periodTo = (int) ($_GET['period_to'] ?? 0);
-    $periodStats = MagazinePeriodStats::isAvailable()
-        ? (new MagazinePeriodStats())->getPeriodDashboard(
+    $periodStatsService = MagazinePeriodStats::isAvailable() ? new MagazinePeriodStats() : null;
+    $periodStats = $periodStatsService !== null
+        ? $periodStatsService->getPeriodDashboard(
             $periodFrom > 0 ? $periodFrom : null,
             $periodTo > 0 ? $periodTo : null
         )
@@ -47,6 +48,30 @@ if (MediaDomain::isMagazine(MediaContext::current())) {
             'games_least' => [],
             'series_most_tests' => [],
             'series_most_previews' => [],
+        ];
+
+    // Recherche : mois précis + catégorie de magazine (Jeux vidéo, Cinéma…).
+    $monthBrowseYear = (int) ($_GET['month_year'] ?? 0);
+    $monthBrowseMonth = (int) ($_GET['month_num'] ?? 0);
+    $monthBrowseCategory = trim((string) ($_GET['month_series_category'] ?? ''));
+    $monthBrowseStats = $periodStatsService !== null
+        ? $periodStatsService->getMonthCategorySubjects(
+            $monthBrowseYear > 0 ? $monthBrowseYear : null,
+            $monthBrowseMonth > 0 ? $monthBrowseMonth : null,
+            $monthBrowseCategory !== '' ? $monthBrowseCategory : null
+        )
+        : [
+            'active' => false,
+            'year' => 0,
+            'month' => 0,
+            'series_category_key' => '',
+            'series_category_label' => '',
+            'month_label' => '',
+            'total' => 0,
+            'groups' => [],
+            'year_choices' => [],
+            'month_choices' => [],
+            'series_category_choices' => [],
         ];
 
     View::render('statistiques-magazines', [
@@ -63,6 +88,7 @@ if (MediaDomain::isMagazine(MediaContext::current())) {
         'pdfCount' => (int) ($pdfStats['count'] ?? 0),
         'pdfStorageLabel' => MagazineRepository::formatPdfStorageGigabytes((int) ($pdfStats['total_bytes'] ?? 0)),
         'periodStats' => $periodStats,
+        'monthBrowseStats' => $monthBrowseStats,
         'wideLayout' => true,
     ]);
     exit;

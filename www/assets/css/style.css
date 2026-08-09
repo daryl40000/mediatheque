@@ -3515,6 +3515,60 @@ body.page-wide .container--wide:has(> .game-detail-page) {
     }
 }
 
+.magazine-month-browse {
+    margin-top: 2.5rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border);
+}
+
+.magazine-month-browse__group {
+    margin: 1.25rem 0 1.75rem;
+}
+
+.magazine-month-browse__group-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin: 0 0 0.5rem;
+}
+
+.magazine-month-browse__group-title {
+    margin: 0;
+    font-size: 1.05rem;
+}
+
+.magazine-month-browse__sort {
+    display: inline-flex;
+    flex-wrap: wrap;
+    gap: 0.35rem;
+}
+
+.magazine-month-browse__sort .btn[aria-pressed="true"],
+.magazine-month-browse__sort .btn.is-active {
+    border-color: color-mix(in srgb, var(--media-accent, var(--accent)) 55%, var(--border));
+    background: color-mix(in srgb, var(--media-accent, var(--accent)) 18%, var(--surface));
+    color: var(--text);
+    font-weight: 700;
+}
+
+.magazine-month-browse__sort-hint {
+    margin: 0 0 0.75rem;
+}
+
+.series-stats-subjects__equiv {
+    display: inline-block;
+    margin-left: 0.15rem;
+    font-size: 0.68rem;
+    white-space: nowrap;
+}
+
+.magazine-month-browse .series-stats-subjects__list {
+    flex-wrap: wrap;
+    overflow-x: visible;
+}
+
 .stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fill, minmax(10.5rem, 1fr));
@@ -3897,16 +3951,26 @@ body.page-wide .container--wide:has(> .game-detail-page) {
     align-items: center;
 }
 
+.series-stats-subjects__result-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 1rem;
+    margin: 0 0 0.65rem;
+}
+
 .series-stats-subjects__result-label {
-    margin: 0 0 0.85rem;
+    margin: 0;
     display: flex;
     flex-wrap: wrap;
     gap: 0.5rem 0.75rem;
     align-items: center;
+    flex: 1 1 auto;
 }
 
 .series-stats-subjects__export {
-    margin-left: auto;
+    margin-left: 0;
 }
 
 .series-stats-subjects__strip .series-stats-subjects__list {
@@ -5381,6 +5445,8 @@ a.collection-grid__link.social-profile-grid__card,
 
 .game-detail-page .magazine-subjects-section {
     margin-top: 1.25rem;
+    min-width: 0;
+    max-width: 100%;
 }
 
 .game-detail-page .game-detail__saga .badge {
@@ -6340,6 +6406,48 @@ td .game-linux-badge--plain {
     min-width: 2.25rem;
 }
 
+.magazine-star-percent-map {
+    margin: 0 0 1.25rem;
+    max-width: 40rem;
+}
+
+.magazine-star-percent-map__label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.magazine-star-percent-map__rows {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.55rem 0.75rem;
+    margin: 0.75rem 0 0;
+}
+
+.magazine-star-percent-map__field {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3rem;
+    margin: 0;
+    min-width: 7.5rem;
+}
+
+.magazine-star-percent-map__field input {
+    width: 4.25rem;
+    margin-top: 0;
+}
+
+.magazine-star-percent-map__star {
+    font-size: 0.9rem;
+    font-variant-numeric: tabular-nums;
+    min-width: 2.4rem;
+}
+
+.magazine-star-percent-map__unit {
+    font-size: 0.85rem;
+    opacity: 0.8;
+}
+
 .magazine-rating-summary__periods {
     list-style: none;
     padding: 0;
@@ -6409,6 +6517,7 @@ td .game-linux-badge--plain {
     border-top: 1px solid rgba(255, 255, 255, 0.08);
     min-width: 0;
     max-width: 100%;
+    box-sizing: border-box;
 }
 
 .magazine-subject-strip {
@@ -6418,6 +6527,9 @@ td .game-linux-badge--plain {
     display: flex;
     flex-direction: column;
     gap: 0.85rem;
+    /* Adapte le layout à la largeur réelle du strip (ex. colonne à côté de la couverture). */
+    container-type: inline-size;
+    container-name: magazine-subject-strip;
 }
 
 /* Une rangée = un type d’article (label à gauche, vignettes à droite). */
@@ -6453,6 +6565,40 @@ td .game-linux-badge--plain {
     border-radius: 0 6px 6px 0;
 }
 
+/* Bouton « Test » : même look que le label, cliquable pour basculer le tri */
+.magazine-subject-strip__row-label--sortable {
+    padding: 0;
+    overflow: hidden;
+}
+
+.magazine-subject-strip__sort-toggle {
+    display: block;
+    width: 100%;
+    margin: 0;
+    padding: 0.45rem 0.55rem 0.45rem 0.6rem;
+    font: inherit;
+    font-size: 0.72rem;
+    font-weight: 700;
+    line-height: 1.2;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    text-align: left;
+    color: inherit;
+    background: transparent;
+    border: 0;
+    cursor: pointer;
+}
+
+.magazine-subject-strip__sort-toggle:hover,
+.magazine-subject-strip__sort-toggle:focus-visible {
+    background: color-mix(in srgb, var(--media-accent) 22%, transparent);
+    outline: none;
+}
+
+.magazine-subject-strip__sort-toggle[aria-pressed="true"] {
+    background: color-mix(in srgb, var(--media-accent) 28%, transparent);
+}
+
 .magazine-subject-strip__row-count {
     display: inline;
     margin-left: 0.15rem;
@@ -6471,15 +6617,27 @@ td .game-linux-badge--plain {
     margin: 0;
     padding: 0.15rem 0 0.5rem;
     overflow-x: auto;
+    overscroll-behavior-x: contain;
     -webkit-overflow-scrolling: touch;
     scrollbar-width: thin;
     flex: 1 1 auto;
     min-width: 0;
+    max-width: 100%;
 }
 
 .magazine-subject-strip__item {
     width: 5.75rem;
     flex: 0 0 auto;
+    max-width: 100%;
+    box-sizing: border-box;
+}
+
+/* Pendant l’édition page/note : élargit la vignette pour que les champs tiennent. */
+.magazine-subject-strip__item:has(.magazine-subject-strip__meta.is-editing) {
+    width: auto;
+    min-width: 5.75rem;
+    max-width: min(12.5rem, 100%);
+    z-index: 2;
 }
 
 .magazine-subject-strip__item--catalog-only {
@@ -6783,7 +6941,18 @@ span.magazine-subject-strip__page-num {
     text-align: center;
 }
 
+/* Plus spécifique que input[type=number] { width:100% } pour ne pas éclater la vignette. */
+.magazine-subject-strip__meta-form .magazine-subject-strip__page-input,
+.magazine-subject-strip__meta-form .magazine-subject-strip__score-input {
+    width: 3.5rem;
+    max-width: 100%;
+    margin-top: 0;
+    box-sizing: border-box;
+}
+
 .magazine-subject-strip__page-save {
+    width: auto;
+    margin-top: 0;
     padding: 0.15rem 0.45rem;
     font-size: 0.72rem;
     line-height: 1.2;
@@ -7426,11 +7595,22 @@ body.livre-cover-lightbox-open {
 }
 
 .magazine-subject-form {
+    width: 100%;
     max-width: 36rem;
+    box-sizing: border-box;
 }
 
 .magazine-subject-form__label-wrap {
     position: relative;
+    min-width: 0;
+    max-width: 100%;
+}
+
+.magazine-subject-form__game-hint {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35rem 0.65rem;
 }
 
 .magazine-global-search__hint {
@@ -7952,28 +8132,101 @@ body.has-magazine-category-rail .magazine-category-rail {
     border-top: 1px solid var(--border-color, rgba(0, 0, 0, 0.08));
 }
 
-@media (max-width: 720px) {
+@media (max-width: 900px) {
     .magazine-sommaire-row--with-offers {
         grid-template-columns: 1fr;
     }
 
+    /* Label au-dessus, vignettes qui s’enroulent (plus de défilement horizontal forcé). */
     .magazine-subject-strip__row:not(.magazine-subject-strip__row--no-label) {
         flex-direction: column;
-        gap: 0.4rem;
+        align-items: stretch;
+        gap: 0.45rem;
     }
 
     .magazine-subject-strip__row-label {
         flex: none;
-        width: auto;
+        width: 100%;
         max-width: 100%;
         border-radius: 6px;
         border-left-width: 3px;
+    }
+
+    .magazine-subject-strip__list {
+        flex-wrap: wrap;
+        overflow-x: visible;
+        width: 100%;
+        gap: 0.65rem 0.75rem;
+        padding-bottom: 0.15rem;
+    }
+
+    .magazine-subject-strip__item {
+        width: 4.85rem;
+    }
+
+    .magazine-subject-strip__sort-toggle {
+        min-height: 2.5rem;
+        padding: 0.55rem 0.7rem;
+    }
+}
+
+/* Même logique si le strip est étroit alors que l’écran est large (colonne détail + couverture). */
+@container magazine-subject-strip (max-width: 40rem) {
+    .magazine-subject-strip__row:not(.magazine-subject-strip__row--no-label) {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 0.45rem;
+    }
+
+    .magazine-subject-strip__row-label {
+        flex: none;
+        width: 100%;
+        max-width: 100%;
+        border-radius: 6px;
+        border-left-width: 3px;
+    }
+
+    .magazine-subject-strip__list {
+        flex-wrap: wrap;
+        overflow-x: visible;
+        width: 100%;
+        gap: 0.65rem 0.75rem;
+        padding-bottom: 0.15rem;
+    }
+
+    .magazine-subject-strip__item {
+        width: 4.85rem;
+    }
+
+    .magazine-subject-strip__sort-toggle {
+        min-height: 2.5rem;
+        padding: 0.55rem 0.7rem;
+    }
+}
+
+@container magazine-subject-strip (max-width: 22rem) {
+    .magazine-subject-strip__item {
+        width: 4.35rem;
     }
 }
 
 @media (max-width: 640px) {
     .magazine-issue-layout {
         grid-template-columns: 1fr;
+    }
+
+    .magazine-subject-strip__item {
+        width: 4.35rem;
+    }
+
+    .magazine-subject-strip__meta-edit {
+        min-width: 1.75rem;
+        min-height: 1.75rem;
+    }
+
+    .game-detail-page .magazine-subjects-section {
+        margin-top: 1rem;
+        padding-top: 0.85rem;
     }
 }
 

@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-08-08 (version **0.8.12** — sujets magazines, autocomplétion, IGDB export)
+**Dernière mise à jour :** 2026-08-09 (version **0.8.13** — stats mois, tri notes, équivalence étoiles)
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif

@@ -232,36 +232,67 @@ $filteredSubjects = $filteredSubjects ?? [];
                 <?php
                 $filterCategoryLabel = (string) ($subjectCategoryChoices[$filterCategory] ?? $filterCategory);
                 $filteredCount = count($filteredSubjects);
+                $filterIsTest = $filterCategory === Moncine\MagazineSubject::TEST;
                 ?>
-                <p class="series-stats-subjects__result-label">
-                    <strong><?= Moncine\View::escape($filterCategoryLabel) ?></strong>
-                    en <?= $filterYear ?>
-                    — <?= $filteredCount ?> résultat<?= $filteredCount > 1 ? 's' : '' ?>
-                    <?php if ($filteredCount > 0): ?>
-                        <?php
-                        $printUrl = Moncine\View::magazineSeriesStatsSubjectsPrintUrl(
-                            $seriesId,
-                            $filterCategory,
-                            $filterYear,
-                            $statut
-                        );
-                        ?>
-                        <a class="btn btn-secondary btn-sm series-stats-subjects__export"
-                           href="<?= Moncine\View::escape($printUrl) ?>"
-                           target="_blank"
-                           rel="noopener">
-                            Exporter en PDF
-                        </a>
-                    <?php endif; ?>
-                </p>
-                <?php if ($filteredSubjects === []): ?>
-                    <p class="hint">Aucun article de ce type dans les numéros de cette année.</p>
-                <?php else: ?>
-                    <div class="magazine-subject-strip series-stats-subjects__strip" role="region"
-                         aria-label="<?= Moncine\View::escape($filterCategoryLabel . ' ' . $filterYear) ?>">
-                        <?php require MONCINE_ROOT . '/templates/_magazine_series_stats_subject_vignettes.php'; ?>
+                <div class="series-stats-subjects__results"
+                     <?= $filterIsTest && $filteredCount > 0 ? 'data-stats-subjects-sort data-sort-mode="alpha"' : '' ?>>
+                    <div class="series-stats-subjects__result-head">
+                        <p class="series-stats-subjects__result-label">
+                            <strong><?= Moncine\View::escape($filterCategoryLabel) ?></strong>
+                            en <?= $filterYear ?>
+                            — <?= $filteredCount ?> résultat<?= $filteredCount > 1 ? 's' : '' ?>
+                            <?php if ($filteredCount > 0): ?>
+                                <?php
+                                $printUrl = Moncine\View::magazineSeriesStatsSubjectsPrintUrl(
+                                    $seriesId,
+                                    $filterCategory,
+                                    $filterYear,
+                                    $statut
+                                );
+                                ?>
+                                <a class="btn btn-secondary btn-sm series-stats-subjects__export"
+                                   href="<?= Moncine\View::escape($printUrl) ?>"
+                                   target="_blank"
+                                   rel="noopener">
+                                    Exporter en PDF
+                                </a>
+                            <?php endif; ?>
+                        </p>
+                        <?php if ($filterIsTest && $filteredCount > 0): ?>
+                            <div class="magazine-month-browse__sort series-stats-subjects__sort" role="group"
+                                 aria-label="Ordre des tests">
+                                <button type="button"
+                                        class="btn btn-secondary btn-sm"
+                                        data-stats-sort="alpha"
+                                        aria-pressed="true">
+                                    A → Z
+                                </button>
+                                <button type="button"
+                                        class="btn btn-secondary btn-sm"
+                                        data-stats-sort="score"
+                                        aria-pressed="false"
+                                        title="Meilleures notes d’abord, en équivalent /100">
+                                    Par note
+                                </button>
+                            </div>
+                        <?php endif; ?>
                     </div>
-                <?php endif; ?>
+                    <?php if ($filterIsTest && $filteredCount > 0): ?>
+                        <p class="hint magazine-month-browse__sort-hint">
+                            « Par note » compare les notes en <strong>équivalent /100</strong>
+                            (ex. 8/10 ≈ 80&nbsp;%), utile si l’échelle a changé au fil des numéros.
+                        </p>
+                    <?php endif; ?>
+                    <?php if ($filteredSubjects === []): ?>
+                        <p class="hint">Aucun article de ce type dans les numéros de cette année.</p>
+                    <?php else: ?>
+                        <div class="magazine-subject-strip series-stats-subjects__strip"
+                             role="region"
+                             aria-label="<?= Moncine\View::escape($filterCategoryLabel . ' ' . $filterYear) ?>">
+                            <?php require MONCINE_ROOT . '/templates/_magazine_series_stats_subject_vignettes.php'; ?>
+                        </div>
+                    <?php endif; ?>
+                </div>
             <?php elseif ($availableYears === []): ?>
                 <p class="hint">
                     Indiquez d’abord une date de parution sur les numéros pour pouvoir filtrer par année.

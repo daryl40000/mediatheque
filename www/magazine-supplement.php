@@ -113,6 +113,7 @@ View::render('magazine-supplement', [
     'seriesTags' => $seriesTags,
     'forcedTag' => $forcedTag,
     'ratingScale' => $ratingScale,
+    'starPercentMap' => MagazineRatingScale::starPercentMapFromSeries($seriesRow),
     'parutionYear' => $parutionYear,
     'defaultSubjectYear' => $defaultSubjectYear,
     'subjectYearChoices' => $subjectYearChoices,

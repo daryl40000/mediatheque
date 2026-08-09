@@ -58,6 +58,48 @@ final class MagazineRatingScaleTest extends TestCase
         $this->assertNull(MagazineRatingScale::toPercent(8.0, null));
     }
 
+    public function testToPercentUsesStarMapForWholeStarsOnly(): void
+    {
+        $map = [
+            0 => 15.0,
+            1 => 40.0,
+            2 => 60.0,
+            3 => 75.0,
+            4 => 90.0,
+            5 => 100.0,
+        ];
+
+        // Étoiles entières → table
+        $this->assertSame(15.0, MagazineRatingScale::toPercent(0.0, '5', $map));
+        $this->assertSame(40.0, MagazineRatingScale::toPercent(1.0, '5', $map));
+        $this->assertSame(75.0, MagazineRatingScale::toPercent(3.0, '5', $map));
+        $this->assertSame(100.0, MagazineRatingScale::toPercent(5.0, '5', $map));
+
+        // Demi-étoile → règle de trois (3,5/5 = 70 %)
+        $this->assertSame(70.0, MagazineRatingScale::toPercent(3.5, '5', $map));
+
+        // Échelle ≥ 10 : table ignorée
+        $this->assertSame(80.0, MagazineRatingScale::toPercent(8.0, '10', $map));
+
+        // Table vide / note absente de la table → règle de trois
+        $this->assertSame(80.0, MagazineRatingScale::toPercent(4.0, '5', []));
+        $this->assertSame(40.0, MagazineRatingScale::toPercent(2.0, '5', [0 => 10.0, 1 => 20.0]));
+    }
+
+    public function testParseAndSerializeStarPercentMap(): void
+    {
+        $map = MagazineRatingScale::parseStarPercentMap('{"0":15,"1":40,"5":100}');
+        $this->assertSame([0 => 15.0, 1 => 40.0, 5 => 100.0], $map);
+        $this->assertSame('{"0":15,"1":40,"5":100}', MagazineRatingScale::serializeStarPercentMap($map));
+        $this->assertNull(MagazineRatingScale::parseStarPercentMap(''));
+        $this->assertNull(MagazineRatingScale::parseStarPercentMap('{}'));
+
+        $fromPost = MagazineRatingScale::normalizeStarPercentMapFromPost([
+            'star_percent' => ['0' => '15', '1' => '', '2' => '60', '3' => '200'],
+        ], 5);
+        $this->assertSame([0 => 15.0, 2 => 60.0], $fromPost);
+    }
+
     public function testFormatDisplayAndStars(): void
     {
         $this->assertSame('Sur 20', MagazineRatingScale::label('20'));

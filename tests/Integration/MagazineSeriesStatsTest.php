@@ -34,6 +34,13 @@ final class MagazineSeriesStatsTest extends MoncineTestCase
         $this->assertSame(2018, MagazineSeriesStats::extractYear('mars 2018'));
         $this->assertNull(MagazineSeriesStats::extractYear(''));
         $this->assertNull(MagazineSeriesStats::extractYear('sans date'));
+
+        $this->assertSame(6, MagazineSeriesStats::extractMonth('2024-06-01'));
+        $this->assertSame(3, MagazineSeriesStats::extractMonth('mars 2018'));
+        $this->assertSame(1, MagazineSeriesStats::extractMonth('janvier 1998'));
+        $this->assertNull(MagazineSeriesStats::extractMonth('2018'));
+        $this->assertNull(MagazineSeriesStats::extractMonth(''));
+        $this->assertSame('Mars', MagazineSeriesStats::monthChoices()[3] ?? null);
     }
 
     public function testMagazineSeriesStatsUrl(): void
