@@ -13,6 +13,21 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.14] — 2026-08-09
+
+**Droits PDF partagés · factoring Phase A jeux · FilmUrls**
+
+### Sécurité
+
+- **PDF partagés** (numéro magazine, suppléments, pièces jointes jeux) : un utilisateur peut **ajouter** un PDF seulement s’il n’y en a pas encore ; **remplacer** et **supprimer** sont réservés à l’administrateur (UI + contrôle serveur).
+
+### Technique
+
+- Phase A : `GameBulkActionService` — actions de masse de `/jeux.php` extraites (comme les films).
+- Dette `View` : URLs films extraites vers `FilmUrls` (façade `View` inchangée pour les appels existants).
+
+---
+
 ## [0.8.13] — 2026-08-09
 
 **Stats magazines · tri des tests · équivalence étoiles · responsive sujets**

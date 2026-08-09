@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.8.13** (2026-08-09)
+**Version actuelle : 0.8.14** (2026-08-09)
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -13,17 +13,17 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 ---
 
-## Où en est-on ? (synthèse 0.8.13)
+## Où en est-on ? (synthèse 0.8.14)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
 | **Films** | ✅ Production | 0.4.4+ → **0.7.6** | Complet (TMDB, sagas, quiz, partage, **ressentis**, moyenne presse **0.8.8**) |
-| **Jeux** | ✅ Utilisable | 0.5.0 → **0.8.13** | Complet (IGDB, sagas, Steam, prêts, magasins, `/jeu-magazines.php`, **doublons maintenance**) |
-| **Magazines** | ✅ Complet (M5) | 0.2.x → **0.8.13** | ABM, PDF, FTS, sujets, pont catalogue, notes/échelles, **stats mois + tri notes**, partage |
+| **Jeux** | ✅ Utilisable | 0.5.0 → **0.8.14** | Complet (IGDB, sagas, Steam, prêts, magasins, `/jeu-magazines.php`, **doublons maintenance**) |
+| **Magazines** | ✅ Complet (M5) | 0.2.x → **0.8.14** | ABM, PDF (droits renforcés), FTS, sujets, pont catalogue, notes/échelles, **stats mois + tri notes**, partage |
 | **BD / Manga** | ✅ **Livré (M2)** | **0.7.2** → **0.8.0** | Collection, envies, partage, profil, impression, **import CSV** |
 | **Livres** | ✅ **Utilisable (M3)** | **0.8.1** | Collection, envies, sagas, lectures, stats, pont jeux ([doc/livres.md](doc/livres.md)) |
 | **Musique** | ⏳ Placeholder (M8) | **0.7.8** | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles et CD physiques |
-| **Transversal** | 🔄 Partiel | **0.7.12**–**0.8.13** | Recherche globale (dès 1 lettre), catalogue admin, import/export, profil, partage, CI, PHPStan 0 alerte |
+| **Transversal** | 🔄 Partiel | **0.7.12**–**0.8.14** | Recherche globale (dès 1 lettre), catalogue admin, import/export, profil, partage, CI, PHPStan 0 alerte |
 
 ### Phases (suivi)
 
@@ -32,7 +32,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 | **M0** Fondations multi-médias | ✅ Livré | 0.1.0 | — |
 | **M1** Stabilisation films | ✅ Livré | 0.4.4 | Maintenance seulement |
 | **M4** Jeux vidéo | ✅ **Livré** (polish restant) | **0.7.17** (+ polish **0.8.x**) | Import GOG (voir M4) |
-| **M5** Magazines | ✅ **Livré** | **0.7.17** (+ polish **0.8.6**–**0.8.13**) | Maintenance ; polish ponctuel |
+| **M5** Magazines | ✅ **Livré** | **0.7.17** (+ polish **0.8.6**–**0.8.14**) | Maintenance ; polish ponctuel |
 | **Pont** Magazines ↔ Catalogue | ✅ Livré | **0.7.17** | Jeu (0.6.3) + **film** (0.7.17) |
 | **M2** BD / Manga | ✅ **Livré** | **0.8.0** | Export CSV optionnel ; suite → **M3** |
 | **M3** Livres | ✅ **Utilisable** | **0.8.1** | Import CSV / partage / imprimable optionnels |
@@ -43,6 +43,11 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.8.14** — Droits PDF + factoring (2026-08-09)
+
+- PDF catalogue (magazines, suppléments, pièces jointes jeux) : ajout si absent ; replace/delete admin.
+- Qualité : `GameBulkActionService`, extraction `FilmUrls`.
 
 ### ✅ **0.8.13** — Stats mois, tri notes, équivalence étoiles (2026-08-09)
 
@@ -597,9 +602,10 @@ Détail complet : archives QA dans l’historique git avant cette réorganisatio
 | Stats série : sujets d’une année + export PDF (colonne IGDB) | **0.8.11**–**0.8.12** |
 | Fix création sujets (contexte onglet) ; autocomplétion 1 lettre | **0.8.12** |
 | Stats sujets d’un mois ; tri tests ; équivalence étoiles → % | **0.8.13** |
+| Droits PDF partagés (ajout si absent / admin replace-delete) | **0.8.14** |
 
 **Critère de sortie M5 :** ✅ atteint — parcours catalogue → collection aligné sur films/jeux.  
-**Polish post-M5 :** notes, périodes d’échelle, stats série/mois, fiabilité sujets — voir **0.8.6**–**0.8.13**.
+**Polish post-M5 :** notes, périodes d’échelle, stats série/mois, fiabilité sujets, droits PDF — voir **0.8.6**–**0.8.14**.
 
 ---
 
@@ -811,4 +817,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.8.13** — 2026-08-09 (stats sujets d’un mois, tri notes, équivalence étoiles).*
+*Dernière mise à jour : **0.8.14** — 2026-08-09 (droits PDF, GameBulkActionService, FilmUrls).*

@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-08-09 (version **0.8.13** — stats mois, tri notes, équivalence étoiles)
+**Dernière mise à jour :** 2026-08-09 (version **0.8.14** — droits PDF, GameBulkActionService, FilmUrls)
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif
@@ -161,7 +161,7 @@ try {
 
 | Page / zone | Service à créer |
 |-------------|-----------------|
-| `www/jeux.php` (actions masse) | `GameBulkActionService` |
+| `www/jeux.php` (actions masse) | ✅ `GameBulkActionService` (2026-08-09) |
 | Import catalogue magazines | étendre `MagazineCatalogImporter` ou `CatalogImportService` |
 | `www/enregistrer-*.php` très longs | service dédié par domaine |
 
@@ -214,7 +214,7 @@ Préférer :
 
 ### Autres fichiers à traiter (priorité moyenne)
 
-- **`lib/View.php`** — URLs domaine extraites (`BdUrls`, `MagazineUrls`, `GameUrls`) ; reste render + URLs films
+- **`lib/View.php`** — URLs domaine extraites (`BdUrls`, `MagazineUrls`, `GameUrls`, **`FilmUrls`**) ; reste render + helpers divers
 - **`lib/UserPublicProfileService.php`** — extraire profils BD / magazine / jeu
 - **`lib/FilmRepositoryLegacy.php`** — planifier fusion avec `FilmRepository` / `CatalogFilmRepository` ou suppression
 
@@ -450,7 +450,7 @@ Validation dispersée dans les repositories. Un helper commun aide, mais **aprè
 | Sujet | Action | Statut |
 |-------|--------|--------|
 | **`FilmRepositoryLegacy.php`** | Helpers d’affichage → `FilmPresentation` ; moteur Legacy = repli pré-catalogue uniquement | ✅ Helpers extraits (2026-07-20) — suppression moteur = suite |
-| **`View.php`** | URLs BD / magazines / jeux → `BdUrls`, `MagazineUrls`, `GameUrls`, `CatalogPageUrls` ; `View` reste façade (render, URLs films, helpers divers) | ✅ URLs domaine extraites (2026-07-20) |
+| **`View.php`** | URLs BD / magazines / jeux / films → `BdUrls`, `MagazineUrls`, `GameUrls`, `CatalogPageUrls`, `FilmUrls` ; `View` reste façade (render + helpers) | ✅ URLs films extraites (2026-08-09) |
 | **`BibliothequeRepository`** | Documenter et centraliser la gestion multi-supports (films / magazines / BD) | ⏳ |
 | **`ROADMAP.md` produit** | Tenir à jour séparément (versions, modules livrés) | Continu |
 | **Sync doc** | Mettre à jour [doc/](doc/) quand une extraction change les points d'entrée | Continu |
@@ -505,6 +505,7 @@ Les formats (durée, support, styles…) passent par [`FilmPresentation`](lib/Fi
 ## Suivi des progrès
 
 - [x] **Phase A** — `FilmBulkActionService` + `films.php` allégé
+- [x] **Phase A** — `GameBulkActionService` + `jeux.php` allégé (assignation saga / franchise)
 - [x] **Phase B** — Pilote 1 : `GameRepository` (**539** lignes ; extractions `GameLibraryQuery`, `GameCatalogUpdater`, `GameCatalogCreator`, `GameLibraryAttach`, `GamePosterService`)
 - [x] **Phase B** — Pilote 2 : `BdRepository` (**514** lignes ; extractions `BdCatalogSql`, `BdLibraryQuery`, `BdCatalogWriter`, `BdTomeOrdre`, `BdCatalogUpdater`, `BdCatalogCreator`, `BdLibraryAttach`, `BdPosterService`)
 - [x] **Phase B** — Pilote 3 : `MagazineRepository` (**481** lignes ; extractions `MagazineCatalogSql`, `MagazineSearchSql`, `MagazineNumeroOrdre`, `MagazineLibraryQuery`, `MagazineCatalogValidator`, `MagazineCatalogWriter`, `MagazineCatalogCreator`, `MagazineCatalogUpdater`, `MagazineLibraryAttach`, `MagazineLibraryMutations`, `MagazinePdfService`)
@@ -515,7 +516,7 @@ Les formats (durée, support, styles…) passent par [`FilmPresentation`](lib/Fi
 - [x] **Phase F** — Pilote Validator (`Validator` + `UserAccountValidator` sur inscription / create)
 - [x] **Dette** — Helpers `FilmRepositoryLegacy` → `FilmPresentation` (moteur Legacy encore en repli)
 - [ ] **Dette** — Suppression complète de `FilmRepositoryLegacy` (après confirmation bases catalogue)
-- [x] **Dette** — `View.php` : URLs BD / magazine / jeu extraites (`BdUrls`, `MagazineUrls`, `GameUrls`, `CatalogPageUrls`) ; render + URLs films encore dans `View`
+- [x] **Dette** — `View.php` : URLs BD / magazine / jeu / **films** extraites (`BdUrls`, `MagazineUrls`, `GameUrls`, `CatalogPageUrls`, `FilmUrls`) ; render + helpers encore dans `View`
 - [x] **Qualité** — PHPStan niveau 8 sur `lib/` + baseline + job CI (`composer phpstan`)
 - [x] **Qualité** — Baseline PHPStan réduite à **0** (typage des `array` / `list<>` via `ListOf`)
 - [ ] **Qualité** — Étendre éventuellement PHPStan à `www/` / templates

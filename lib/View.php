@@ -280,7 +280,6 @@ final class View
             . self::escape(Csrf::getToken()) . '">';
     }
 
-    /** Lien vers la liste des films d’un réalisateur ou acteur. */
     /** Lien de tri pour la table « Ma collection » (clic = bascule asc/desc). */
     public static function filmsSortUrl(
         string $column,
@@ -290,12 +289,7 @@ final class View
         string $kindFilter = '',
         string $viewMode = ''
     ): string {
-        $dir = 'asc';
-        if ($currentSort === $column && strtolower($currentDir) === 'asc') {
-            $dir = 'desc';
-        }
-
-        return self::filmsCollectionUrl($searchQuery, $column, $dir, $kindFilter, $viewMode);
+        return FilmUrls::filmsSortUrl($column, $currentSort, $currentDir, $searchQuery, $kindFilter, $viewMode);
     }
 
     /** Lien vers la collection (recherche, tri, filtre catégorie, mode d’affichage, page). */
@@ -307,29 +301,7 @@ final class View
         string $viewMode = '',
         int $page = 1
     ): string {
-        $params = [];
-        $searchQuery = trim($searchQuery);
-        if ($searchQuery !== '') {
-            $params['q'] = $searchQuery;
-        }
-        if ($sortBy !== '' && $sortBy !== 'titre') {
-            $params['sort'] = $sortBy;
-        }
-        if (strtolower($sortDir) === 'desc') {
-            $params['dir'] = 'desc';
-        }
-        $kindFilter = ContentKindFilter::normalize($kindFilter);
-        if ($kindFilter !== ContentKindFilter::ALL) {
-            $params['kind'] = $kindFilter;
-        }
-        if (CollectionViewMode::isGrid($viewMode) || CollectionViewMode::isShelf($viewMode)) {
-            $params['view'] = CollectionViewMode::queryValue($viewMode) ?? CollectionViewMode::GRID;
-        }
-        if ($page > 1) {
-            $params['page'] = (string) $page;
-        }
-
-        return $params === [] ? '/films.php' : '/films.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return FilmUrls::filmsCollectionUrl($searchQuery, $sortBy, $sortDir, $kindFilter, $viewMode, $page);
     }
 
     /** Version imprimable de la collection (mêmes filtres / tri que Mes films). */
@@ -339,23 +311,7 @@ final class View
         string $sortDir = 'asc',
         string $kindFilter = ''
     ): string {
-        $params = [];
-        $searchQuery = trim($searchQuery);
-        if ($searchQuery !== '') {
-            $params['q'] = $searchQuery;
-        }
-        if ($sortBy !== '' && $sortBy !== 'titre') {
-            $params['sort'] = $sortBy;
-        }
-        if (strtolower($sortDir) === 'desc') {
-            $params['dir'] = 'desc';
-        }
-        $kindFilter = ContentKindFilter::normalize($kindFilter);
-        if ($kindFilter !== ContentKindFilter::ALL) {
-            $params['kind'] = $kindFilter;
-        }
-
-        return $params === [] ? '/imprimer-films.php' : '/imprimer-films.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return FilmUrls::filmsPrintUrl($searchQuery, $sortBy, $sortDir, $kindFilter);
     }
 
     /** Version imprimable des envies (Mes envies ou envies du groupe). */
@@ -365,32 +321,13 @@ final class View
         string $sortDir = 'asc',
         string $scope = WishlistScope::MINE
     ): string {
-        $params = [];
-        $searchQuery = trim($searchQuery);
-        if ($searchQuery !== '') {
-            $params['q'] = $searchQuery;
-        }
-        if (WishlistScope::normalize($scope) === WishlistScope::GROUP) {
-            $params['scope'] = WishlistScope::GROUP;
-        }
-        if ($sortBy !== '' && $sortBy !== 'titre') {
-            $params['sort'] = $sortBy;
-        }
-        if (strtolower($sortDir) === 'desc') {
-            $params['dir'] = 'desc';
-        }
-
-        return $params === [] ? '/imprimer-envies.php' : '/imprimer-envies.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return FilmUrls::wishlistPrintUrl($searchQuery, $sortBy, $sortDir, $scope);
     }
 
     /** Page de choix ou formulaire d’ajout de film. */
     public static function addFilmChoiceUrl(int $oeuvreId = 0): string
     {
-        if ($oeuvreId > 0) {
-            return '/ajouter-film.php?oeuvre_id=' . $oeuvreId;
-        }
-
-        return '/ajouter-film.php';
+        return FilmUrls::addFilmChoiceUrl($oeuvreId);
     }
 
     /** Page de choix ou formulaire d’ajout de jeu. */
@@ -406,15 +343,7 @@ final class View
      */
     public static function personSearchFilmUrl(array $film): string
     {
-        $presence = (string) ($film['library_presence'] ?? 'none');
-        $bibId = (int) ($film['id'] ?? 0);
-        if ($bibId > 0 && $presence !== 'none') {
-            return '/film.php?id=' . $bibId;
-        }
-
-        $oeuvreId = (int) ($film['oeuvre_id'] ?? 0);
-
-        return self::addFilmChoiceUrl($oeuvreId);
+        return FilmUrls::personSearchFilmUrl($film);
     }
 
     /**
@@ -480,13 +409,7 @@ final class View
 
     public static function addFilmUrl(string $statut, int $oeuvreId = 0): string
     {
-        $statut = LibraryStatut::normalize($statut);
-        $params = ['statut' => $statut];
-        if ($oeuvreId > 0) {
-            $params['oeuvre_id'] = (string) $oeuvreId;
-        }
-
-        return '/ajouter-film.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return FilmUrls::addFilmUrl($statut, $oeuvreId);
     }
 
     /** Fiche d’une œuvre dans le catalogue partagé (films) ou fiche collection selon le domaine. */
@@ -612,12 +535,7 @@ final class View
     /** Liste des magazines qui traitent un film catalogue. */
     public static function filmMagazinesUrl(int $oeuvreId, int $bibId = 0): string
     {
-        $params = ['oeuvre_id' => max(0, $oeuvreId)];
-        if ($bibId > 0) {
-            $params['id'] = $bibId;
-        }
-
-        return '/film-magazines.php?' . http_build_query($params);
+        return FilmUrls::filmMagazinesUrl($oeuvreId, $bibId);
     }
 
     public static function gameLivresUrl(int $oeuvreId, int $bibId = 0): string
@@ -692,15 +610,7 @@ final class View
         int $catalogPage = 1,
         string $catalogMedia = ''
     ): string {
-        return CatalogPageUrls::catalogOeuvrePageUrl(
-            '/oeuvre.php',
-            $oeuvreId,
-            $catalogSearch,
-            $catalogSort,
-            $catalogDir,
-            $catalogPage,
-            $catalogMedia
-        );
+        return FilmUrls::oeuvreUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
     }
 
     /** Ajoute des paramètres GET avant un éventuel fragment (#…). */
@@ -762,22 +672,7 @@ final class View
         string $sortDir = 'asc',
         string $scope = WishlistScope::MINE
     ): string {
-        $params = [];
-        $searchQuery = trim($searchQuery);
-        if ($searchQuery !== '') {
-            $params['q'] = $searchQuery;
-        }
-        if (WishlistScope::normalize($scope) === WishlistScope::GROUP) {
-            $params['scope'] = WishlistScope::GROUP;
-        }
-        if ($sortBy !== '' && $sortBy !== 'titre') {
-            $params['sort'] = $sortBy;
-        }
-        if (strtolower($sortDir) === 'desc') {
-            $params['dir'] = 'desc';
-        }
-
-        return $params === [] ? '/souhaits.php' : '/souhaits.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return FilmUrls::wishlistUrl($searchQuery, $sortBy, $sortDir, $scope);
     }
 
     public static function wishlistSortUrl(
@@ -787,24 +682,7 @@ final class View
         string $searchQuery = '',
         string $scope = WishlistScope::MINE
     ): string {
-        $dir = 'asc';
-        if ($currentSort === $column && strtolower($currentDir) === 'asc') {
-            $dir = 'desc';
-        }
-
-        $params = [
-            'sort' => $column,
-            'dir' => $dir,
-        ];
-        $searchQuery = trim($searchQuery);
-        if ($searchQuery !== '') {
-            $params['q'] = $searchQuery;
-        }
-        if (WishlistScope::normalize($scope) === WishlistScope::GROUP) {
-            $params['scope'] = WishlistScope::GROUP;
-        }
-
-        return '/souhaits.php?' . http_build_query($params, '', '&', PHP_QUERY_RFC3986);
+        return FilmUrls::wishlistSortUrl($column, $currentSort, $currentDir, $searchQuery, $scope);
     }
 
     /** @param list<array<string, mixed>> $voters */
@@ -821,21 +699,12 @@ final class View
     /** Indicateur visuel du tri actif (↑ ou ↓). */
     public static function filmsSortIndicator(string $column, string $currentSort, string $currentDir): string
     {
-        if ($currentSort !== $column) {
-            return '';
-        }
-
-        return strtolower($currentDir) === 'desc' ? ' ↓' : ' ↑';
+        return FilmUrls::filmsSortIndicator($column, $currentSort, $currentDir);
     }
 
     public static function sagaUrl(string $sagaName): string
     {
-        $sagaName = trim($sagaName);
-        if ($sagaName === '') {
-            return '/sagas.php';
-        }
-
-        return '/sagas.php?saga=' . rawurlencode($sagaName);
+        return FilmUrls::sagaUrl($sagaName);
     }
 
     public static function gameFranchiseUrl(string $franchiseName, string $viewMode = ''): string
@@ -845,21 +714,12 @@ final class View
 
     public static function supportFilterUrl(string $supportKey): string
     {
-        if (!SupportPhysique::isValid($supportKey)) {
-            return '/support.php';
-        }
-
-        return '/support.php?type=' . rawurlencode($supportKey);
+        return FilmUrls::supportFilterUrl($supportKey);
     }
 
     public static function personSearchUrl(string $name): string
     {
-        $name = trim($name);
-        if ($name === '') {
-            return '/personnes.php';
-        }
-
-        return '/personnes.php?q=' . rawurlencode($name);
+        return FilmUrls::personSearchUrl($name);
     }
 
     public static function magazinesUrl(string $query = '', string $sort = 'titre', string $dir = 'asc'): string
@@ -1279,11 +1139,6 @@ final class View
 
     public static function filmLibraryNavUrl(int $bibId): string
     {
-        $path = '/film.php?id=' . $bibId;
-        if (MediaContext::current() === MediaDomain::FILM) {
-            return $path;
-        }
-
-        return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::FILM, $path);
+        return FilmUrls::filmLibraryNavUrl($bibId);
     }
 }

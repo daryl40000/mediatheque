@@ -1,13 +1,19 @@
 <?php
 /**
  * Enregistre un ou plusieurs fichiers joints sur une fiche jeu catalogue
- * (PDF manuel/soluce…) — réservé aux administrateurs du catalogue.
+ * (PDF manuel/soluce…).
+ *
+ * Règles PDF partagés :
+ * - utilisateur : peut ajouter un PDF seulement s’il n’y en a pas encore ;
+ * - admin : peut ajouter PDF et autres formats (plusieurs fichiers) ;
+ * - suppression : voir supprimer-fichier-jeu.php (admin uniquement).
  */
 
 declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\Auth;
 use Moncine\CatalogAdmin;
 use Moncine\Csrf;
 use Moncine\GameAttachmentRepository;
@@ -21,7 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
 }
 
 MediaDomainGuards::ensureGameContext();
-CatalogAdmin::denyUnlessAccess();
+
+if (!Auth::isLoggedIn()) {
+    header('Location: /connexion.php');
+    exit;
+}
 
 $oeuvreId = (int) ($_POST['oeuvre_id'] ?? 0);
 $returnUrl = View::oeuvreJeuUrl($oeuvreId);
@@ -33,6 +43,7 @@ UploadLimits::guardPostWithFiles($_POST, $returnUrl, [
 ]);
 
 $repo = new GameAttachmentRepository();
+$isAdmin = CatalogAdmin::canAccess();
 
 if (!UploadLimits::phpAllowsAttachmentUpload()) {
     header('Location: ' . $returnUrl . '&attachment_error=' . rawurlencode(strip_tags(UploadLimits::phpLimitsWarning())));
@@ -51,24 +62,42 @@ if ($label === '' && $kind !== '' && $kind !== 'Autre') {
     $label = $kind;
 }
 
+$hasPdfAlready = $repo->hasPdfForOeuvre($oeuvreId);
 $saved = 0;
 $errors = [];
 foreach ($uploads as $upload) {
+    $fileName = (string) ($upload['name'] ?? 'fichier');
+    $isPdf = GameAttachmentRepository::looksLikePdf($fileName);
+
+    if (!$isAdmin) {
+        if (!$isPdf) {
+            $errors[] = 'Seuls les administrateurs peuvent ajouter des fichiers autres que PDF.';
+            continue;
+        }
+        if ($hasPdfAlready) {
+            $errors[] = 'Un PDF est déjà présent. Seul un administrateur peut en ajouter un autre ou le remplacer.';
+            continue;
+        }
+    }
+
     $fileLabel = $label;
     // Plusieurs fichiers + un seul libellé : on précise le nom du fichier.
     if ($fileLabel !== '' && count($uploads) > 1) {
-        $fileLabel = $fileLabel . ' — ' . (string) ($upload['name'] ?? 'fichier');
+        $fileLabel = $fileLabel . ' — ' . $fileName;
     }
 
     $result = $repo->attachUploadedFile(
         $oeuvreId,
         (string) ($upload['tmp_name'] ?? ''),
-        (string) ($upload['name'] ?? 'fichier'),
+        $fileName,
         (int) ($upload['size'] ?? 0),
         $fileLabel
     );
     if ($result === true) {
         $saved++;
+        if ($isPdf) {
+            $hasPdfAlready = true;
+        }
     } else {
         $errors[] = (string) $result;
     }

@@ -431,16 +431,17 @@ Dans les listes et sur la fiche, chaque support affiche une **icône** :
 
 ## Fichiers attachés (0.5.1 — multi-PDF)
 
-Sur la **fiche jeu**, le foyer peut joindre des fichiers utiles :
+Sur la **fiche jeu**, des fichiers utiles peuvent être joints :
 
 - **PDF** : manuel, soluce, guide, carte… (badge PDF, ouverture dans un nouvel onglet) ;
-- **Autres** : patch, image disque, archive…
-- **Plusieurs fichiers** d’un coup ;
+- **Autres** : patch, image disque, archive… (**admin** uniquement) ;
+- **Plusieurs fichiers** d’un coup (**admin**) ;
 - **Type** facultatif (Manuel / Soluce / Guide…) utilisé comme libellé si la description est vide ;
 - **Limite** : 350 Mo par fichier (`UploadLimits::maxAttachmentBytes()`, même plafond que les PDF magazines) ;
 - **Stockage** : sous-dossier `games/` dans `MONCINE_DATA` ;
-- **Téléchargement** : via `/media-object.php` (contrôle d’accès foyer) ;
-- **Interface** : panneau `_game_attachments_panel.php` sur la fiche catalogue (upload admin + liste pour tous) ; lecture seule sur la fiche perso.
+- **Téléchargement** : via `/media-object.php` (connexion requise) ;
+- **Droits** : utilisateur = ajouter un PDF seulement s’il n’y en a pas encore ; admin = ajouter / remplacer / supprimer ;
+- **Interface** : panneau `_game_attachments_panel.php` (fiche catalogue + ajout PDF sur fiche perso).
 
 ## Notes et bibliothèque
 

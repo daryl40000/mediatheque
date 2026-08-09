@@ -2,9 +2,10 @@
 /**
  * Fichiers joints à une fiche jeu catalogue (manuel, soluce, patch…).
  *
- * Stockés au niveau de l’œuvre (partagés) : seuls les admins/modérateurs
- * catalogue peuvent en ajouter ou en supprimer ; tout utilisateur connecté
- * peut les consulter / télécharger.
+ * Stockés au niveau de l’œuvre (partagés).
+ * Lecture : tout utilisateur connecté.
+ * Ajout PDF : utilisateur si aucun PDF n’existe encore ; admin sinon (plusieurs, non-PDF).
+ * Suppression / remplacement : administrateur catalogue uniquement.
  */
 
 declare(strict_types=1);
@@ -87,6 +88,40 @@ final class GameAttachmentRepository
         $stmt->execute([$storedObjectId, MediaDomain::JEU]);
 
         return (bool) $stmt->fetchColumn();
+    }
+
+    /** Au moins un fichier PDF joint sur cette fiche catalogue. */
+    public function hasPdfForOeuvre(int $oeuvreId): bool
+    {
+        if (!self::isAvailable() || $oeuvreId <= 0) {
+            return false;
+        }
+
+        $stmt = $this->db->prepare(
+            "SELECT 1
+             FROM game_attachment ga
+             INNER JOIN stored_objects so ON so.id = ga.stored_object_id
+             WHERE ga.oeuvre_id = ?
+               AND (
+                    lower(so.mime) = 'application/pdf'
+                    OR lower(ga.original_filename) LIKE '%.pdf'
+               )
+             LIMIT 1"
+        );
+        $stmt->execute([$oeuvreId]);
+
+        return (bool) $stmt->fetchColumn();
+    }
+
+    /** Le nom / MIME correspondent-ils à un PDF ? */
+    public static function looksLikePdf(string $originalName, string $mime = ''): bool
+    {
+        $ext = strtolower((string) pathinfo($originalName, PATHINFO_EXTENSION));
+        if ($ext === 'pdf') {
+            return true;
+        }
+
+        return StoredObjectDelivery::normalizeMime($mime) === 'application/pdf';
     }
 
     /** @return true|string */

@@ -32,8 +32,32 @@ final class MagazinePdfService {
 
         return MediaStorage::relativePath('magazine', $seriesSlug, $year, $fileName);
     }
-    public function attachPdf(int $oeuvreId, string $tmpPath, string $originalName, int $fileSize): bool|string
+    /** Indique si un PDF principal est déjà rattaché à ce numéro catalogue. */
+    public function hasPdf(int $oeuvreId): bool
     {
+        if ($oeuvreId <= 0) {
+            return false;
+        }
+
+        $stmt = $this->db->prepare('SELECT stored_object_id FROM oeuvre_magazine WHERE oeuvre_id = ? LIMIT 1');
+        $stmt->execute([$oeuvreId]);
+
+        return (int) ($stmt->fetchColumn() ?: 0) > 0;
+    }
+
+    /**
+     * Attache un PDF au numéro catalogue.
+     *
+     * @param bool $allowReplace si false (défaut), refuse quand un PDF existe déjà
+     *                           (remplacement réservé à l’admin côté HTTP)
+     */
+    public function attachPdf(
+        int $oeuvreId,
+        string $tmpPath,
+        string $originalName,
+        int $fileSize,
+        bool $allowReplace = false
+    ): bool|string {
         if ($oeuvreId <= 0 || !is_readable($tmpPath)) {
             return 'Fichier PDF invalide.';
         }
@@ -62,8 +86,13 @@ final class MagazinePdfService {
             return 'Numéro magazine introuvable.';
         }
 
-        // Remplacement : supprime l’ancien PDF rattaché à ce numéro.
-        $this->removeStoredPdfForOeuvre($oeuvreId);
+        if ($this->hasPdf($oeuvreId)) {
+            if (!$allowReplace) {
+                return 'Un PDF est déjà présent. Seul un administrateur peut le remplacer.';
+            }
+            // Remplacement admin : supprime l’ancien PDF rattaché à ce numéro.
+            $this->removeStoredPdfForOeuvre($oeuvreId);
+        }
 
         $relative = self::buildMagazinePdfRelativePath(
             (string) ($meta['series_titre'] ?? ''),

@@ -684,6 +684,15 @@ final class MagazineTest extends MoncineTestCase
         @unlink($tmpPdf);
         $this->assertSame(true, $attachResult);
 
+        // Sans autorisation de remplacement : second envoi refusé.
+        $tmpPdf2 = tempnam(sys_get_temp_dir(), 'magpdf_');
+        $this->assertNotFalse($tmpPdf2);
+        file_put_contents($tmpPdf2, "%PDF-1.4\n1 0 obj\n<<>>\nendobj\ntrailer\n<<>>\n%%EOF\n");
+        $denyReplace = $repo->attachPdf($oeuvreId, $tmpPdf2, 'autre.pdf', (int) filesize($tmpPdf2), false);
+        @unlink($tmpPdf2);
+        $this->assertIsString($denyReplace);
+        $this->assertStringContainsString('déjà présent', $denyReplace);
+
         $issue = $repo->findIssueByBibId($bibId, $userId, $foyerId);
         $this->assertNotNull($issue);
         $this->assertGreaterThan(0, (int) ($issue['stored_object_id'] ?? 0));

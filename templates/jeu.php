@@ -186,7 +186,8 @@ if ($linuxBadge === '' && !empty($game['linux_not_supported'])) {
 
                 <?php if (Moncine\GameAttachmentRepository::isAvailable()): ?>
                     <?php
-                    // Lecture seule sur la fiche perso : l’ajout se fait sur la fiche catalogue (admin).
+                    // Fiche perso : lecture + ajout d’un PDF s’il n’y en a pas ;
+                    // suppression / formats non-PDF = fiche catalogue (admin).
                     $attachments = $attachments ?? [];
                     $oeuvreId = (int) ($game['oeuvre_id'] ?? $oeuvreId ?? 0);
                     $canManageAttachments = false;

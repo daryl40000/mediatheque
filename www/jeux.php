@@ -1,6 +1,6 @@
 <?php
 /**
- * Mes jeux vidéo — liste de la collection.
+ * Mes jeux vidéo — liste de la collection (+ actions de masse).
  */
 
 declare(strict_types=1);
@@ -9,6 +9,7 @@ require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
 use Moncine\CollectionViewMode;
 use Moncine\Csrf;
+use Moncine\Exception\ValidationException;
 use Moncine\GameFranchiseRepository;
 use Moncine\GameListFilter;
 use Moncine\GameRepository;
@@ -16,6 +17,7 @@ use Moncine\LibraryStatut;
 use Moncine\MediaContext;
 use Moncine\MediaDomain;
 use Moncine\MediaDomainGuards;
+use Moncine\Service\GameBulkActionService;
 use Moncine\UserContext;
 use Moncine\View;
 
@@ -55,41 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $gameIds = GameFranchiseRepository::parseBulkGameIds($_POST);
     $action = (string) ($_POST['action'] ?? '');
 
-    if ($gameIds === []) {
+    try {
+        $params = (new GameBulkActionService())->handleBulkAction($action, $gameIds, $_POST, $foyerId);
+        moncine_jeux_bulk_redirect($redirectUrl, $params);
+    } catch (ValidationException $e) {
         moncine_jeux_bulk_redirect($redirectUrl, [
-            'bulk_error' => 'Sélectionnez au moins un jeu.',
+            'bulk_error' => $e->getMessage(),
         ]);
     }
-
-    if ($action === 'assign_franchise') {
-        if (!GameFranchiseRepository::isAvailable()) {
-            moncine_jeux_bulk_redirect($redirectUrl, [
-                'bulk_error' => 'Module sagas indisponible.',
-            ]);
-        }
-
-        $franchiseNew = trim((string) ($_POST['franchise_new'] ?? ''));
-        $franchiseExisting = trim((string) ($_POST['franchise_existing'] ?? ''));
-        $franchiseName = $franchiseNew !== '' ? $franchiseNew : $franchiseExisting;
-
-        if ($franchiseName === '') {
-            moncine_jeux_bulk_redirect($redirectUrl, [
-                'bulk_error' => 'Choisissez une saga existante ou saisissez un nouveau nom.',
-            ]);
-        }
-
-        $updated = $franchiseRepo->assignGamesToFranchise($gameIds, $franchiseName, $foyerId);
-        moncine_jeux_bulk_redirect($redirectUrl, [
-            'bulk_ok' => $updated,
-            'bulk_msg' => $updated . ' jeu' . ($updated > 1 ? 'x' : '') . ' ajouté' . ($updated > 1 ? 's' : '')
-                . ' à la saga « ' . $franchiseName . ' ».',
-            'franchise_name' => $franchiseName,
-        ]);
-    }
-
-    moncine_jeux_bulk_redirect($redirectUrl, [
-        'bulk_error' => 'Action inconnue.',
-    ]);
 }
 
 if (!GameRepository::isAvailable()) {

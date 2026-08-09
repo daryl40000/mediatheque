@@ -34,4 +34,12 @@ final class GameAttachmentUploadTypeTest extends TestCase
         $this->assertTrue(StoredObjectDelivery::isInlineSafe('image/jpeg'));
         $this->assertTrue(StoredObjectDelivery::isInlineSafe('application/pdf'));
     }
+
+    public function testLooksLikePdf(): void
+    {
+        $this->assertTrue(GameAttachmentRepository::looksLikePdf('manuel.pdf'));
+        $this->assertTrue(GameAttachmentRepository::looksLikePdf('x.bin', 'application/pdf'));
+        $this->assertFalse(GameAttachmentRepository::looksLikePdf('pack.zip'));
+        $this->assertFalse(GameAttachmentRepository::looksLikePdf('pack.zip', 'application/zip'));
+    }
 }

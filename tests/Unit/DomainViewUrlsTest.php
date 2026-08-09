@@ -5,6 +5,7 @@ declare(strict_types=1);
 namespace Moncine\Tests\Unit;
 
 use Moncine\BdUrls;
+use Moncine\FilmUrls;
 use Moncine\GameUrls;
 use Moncine\LibraryStatut;
 use Moncine\MagazineUrls;
@@ -13,6 +14,21 @@ use PHPUnit\Framework\TestCase;
 
 final class DomainViewUrlsTest extends TestCase
 {
+    public function testFilmsCollectionUrlDefault(): void
+    {
+        $this->assertSame('/films.php', FilmUrls::filmsCollectionUrl());
+        $this->assertSame(
+            FilmUrls::filmsCollectionUrl('matrix', 'annee', 'desc'),
+            View::filmsCollectionUrl('matrix', 'annee', 'desc')
+        );
+    }
+
+    public function testSagaUrl(): void
+    {
+        $this->assertSame('/sagas.php?saga=Star%20Wars', FilmUrls::sagaUrl('Star Wars'));
+        $this->assertSame(FilmUrls::sagaUrl('Dune'), View::sagaUrl('Dune'));
+    }
+
     public function testMagazinesUrlDefault(): void
     {
         $this->assertSame('/magazines.php?sort=titre&dir=asc', MagazineUrls::magazinesUrl());

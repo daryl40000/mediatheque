@@ -12,6 +12,7 @@ use Moncine\LibraryStatut;
 use Moncine\MagazineIssueSupplementRepository;
 use Moncine\MagazineRepository;
 use Moncine\FormCheckbox;
+use Moncine\CatalogAdmin;
 use Moncine\MediaDomainGuards;
 use Moncine\PosterStorage;
 use Moncine\UploadLimits;
@@ -122,11 +123,21 @@ if ($action === 'pdf_only') {
         exit;
     }
 
+    // Utilisateur : ajout seulement s’il n’y a pas encore de PDF. Remplacement = admin.
+    $allowReplace = CatalogAdmin::canAccess();
+    if ($repo->hasPdf($oeuvreId) && !$allowReplace) {
+        header('Location: ' . $returnUrl . '&error=' . rawurlencode(
+            'Un PDF est déjà présent. Seul un administrateur peut le remplacer.'
+        ) . '&popover=pdf');
+        exit;
+    }
+
     $pdfResult = $repo->attachPdf(
         $oeuvreId,
         (string) $_FILES['pdf_file']['tmp_name'],
         (string) ($_FILES['pdf_file']['name'] ?? 'numero.pdf'),
-        (int) ($_FILES['pdf_file']['size'] ?? 0)
+        (int) ($_FILES['pdf_file']['size'] ?? 0),
+        $allowReplace
     );
     if ($pdfResult !== true) {
         header('Location: ' . $returnUrl . '&error=' . rawurlencode((string) $pdfResult));
@@ -143,6 +154,13 @@ if ($action === 'pdf_only') {
 }
 
 if ($action === 'remove_pdf') {
+    if (!CatalogAdmin::canAccess()) {
+        header('Location: ' . $returnUrl . '&error=' . rawurlencode(
+            'Seuls les administrateurs peuvent retirer un PDF.'
+        ) . '&popover=pdf');
+        exit;
+    }
+
     if ($oeuvreId <= 0) {
         header('Location: ' . $returnUrl . '&error=' . rawurlencode('Numéro invalide.'));
         exit;
@@ -233,6 +251,13 @@ if ($action === 'add_supplement') {
 }
 
 if ($action === 'remove_supplement') {
+    if (!CatalogAdmin::canAccess()) {
+        header('Location: ' . $returnUrl . '&error=' . rawurlencode(
+            'Seuls les administrateurs peuvent retirer un supplément PDF.'
+        ) . '&popover=pdf');
+        exit;
+    }
+
     $supplementId = (int) ($_POST['supplement_id'] ?? 0);
     if ($oeuvreId <= 0 || $supplementId <= 0) {
         header('Location: ' . $returnUrl . '&error=' . rawurlencode('Supplément invalide.') . '&popover=pdf');
@@ -277,11 +302,20 @@ if ($result !== true) {
 }
 
 if ($oeuvreId > 0 && isset($_FILES['pdf_file']) && (int) ($_FILES['pdf_file']['error'] ?? UPLOAD_ERR_NO_FILE) === UPLOAD_ERR_OK) {
+    $allowReplace = CatalogAdmin::canAccess();
+    if ($repo->hasPdf($oeuvreId) && !$allowReplace) {
+        header('Location: ' . $returnUrl . '&error=' . rawurlencode(
+            'Un PDF est déjà présent. Seul un administrateur peut le remplacer.'
+        ));
+        exit;
+    }
+
     $pdfResult = $repo->attachPdf(
         $oeuvreId,
         (string) $_FILES['pdf_file']['tmp_name'],
         (string) ($_FILES['pdf_file']['name'] ?? 'numero.pdf'),
-        (int) ($_FILES['pdf_file']['size'] ?? 0)
+        (int) ($_FILES['pdf_file']['size'] ?? 0),
+        $allowReplace
     );
     if ($pdfResult !== true) {
         header('Location: ' . $returnUrl . '&error=' . rawurlencode((string) $pdfResult));

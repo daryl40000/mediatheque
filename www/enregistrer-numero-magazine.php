@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\CatalogAdmin;
 use Moncine\Csrf;
 use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
@@ -101,11 +102,21 @@ if ($oeuvreId > 0 && isset($_FILES['pdf_file']) && (int) ($_FILES['pdf_file']['e
         exit;
     }
 
+    $allowReplace = CatalogAdmin::canAccess();
+    if ($repo->hasPdf($oeuvreId) && !$allowReplace) {
+        // Numéro créé / ajouté : on n’écrase pas un PDF catalogue existant.
+        header('Location: ' . View::magazineIssueUrl($result) . '&added=1&error=' . rawurlencode(
+            'Un PDF est déjà présent sur ce numéro. Seul un administrateur peut le remplacer.'
+        ));
+        exit;
+    }
+
     $pdfResult = $repo->attachPdf(
         $oeuvreId,
         (string) $_FILES['pdf_file']['tmp_name'],
         (string) ($_FILES['pdf_file']['name'] ?? 'numero.pdf'),
-        (int) ($_FILES['pdf_file']['size'] ?? 0)
+        (int) ($_FILES['pdf_file']['size'] ?? 0),
+        $allowReplace
     );
     if ($pdfResult !== true) {
         header('Location: ' . View::magazineIssueUrl($result) . '&error=' . rawurlencode((string) $pdfResult));

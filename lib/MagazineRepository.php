@@ -485,9 +485,19 @@ final class MagazineRepository
         return $this->libraryMutations()->userCanAccessStoredObject($storedObjectId, $userId, $foyerId);
     }
 
-    public function attachPdf(int $oeuvreId, string $tmpPath, string $originalName, int $fileSize): bool|string
+    public function hasPdf(int $oeuvreId): bool
     {
-        return $this->pdfService()->attachPdf($oeuvreId, $tmpPath, $originalName, $fileSize);
+        return $this->pdfService()->hasPdf($oeuvreId);
+    }
+
+    public function attachPdf(
+        int $oeuvreId,
+        string $tmpPath,
+        string $originalName,
+        int $fileSize,
+        bool $allowReplace = false
+    ): bool|string {
+        return $this->pdfService()->attachPdf($oeuvreId, $tmpPath, $originalName, $fileSize, $allowReplace);
     }
 
     public function detachPdf(int $oeuvreId): bool|string

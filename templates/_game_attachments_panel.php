@@ -2,15 +2,28 @@
 /**
  * Fichiers joints à la fiche jeu catalogue : PDF (manuel, soluce…), patch, archive…
  *
- * Lecture : tout le monde. Ajout / suppression : admin catalogue uniquement.
+ * Lecture : tout le monde.
+ * Ajout PDF : utilisateur si aucun PDF n’existe encore ; admin : tous formats.
+ * Suppression : admin catalogue uniquement.
  *
  * @var int $oeuvreId
  * @var list<array<string, mixed>> $attachments
- * @var bool $canManageAttachments
+ * @var bool $canManageAttachments  (admin : ajout + suppression complets)
  */
 $oeuvreId = (int) ($oeuvreId ?? 0);
 $attachments = $attachments ?? [];
 $canManageAttachments = !empty($canManageAttachments);
+$isCatalogAdmin = Moncine\CatalogAdmin::canAccess();
+$hasPdfAttachment = false;
+foreach ($attachments as $attachmentRow) {
+    if (!empty($attachmentRow['is_pdf'])) {
+        $hasPdfAttachment = true;
+        break;
+    }
+}
+// Utilisateur : formulaire d’ajout PDF uniquement s’il n’y a pas encore de PDF.
+$canAddPdfOnly = !$isCatalogAdmin && !$hasPdfAttachment && $oeuvreId > 0;
+$canShowAddForm = $canManageAttachments || $canAddPdfOnly;
 $maxAttachmentLabel = Moncine\UploadLimits::maxAttachmentBytesLabel();
 ?>
 <section class="game-attachments-panel" id="game-attachments">
@@ -23,16 +36,20 @@ $maxAttachmentLabel = Moncine\UploadLimits::maxAttachmentBytesLabel();
         $info = 'Ajoutez un ou plusieurs PDF (manuel, soluce, guide…) ou d’autres fichiers '
             . '(patch, image disque…). Ces fichiers sont partagés pour tout le monde. '
             . 'Max ' . $maxAttachmentLabel . ' par fichier.';
+    } elseif ($canAddPdfOnly) {
+        $info = 'Vous pouvez ajouter un PDF (manuel, soluce…) s’il n’y en a pas encore. '
+            . 'La suppression et l’ajout d’autres fichiers sont réservés aux administrateurs. '
+            . 'Max ' . $maxAttachmentLabel . '.';
     } else {
         $info = 'Manuels, soluces et autres fichiers partagés sur cette fiche catalogue. '
-            . 'Seuls les administrateurs peuvent en ajouter.';
+            . 'Seul un administrateur peut remplacer ou supprimer un PDF déjà présent.';
     }
     $infoAria = 'Aide sur les fichiers joints';
     require MONCINE_ROOT . '/templates/_heading_with_info.php';
     unset($info, $infoAria, $title, $tag, $class);
     ?>
 
-    <?php if ($canManageAttachments): ?>
+    <?php if ($canShowAddForm): ?>
         <?php require MONCINE_ROOT . '/templates/_upload_limits_warning.php'; ?>
     <?php endif; ?>
 
@@ -129,7 +146,43 @@ $maxAttachmentLabel = Moncine\UploadLimits::maxAttachmentBytesLabel();
                 <button type="submit" class="btn btn-secondary btn-sm">Enregistrer</button>
             </form>
         </details>
-    <?php elseif (Moncine\CatalogAdmin::canAccess() && $oeuvreId > 0): ?>
+    <?php elseif ($canAddPdfOnly): ?>
+        <details class="game-attachments-add">
+            <summary class="btn btn-secondary btn-sm game-attachments-add__trigger">Ajouter un PDF</summary>
+            <form method="post" action="/enregistrer-fichier-jeu.php" enctype="multipart/form-data" class="game-attachments-form">
+                <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                <input type="hidden" name="oeuvre_id" value="<?= $oeuvreId ?>">
+
+                <?php
+                unset($info, $infoHtml, $infoAria, $for, $label);
+                $for = 'attachment_kind_user';
+                $label = 'Type (facultatif)';
+                $info = 'Sert de libellé si vous ne renseignez pas la description ci-dessous.';
+                $infoAria = 'Aide sur le type de fichier';
+                require MONCINE_ROOT . '/templates/_form_label_info.php';
+                unset($info, $infoAria, $for, $label);
+                ?>
+                <select name="attachment_kind" id="attachment_kind_user">
+                    <option value="">— Choisir —</option>
+                    <option value="Manuel">Manuel</option>
+                    <option value="Soluce">Soluce</option>
+                    <option value="Guide">Guide</option>
+                    <option value="Carte">Carte</option>
+                    <option value="Autre">Autre</option>
+                </select>
+
+                <label for="attachment_label_user">Description (facultatif)</label>
+                <input type="text" name="attachment_label" id="attachment_label_user" maxlength="120"
+                       placeholder="Ex. Manuel FR, Soluce complète…">
+
+                <label for="attachment_file_user">Fichier PDF</label>
+                <input type="file" name="attachment_file[]" id="attachment_file_user" required
+                       accept=".pdf,application/pdf">
+
+                <button type="submit" class="btn btn-secondary btn-sm">Enregistrer le PDF</button>
+            </form>
+        </details>
+    <?php elseif ($isCatalogAdmin && $oeuvreId > 0): ?>
         <p class="hint">
             Pour ajouter ou retirer des fichiers,
             ouvrez la <a href="<?= Moncine\View::escape(Moncine\View::oeuvreJeuUrl($oeuvreId)) ?>">fiche catalogue</a>.

@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.8.13** · **Date : 2026-08-09**
+**Version : 0.8.14** · **Date : 2026-08-09**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -114,24 +114,23 @@ Vous pouvez importer un PDF depuis la fiche ouverte depuis **Mes envies**. Aprè
 2. il est **retiré des envies** automatiquement ;
 3. la fiche s’ouvre sur l’entrée **collection** (redirection corrigée en **0.2.5**).
 
-### Retirer un PDF d’un numéro (**0.7.22**)
+### PDF d’un numéro (droits)
 
-Sur la **fiche numéro** (`/magazine-numero.php?id=…`) :
+- **Ajouter** un PDF : tout utilisateur connecté, **uniquement s’il n’y en a pas encore**.
+- **Remplacer** ou **retirer** un PDF : **administrateur** uniquement (le fichier est partagé sur la fiche catalogue).
 
-1. Cliquez sur l’icône **PDF**.
-2. Cliquez sur **Retirer le PDF** (confirmation).
-
-Le fichier est supprimé du serveur et l’icône PDF disparaît. Le numéro reste dans votre collection (si vous aviez aussi le support **Papier**, il reste possédé).
+Sur la **fiche numéro** (`/magazine-numero.php?id=…`) : icône **PDF** → importer (si absent) ; l’admin voit aussi Remplacer / Retirer.
 
 ### Suppléments / livrets bonus
 
 Un numéro peut avoir **un ou plusieurs PDF secondaires** (livret posters, CD-ROM, etc.) :
 
 1. Sur la fiche numéro, icône **Gérer le PDF** → section **Suppléments / livrets**.
-2. Choisissez un libellé optionnel et un ou plusieurs fichiers PDF.
-3. Sous la couverture apparaissent des **vignettes** (1re page de chaque PDF).
-4. **Clic sur la vignette** → fiche dédiée du supplément (`/magazine-supplement.php`) : lecture PDF, sujets reliés aux jeux/films (comme un numéro).
-5. Sur la fiche numéro, si un PDF principal existe : badge vert **PDF** juste sous la couverture, à côté de Modifier / Gérer le PDF.
+2. Choisissez un libellé optionnel et un ou plusieurs fichiers PDF (**ajout** possible pour tout utilisateur).
+3. **Retirer** un supplément : **administrateur** uniquement.
+4. Sous la couverture apparaissent des **vignettes** (1re page de chaque PDF).
+5. **Clic sur la vignette** → fiche dédiée du supplément (`/magazine-supplement.php`) : lecture PDF, sujets reliés aux jeux/films (comme un numéro).
+6. Sur la fiche numéro, si un PDF principal existe : badge vert **PDF** juste sous la couverture, à côté de Modifier / Gérer le PDF.
 
 Le texte des 6 premières pages de chaque supplément est **indexé** et fusionné dans la recherche du numéro.
 

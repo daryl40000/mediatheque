@@ -19,6 +19,8 @@ $popoverOpen = (string) ($popoverOpen ?? '');
 $error = (string) ($error ?? '');
 $supplements = $supplements ?? [];
 $supplementsAvailable = Moncine\MagazineIssueSupplementRepository::isAvailable();
+// Remplacer / retirer PDF et suppléments : admin uniquement.
+$canManageSharedPdf = Moncine\CatalogAdmin::canAccess();
 ?>
 <div class="game-detail-sidebar__actions"
      data-detail-actions
@@ -126,22 +128,26 @@ $supplementsAvailable = Moncine\MagazineIssueSupplementRepository::isAvailable()
                             Lire le PDF
                         </a>
                     </p>
-                    <p class="hint">Remplacez le fichier ou retirez-le de votre bibliothèque (le numéro reste en collection).</p>
-                    <form method="post" action="/traiter-numero-magazine.php" enctype="multipart/form-data" class="import-form magazine-pdf-popover__replace">
-                        <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
-                        <input type="hidden" name="bib_id" value="<?= $bibId ?>">
-                        <input type="hidden" name="action" value="pdf_only">
-                        <label for="popover_replace_pdf">Remplacer par un autre PDF</label>
-                        <input type="file" name="pdf_file" id="popover_replace_pdf" accept="application/pdf,.pdf" required>
-                        <button type="submit" class="btn btn-secondary btn-sm">Remplacer le PDF</button>
-                    </form>
-                    <form method="post" action="/traiter-numero-magazine.php" class="magazine-pdf-popover__remove"
-                          onsubmit="return confirm('Retirer le PDF de ce numéro ? Le fichier sera supprimé du serveur.');">
-                        <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
-                        <input type="hidden" name="bib_id" value="<?= $bibId ?>">
-                        <input type="hidden" name="action" value="remove_pdf">
-                        <button type="submit" class="btn btn-danger-text btn-sm">Retirer le PDF</button>
-                    </form>
+                    <?php if ($canManageSharedPdf): ?>
+                        <p class="hint">En tant qu’administrateur, vous pouvez remplacer ou retirer ce PDF partagé.</p>
+                        <form method="post" action="/traiter-numero-magazine.php" enctype="multipart/form-data" class="import-form magazine-pdf-popover__replace">
+                            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                            <input type="hidden" name="bib_id" value="<?= $bibId ?>">
+                            <input type="hidden" name="action" value="pdf_only">
+                            <label for="popover_replace_pdf">Remplacer par un autre PDF</label>
+                            <input type="file" name="pdf_file" id="popover_replace_pdf" accept="application/pdf,.pdf" required>
+                            <button type="submit" class="btn btn-secondary btn-sm">Remplacer le PDF</button>
+                        </form>
+                        <form method="post" action="/traiter-numero-magazine.php" class="magazine-pdf-popover__remove"
+                              onsubmit="return confirm('Retirer le PDF de ce numéro ? Le fichier sera supprimé du serveur.');">
+                            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                            <input type="hidden" name="bib_id" value="<?= $bibId ?>">
+                            <input type="hidden" name="action" value="remove_pdf">
+                            <button type="submit" class="btn btn-danger-text btn-sm">Retirer le PDF</button>
+                        </form>
+                    <?php else: ?>
+                        <p class="hint">Un PDF est déjà présent. Seul un administrateur peut le remplacer ou le retirer.</p>
+                    <?php endif; ?>
                 <?php else: ?>
                     <p class="hint">Aucun PDF pour l’instant. Importez un fichier ci-dessous.</p>
                     <form method="post" action="/traiter-numero-magazine.php" enctype="multipart/form-data" class="import-form">
@@ -183,14 +189,16 @@ $supplementsAvailable = Moncine\MagazineIssueSupplementRepository::isAvailable()
                                                class="btn btn-ghost btn-sm"
                                                target="_blank" rel="noopener">Lire</a>
                                         <?php endif; ?>
-                                        <form method="post" action="/traiter-numero-magazine.php" class="inline-form"
-                                              onsubmit="return confirm('Retirer ce supplément ? Le fichier sera supprimé.');">
-                                            <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
-                                            <input type="hidden" name="bib_id" value="<?= $bibId ?>">
-                                            <input type="hidden" name="action" value="remove_supplement">
-                                            <input type="hidden" name="supplement_id" value="<?= $suppId ?>">
-                                            <button type="submit" class="btn btn-danger-text btn-sm">Retirer</button>
-                                        </form>
+                                        <?php if ($canManageSharedPdf): ?>
+                                            <form method="post" action="/traiter-numero-magazine.php" class="inline-form"
+                                                  onsubmit="return confirm('Retirer ce supplément ? Le fichier sera supprimé.');">
+                                                <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
+                                                <input type="hidden" name="bib_id" value="<?= $bibId ?>">
+                                                <input type="hidden" name="action" value="remove_supplement">
+                                                <input type="hidden" name="supplement_id" value="<?= $suppId ?>">
+                                                <button type="submit" class="btn btn-danger-text btn-sm">Retirer</button>
+                                            </form>
+                                        <?php endif; ?>
                                     </span>
                                 </li>
                             <?php endforeach; ?>
