@@ -121,6 +121,20 @@ $libraryBibId = $libraryBibId ?? null;
                     </section>
                 <?php endif; ?>
 
+                <?php if (!empty($canManageCatalog) && $oeuvreId > 0): ?>
+                    <?php
+                    $enrichTarget = 'oeuvre';
+                    $entityId = $oeuvreId;
+                    $canEnrichOpenLibrary = !empty($canEnrichOpenLibrary);
+                    $enrichStatus = $enrichStatus ?? null;
+                    $enrichMessage = $enrichMessage ?? '';
+                    $currentOpenLibraryId = (string) ($book['openlibrary_id'] ?? '');
+                    $currentIsbn = (string) ($book['isbn'] ?? '');
+                    $currentPosterUrl = (string) ($book['poster_url'] ?? '');
+                    require MONCINE_ROOT . '/templates/_enrich_livre_panel.php';
+                    ?>
+                <?php endif; ?>
+
                 <div class="result-actions">
                     <?php if ($libraryBibId !== null && $libraryBibId > 0): ?>
                         <a href="<?= Moncine\View::escape(Moncine\View::livreUrl((int) $libraryBibId)) ?>" class="btn btn-primary">

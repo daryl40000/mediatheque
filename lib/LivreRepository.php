@@ -27,6 +27,41 @@ final class LivreRepository
         return $stmt !== false && $stmt->fetchColumn() !== false;
     }
 
+    /** Colonnes openlibrary_id / ol_enriched_at (migration 077). */
+    public static function hasOpenLibraryColumns(): bool
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        if (!self::isAvailable()) {
+            return $cached = false;
+        }
+
+        $cols = Database::getInstance()->query('PRAGMA table_info(oeuvre_livre)');
+        if ($cols === false) {
+            return $cached = false;
+        }
+
+        $names = [];
+        foreach ($cols->fetchAll(PDO::FETCH_ASSOC) ?: [] as $col) {
+            $names[(string) ($col['name'] ?? '')] = true;
+        }
+
+        return $cached = isset($names['openlibrary_id'], $names['ol_enriched_at']);
+    }
+
+    /** Fragment SQL optionnel pour les SELECT livre. */
+    public static function openLibrarySelectSql(string $alias = 'ol'): string
+    {
+        if (!self::hasOpenLibraryColumns()) {
+            return '';
+        }
+
+        return ', ' . $alias . '.openlibrary_id, ' . $alias . '.ol_enriched_at';
+    }
+
     /** @return list<string> */
     public function listKnownCategoryLabels(): array
     {
@@ -142,7 +177,8 @@ final class LivreRepository
                     o.id AS oeuvre_id, o.titre, o.titre_original, o.annee, o.synopsis, o.poster_url,
                     o.saga, o.saga_ordre,
                     ol.auteur, ol.isbn, ol.pages, ol.editeur, ol.categories, ol.langue, ol.collection_label,
-                    ol.sous_titre, ol.back_cover_url
+                    ol.sous_titre, ol.back_cover_url'
+            . self::openLibrarySelectSql('ol') . '
              FROM bibliotheque b
              INNER JOIN oeuvres o ON o.id = b.oeuvre_id AND o.media_domain = ?
              INNER JOIN oeuvre_livre ol ON ol.oeuvre_id = o.id
@@ -177,7 +213,8 @@ final class LivreRepository
             'SELECT o.id AS oeuvre_id, o.titre, o.titre_original, o.annee, o.synopsis, o.poster_url,
                     o.saga, o.saga_ordre,
                     ol.auteur, ol.isbn, ol.pages, ol.editeur, ol.categories, ol.langue, ol.collection_label,
-                    ol.sous_titre, ol.back_cover_url
+                    ol.sous_titre, ol.back_cover_url'
+            . self::openLibrarySelectSql('ol') . '
              FROM oeuvres o
              INNER JOIN oeuvre_livre ol ON ol.oeuvre_id = o.id
              WHERE o.id = ? AND o.media_domain = ?
@@ -684,6 +721,8 @@ final class LivreRepository
         $row['category_list'] = LivreCategory::parseList($row['categories']);
         $row['is_jeux_video'] = LivreCategory::includesJeuxVideo($row['categories']);
         $row['display_titre'] = (string) ($row['titre'] ?? '');
+        $row['openlibrary_id'] = trim((string) ($row['openlibrary_id'] ?? ''));
+        $row['ol_enriched_at'] = trim((string) ($row['ol_enriched_at'] ?? ''));
 
         return $row;
     }

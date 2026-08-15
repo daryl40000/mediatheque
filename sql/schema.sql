@@ -597,12 +597,16 @@ CREATE TABLE IF NOT EXISTS oeuvre_livre (
     langue TEXT NOT NULL DEFAULT 'fr',
     collection_label TEXT NOT NULL DEFAULT '',
     sous_titre TEXT NOT NULL DEFAULT '',
-    back_cover_url TEXT NOT NULL DEFAULT ''
+    back_cover_url TEXT NOT NULL DEFAULT '',
+    openlibrary_id TEXT NOT NULL DEFAULT '',
+    ol_enriched_at TEXT DEFAULT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_oeuvre_livre_auteur ON oeuvre_livre(auteur COLLATE NOCASE);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_livre_editeur ON oeuvre_livre(editeur COLLATE NOCASE);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_livre_isbn ON oeuvre_livre(isbn);
+CREATE INDEX IF NOT EXISTS idx_oeuvre_livre_openlibrary_id
+    ON oeuvre_livre(openlibrary_id) WHERE TRIM(openlibrary_id) != '';
 
 CREATE TABLE IF NOT EXISTS livre_game_link (
     id INTEGER PRIMARY KEY AUTOINCREMENT,

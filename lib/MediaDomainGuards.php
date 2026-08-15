@@ -109,6 +109,8 @@ final class MediaDomainGuards
         '/sagas-livres.php',
         '/marquer-livre-lu.php',
         '/marquer-livre-ressenti.php',
+        '/enrichir-livre.php',
+        '/enrichir-oeuvre-livre.php',
     ];
 
     /** Pages collection / envies réservées à l’onglet Livres. */

@@ -194,6 +194,20 @@ $socialRessentis = $socialRessentis ?? ['foyer' => [], 'friends' => []];
                     </section>
                 <?php endif; ?>
 
+                <?php if (!empty($canManageCatalog) && $bookId > 0): ?>
+                    <?php
+                    $enrichTarget = 'book';
+                    $entityId = $bookId;
+                    $canEnrichOpenLibrary = !empty($canEnrichOpenLibrary);
+                    $enrichStatus = $enrichStatus ?? null;
+                    $enrichMessage = $enrichMessage ?? '';
+                    $currentOpenLibraryId = (string) ($book['openlibrary_id'] ?? '');
+                    $currentIsbn = (string) ($book['isbn'] ?? '');
+                    $currentPosterUrl = (string) ($book['poster_url'] ?? '');
+                    require MONCINE_ROOT . '/templates/_enrich_livre_panel.php';
+                    ?>
+                <?php endif; ?>
+
                 <?php if ($isWishlist): ?>
                     <section class="film-promote-panel">
                         <h2 class="film-promote-panel__title">Ajouter à ma collection</h2>

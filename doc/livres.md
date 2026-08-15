@@ -1,6 +1,6 @@
 # Livres (phase M3)
 
-**Version :** **0.8.1**  
+**Version :** **0.8.15** (enrichissement Open Library)  
 Module de gestion des **livres** papier ou numériques, sur le même parcours que Films / Jeux / BD / Magazines.
 
 ## Fonctionnalités
@@ -17,6 +17,7 @@ Module de gestion des **livres** papier ou numériques, sur le même parcours qu
 - Actions fiche (comme BD / films) : **ressenti**, **modifier**, **marquer comme lu** (+ date + historique)
 - Bandeau **saga** sur la fiche : volumes voisins, tome courant encadré (comme les BD)
 - **Statistiques livres** (`/statistiques.php` en onglet Livres) : lectures, ressentis, catégories, supports
+- **Enrichissement Open Library** (admin) : ISBN / titre / ID édition → couverture, auteur, éditeur, pages, résumé, sous-titre, saga / n°
 
 ## Pages principales
 
@@ -28,6 +29,8 @@ Module de gestion des **livres** papier ou numériques, sur le même parcours qu
 | `/ajouter-livre.php` | Nouveau livre |
 | `/modifier-livre.php?id=` | Modifier un livre |
 | `/oeuvre-livre.php?id=` | Fiche catalogue |
+| `/enrichir-oeuvre-livre.php` | Enrichir une fiche catalogue via Open Library (POST, admin) |
+| `/enrichir-livre.php` | Enrichir un exemplaire (met à jour le catalogue) (POST, admin) |
 | `/sagas-livres.php` | Liste / détail des sagas |
 | `/jeu-livres.php?id=` | Livres liés à un jeu |
 | `/statistiques.php` | Stats du domaine Livres (onglet actif) |
@@ -36,12 +39,12 @@ Module de gestion des **livres** papier ou numériques, sur le même parcours qu
 
 ## Base de données
 
-- `oeuvre_livre` : auteur, ISBN, pages, éditeur, catégories, langue, collection, sous-titre, 4e de couverture
+- `oeuvre_livre` : auteur, ISBN, pages, éditeur, catégories, langue, collection, sous-titre, 4e de couverture, `openlibrary_id`, `ol_enriched_at` (migration **077**)
 - `oeuvres.saga` / `oeuvres.saga_ordre` : sagas (comme les films)
 - `livre_game_link` : liens livre catalogue ↔ jeu catalogue
 - `historique` : dates de lecture et ressentis (même table que films / BD)
 
-Migrations : `068_oeuvre_livre.sql`, `069_oeuvre_livre_sous_titre_back_cover.sql`
+Migrations : `068_oeuvre_livre.sql`, `069_oeuvre_livre_sous_titre_back_cover.sql`, `077_oeuvre_livre_openlibrary.sql`
 
 ## Classes principales
 
@@ -52,7 +55,19 @@ Migrations : `068_oeuvre_livre.sql`, `069_oeuvre_livre_sous_titre_back_cover.sql
 | `LivreGameLink` | Liens livre ↔ jeux |
 | `LivreSagaContext` | Bandeau volumes voisins sur la fiche |
 | `LivreCollectionStats` | Tableau de bord statistiques |
+| `OpenLibraryClient` | Appels HTTP Open Library (ISBN, recherche, couvertures) |
+| `LivreEnricher` / `LivreCatalogEnrichment` | Orchestration et écriture des métadonnées |
 | `LivreUrls` / `View` | URLs fiches, listes, sagas |
+
+## Enrichissement Open Library
+
+Sur la fiche **catalogue** (`/oeuvre-livre.php`) ou **exemplaire** (`/livre.php`), un administrateur voit le panneau **Enrichir** :
+
+1. **Enrichir (ISBN ou titre)** — utilise l’ISBN de la fiche s’il est renseigné, sinon recherche par titre/auteur ;
+2. **Chercher cet ISBN** — force un lookup ISBN ;
+3. **Appliquer un ID** — coller `OLxxxxM` ou une URL `openlibrary.org/books/…`.
+
+Aucune clé API n’est nécessaire. Les couvertures sont téléchargées localement (comme IGDB). Option **Garder la couverture**.
 
 ## Parcours utilisateur (résumé)
 
@@ -62,11 +77,13 @@ Migrations : `068_oeuvre_livre.sql`, `069_oeuvre_livre_sous_titre_back_cover.sql
 4. Si « Jeux vidéo » : rechercher et lier les jeux concernés
 5. Sur la fiche : noter un ressenti, marquer comme lu, voir les autres tomes de la saga
 6. Sur la fiche d’un jeu lié : bouton **Livres** pour retrouver ces ouvrages
+7. (Admin) Enrichir via Open Library pour compléter ISBN / couverture / résumé
 
-## Limites (0.8.1)
+## Limites
 
 - Pas encore d’import CSV catalogue livres
 - Pas de partage visiteur dédié ni de listes imprimables livres
 - PDF ebook éventuels : sous-dossier stockage réservé, pas d’UI dédiée
+- Enrichissement Open Library : admin uniquement ; pas encore de lot automatique sur Importer
 
-*Dernière mise à jour : **0.8.1** — 2026-07-30.*
+*Dernière mise à jour : **0.8.15** — 2026-08-15.*

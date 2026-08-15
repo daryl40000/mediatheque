@@ -13,6 +13,17 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.15] — 2026-08-15
+
+**Livres — enrichissement Open Library**
+
+### Ajouté
+
+- **Open Library** (admin) : enrichissement sur fiche catalogue / exemplaire livre (ISBN, titre, ID édition) — couverture, auteur, éditeur, pages, année, résumé, sous-titre, saga / n° dans la saga.
+- Migration **077** : `oeuvre_livre.openlibrary_id`, `ol_enriched_at`.
+
+---
+
 ## [0.8.14] — 2026-08-09
 
 **Droits PDF partagés · factoring Phase A jeux · FilmUrls**

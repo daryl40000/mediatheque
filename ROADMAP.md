@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.8.14** (2026-08-09)
+**Version actuelle : 0.8.15** (2026-08-15)
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -13,7 +13,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 ---
 
-## Où en est-on ? (synthèse 0.8.14)
+## Où en est-on ? (synthèse 0.8.15)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
@@ -21,9 +21,9 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 | **Jeux** | ✅ Utilisable | 0.5.0 → **0.8.14** | Complet (IGDB, sagas, Steam, prêts, magasins, `/jeu-magazines.php`, **doublons maintenance**) |
 | **Magazines** | ✅ Complet (M5) | 0.2.x → **0.8.14** | ABM, PDF (droits renforcés), FTS, sujets, pont catalogue, notes/échelles, **stats mois + tri notes**, partage |
 | **BD / Manga** | ✅ **Livré (M2)** | **0.7.2** → **0.8.0** | Collection, envies, partage, profil, impression, **import CSV** |
-| **Livres** | ✅ **Utilisable (M3)** | **0.8.1** | Collection, envies, sagas, lectures, stats, pont jeux ([doc/livres.md](doc/livres.md)) |
+| **Livres** | ✅ **Utilisable (M3)** | **0.8.1** → **0.8.15** | Collection, envies, sagas, lectures, stats, pont jeux, **Open Library** ([doc/livres.md](doc/livres.md)) |
 | **Musique** | ⏳ Placeholder (M8) | **0.7.8** | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles et CD physiques |
-| **Transversal** | 🔄 Partiel | **0.7.12**–**0.8.14** | Recherche globale (dès 1 lettre), catalogue admin, import/export, profil, partage, CI, PHPStan 0 alerte |
+| **Transversal** | 🔄 Partiel | **0.7.12**–**0.8.15** | Recherche globale (dès 1 lettre), catalogue admin, import/export, profil, partage, CI, PHPStan 0 alerte |
 
 ### Phases (suivi)
 
@@ -35,7 +35,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 | **M5** Magazines | ✅ **Livré** | **0.7.17** (+ polish **0.8.6**–**0.8.14**) | Maintenance ; polish ponctuel |
 | **Pont** Magazines ↔ Catalogue | ✅ Livré | **0.7.17** | Jeu (0.6.3) + **film** (0.7.17) |
 | **M2** BD / Manga | ✅ **Livré** | **0.8.0** | Export CSV optionnel ; suite → **M3** |
-| **M3** Livres | ✅ **Utilisable** | **0.8.1** | Import CSV / partage / imprimable optionnels |
+| **M3** Livres | ✅ **Utilisable** | **0.8.1** (+ **Open Library 0.8.15**) | Import CSV / partage / imprimable optionnels |
 | **M8** Musique (vinyles, CD) | ⏳ À faire | 0.8.x+ (indicatif) | **Après M3** |
 | **M6** Transversal | 🔄 **Partiel** | 0.7.14+ | Stats, import/export par domaine → **0.9.0** |
 | **M7** Identité & polish | ⏳ À faire | 1.0.0 | Fin |
@@ -43,6 +43,11 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.8.15** — Livres Open Library (2026-08-15)
+
+- Enrichissement admin via Open Library (ISBN / titre / ID édition) : couverture, métadonnées, résumé, sous-titre, saga / n°.
+- Migration **077** (`openlibrary_id`, `ol_enriched_at`).
 
 ### ✅ **0.8.14** — Droits PDF + factoring (2026-08-09)
 
@@ -486,7 +491,7 @@ Comptes, foyers, envies personnelles et de groupe, catalogue partagé, soumissio
 
 | Élément | Films | BD/Manga | Livres | Musique | Jeux | Magazines |
 |---------|-------|----------|--------|---------|------|-----------|
-| Enrichissement | TMDB / OMDB | Manuel (+ API plus tard) | ISBN / Open Library | Manuel (+ Discogs plus tard) | IGDB | — |
+| Enrichissement | TMDB / OMDB | Manuel (+ API plus tard) | **ISBN / Open Library (0.8.15)** | Manuel (+ Discogs plus tard) | IGDB | — |
 | Métadonnées clés | Réalisateur, acteurs | Série, tome, auteurs | Auteur, ISBN | Artiste, album, label | Plateforme, éditeur | N°, parution |
 | Support exemplaire | DVD, Blu-ray… | Album, relié… | Broché, poche… | Vinyle, CD… | Boîte, démat… | **PDF** |
 | Outil dédié | Quiz « Ce soir » | — | — | — | — | Lecteur + recherche PDF |
@@ -663,9 +668,9 @@ Relier optionnellement un sujet magazine à une fiche **jeu ou film** catalogue 
 
 ---
 
-## M3 — Livres ✅ Utilisable (0.8.1)
+## M3 — Livres ✅ Utilisable (0.8.1 → 0.8.15)
 
-**Version de première livraison :** **0.8.1**
+**Version de première livraison :** **0.8.1** · **Open Library :** **0.8.15**
 
 | Tâche | Détail | Statut |
 |-------|--------|--------|
@@ -675,11 +680,12 @@ Relier optionnellement un sujet magazine à une fiche **jeu ou film** catalogue 
 | Sagas | `/sagas-livres.php` | ✅ |
 | Pont jeux | Catégorie Jeux vidéo + `/jeu-livres.php` | ✅ |
 | Stats | `/statistiques.php` domaine Livres | ✅ |
+| Enrichissement | Open Library (ISBN / titre / ID édition) | ✅ **0.8.15** |
 | Doc | [doc/livres.md](doc/livres.md) | ✅ |
 | Import CSV | Catalogue livres | ⏳ Optionnel |
 | Partage / imprimable | Comme BD | ⏳ Optionnel |
 
-**Critère de sortie :** livres papier en collection, catégories, pont jeux — **atteint** (**0.8.1**).
+**Critère de sortie :** livres papier en collection, catégories, pont jeux — **atteint** (**0.8.1**). Enrichissement externe — **atteint** (**0.8.15**).
 
 ---
 
@@ -817,4 +823,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.8.14** — 2026-08-09 (droits PDF, GameBulkActionService, FilmUrls).*
+*Dernière mise à jour : **0.8.15** — 2026-08-15 (Open Library livres).*

@@ -7,9 +7,11 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\CatalogAdmin;
 use Moncine\HistoriqueRepository;
 use Moncine\LibraryStatut;
 use Moncine\LivreCategory;
+use Moncine\LivreEnricher;
 use Moncine\LivreGameLink;
 use Moncine\LivreRepository;
 use Moncine\LivreSagaContext;
@@ -116,4 +118,8 @@ View::render('livre', [
     'sagaSuggestions' => $repo->listKnownSagas(),
     'livreSagaNeighbors' => $livreSagaNeighbors,
     'sagaTitre' => $sagaTitre,
+    'canManageCatalog' => CatalogAdmin::canAccess(),
+    'canEnrichOpenLibrary' => LivreEnricher::canEnrich(),
+    'enrichStatus' => isset($_GET['enrich']) ? (string) $_GET['enrich'] : null,
+    'enrichMessage' => trim((string) ($_GET['enrich_msg'] ?? '')),
 ]);
