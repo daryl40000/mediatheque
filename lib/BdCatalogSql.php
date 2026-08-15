@@ -50,7 +50,8 @@ final class BdCatalogSql
         return 'b.id, b.user_id, b.foyer_id, b.oeuvre_id, b.statut, b.support_physique, b.created_at,'
             . ' o.titre, o.titre_original, o.annee, o.poster_url, o.synopsis,'
             . ' ob.series_id, ob.kind, ob.tome_numero, ob.tome_ordre, ob.tome_label, ob.est_hors_serie,'
-            . ' ob.scenariste, ob.dessinateur, ob.editeur, ob.genre,'
+            . ' ob.scenariste, ob.dessinateur, ob.editeur, ob.genre'
+            . BdRepository::openLibrarySelectSql('ob') . ','
             . ' s.titre AS series_titre';
     }
 
@@ -70,7 +71,8 @@ final class BdCatalogSql
     {
         return 'o.id AS oeuvre_id, o.titre, o.titre_original, o.annee, o.poster_url, o.synopsis,'
             . ' ob.series_id, ob.kind, ob.tome_numero, ob.tome_ordre, ob.tome_label, ob.est_hors_serie,'
-            . ' ob.scenariste, ob.dessinateur, ob.editeur, ob.genre,'
+            . ' ob.scenariste, ob.dessinateur, ob.editeur, ob.genre'
+            . BdRepository::openLibrarySelectSql('ob') . ','
             . ' s.titre AS series_titre';
     }
 

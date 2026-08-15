@@ -1,0 +1,62 @@
+<?php
+/**
+ * Enrichissement Open Library d’une fiche album BD catalogue.
+ */
+
+declare(strict_types=1);
+
+require_once dirname(__DIR__) . '/lib/bootstrap.php';
+
+use Moncine\BdEnricher;
+use Moncine\CatalogAdmin;
+use Moncine\Csrf;
+use Moncine\MediaDomainGuards;
+use Moncine\View;
+
+if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    header('Location: /catalogue.php');
+    exit;
+}
+
+MediaDomainGuards::ensureBdContext('/oeuvre-bd.php');
+CatalogAdmin::denyUnlessAccess();
+
+$oeuvreId = (int) ($_POST['oeuvre_id'] ?? 0);
+$returnUrl = $oeuvreId > 0 ? View::oeuvreBdUrl($oeuvreId) : '/bd.php';
+
+if ($oeuvreId <= 0) {
+    header('Location: ' . $returnUrl);
+    exit;
+}
+
+Csrf::rejectUnlessValid($_POST, $returnUrl);
+
+$enricher = new BdEnricher();
+$action = (string) ($_POST['action'] ?? 'enrich');
+$keepPoster = isset($_POST['keep_poster']);
+
+if ($action === 'openlibrary') {
+    $result = $enricher->correctOeuvreWithOpenLibraryId(
+        $oeuvreId,
+        (string) ($_POST['openlibrary_id'] ?? ''),
+        $keepPoster
+    );
+} elseif ($action === 'isbn') {
+    $result = $enricher->enrichOeuvreByIsbn(
+        $oeuvreId,
+        (string) ($_POST['isbn'] ?? ''),
+        $keepPoster
+    );
+} else {
+    $result = $enricher->enrichOeuvre($oeuvreId, $keepPoster);
+}
+
+$status = $result['ok'] ? 'ok' : ($result['not_found'] ? 'not_found' : 'error');
+$params = http_build_query([
+    'enrich' => $status,
+    'enrich_msg' => $result['message'],
+]);
+
+$sep = str_contains($returnUrl, '?') ? '&' : '?';
+header('Location: ' . $returnUrl . $sep . $params);
+exit;

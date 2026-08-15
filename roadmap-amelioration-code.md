@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-08-15 (version **0.8.15** — Open Library livres ; qualité inchangée hors module)
+**Dernière mise à jour :** 2026-08-15 (version **0.8.16** — Open Library BD/manga)
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif

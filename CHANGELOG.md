@@ -13,6 +13,17 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.16] — 2026-08-15
+
+**BD / Manga — enrichissement Open Library**
+
+### Ajouté
+
+- **Open Library** (admin) sur les tomes BD/manga (fiche catalogue `/oeuvre-bd.php` et album `/album-bd.php`) : ISBN, titre, ID édition → couverture, scénariste, éditeur, pages, année, résumé.
+- Migration **078** : `oeuvre_bd.isbn`, `pages`, `openlibrary_id`, `ol_enriched_at`.
+
+---
+
 ## [0.8.15] — 2026-08-15
 
 **Livres — enrichissement Open Library**

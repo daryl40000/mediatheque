@@ -3,7 +3,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 [![Tests](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml/badge.svg)](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml)
 
-**Version : 0.8.15**
+**Version : 0.8.16**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -20,7 +20,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. Depuis 
 | [doc/magazines.md](doc/magazines.md) | Magazines : PDF, recherche, tags, import catalogue ABM (**0.6.0**) |
 | [doc/import-abm.md](doc/import-abm.md) | Import catalogue depuis Abandonware Magazines (CLI + admin) |
 | [doc/import-bd.md](doc/import-bd.md) | Import catalogue BD / Manga (CSV admin) |
-| [doc/bd.md](doc/bd.md) | BD / Manga : séries, tomes, import CSV (**0.8.0**) |
+| [doc/bd.md](doc/bd.md) | BD / Manga : séries, tomes, import CSV, **Open Library** (**0.8.16**) |
 | [doc/livres.md](doc/livres.md) | Livres : collection, sagas, lectures, pont jeux (**0.8.1**) |
 | [doc/jeux.md](doc/jeux.md) | Jeux vidéo : collection, pont magazine, Linux, recherche/filtres |
 | [doc/partage-visiteur.md](doc/partage-visiteur.md) | Liens lecture seule : recherche, filtres, colonnes notes (**0.7.0**) |
@@ -43,7 +43,7 @@ En **0.2.x**, l’onglet **Films** reprend toute la dvdthèque Monciné. Depuis 
 | **Films** | ✅ Production | Collection, envies, TMDB/OMDB, quiz « Ce soir », prêts, sagas, **vue Bibliothèque** (**0.5.7**), listes imprimables (**0.4.4+**) |
 | **Jeux vidéo** | ✅ Utilisable | Collection, envies, notes, stats, **extensions DLC**, **remakes**, **enrichissement IGDB**, **sagas jeux**, **vue Bibliothèque**, recherche **acronymes**, fichiers attachés, Linux tri-état, **pont magazine ↔ jeux** (**0.6.3**), fiche `/oeuvre-jeu.php`, autocomplétion à l’ajout, **recherche tolérante** (**0.5.7**, [doc/jeux.md](doc/jeux.md)) |
 | **Magazines** | ✅ Complet (M5) | Séries, numéros, PDF, FTS, import/export catalogue ABM, sujets en **bandeau vignettes** (**0.7.17**), lien catalogue **jeu/film** (**0.7.17**), profil public ([doc/magazines.md](doc/magazines.md)) |
-| **BD / Manga** | ✅ Utilisable (M2) | Collection, envies, partage, profil, impression, **import CSV catalogue** (**0.8.0**) |
+| **BD / Manga** | ✅ Utilisable (M2) | Collection, envies, partage, profil, impression, **import CSV**, **Open Library** (**0.8.16**, [doc/bd.md](doc/bd.md)) |
 | **Livres** | ✅ Utilisable (M3) | Collection, envies, sagas, lectures / ressentis, stats, pont jeux, **Open Library** (**0.8.15**, [doc/livres.md](doc/livres.md)) |
 | **Musique** | ⏸️ Placeholder | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles/CD — **0.7.8** |
 | **Transversal** | Partiel | Catalogue partagé multi-domaines, **recherche globale** en-tête (**0.7.14**), **suppression groupée catalogue admin** (**0.7.15**), foyers, amis, partage visiteur, profil public (films + magazines + **jeux**) |
@@ -76,6 +76,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.8.16** | BD / Manga : enrichissement Open Library (ISBN, couverture, résumé…) |
 | **0.8.15** | Livres : enrichissement Open Library (ISBN, résumé, sous-titre, saga / n°) |
 | **0.8.14** | Droits PDF (ajout si absent / admin pour replace-delete) ; GameBulkActionService ; FilmUrls |
 | **0.8.13** | Stats sujets d’un mois ; tri tests A→Z / note (/100) ; équivalence étoiles ; responsive sujets |

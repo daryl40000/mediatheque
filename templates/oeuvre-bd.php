@@ -89,11 +89,31 @@ $navLabels = Moncine\MediaDomain::navLabels(Moncine\MediaDomain::BD);
                     <?php if ((string) ($album['editeur'] ?? '') !== ''): ?>
                         <div><dt>Éditeur</dt><dd><?= Moncine\View::escape((string) $album['editeur']) ?></dd></div>
                     <?php endif; ?>
+                    <?php if ((string) ($album['isbn'] ?? '') !== ''): ?>
+                        <div><dt>ISBN</dt><dd><?= Moncine\View::escape((string) $album['isbn']) ?></dd></div>
+                    <?php endif; ?>
+                    <?php if ((int) ($album['pages'] ?? 0) > 0): ?>
+                        <div><dt>Pages</dt><dd><?= (int) $album['pages'] ?></dd></div>
+                    <?php endif; ?>
                 </dl>
 
                 <?php if (trim((string) ($album['synopsis'] ?? '')) !== ''): ?>
                     <h2>Résumé</h2>
                     <p class="film-synopsis"><?= Moncine\View::escape((string) $album['synopsis']) ?></p>
+                <?php endif; ?>
+
+                <?php if (Moncine\CatalogAdmin::canAccess() && $oeuvreId > 0): ?>
+                    <?php
+                    $enrichTarget = 'oeuvre';
+                    $entityId = $oeuvreId;
+                    $canEnrichOpenLibrary = !empty($canEnrichOpenLibrary);
+                    $enrichStatus = $enrichStatus ?? null;
+                    $enrichMessage = $enrichMessage ?? '';
+                    $currentOpenLibraryId = (string) ($album['openlibrary_id'] ?? '');
+                    $currentIsbn = (string) ($album['isbn'] ?? '');
+                    $currentPosterUrl = (string) ($album['poster_url'] ?? '');
+                    require MONCINE_ROOT . '/templates/_enrich_bd_panel.php';
+                    ?>
                 <?php endif; ?>
             </div>
         </article>

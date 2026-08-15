@@ -83,6 +83,8 @@ final class MediaDomainGuards
         '/imprimer-envies-bd.php',
         '/utilisateur-serie-bd.php',
         '/utilisateur-album-bd.php',
+        '/enrichir-bd.php',
+        '/enrichir-oeuvre-bd.php',
     ];
 
     /** Pages collection / envies réservées à l’onglet BD. */

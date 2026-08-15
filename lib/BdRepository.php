@@ -118,6 +118,35 @@ final class BdRepository
             && CatalogSchema::usesCatalogTables(Database::getInstance());
     }
 
+    /** Colonnes Open Library sur oeuvre_bd (migration 078). */
+    public static function hasOpenLibraryColumns(): bool
+    {
+        static $cached = null;
+        if ($cached !== null) {
+            return $cached;
+        }
+
+        if (!self::isAvailable()) {
+            return $cached = false;
+        }
+
+        return $cached = BdSchema::hasColumn('openlibrary_id')
+            && BdSchema::hasColumn('ol_enriched_at')
+            && BdSchema::hasColumn('isbn')
+            && BdSchema::hasColumn('pages');
+    }
+
+    /** Fragment SQL optionnel pour les SELECT tome. */
+    public static function openLibrarySelectSql(string $alias = 'ob'): string
+    {
+        if (!self::hasOpenLibraryColumns()) {
+            return '';
+        }
+
+        return ', ' . $alias . '.isbn, ' . $alias . '.pages, '
+            . $alias . '.openlibrary_id, ' . $alias . '.ol_enriched_at';
+    }
+
     public static function seriesLibraryTableExists(): bool
     {
         $stmt = Database::getInstance()->query(

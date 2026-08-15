@@ -68,6 +68,8 @@ if ($oeuvreIdFromCatalog > 0) {
         'scenariste' => (string) ($_POST['scenariste'] ?? ''),
         'dessinateur' => (string) ($_POST['dessinateur'] ?? ''),
         'editeur' => (string) ($_POST['editeur'] ?? ''),
+        'isbn' => (string) ($_POST['isbn'] ?? ''),
+        'pages' => (int) ($_POST['pages'] ?? 0),
         'genre' => (string) ($_POST['genre'] ?? ''),
         'support_physique' => BdRepository::supportFromPost($_POST),
     ], $statut, $userId, $foyerId);

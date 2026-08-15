@@ -7,6 +7,7 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\BdEnricher;
 use Moncine\BdKind;
 use Moncine\BdPhysicalSupport;
 use Moncine\BdRepository;
@@ -95,4 +96,7 @@ View::render('oeuvre-bd', [
     'oeuvreId' => $oeuvreId,
     'kindChoices' => BdKind::choices(),
     'supportChoices' => BdPhysicalSupport::choices(),
+    'canEnrichOpenLibrary' => BdEnricher::canEnrich(),
+    'enrichStatus' => isset($_GET['enrich']) ? (string) $_GET['enrich'] : null,
+    'enrichMessage' => trim((string) ($_GET['enrich_msg'] ?? '')),
 ]);

@@ -21,6 +21,32 @@ final class BdCatalogWriter
     public function insertCatalogBdRow(int $oeuvreId, array $data, int $seriesId, string $kind): void
     {
         $catalogFields = $this->prepareCatalogTomeFields($data, $seriesId, null);
+        $hasOl = BdRepository::hasOpenLibraryColumns();
+
+        if ($hasOl) {
+            $this->db->prepare(
+                'INSERT INTO oeuvre_bd (
+                    oeuvre_id, series_id, kind, tome_numero, tome_ordre, tome_label, est_hors_serie,
+                    scenariste, dessinateur, editeur, genre, isbn, pages
+                 ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
+            )->execute([
+                $oeuvreId,
+                $seriesId > 0 ? $seriesId : null,
+                $kind,
+                $catalogFields['tome_numero'],
+                $catalogFields['tome_ordre'],
+                $catalogFields['tome_label'],
+                $catalogFields['est_hors_serie'],
+                $catalogFields['scenariste'],
+                $catalogFields['dessinateur'],
+                $catalogFields['editeur'],
+                $catalogFields['genre'],
+                $catalogFields['isbn'],
+                $catalogFields['pages'],
+            ]);
+
+            return;
+        }
 
         $this->db->prepare(
             'INSERT INTO oeuvre_bd (
@@ -53,7 +79,9 @@ final class BdCatalogWriter
      *     scenariste: string,
      *     dessinateur: string,
      *     editeur: string,
-     *     genre: string
+     *     genre: string,
+     *     isbn: string,
+     *     pages: int
      * }
      */
     public function prepareCatalogTomeFields(array $data, int $seriesId, ?array $existing): array
@@ -77,6 +105,10 @@ final class BdCatalogWriter
             'dessinateur' => trim((string) ($data['dessinateur'] ?? $existing['dessinateur'] ?? '')),
             'editeur' => trim((string) ($data['editeur'] ?? $existing['editeur'] ?? '')),
             'genre' => trim((string) ($data['genre'] ?? $existing['genre'] ?? '')),
+            'isbn' => OpenLibraryClient::normalizeIsbn(
+                (string) ($data['isbn'] ?? $existing['isbn'] ?? '')
+            ),
+            'pages' => max(0, (int) ($data['pages'] ?? $existing['pages'] ?? 0)),
         ];
     }
 }

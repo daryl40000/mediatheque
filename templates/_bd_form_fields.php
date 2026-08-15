@@ -73,6 +73,15 @@ $showPossessionHint = ($showPossessionHint ?? true) === true;
 <input type="text" name="editeur" id="bd_editeur"
        value="<?= Moncine\View::escape((string) ($album['editeur'] ?? '')) ?>">
 
+<label for="bd_isbn">ISBN</label>
+<input type="text" name="isbn" id="bd_isbn" maxlength="20"
+       value="<?= Moncine\View::escape((string) ($album['isbn'] ?? '')) ?>"
+       placeholder="978…" inputmode="numeric" autocomplete="off">
+
+<label for="bd_pages">Nombre de pages</label>
+<input type="number" name="pages" id="bd_pages" min="0" max="9999" step="1"
+       value="<?= (int) ($album['pages'] ?? 0) > 0 ? (int) $album['pages'] : '' ?>">
+
 <label for="bd_genre">Genre</label>
 <input type="text" name="genre" id="bd_genre" list="bd_genre_list"
        value="<?= Moncine\View::escape((string) ($album['genre'] ?? '')) ?>">

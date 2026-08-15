@@ -7,10 +7,12 @@ declare(strict_types=1);
 
 require_once dirname(__DIR__) . '/lib/bootstrap.php';
 
+use Moncine\BdEnricher;
 use Moncine\BdPhysicalSupport;
 use Moncine\BdRepository;
 use Moncine\BdSeriesContext;
 use Moncine\BibliothequeRepository;
+use Moncine\CatalogAdmin;
 use Moncine\HistoriqueRepository;
 use Moncine\LibraryStatut;
 use Moncine\MediaDomain;
@@ -115,4 +117,8 @@ View::render('album-bd', [
     'bdSeriesNeighbors' => $bdSeriesNeighbors,
     'seriesTitre' => trim((string) ($album['series_titre'] ?? '')),
     'inWishlist' => $inWishlist,
+    'canManageCatalog' => CatalogAdmin::canAccess(),
+    'canEnrichOpenLibrary' => BdEnricher::canEnrich(),
+    'enrichStatus' => isset($_GET['enrich']) ? (string) $_GET['enrich'] : null,
+    'enrichMessage' => trim((string) ($_GET['enrich_msg'] ?? '')),
 ]);

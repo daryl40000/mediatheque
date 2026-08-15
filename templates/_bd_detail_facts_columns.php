@@ -24,6 +24,14 @@ $readAtLabel = (string) ($album['read_at_label'] ?? '');
             <dt>Éditeur</dt>
             <dd><?= Moncine\View::escape((string) $album['editeur']) ?></dd>
         <?php endif; ?>
+        <?php if ((string) ($album['isbn'] ?? '') !== ''): ?>
+            <dt>ISBN</dt>
+            <dd><?= Moncine\View::escape((string) $album['isbn']) ?></dd>
+        <?php endif; ?>
+        <?php if ((int) ($album['pages'] ?? 0) > 0): ?>
+            <dt>Pages</dt>
+            <dd><?= (int) $album['pages'] ?></dd>
+        <?php endif; ?>
         <?php if ((string) ($album['genre'] ?? '') !== ''): ?>
             <dt>Genre</dt>
             <dd><span class="magazine-tag magazine-tag--game-genre"><?= Moncine\View::escape((string) $album['genre']) ?></span></dd>

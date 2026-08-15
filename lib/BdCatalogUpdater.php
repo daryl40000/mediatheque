@@ -55,32 +55,65 @@ final class BdCatalogUpdater
         try {
             (new OeuvreRepository())->update($oeuvreId, $oeuvreUpdate, $oeuvreFields);
 
-            $this->db->prepare(
-                'UPDATE oeuvre_bd SET
-                    series_id = ?,
-                    kind = ?,
-                    tome_numero = ?,
-                    tome_ordre = ?,
-                    tome_label = ?,
-                    est_hors_serie = ?,
-                    scenariste = ?,
-                    dessinateur = ?,
-                    editeur = ?,
-                    genre = ?
-                 WHERE oeuvre_id = ?'
-            )->execute([
-                $seriesId > 0 ? $seriesId : null,
-                $kind,
-                $catalogFields['tome_numero'],
-                $catalogFields['tome_ordre'],
-                $catalogFields['tome_label'],
-                $catalogFields['est_hors_serie'],
-                $catalogFields['scenariste'],
-                $catalogFields['dessinateur'],
-                $catalogFields['editeur'],
-                $catalogFields['genre'],
-                $oeuvreId,
-            ]);
+            if (BdRepository::hasOpenLibraryColumns()) {
+                $this->db->prepare(
+                    'UPDATE oeuvre_bd SET
+                        series_id = ?,
+                        kind = ?,
+                        tome_numero = ?,
+                        tome_ordre = ?,
+                        tome_label = ?,
+                        est_hors_serie = ?,
+                        scenariste = ?,
+                        dessinateur = ?,
+                        editeur = ?,
+                        genre = ?,
+                        isbn = ?,
+                        pages = ?
+                     WHERE oeuvre_id = ?'
+                )->execute([
+                    $seriesId > 0 ? $seriesId : null,
+                    $kind,
+                    $catalogFields['tome_numero'],
+                    $catalogFields['tome_ordre'],
+                    $catalogFields['tome_label'],
+                    $catalogFields['est_hors_serie'],
+                    $catalogFields['scenariste'],
+                    $catalogFields['dessinateur'],
+                    $catalogFields['editeur'],
+                    $catalogFields['genre'],
+                    $catalogFields['isbn'],
+                    $catalogFields['pages'],
+                    $oeuvreId,
+                ]);
+            } else {
+                $this->db->prepare(
+                    'UPDATE oeuvre_bd SET
+                        series_id = ?,
+                        kind = ?,
+                        tome_numero = ?,
+                        tome_ordre = ?,
+                        tome_label = ?,
+                        est_hors_serie = ?,
+                        scenariste = ?,
+                        dessinateur = ?,
+                        editeur = ?,
+                        genre = ?
+                     WHERE oeuvre_id = ?'
+                )->execute([
+                    $seriesId > 0 ? $seriesId : null,
+                    $kind,
+                    $catalogFields['tome_numero'],
+                    $catalogFields['tome_ordre'],
+                    $catalogFields['tome_label'],
+                    $catalogFields['est_hors_serie'],
+                    $catalogFields['scenariste'],
+                    $catalogFields['dessinateur'],
+                    $catalogFields['editeur'],
+                    $catalogFields['genre'],
+                    $oeuvreId,
+                ]);
+            }
 
             if ($bibId !== null && $bibId > 0) {
                 $this->db->prepare('UPDATE bibliotheque SET support_physique = ? WHERE id = ?')

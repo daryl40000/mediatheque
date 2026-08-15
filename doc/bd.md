@@ -1,5 +1,7 @@
 # BD / Manga — module collection (phase M2)
 
+**Version :** **0.8.16** (enrichissement Open Library)
+
 ## Organisation (comme les magazines)
 
 1. **Créer une série** (`/ajouter-serie-bd.php`) — ex. « Astérix », « One Piece ».
@@ -11,7 +13,7 @@ La page **Mes BD** (`/bd.php`) affiche vos **séries**. Cliquez sur une série p
 
 - **`series`** (`media_domain = 'bd'`) : titre, type (BD/manga/comic dans `tags`), éditeur, couverture.
 - **`series_bibliotheque`** : séries suivies (collection ou envies), comme pour les magazines.
-- **`oeuvre_bd`** : métadonnées de chaque tome (numéro, auteurs, genre…).
+- **`oeuvre_bd`** : métadonnées de chaque tome (numéro, auteurs, genre, ISBN, pages, Open Library…).
 - **`bibliotheque`** : votre exemplaire (`support_physique`).
 - **`historique`** : dates « Lu le » et notes.
 
@@ -24,8 +26,8 @@ La page **Mes BD** (`/bd.php`) affiche vos **séries**. Cliquez sur une série p
 | `/ajouter-serie-bd.php` | Nouvelle série |
 | `/modifier-serie-bd.php?series_id=` | Modifier titre, type, éditeur, notes, couverture |
 | `/ajouter-tome-bd.php?series_id=` | Nouveau tome |
-| `/album-bd.php?id=` | Fiche d’un tome |
-| `/oeuvre-bd.php?id=` | Fiche **catalogue** d’un tome (consultable par tout utilisateur connecté depuis **0.7.12**) |
+| `/oeuvre-bd.php?id=` | Fiche **catalogue** d’un tome (consultable par tout utilisateur connecté depuis **0.7.12**) ; enrichissement Open Library (admin) |
+| `/album-bd.php?id=` | Fiche d’un tome ; enrichissement Open Library (admin) |
 | `/bd-envies.php` | Séries en envies |
 | `/utilisateur.php?domain=bd` | Profil public (amis) — séries et tomes ; **clic sur un tome** → fiche catalogue (**0.7.12**) |
 | `/partage-bd.php?t=` | Liste partagée (visiteur sans compte) |
@@ -74,7 +76,7 @@ En-tête de série (collection) : **« X possédé(s) sur Y »** (tomes posséd�
 ## Limites (après 0.8.0)
 
 - **Import CSV catalogue** : disponible pour les admins (`/import-catalogue-bd.php`, [import-bd.md](import-bd.md)).
-- Pas d’API externe d’enrichissement.
+- **Enrichissement Open Library** (admin) : sur fiche tome catalogue (`/oeuvre-bd.php`) ou album (`/album-bd.php`) — ISBN / titre / ID édition → couverture, scénariste, éditeur, pages, résumé (migration **078**).
 - Profil public, partage visiteur et listes imprimables (série + Mes BD) : disponibles.
 - **Couverture de série** : sans image dédiée, l’application affiche automatiquement la couverture du **tome 1** (hors-série exclus). Vous pouvez aussi téléverser une couverture propre à la série via **Modifier la série**.
 - **Maintenance catalogue** : les logos de série (`/posters/s{id}.jpg`) ne sont plus traités comme des affiches orphelines.

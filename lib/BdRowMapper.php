@@ -151,6 +151,9 @@ final class BdRowMapper
         $row['display_label'] = self::displayLabel($row);
         $row['tome_summary'] = self::tomeSummary($row);
         $row['series_titre'] = trim((string) ($row['series_titre'] ?? ''));
+        $row['isbn'] = trim((string) ($row['isbn'] ?? ''));
+        $row['pages'] = (int) ($row['pages'] ?? 0);
+        $row['openlibrary_id'] = trim((string) ($row['openlibrary_id'] ?? ''));
 
         return $row;
     }

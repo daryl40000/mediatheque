@@ -128,6 +128,20 @@ $popoverOpen = (string) ($popoverOpen ?? '');
                     </section>
                 <?php endif; ?>
 
+                <?php if (!empty($canManageCatalog) && $albumId > 0): ?>
+                    <?php
+                    $enrichTarget = 'album';
+                    $entityId = $albumId;
+                    $canEnrichOpenLibrary = !empty($canEnrichOpenLibrary);
+                    $enrichStatus = $enrichStatus ?? null;
+                    $enrichMessage = $enrichMessage ?? '';
+                    $currentOpenLibraryId = (string) ($album['openlibrary_id'] ?? '');
+                    $currentIsbn = (string) ($album['isbn'] ?? '');
+                    $currentPosterUrl = (string) ($album['poster_url'] ?? '');
+                    require MONCINE_ROOT . '/templates/_enrich_bd_panel.php';
+                    ?>
+                <?php endif; ?>
+
                 <?php if (!empty($bdSeriesNeighbors)): ?>
                     <?php require MONCINE_ROOT . '/templates/_bd_series_context_strip.php'; ?>
                 <?php endif; ?>

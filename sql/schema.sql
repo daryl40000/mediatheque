@@ -577,7 +577,11 @@ CREATE TABLE IF NOT EXISTS oeuvre_bd (
     scenariste TEXT NOT NULL DEFAULT '',
     dessinateur TEXT NOT NULL DEFAULT '',
     editeur TEXT NOT NULL DEFAULT '',
-    genre TEXT NOT NULL DEFAULT ''
+    genre TEXT NOT NULL DEFAULT '',
+    isbn TEXT NOT NULL DEFAULT '',
+    pages INTEGER NOT NULL DEFAULT 0,
+    openlibrary_id TEXT NOT NULL DEFAULT '',
+    ol_enriched_at TEXT DEFAULT NULL
 );
 
 CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_series ON oeuvre_bd(series_id);
@@ -586,6 +590,9 @@ CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_kind ON oeuvre_bd(kind);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_scenariste ON oeuvre_bd(scenariste COLLATE NOCASE);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_dessinateur ON oeuvre_bd(dessinateur COLLATE NOCASE);
 CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_editeur ON oeuvre_bd(editeur COLLATE NOCASE);
+CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_isbn ON oeuvre_bd(isbn) WHERE TRIM(isbn) != '';
+CREATE INDEX IF NOT EXISTS idx_oeuvre_bd_openlibrary_id
+    ON oeuvre_bd(openlibrary_id) WHERE TRIM(openlibrary_id) != '';
 
 CREATE TABLE IF NOT EXISTS oeuvre_livre (
     oeuvre_id INTEGER PRIMARY KEY REFERENCES oeuvres(id) ON DELETE CASCADE,
