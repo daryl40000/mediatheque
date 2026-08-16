@@ -108,7 +108,7 @@ Comme Monciné :
 ```bash
 composer install
 php lib/cli/migrate.php
-php -S localhost:8080 -t www
+php -S localhost:8081 -t www
 ```
 
 Après mise à jour vers 0.1.0, exécuter les migrations (au minimum **030**). Les œuvres existantes reçoivent `media_domain = film`.

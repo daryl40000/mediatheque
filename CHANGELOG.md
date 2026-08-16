@@ -11,6 +11,10 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ## [Unreleased]
 
+### Corrigé
+
+- **Export catalogue** : le numéro **IGDB** des jeux est désormais exporté (et réimporté) via la colonne `Jeu — IGDB ID`.
+
 ---
 
 ## [0.8.17] — 2026-08-16

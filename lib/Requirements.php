@@ -50,7 +50,7 @@ final class Requirements
         echo '</ul>';
         echo '<p><strong>Sur Ubuntu/Debian :</strong></p>';
         echo '<pre><code>sudo apt install php8.3-sqlite3</code></pre>';
-        echo '<p>Puis relancez le serveur : <code>php -S localhost:8080 -t www</code></p>';
+        echo '<p>Puis relancez le serveur : <code>php -S localhost:8081 -t www</code></p>';
         echo '</body></html>';
         exit;
     }

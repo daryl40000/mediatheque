@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Serveur de développement avec limites adaptées aux PDF magazines (350 Mo).
 cd "$(dirname "$0")/.." || exit 1
-HOST="${1:-localhost:8080}"
+HOST="${1:-localhost:8081}"
 SESSION_DIR="$(pwd)/data/sessions"
 mkdir -p "$SESSION_DIR"
 echo "Médiathèque — serveur de développement sur http://${HOST}/"

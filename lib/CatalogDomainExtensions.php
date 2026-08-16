@@ -25,6 +25,7 @@ final class CatalogDomainExtensions
         'jeu_base_game_oeuvre_id' => 'Jeu — ID jeu de base',
         'jeu_is_remake' => 'Jeu — remake',
         'jeu_original_game_oeuvre_id' => 'Jeu — ID jeu d\'origine',
+        'jeu_igdb_id' => 'Jeu — IGDB ID',
         'mag_series_id' => 'Magazine — ID série',
         'mag_series_titre' => 'Magazine — titre série',
         'mag_series_publication_type' => 'Magazine — type publication',
@@ -80,6 +81,14 @@ final class CatalogDomainExtensions
         'jeu_base_game_oeuvre_id' => ['jeu id jeu de base', 'jeu_base_game_oeuvre_id', 'base_game_oeuvre_id'],
         'jeu_is_remake' => ['jeu remake', 'jeu_is_remake', 'remake'],
         'jeu_original_game_oeuvre_id' => ['jeu id jeu origine', 'jeu_original_game_oeuvre_id', 'original_game_oeuvre_id'],
+        'jeu_igdb_id' => [
+            'jeu igdb id',
+            'jeu — igdb id',
+            'jeu_igdb_id',
+            'igdb id',
+            'igdb_id',
+            'igdb',
+        ],
         'mag_series_id' => ['magazine id serie', 'magazine id série', 'mag_series_id', 'series_id magazine'],
         'mag_series_titre' => ['magazine titre serie', 'magazine titre série', 'mag_series_titre', 'serie magazine'],
         'mag_series_publication_type' => [
@@ -161,6 +170,9 @@ final class CatalogDomainExtensions
                 'jeu_is_remake' => self::formatBoolForExport((int) ($row['jeu_is_remake'] ?? 0) === 1),
                 'jeu_original_game_oeuvre_id' => (int) ($row['jeu_original_game_oeuvre_id'] ?? 0) > 0
                     ? (string) (int) $row['jeu_original_game_oeuvre_id']
+                    : '',
+                'jeu_igdb_id' => (int) ($row['jeu_igdb_id'] ?? 0) > 0
+                    ? (string) (int) $row['jeu_igdb_id']
                     : '',
                 'mag_est_hors_serie' => self::formatBoolForExport((int) ($row['mag_est_hors_serie'] ?? 0) === 1),
                 'mag_series_id' => (int) ($row['mag_series_id'] ?? 0) > 0
@@ -301,12 +313,23 @@ final class CatalogDomainExtensions
             'original_game_oeuvre_id' => $originalGameId,
         ];
         $relationParams = GameRepository::relationWriteParams($relationData);
+        $igdbId = max(0, (int) self::cellIfImported(
+            $data,
+            $importSet,
+            'jeu_igdb_id',
+            (string) ($data['jeu_igdb_id'] ?? '0')
+        ));
+        $shouldWriteIgdb = GameRepository::hasIgdbColumns()
+            && ($importSet === null || isset($importSet['jeu_igdb_id']));
 
         if (!$exists && $studio === '' && $editeur === '' && $genre === '' && $platform === '') {
             $db->prepare(
                 'INSERT INTO oeuvre_jeu (oeuvre_id, studio, editeur, genre, platform, is_digital)
                  VALUES (?, ?, ?, ?, ?, ?)'
             )->execute([$oeuvreId, '', '', '', '', 0]);
+            if ($shouldWriteIgdb) {
+                self::writeGameIgdbId($db, $oeuvreId, $igdbId);
+            }
 
             return;
         }
@@ -340,6 +363,9 @@ final class CatalogDomainExtensions
                     ...$relationParams,
                 ]);
             }
+            if ($shouldWriteIgdb) {
+                self::writeGameIgdbId($db, $oeuvreId, $igdbId);
+            }
 
             return;
         }
@@ -367,6 +393,15 @@ final class CatalogDomainExtensions
                 ...$relationParams,
             ]);
         }
+        if ($shouldWriteIgdb) {
+            self::writeGameIgdbId($db, $oeuvreId, $igdbId);
+        }
+    }
+
+    private static function writeGameIgdbId(PDO $db, int $oeuvreId, int $igdbId): void
+    {
+        $db->prepare('UPDATE oeuvre_jeu SET igdb_id = ? WHERE oeuvre_id = ?')
+            ->execute([$igdbId, $oeuvreId]);
     }
 
     /**

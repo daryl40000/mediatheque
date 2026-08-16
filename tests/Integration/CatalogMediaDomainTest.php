@@ -50,6 +50,7 @@ final class CatalogMediaDomainTest extends MoncineTestCase
             'Jeu — studio' => 'Studio X',
             'Jeu — plateforme' => 'pc',
             'Jeu — genre' => 'RPG',
+            'Jeu — IGDB ID' => '1942',
         ]);
 
         $result = (new ImportRunner())->importCatalogSheet([$row], $header);
@@ -64,11 +65,49 @@ final class CatalogMediaDomainTest extends MoncineTestCase
         $this->assertNotNull($game);
         $this->assertSame('Studio X', $game['studio'] ?? '');
         $this->assertSame('pc', $game['platform'] ?? '');
+        if (GameRepository::hasIgdbColumns()) {
+            $this->assertSame(1942, (int) ($game['igdb_id'] ?? 0));
+        }
     }
 
     public function testCatalogExportIncludesMediaDomainColumn(): void
     {
         $this->assertContains('Domaine média', CatalogExportSchema::headers());
+        $this->assertContains('Jeu — IGDB ID', CatalogExportSchema::headers());
+    }
+
+    public function testCatalogExportIncludesGameIgdbId(): void
+    {
+        if (!GameRepository::isAvailable() || !GameRepository::hasIgdbColumns()) {
+            $this->markTestSkipped('Module jeux / colonnes IGDB non disponibles.');
+        }
+
+        $oeuvreId = (new OeuvreRepository())->insert([
+            'titre' => 'Jeu Export IGDB',
+            'realisateur' => '',
+            'media_domain' => MediaDomain::JEU,
+        ]);
+        $db = \Moncine\Database::getInstance();
+        $db->prepare(
+            'INSERT INTO oeuvre_jeu (oeuvre_id, studio, editeur, genre, platform, is_digital, igdb_id)
+             VALUES (?, ?, ?, ?, ?, ?, ?)'
+        )->execute([$oeuvreId, 'Studio', '', 'Action', 'pc', 0, 119171]);
+
+        $exported = null;
+        foreach ((new OeuvreRepository())->findAllForExport() as $oeuvre) {
+            if ((int) ($oeuvre['id'] ?? 0) === $oeuvreId) {
+                $exported = $oeuvre;
+                break;
+            }
+        }
+        $this->assertNotNull($exported);
+        $this->assertSame(119171, (int) ($exported['jeu_igdb_id'] ?? 0));
+
+        $row = CatalogExportSchema::rowToExport($exported);
+        $headers = CatalogExportSchema::headers();
+        $igdbIndex = array_search('Jeu — IGDB ID', $headers, true);
+        $this->assertNotFalse($igdbIndex);
+        $this->assertSame('119171', $row[$igdbIndex]);
     }
 
     public function testCatalogAdminListsAllMediaDomains(): void

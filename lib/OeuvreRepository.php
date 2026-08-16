@@ -370,6 +370,10 @@ final class OeuvreRepository
             if (GameRepository::hasRemakeColumns()) {
                 $select .= ', oj.is_remake AS jeu_is_remake, oj.original_game_oeuvre_id AS jeu_original_game_oeuvre_id';
             }
+            // Identifiant IGDB : indispensable pour réimporter / réenrichir sans ambiguïté.
+            $select .= GameRepository::hasIgdbColumns()
+                ? ', oj.igdb_id AS jeu_igdb_id'
+                : ', 0 AS jeu_igdb_id';
         }
         if ($magTable) {
             $select .= ', om.series_id AS mag_series_id, om.numero AS mag_numero,'

@@ -256,16 +256,16 @@ Deux façons équivalentes pour ouvrir le site ; la **recommandée** pour les **
 | Méthode | Commande | Quand l’utiliser |
 |---------|----------|------------------|
 | **Recommandée** | `./start-dev.sh` | Magazines, import PDF jusqu’à ~350 Mo, sessions stables |
-| **Simple** | `php -S localhost:8080 -t www` | Essai rapide (limites d’upload PHP souvent basses) |
+| **Simple** | `php -S localhost:8081 -t www` | Essai rapide (limites d’upload PHP souvent basses) |
 
-Par défaut le site écoute sur **http://localhost:8080/**  
+Par défaut le site écoute sur **http://localhost:8081/**  
 Pour un autre port : `./www/serve.sh localhost:9000`
 
 Arrêt du serveur : **Ctrl+C** dans le terminal.
 
 ### 5. Premier démarrage dans le navigateur
 
-1. Ouvrez **http://localhost:8080/**
+1. Ouvrez **http://localhost:8081/**
 2. Si aucun compte n’existe, vous êtes guidé vers **`/premier-compte.php`** — créez le **compte administrateur** (identifiant, mot de passe, foyer).
 3. Ensuite, connectez-vous via **`/connexion.php`** si nécessaire.
 4. Vous arrivez sur l’**accueil** : choisissez un **onglet** en haut (Films, Magazines, etc.).
@@ -376,7 +376,7 @@ composer install
 ./start-dev.sh
 ```
 
-Puis ouvrir **http://localhost:8080/** et créer le compte sur **`/premier-compte.php`**.
+Puis ouvrir **http://localhost:8081/** et créer le compte sur **`/premier-compte.php`**.
 
 ---
 

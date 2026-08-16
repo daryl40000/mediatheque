@@ -129,6 +129,8 @@ Les champs déjà remplis ne sont **pas écrasés**, sauf correction avec un **i
 | Enrichir une fiche bibliothèque | `/jeu.php` → panneau IGDB (admin) |
 | Corriger avec un ID IGDB | Coller le numéro ou l’URL `igdb.com/games/…` |
 
+**Export / import catalogue admin :** la colonne **`Jeu — IGDB ID`** conserve l’identifiant IGDB (CSV et ODS). Indispensable pour réimporter un catalogue sans perdre le lien d’enrichissement.
+
 Handlers : `/enrichir-jeux.php` (lot + config), `/enrichir-jeu.php`, `/enrichir-oeuvre-jeu.php`.
 
 ### Sagas jeux (0.5.6)
