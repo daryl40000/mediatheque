@@ -61,12 +61,14 @@
             <div class="film-detail__body game-detail__body">
                 <header class="film-detail__heading game-detail__heading">
                     <div class="game-detail__title-bar game-detail__title-bar--with-press">
-                        <h1 class="game-detail__title-row">
-                            <span><?= Moncine\View::escape((string) ($oeuvre['titre'] ?? '')) ?></span>
-                            <?php if ((int) ($oeuvre['annee'] ?? 0) > 0): ?>
-                                <span class="film-year">(<?= (int) $oeuvre['annee'] ?>)</span>
-                            <?php endif; ?>
-                        </h1>
+                        <div class="game-detail__title-stack">
+                            <h1 class="game-detail__title-row">
+                                <span><?= Moncine\View::escape((string) ($oeuvre['titre'] ?? '')) ?></span>
+                                <?php if ((int) ($oeuvre['annee'] ?? 0) > 0): ?>
+                                    <span class="film-year">(<?= (int) $oeuvre['annee'] ?>)</span>
+                                <?php endif; ?>
+                            </h1>
+                        </div>
                         <?php require MONCINE_ROOT . '/templates/_magazine_press_average_title.php'; ?>
                     </div>
                     <?php if (trim((string) ($oeuvre['titre_original'] ?? '')) !== ''): ?>

@@ -508,6 +508,12 @@ final class View
         return GameUrls::oeuvreJeuUrl($oeuvreId, $catalogSearch, $catalogSort, $catalogDir, $catalogPage, $catalogMedia);
     }
 
+    /** Fiche catalogue jeu avec bascule d’onglet si besoin (ex. depuis Magazines). */
+    public static function oeuvreJeuNavUrl(int $oeuvreId): string
+    {
+        return GameUrls::oeuvreJeuNavUrl($oeuvreId);
+    }
+
     /** Fiche catalogue admin — numéro de magazine. */
     public static function oeuvreMagazineUrl(
         int $oeuvreId,

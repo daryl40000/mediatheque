@@ -26,7 +26,7 @@ final class OpenLibraryClient
 
     private const MAX_BODY_BYTES = 1_048_576;
 
-    private const USER_AGENT = 'Mediatheque/0.8.16 (+https://github.com/daryl40000/mediatheque; OpenLibrary integration)';
+    private const USER_AGENT = 'Mediatheque/0.8.17 (+https://github.com/daryl40000/mediatheque; OpenLibrary integration)';
 
     private ?string $lastError = null;
 

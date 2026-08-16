@@ -19,10 +19,13 @@ use Moncine\GameRepository;
 use Moncine\LivreGameLink;
 use Moncine\MagazineGameLink;
 use Moncine\MediaDomain;
+use Moncine\MediaDomainGuards;
 use Moncine\UserContext;
 use Moncine\View;
 
 CatalogAdmin::denyUnlessCatalogAvailable();
+// Depuis Magazines / Films / etc. : basculer sur l’onglet Jeux pour pouvoir ajouter à la bibliothèque.
+MediaDomainGuards::ensureGameContext();
 
 $oeuvreId = (int) ($_GET['id'] ?? 0);
 $catalogListContext = CatalogListContext::fromQuery($_GET);

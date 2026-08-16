@@ -2,7 +2,7 @@
 
 Documentation du module **Jeux** dans la médiathèque Monciné.
 
-**Version : 0.7.15** · **Date : 2026-07-08**
+**Version : 0.8.17** · **Date : 2026-08-16**
 
 ## Objectif
 
@@ -461,7 +461,9 @@ Deux cases **mutuellement exclusives** dans le formulaire d’ajout/modification
 | Testé sur Linux | `bibliotheque.tested_on_linux` | Badge pingouin Tux (fond bleu ciel) |
 | Linux non supporté | `bibliotheque.linux_not_supported` | Pingouin barré (barre rouge) |
 
-Les badges apparaissent sur la fiche jeu et dans les listes (Mes jeux, Mes envies).
+Les badges apparaissent sur la fiche jeu (sous le titre, à gauche — pas sous la note presse, **0.8.17**) et dans les listes (Mes jeux, Mes envies).
+
+Depuis un **sujet magazine** pointant vers un jeu catalogue non possédé, le lien bascule bien vers l’onglet **Jeux** avant l’ajout (**0.8.17**, `oeuvreJeuNavUrl`).
 
 ## Prêts entre amis (0.6.5)
 

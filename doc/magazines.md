@@ -1,6 +1,6 @@
 # Magazines — guide utilisateur et technique
 
-**Version : 0.8.14** · **Date : 2026-08-09**
+**Version : 0.8.17** · **Date : 2026-08-16**
 
 L’onglet **Magazines** permet de gérer des **séries** (revues) et leurs **numéros** : couverture, sommaire, PDF, recherche, supports (papier / PDF), collection et envies.
 
@@ -199,7 +199,7 @@ Migration : `sql/migrations/038_magazine_fts.sql`.
 
 **Grille** : **48 numéros par page** (8 colonnes × 6 lignes sur grand écran). Navigation **Première / Préc. / Suiv. / Dernière** et saut de page (`?page=2`). Les écrans plus étroits affichent moins de colonnes (6, 4 ou 2) pour garder des tuiles lisibles.
 
-**Couvertures** : sur **Mes magazines** (collection), les numéros **non possédés** (ni papier ni PDF) s’affichent en **noir et blanc** ; les possédés et la liste **Mes envies** restent en couleur.
+**Couvertures** : sur **Mes magazines** (collection), les numéros **non possédés** (ni papier ni PDF) s’affichent en **noir et blanc** ; les possédés et la liste **Mes envies** restent en couleur. Sur la fiche numéro, les vignettes de sujets liés à un **jeu ou film non possédé** sont aussi en noir et blanc (**0.8.17**). Un clic sur un sujet catalogue jeu bascule vers l’onglet **Jeux** pour pouvoir l’ajouter à la bibliothèque.
 
 **Statistiques** (`/statistiques.php`, onglet Magazines) : nombre de **PDF possédés** et **espace disque** total (Go), calculés depuis `stored_objects.size_bytes` à l’import ; section **Sujets d’un mois** (**0.8.13**) : catégorie de magazine + mois + année → tests / previews / dossiers (tri A→Z ou par note).
 

@@ -16,7 +16,8 @@ use Moncine\UserContext;
 use Moncine\View;
 
 MediaDomainGuards::renderCollectionPageOrExit();
-MediaDomainGuards::ensureGameContext('/ajouter-jeu.php');
+// Conserver ?oeuvre_id=… / ?statut=… lors d’une bascule depuis un autre onglet.
+MediaDomainGuards::ensureGameContext();
 
 $statutRaw = trim((string) ($_GET['statut'] ?? ''));
 $showChoice = $statutRaw === '';

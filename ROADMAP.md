@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.8.16** (2026-08-15)
+**Version actuelle : 0.8.17** (2026-08-16)
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -13,17 +13,17 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 ---
 
-## Où en est-on ? (synthèse 0.8.16)
+## Où en est-on ? (synthèse 0.8.17)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
 | **Films** | ✅ Production | 0.4.4+ → **0.7.6** | Complet (TMDB, sagas, quiz, partage, **ressentis**, moyenne presse **0.8.8**) |
-| **Jeux** | ✅ Utilisable | 0.5.0 → **0.8.14** | Complet (IGDB, sagas, Steam, prêts, magasins, `/jeu-magazines.php`, **doublons maintenance**) |
-| **Magazines** | ✅ Complet (M5) | 0.2.x → **0.8.14** | ABM, PDF (droits renforcés), FTS, sujets, pont catalogue, notes/échelles, **stats mois + tri notes**, partage |
+| **Jeux** | ✅ Utilisable | 0.5.0 → **0.8.17** | Complet (IGDB, sagas, Steam, prêts, magasins, `/jeu-magazines.php`, **doublons maintenance**, nav Magazines→Jeux) |
+| **Magazines** | ✅ Complet (M5) | 0.2.x → **0.8.17** | ABM, PDF (droits renforcés), FTS, sujets, pont catalogue, notes/échelles, **stats mois + tri notes**, partage |
 | **BD / Manga** | ✅ **Livré (M2)** | **0.7.2** → **0.8.0** (+ **OL 0.8.16**) | Collection, envies, partage, profil, impression, **import CSV**, **Open Library** |
 | **Livres** | ✅ **Utilisable (M3)** | **0.8.1** → **0.8.15** | Collection, envies, sagas, lectures, stats, pont jeux, **Open Library** ([doc/livres.md](doc/livres.md)) |
 | **Musique** | ⏳ Placeholder (M8) | **0.7.8** | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles et CD physiques |
-| **Transversal** | 🔄 Partiel | **0.7.12**–**0.8.16** | Recherche globale (dès 1 lettre), catalogue admin, import/export, profil, partage, CI, PHPStan 0 alerte |
+| **Transversal** | 🔄 Partiel | **0.7.12**–**0.8.17** | Recherche globale (dès 1 lettre), catalogue admin, import/export, profil, partage, CI, PHPStan 0 alerte |
 
 ### Phases (suivi)
 
@@ -43,6 +43,12 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.8.17** — Navigation Magazines → Jeux & UI fiche (2026-08-16)
+
+- Bascule d’onglet correcte vers Jeux depuis un sujet magazine catalogue ; conservation des paramètres d’URL à l’ajout.
+- Fiche jeu : badge Linux / ressenti sous le titre, plus sous la note presse.
+- Vignettes sujets non possédés en noir et blanc.
 
 ### ✅ **0.8.16** — BD Open Library (2026-08-15)
 
@@ -829,4 +835,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.8.16** — 2026-08-15 (Open Library BD/manga).*
+*Dernière mise à jour : **0.8.17** — 2026-08-16 (nav Magazines→Jeux, UI fiche jeu).*

@@ -13,6 +13,7 @@ use Moncine\FilmRepository;
 use Moncine\GameRepository;
 use Moncine\LibraryStatut;
 use Moncine\MagazineRepository;
+use Moncine\MediaContext;
 use Moncine\MediaDomain;
 use Moncine\CatalogListContext;
 use Moncine\OeuvreRepository;
@@ -75,6 +76,9 @@ if ($oeuvreId <= 0 || $oeuvre === null) {
     header('Location: ' . $backUrl . (str_contains($backUrl, '?') ? '&' : '?') . 'save_error=' . rawurlencode('Œuvre invalide.'));
     exit;
 }
+
+// Active l’onglet du média ajouté (ex. Jeux alors qu’on venait de Magazines).
+MediaContext::set($domain);
 
 $userId = UserContext::currentUserId();
 $foyerId = UserContext::currentFoyerId();

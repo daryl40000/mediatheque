@@ -205,6 +205,17 @@ final class GameUrls
         return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::JEU, $path);
     }
 
+    /** Lien cliquable vers une fiche catalogue jeu (bascule d’onglet si besoin). */
+    public static function oeuvreJeuNavUrl(int $oeuvreId): string
+    {
+        $path = self::oeuvreJeuUrl($oeuvreId);
+        if (MediaContext::current() === MediaDomain::JEU) {
+            return $path;
+        }
+
+        return MediaDomainGuards::mediaDomainSwitchUrl(MediaDomain::JEU, $path);
+    }
+
     public static function gameCatalogApiUrl(): string
     {
         return '/rechercher-jeux-catalogue.php';

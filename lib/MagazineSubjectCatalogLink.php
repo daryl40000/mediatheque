@@ -226,7 +226,7 @@ final class MagazineSubjectCatalogLink
                 $subject['media_in_library'] = true;
                 $subject['media_nav_url'] = View::gameNavUrl($bibId);
             } else {
-                $subject['media_nav_url'] = View::oeuvreJeuUrl($oeuvreId);
+                $subject['media_nav_url'] = View::oeuvreJeuNavUrl($oeuvreId);
             }
 
             return $subject;

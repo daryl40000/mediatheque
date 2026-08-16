@@ -394,8 +394,31 @@ final class MediaDomainGuards
             return;
         }
 
-        header('Location: ' . SafeRedirect::path($redirectPath ?? self::currentRequestUri($fallbackPath)));
+        $target = self::resolveContextSwitchRedirect($redirectPath, $fallbackPath);
+        header('Location: ' . SafeRedirect::path($target));
         exit;
+    }
+
+    /**
+     * Cible de redirection après bascule d’onglet.
+     * Si le chemin fourni est le même que la page courante sans query, on garde
+     * l’URL complète (?id=…, ?oeuvre_id=…) pour ne pas perdre le contexte.
+     */
+    private static function resolveContextSwitchRedirect(?string $redirectPath, string $fallbackPath): string
+    {
+        $current = self::currentRequestUri($fallbackPath);
+        if ($redirectPath === null || $redirectPath === '') {
+            return $current;
+        }
+
+        $redirectPathOnly = self::normalizePath((string) (parse_url($redirectPath, PHP_URL_PATH) ?: $redirectPath));
+        $currentPathOnly = self::normalizePath((string) (parse_url($current, PHP_URL_PATH) ?: $current));
+        $redirectHasQuery = str_contains($redirectPath, '?');
+        if ($redirectPathOnly === $currentPathOnly && !$redirectHasQuery && str_contains($current, '?')) {
+            return $current;
+        }
+
+        return $redirectPath;
     }
 
     /**

@@ -149,7 +149,7 @@ final class MagazineJeuxOffertsList
             if ($gameBibId > 0) {
                 $gameUrl = View::gameNavUrl($gameBibId);
             } elseif ($catalogOeuvreId > 0) {
-                $gameUrl = View::oeuvreJeuUrl($catalogOeuvreId);
+                $gameUrl = View::oeuvreJeuNavUrl($catalogOeuvreId);
             } else {
                 $gameUrl = '';
             }

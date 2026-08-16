@@ -4,6 +4,8 @@ declare(strict_types=1);
 
 namespace Moncine\Tests\Unit;
 
+use Moncine\GameUrls;
+use Moncine\MediaContext;
 use Moncine\MediaDomain;
 use Moncine\MediaDomainGuards;
 use PHPUnit\Framework\TestCase;
@@ -156,5 +158,22 @@ final class MediaDomainTest extends TestCase
         $this->assertStringContainsString('domain=magazine', $url);
         $this->assertStringContainsString('redirect=%2Fmagazine-numero.php%3Fid%3D42', $url);
         $this->assertStringContainsString('csrf_token=', $url);
+    }
+
+    public function testOeuvreJeuNavUrlSwitchesDomainWhenNotOnGamesTab(): void
+    {
+        if (session_status() !== PHP_SESSION_ACTIVE) {
+            session_start();
+        }
+        $_SESSION = [];
+
+        MediaContext::set(MediaDomain::MAGAZINE);
+        $url = GameUrls::oeuvreJeuNavUrl(123);
+        $this->assertStringContainsString('set-media-domain.php', $url);
+        $this->assertStringContainsString('domain=jeu', $url);
+        $this->assertStringContainsString('oeuvre-jeu.php', $url);
+
+        MediaContext::set(MediaDomain::JEU);
+        $this->assertStringStartsWith('/oeuvre-jeu.php?id=123', GameUrls::oeuvreJeuNavUrl(123));
     }
 }

@@ -13,6 +13,19 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.17] — 2026-08-16
+
+**Navigation Magazines → Jeux · fiche jeu (Linux / note presse)**
+
+### Corrigé
+
+- **Magazines → jeu** : depuis l’onglet Magazines, ouvrir une fiche jeu catalogue (sujet non possédé) bascule bien sur l’onglet Jeux ; l’ajout à la bibliothèque fonctionne aussi dans ce cas (`oeuvreJeuNavUrl`, `ensureGameContext`, `MediaContext` à l’ajout).
+- **Ajouter un jeu** : la bascule d’onglet conserve les paramètres d’URL (`oeuvre_id`, `statut`…).
+- **Fiche jeu** : le badge Linux et le ressenti restent sous le titre (à gauche) et ne passent plus sous la note presse.
+- **Sujets magazine** : vignettes des jeux/films non possédés en noir et blanc (comme le reste du catalogue), au lieu d’un simple assombrissement.
+
+---
+
 ## [0.8.16] — 2026-08-15
 
 **BD / Manga — enrichissement Open Library**

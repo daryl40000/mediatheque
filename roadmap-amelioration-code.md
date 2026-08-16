@@ -1,6 +1,6 @@
 # Roadmap d'amélioration de la qualité de code
 
-**Dernière mise à jour :** 2026-08-15 (version **0.8.16** — Open Library BD/manga)
+**Dernière mise à jour :** 2026-08-16 (version **0.8.17** — nav Magazines→Jeux, UI fiche jeu)
 **Complément de :** [ROADMAP.md](ROADMAP.md) (fonctionnalités produit) — ce fichier traite uniquement de la **qualité et de la structure du code**.
 
 ## Objectif

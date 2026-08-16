@@ -97,22 +97,32 @@ if ($linuxBadge === '' && !empty($game['linux_not_supported'])) {
             <div class="film-detail__body game-detail__body">
                 <header class="film-detail__heading game-detail__heading">
                     <div class="game-detail__title-bar game-detail__title-bar--with-press">
-                        <h1 class="game-detail__title-row">
-                            <span><?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? 'Jeu')) ?></span>
-                            <?php if ($linuxBadge !== ''): ?>
-                                <?php
-                                $size = 'md';
-                                $plain = true;
-                                require MONCINE_ROOT . '/templates/_game_linux_badge_if_set.php';
+                        <div class="game-detail__title-stack">
+                            <h1 class="game-detail__title-row">
+                                <span class="game-detail__title-text"><?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? 'Jeu')) ?></span>
+                                <?php if ((int) ($game['annee'] ?? 0) > 0): ?>
+                                    <span class="film-year">(<?= (int) $game['annee'] ?>)</span>
+                                <?php endif; ?>
+                            </h1>
+                            <?php
+                            $showLinuxInTitle = $linuxBadge !== '';
+                            $showRessentiInTitle = !$isWishlist || !empty($monRessenti);
+                            if ($showLinuxInTitle || $showRessentiInTitle):
                                 ?>
+                                <div class="game-detail__title-extras">
+                                    <?php if ($showLinuxInTitle): ?>
+                                        <?php
+                                        $size = 'md';
+                                        $plain = true;
+                                        require MONCINE_ROOT . '/templates/_game_linux_badge_if_set.php';
+                                        ?>
+                                    <?php endif; ?>
+                                    <?php if ($showRessentiInTitle): ?>
+                                        <?php require MONCINE_ROOT . '/templates/_game_detail_ressenti_title.php'; ?>
+                                    <?php endif; ?>
+                                </div>
                             <?php endif; ?>
-                            <?php if ((int) ($game['annee'] ?? 0) > 0): ?>
-                                <span class="film-year">(<?= (int) $game['annee'] ?>)</span>
-                            <?php endif; ?>
-                            <?php if (!$isWishlist || !empty($monRessenti)): ?>
-                                <?php require MONCINE_ROOT . '/templates/_game_detail_ressenti_title.php'; ?>
-                            <?php endif; ?>
-                        </h1>
+                        </div>
                         <?php require MONCINE_ROOT . '/templates/_magazine_press_average_title.php'; ?>
                     </div>
                     <?php

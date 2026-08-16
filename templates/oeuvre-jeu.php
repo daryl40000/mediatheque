@@ -93,26 +93,32 @@ $completionCount = (int) ($completionCount ?? 0);
             <div class="film-detail__body game-detail__body">
                 <header class="film-detail__heading game-detail__heading">
                     <div class="game-detail__title-bar game-detail__title-bar--with-press">
-                        <h1 class="game-detail__title-row">
-                            <span><?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? '')) ?></span>
-                            <?php if (!empty($game['is_extension'])): ?>
-                                <span class="magazine-tag">Extension</span>
-                            <?php endif; ?>
-                            <?php if (!empty($game['is_remake'])): ?>
-                                <span class="magazine-tag">Remake</span>
-                            <?php endif; ?>
+                        <div class="game-detail__title-stack">
+                            <h1 class="game-detail__title-row">
+                                <span class="game-detail__title-text"><?= Moncine\View::escape((string) ($game['display_titre'] ?? $game['titre'] ?? '')) ?></span>
+                                <?php if (!empty($game['is_extension'])): ?>
+                                    <span class="magazine-tag">Extension</span>
+                                <?php endif; ?>
+                                <?php if (!empty($game['is_remake'])): ?>
+                                    <span class="magazine-tag">Remake</span>
+                                <?php endif; ?>
+                                <?php if ((int) ($game['annee'] ?? 0) > 0): ?>
+                                    <span class="film-year">(<?= (int) $game['annee'] ?>)</span>
+                                <?php endif; ?>
+                            </h1>
                             <?php
                             $linuxBadge = (string) ($game['linux_badge'] ?? '');
                             if ($linuxBadge !== ''):
-                                $size = 'md';
-                                $plain = true;
-                                require MONCINE_ROOT . '/templates/_game_linux_badge_if_set.php';
-                            endif;
-                            ?>
-                            <?php if ((int) ($game['annee'] ?? 0) > 0): ?>
-                                <span class="film-year">(<?= (int) $game['annee'] ?>)</span>
+                                ?>
+                                <div class="game-detail__title-extras">
+                                    <?php
+                                    $size = 'md';
+                                    $plain = true;
+                                    require MONCINE_ROOT . '/templates/_game_linux_badge_if_set.php';
+                                    ?>
+                                </div>
                             <?php endif; ?>
-                        </h1>
+                        </div>
                         <?php require MONCINE_ROOT . '/templates/_magazine_press_average_title.php'; ?>
                     </div>
                     <?php
