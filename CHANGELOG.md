@@ -11,6 +11,16 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ## [Unreleased]
 
+---
+
+## [0.8.18] — 2026-09-23
+
+**Envies films · identifiant IGDB à l’export**
+
+### Ajouté
+
+- **Films** : bouton **Retirer** sur Mes envies (liste personnelle et envies du groupe) et libellé **Retirer des envies** sur la fiche. Le film quitte les envies sans passer dans la collection.
+
 ### Corrigé
 
 - **Export catalogue** : le numéro **IGDB** des jeux est désormais exporté (et réimporté) via la colonne `Jeu — IGDB ID`.
