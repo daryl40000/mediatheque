@@ -142,4 +142,24 @@ final class WishlistTargetsTest extends MoncineTestCase
         $this->assertSame('4012345678901', $row['ean'] ?? '');
         $this->assertSame($eanId, (int) ($row['oeuvre_ean_id'] ?? 0));
     }
+
+    public function testDeleteByIdRemovesWishlistFilmAndItsTargets(): void
+    {
+        $this->loginAsAdmin();
+
+        $oeuvreId = $this->seedCatalogOeuvre('Film Envie A Retirer', 'Réal Retrait');
+        $repo = new FilmRepository();
+        $filmId = $repo->addFromCatalogOeuvre($oeuvreId, LibraryStatut::WISHLIST);
+        $this->assertIsInt($filmId);
+        $this->assertSame(1, $repo->countWishlist());
+
+        $targets = new WishlistTargetRepository();
+        $targetId = $targets->add($filmId, SupportPhysique::DVD, '');
+        $this->assertIsInt($targetId);
+
+        $this->assertTrue($repo->deleteById($filmId));
+        $this->assertNull($repo->findById($filmId));
+        $this->assertSame(0, $repo->countWishlist());
+        $this->assertSame([], $targets->listForBibliothequeId($filmId));
+    }
 }

@@ -110,6 +110,16 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
     <?php if (!empty($_GET['vote_ok'])): ?>
         <p class="alert alert-success">Film ajouté à vos envies.</p>
     <?php endif; ?>
+    <?php if (isset($_GET['deleted']) && (string) $_GET['deleted'] === '1'): ?>
+        <p class="alert alert-success">
+            Film retiré de vos envies<?= !empty($_GET['deleted_title'])
+                ? ' : « ' . Moncine\View::escape((string) $_GET['deleted_title']) . ' »'
+                : '' ?>.
+        </p>
+    <?php endif; ?>
+    <?php if (!empty($_GET['remove_error'])): ?>
+        <p class="alert alert-warning"><?= Moncine\View::escape((string) $_GET['remove_error']) ?></p>
+    <?php endif; ?>
 
     <?php if ($searched): ?>
         <p class="stats">
@@ -182,6 +192,13 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                         <td class="wishlist-actions">
                             <?php if ($inMine): ?>
                                 <span class="hint">Déjà dans vos envies</span>
+                                <?php if ($myFilmId > 0): ?>
+                                    <?php
+                                    $filmId = $myFilmId;
+                                    $filmTitle = (string) ($film['titre'] ?? '');
+                                    require MONCINE_ROOT . '/templates/_film_wishlist_remove_form.php';
+                                    ?>
+                                <?php endif; ?>
                             <?php elseif ($oeuvreId > 0): ?>
                                 <form method="post" action="/souhaits.php" class="inline-form">
                                     <?php require MONCINE_ROOT . '/templates/_csrf_field.php'; ?>
@@ -254,6 +271,8 @@ $sortHeader = static function (string $label, string $column) use ($sortBy, $sor
                                 ['q', $query],
                             ];
                             require MONCINE_ROOT . '/templates/_film_promote_wishlist_form.php';
+                            $filmTitle = (string) ($film['titre'] ?? '');
+                            require MONCINE_ROOT . '/templates/_film_wishlist_remove_form.php';
                             ?>
                         </td>
                     </tr>

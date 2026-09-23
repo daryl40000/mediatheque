@@ -59,18 +59,49 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     $action = (string) ($_POST['action'] ?? 'promote');
 
+    // Sans filtres, l’adresse est « /souhaits.php » : on ajoute « ? ». Sinon, on ajoute « & ».
+    $redirectSep = str_contains($redirectUrl, '?') ? '&' : '?';
+
     if ($action === 'vote') {
         $oeuvreId = max(0, (int) ($_POST['oeuvre_id'] ?? 0));
         if ($oeuvreId <= 0) {
-            header('Location: ' . $redirectUrl . '&vote_error=' . rawurlencode('Œuvre invalide.'));
+            header('Location: ' . $redirectUrl . $redirectSep . 'vote_error=' . rawurlencode('Œuvre invalide.'));
             exit;
         }
         $result = $repo->addFromCatalogOeuvre($oeuvreId, LibraryStatut::WISHLIST);
         if (!is_int($result)) {
-            header('Location: ' . $redirectUrl . '&vote_error=' . rawurlencode((string) $result));
+            header('Location: ' . $redirectUrl . $redirectSep . 'vote_error=' . rawurlencode((string) $result));
             exit;
         }
-        header('Location: ' . $redirectUrl . '&vote_ok=1');
+        header('Location: ' . $redirectUrl . $redirectSep . 'vote_ok=1');
+        exit;
+    }
+
+    // Retirer un film des envies (il ne passe pas dans « Mes films »).
+    if ($action === 'remove') {
+        $filmId = (int) ($_POST['film_id'] ?? 0);
+        if ($filmId <= 0) {
+            header('Location: ' . $redirectUrl . $redirectSep . 'remove_error=' . rawurlencode('Film invalide.'));
+            exit;
+        }
+
+        $film = $repo->findById($filmId);
+        if ($film === null || ($film['statut'] ?? '') !== LibraryStatut::WISHLIST) {
+            header('Location: ' . $redirectUrl . $redirectSep . 'remove_error=' . rawurlencode('Ce film n’est pas dans vos envies.'));
+            exit;
+        }
+
+        $titre = (string) ($film['titre'] ?? '');
+        if (!$repo->deleteById($filmId)) {
+            header('Location: ' . $redirectUrl . $redirectSep . 'remove_error=' . rawurlencode('Impossible de retirer ce film de vos envies.'));
+            exit;
+        }
+
+        $params = ['deleted' => '1'];
+        if ($titre !== '') {
+            $params['deleted_title'] = $titre;
+        }
+        header('Location: ' . $redirectUrl . $redirectSep . http_build_query($params));
         exit;
     }
 
@@ -81,12 +112,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $wishlistTargetId = $targetId > 0 ? $targetId : null;
 
     if ($filmId <= 0) {
-        header('Location: ' . $redirectUrl . '&promote_error=' . rawurlencode('Film invalide.'));
+        header('Location: ' . $redirectUrl . $redirectSep . 'promote_error=' . rawurlencode('Film invalide.'));
         exit;
     }
 
     if (!$repo->promoteToCollection($filmId, $supportKey, '', $wishlistTargetId)) {
-        header('Location: ' . $redirectUrl . '&promote_error=' . rawurlencode('Impossible d’ajouter ce film à vos films.'));
+        header('Location: ' . $redirectUrl . $redirectSep . 'promote_error=' . rawurlencode('Impossible d’ajouter ce film à vos films.'));
         exit;
     }
 

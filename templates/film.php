@@ -182,12 +182,15 @@ $sagaFilms = $sagaFilms ?? [];
                             <?php require MONCINE_ROOT . '/templates/_film_list_context_fields.php'; ?>
                         <?php endif; ?>
                         <button type="submit"
-                                class="btn btn-icon btn-danger-text btn-sm"
+                                class="btn btn-danger-text btn-sm<?= $isWishlist ? ' btn-with-icon' : ' btn-icon' ?>"
                                 title="<?= Moncine\View::escape($deleteTitle) ?>"
                                 aria-label="<?= Moncine\View::escape($deleteTitle) ?>">
                             <svg class="icon-trash" width="16" height="16" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
-                                <path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9zM7 9h2v9H7V9z"/>
+                                <path fill="currentColor" d="M9 3h6l1 2h4v2H4V5h4l1-2zm1 6h2v9h-2V9zm4 0h2v9h-2V9z"/>
                             </svg>
+                            <?php if ($isWishlist): ?>
+                                Retirer des envies
+                            <?php endif; ?>
                         </button>
                     </form>
                 </div>

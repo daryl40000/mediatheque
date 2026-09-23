@@ -1129,6 +1129,17 @@ textarea {
     background: rgba(248, 113, 113, 0.12);
 }
 
+.btn-with-icon {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35rem;
+    line-height: 1.2;
+}
+
+.btn-with-icon .icon-trash {
+    flex: 0 0 auto;
+}
+
 .icon-trash {
     display: block;
 }
@@ -2490,6 +2501,17 @@ textarea {
 .wishlist-actions .wishlist-promote-form--compact .btn {
     flex: 0 0 auto;
     white-space: nowrap;
+}
+
+.wishlist-actions {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.45rem;
+}
+
+.wishlist-remove-form {
+    margin: 0;
 }
 
 .film-promote-form .film-promote-form__target-select {
