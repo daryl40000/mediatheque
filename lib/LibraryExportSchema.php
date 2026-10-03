@@ -22,6 +22,7 @@ final class LibraryExportSchema
     'oeuvre_id' => 'ID catalogue',
     'bibliotheque_id' => 'ID bibliothèque',
     'media_domain' => 'Domaine média',
+    'tmdb_id' => 'TMDB ID',
     'titre' => 'Titre',
     'realisateur' => 'Réalisateur',
     'statut' => 'Statut',
@@ -63,6 +64,7 @@ final class LibraryExportSchema
       'type média',
       'domaine',
     ],
+    'tmdb_id' => ['tmdb id', 'tmdb_id', 'tmdb'],
     'titre' => ['titre', 'title', 'nom', 'film'],
     'realisateur' => ['realisateur', 'director', 'auteur'],
     'statut' => [
@@ -163,6 +165,7 @@ final class LibraryExportSchema
         'oeuvre_id' => (int) ($film['oeuvre_id'] ?? 0) > 0 ? (string) (int) $film['oeuvre_id'] : '',
         'bibliotheque_id' => (int) ($film['id'] ?? 0) > 0 ? (string) (int) $film['id'] : '',
         'media_domain' => MediaDomain::normalize((string) ($film['media_domain'] ?? MediaDomain::FILM)),
+        'tmdb_id' => self::tmdbIdForExport($film),
         'support_physique' => self::supportLabelForExport($film),
         'vu' => CollectionExportSchema::formatVueDateForExport((string) ($film['derniere_vue'] ?? '')),
         'note' => $note !== null && $note !== '' ? (string) $note : '',
@@ -185,6 +188,24 @@ final class LibraryExportSchema
     public static function columnLabelsText(): string
     {
         return implode(', ', self::headers());
+    }
+
+    /**
+     * Numéro TMDB pour un film uniquement. Les autres médias n’en ont pas :
+     * la case reste vide pour qu’un autre outil puisse ignorer ces lignes.
+     *
+     * @param array<string, mixed> $film
+     */
+    private static function tmdbIdForExport(array $film): string
+    {
+        $domain = MediaDomain::normalize((string) ($film['media_domain'] ?? MediaDomain::FILM));
+        if (!MediaDomain::isFilm($domain)) {
+            return '';
+        }
+
+        $tmdbId = (int) ($film['tmdb_id'] ?? 0);
+
+        return $tmdbId > 0 ? (string) $tmdbId : '';
     }
 
     /**

@@ -3,7 +3,7 @@
 [![CodeFactor](https://www.codefactor.io/repository/github/daryl40000/mediatheque/badge)](https://www.codefactor.io/repository/github/daryl40000/mediatheque)
 [![Tests](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml/badge.svg)](https://github.com/daryl40000/mediatheque/actions/workflows/tests.yml)
 
-**Version : 0.8.18**
+**Version : 0.8.19**
 
 **Auteur :** Stéphane MATER  
 **Licence :** [GNU General Public License v3.0 ou ultérieure](LICENSE) (GPL-3.0-or-later)
@@ -76,6 +76,7 @@ Voir le détail dans [ROADMAP.md](ROADMAP.md).
 
 | Version | Contenu |
 |---------|---------|
+| **0.8.19** | Export bibliothèque : colonne TMDB ID pour les films |
 | **0.8.18** | Retirer un film des envies ; export / import du numéro IGDB des jeux |
 | **0.8.17** | Fix Magazines → Jeux (bascule d’onglet) ; fiche jeu (Linux / note presse) ; vignettes sujets N&B |
 | **0.8.16** | BD / Manga : enrichissement Open Library (ISBN, couverture, résumé…) |

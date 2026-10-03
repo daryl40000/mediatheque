@@ -13,6 +13,16 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.19] — 2026-10-03
+
+**Export bibliothèque · numéro TMDB des films**
+
+### Ajouté
+
+- **Export bibliothèque** (CSV et ODS) : colonne **TMDB ID**, remplie pour les films déjà liés à TMDB. Les autres médias laissent la case vide, pour faciliter l’intégration dans un autre outil.
+
+---
+
 ## [0.8.18] — 2026-09-23
 
 **Envies films · identifiant IGDB à l’export**

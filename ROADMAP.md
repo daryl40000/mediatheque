@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.8.18** (2026-09-23)
+**Version actuelle : 0.8.19** (2026-10-03)
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -13,17 +13,17 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 ---
 
-## Où en est-on ? (synthèse 0.8.18)
+## Où en est-on ? (synthèse 0.8.19)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
-| **Films** | ✅ Production | 0.4.4+ → **0.8.18** | Complet (TMDB, sagas, quiz, partage, **ressentis**, moyenne presse **0.8.8**, **retrait d’une envie**) |
+| **Films** | ✅ Production | 0.4.4+ → **0.8.19** | Complet (TMDB, sagas, quiz, partage, **ressentis**, moyenne presse **0.8.8**, **retrait d’une envie**, **TMDB à l’export bibliothèque**) |
 | **Jeux** | ✅ Utilisable | 0.5.0 → **0.8.18** | Complet (IGDB, sagas, Steam, prêts, magasins, `/jeu-magazines.php`, **doublons maintenance**, nav Magazines→Jeux, **IGDB à l’export**) |
 | **Magazines** | ✅ Complet (M5) | 0.2.x → **0.8.17** | ABM, PDF (droits renforcés), FTS, sujets, pont catalogue, notes/échelles, **stats mois + tri notes**, partage |
 | **BD / Manga** | ✅ **Livré (M2)** | **0.7.2** → **0.8.0** (+ **OL 0.8.16**) | Collection, envies, partage, profil, impression, **import CSV**, **Open Library** |
 | **Livres** | ✅ **Utilisable (M3)** | **0.8.1** → **0.8.15** | Collection, envies, sagas, lectures, stats, pont jeux, **Open Library** ([doc/livres.md](doc/livres.md)) |
 | **Musique** | ⏳ Placeholder (M8) | **0.7.8** | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles et CD physiques |
-| **Transversal** | 🔄 Partiel | **0.7.12**–**0.8.18** | Recherche globale (dès 1 lettre), catalogue admin, import/export, profil, partage, CI, PHPStan 0 alerte |
+| **Transversal** | 🔄 Partiel | **0.7.12**–**0.8.19** | Recherche globale (dès 1 lettre), catalogue admin, import/export, profil, partage, CI, PHPStan 0 alerte |
 
 ### Phases (suivi)
 
@@ -43,6 +43,10 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.8.19** — Export bibliothèque TMDB (2026-10-03)
+
+- Colonne **TMDB ID** dans l’export bibliothèque (CSV et ODS), remplie pour les films liés à TMDB.
 
 ### ✅ **0.8.18** — Envies films & export IGDB (2026-09-23)
 
@@ -840,4 +844,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.8.18** — 2026-09-23 (retrait d’une envie film, export IGDB).*
+*Dernière mise à jour : **0.8.19** — 2026-10-03 (colonne TMDB dans l’export bibliothèque).*
