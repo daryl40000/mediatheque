@@ -13,6 +13,17 @@ Les numéros suivent le [versionnement sémantique](https://semver.org/lang/fr/)
 
 ---
 
+## [0.8.20] — 2026-11-16
+
+**Thème clair « moderne » et bascule de thème**
+
+### Ajouté
+
+- Nouveau **thème clair** « moderne », en plus du thème sombre « cinéma » existant.
+- **Bouton de bascule** de thème (icône soleil/lune) dans le menu en haut à droite ; le choix est mémorisé par navigateur.
+
+---
+
 ## [0.8.19] — 2026-10-03
 
 **Export bibliothèque · numéro TMDB des films**

@@ -28,6 +28,34 @@
     --on-accent: #0a0a0e;
 }
 
+/* ── Thème clair « moderne » (activé via data-theme="light" sur <html>) ── */
+html[data-theme="light"] {
+    color-scheme: light;
+    --bg: #f4f5f7;
+    --surface: #ffffff;
+    --surface-muted: #eceef2;
+    --text: #1b1d21;
+    --muted: #5a6072;
+    --border: #d7dae1;
+    --success: #15803d;
+    --warning: #b45309;
+    --link: #1d4ed8;
+    --link-hover: #1e40af;
+    --link-visited: #6d28d9;
+    --link-admin: #0369a1;
+    --link-secondary: #7c3aed;
+    --on-accent: #ffffff;
+}
+
+/* Les teintes par domaine média sont fixées en ligne sur <body> (cf. MediaDomain::theme()) :
+   on les neutralise ici pour garder un fond clair, en conservant la couleur d’accent du domaine. */
+html[data-theme="light"] body[data-media-domain] {
+    --media-bar-bg: var(--surface-muted) !important;
+    --media-header-tint: var(--surface) !important;
+    --media-body-tint: var(--bg) !important;
+    --media-accent-muted: color-mix(in srgb, var(--media-accent) 16%, var(--surface)) !important;
+}
+
 * {
     box-sizing: border-box;
 }
@@ -423,6 +451,44 @@ a.support-link:hover,
     font-weight: 700;
     line-height: 1.1rem;
     text-align: center;
+}
+
+.theme-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.25rem;
+    height: 2.25rem;
+    padding: 0;
+    border: none;
+    border-radius: 8px;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    flex-shrink: 0;
+    line-height: 0;
+}
+
+.theme-toggle:hover,
+.theme-toggle:focus-visible {
+    color: var(--accent);
+    background: rgba(232, 185, 35, 0.12);
+}
+
+.theme-toggle__icon {
+    display: block;
+}
+
+.theme-toggle__icon--moon {
+    display: none;
+}
+
+html[data-theme="light"] .theme-toggle__icon--sun {
+    display: none;
+}
+
+html[data-theme="light"] .theme-toggle__icon--moon {
+    display: block;
 }
 
 .site-header__search {

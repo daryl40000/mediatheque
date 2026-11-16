@@ -44,6 +44,15 @@ $mediaCssVars = implode('; ', [
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
     <title><?= Moncine\View::escape($pageTitle ?? MONCINE_APP_NAME) ?> — <?= Moncine\View::escape(MONCINE_APP_NAME) ?></title>
+    <script>
+    (function () {
+        try {
+            if (localStorage.getItem('mediatheque.theme') === 'light') {
+                document.documentElement.setAttribute('data-theme', 'light');
+            }
+        } catch (e) {}
+    })();
+    </script>
     <?php require MONCINE_ROOT . '/templates/_head_icons.php'; ?>
     <link rel="stylesheet" href="/assets/css/style.css">
     <link rel="stylesheet" href="/assets/css/responsive.css">
@@ -202,6 +211,15 @@ $mediaCssVars = implode('; ', [
                     <button type="submit" class="site-nav__logout btn-link">Déconnexion</button>
                 </form>
             </nav>
+            <button type="button" class="theme-toggle" id="theme-toggle"
+                    aria-label="Changer de thème" title="Changer de thème">
+                <svg class="theme-toggle__icon theme-toggle__icon--sun" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path fill="currentColor" d="M12 17a5 5 0 1 0 0-10 5 5 0 0 0 0 10Zm0-15a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0V3a1 1 0 0 1 1-1Zm0 18a1 1 0 0 1 1 1v2a1 1 0 1 1-2 0v-2a1 1 0 0 1 1-1ZM4.22 4.22a1 1 0 0 1 1.41 0l1.42 1.42a1 1 0 0 1-1.42 1.41L4.22 5.64a1 1 0 0 1 0-1.42Zm12.73 12.73a1 1 0 0 1 1.41 0l1.42 1.41a1 1 0 0 1-1.42 1.42l-1.41-1.42a1 1 0 0 1 0-1.41ZM1 12a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2H2a1 1 0 0 1-1-1Zm18 0a1 1 0 0 1 1-1h2a1 1 0 1 1 0 2h-2a1 1 0 0 1-1-1ZM4.22 19.78a1 1 0 0 1 0-1.41l1.42-1.42a1 1 0 1 1 1.41 1.42l-1.41 1.41a1 1 0 0 1-1.42 0Zm12.73-12.73a1 1 0 0 1 0-1.41l1.41-1.42a1 1 0 1 1 1.42 1.42l-1.42 1.41a1 1 0 0 1-1.41 0Z"/>
+                </svg>
+                <svg class="theme-toggle__icon theme-toggle__icon--moon" width="20" height="20" viewBox="0 0 24 24" aria-hidden="true" focusable="false">
+                    <path fill="currentColor" d="M20.742 13.045a8.088 8.088 0 0 1-2.077.27c-4.476 0-8.102-3.627-8.102-8.103 0-1.01.187-1.976.53-2.868a.75.75 0 0 0-.917-.99A10.027 10.027 0 0 0 2.5 11.25C2.5 16.937 7.063 21.5 12.75 21.5c4.08 0 7.61-2.364 9.297-5.81a.75.75 0 0 0-.863-1.034 8.1 8.1 0 0 1-.442.389Z"/>
+                </svg>
+            </button>
         </div>
     </header>
     <main class="container<?= !empty($wideLayout) ? ' container--wide' : '' ?>">

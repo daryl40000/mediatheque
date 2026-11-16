@@ -1,6 +1,6 @@
 # Roadmap — Médiathèque
 
-**Version actuelle : 0.8.19** (2026-10-03)
+**Version actuelle : 0.8.20** (2026-11-16)
 **Documentation :** [doc/mediatheque.md](doc/mediatheque.md) · [CHANGELOG.md](CHANGELOG.md) · [roadmap-amelioration-code.md](roadmap-amelioration-code.md) (qualité code)
 
 ---
@@ -13,7 +13,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 
 ---
 
-## Où en est-on ? (synthèse 0.8.19)
+## Où en est-on ? (synthèse 0.8.20)
 
 | Domaine | Statut | Versions | Parcours catalogue → collection |
 |---------|--------|----------|----------------------------------|
@@ -23,7 +23,7 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 | **BD / Manga** | ✅ **Livré (M2)** | **0.7.2** → **0.8.0** (+ **OL 0.8.16**) | Collection, envies, partage, profil, impression, **import CSV**, **Open Library** |
 | **Livres** | ✅ **Utilisable (M3)** | **0.8.1** → **0.8.15** | Collection, envies, sagas, lectures, stats, pont jeux, **Open Library** ([doc/livres.md](doc/livres.md)) |
 | **Musique** | ⏳ Placeholder (M8) | **0.7.8** | Onglet ambre + page « bientôt » (`/musique.php`) — vinyles et CD physiques |
-| **Transversal** | 🔄 Partiel | **0.7.12**–**0.8.19** | Recherche globale (dès 1 lettre), catalogue admin, import/export, profil, partage, CI, PHPStan 0 alerte |
+| **Transversal** | 🔄 Partiel | **0.7.12**–**0.8.20** | Recherche globale (dès 1 lettre), catalogue admin, import/export, profil, partage, CI, PHPStan 0 alerte, **thème clair + bascule de thème** |
 
 ### Phases (suivi)
 
@@ -43,6 +43,11 @@ Une **seule application** pour gérer films, BD/manga, livres, **musique (vinyle
 ---
 
 ## Prochaines étapes (par priorité)
+
+### ✅ **0.8.20** — Thème clair et bascule de thème (2026-11-16)
+
+- Nouveau **thème clair** « moderne », en plus du thème sombre « cinéma » existant.
+- **Bouton de bascule** de thème (icône soleil/lune) dans le menu en haut à droite, choix mémorisé par navigateur.
 
 ### ✅ **0.8.19** — Export bibliothèque TMDB (2026-10-03)
 
@@ -844,4 +849,4 @@ flowchart TB
 | UI onglets | `templates/_media_domain_tabs.php`, `templates/layout.php` |
 | Conventions dev | [doc/conventions-techniques.md](doc/conventions-techniques.md) |
 
-*Dernière mise à jour : **0.8.19** — 2026-10-03 (colonne TMDB dans l’export bibliothèque).*
+*Dernière mise à jour : **0.8.20** — 2026-11-16 (thème clair et bascule de thème).*

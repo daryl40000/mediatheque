@@ -11,6 +11,7 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     };
 
+    runInit('themeToggle', initThemeToggle);
     runInit('seriesPossessionFilterMemory', initSeriesPossessionFilterMemory);
     runInit('collectionViewModeMemory', initCollectionViewModeMemory);
     runInit('catalogListNavScrollReset', initCatalogListNavScrollReset);
@@ -77,6 +78,47 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 });
+
+const THEME_STORAGE_KEY = 'mediatheque.theme';
+
+/**
+ * Bascule thème sombre « cinéma » / thème clair « moderne », mémorisé en localStorage.
+ */
+function initThemeToggle() {
+    const toggle = document.getElementById('theme-toggle');
+    if (!toggle) {
+        return;
+    }
+
+    const applyTheme = (theme) => {
+        if (theme === 'light') {
+            document.documentElement.setAttribute('data-theme', 'light');
+        } else {
+            document.documentElement.removeAttribute('data-theme');
+        }
+        const label = theme === 'light' ? 'Passer au thème sombre' : 'Passer au thème clair';
+        toggle.setAttribute('aria-label', label);
+        toggle.setAttribute('title', label);
+    };
+
+    let stored = 'dark';
+    try {
+        stored = localStorage.getItem(THEME_STORAGE_KEY) === 'light' ? 'light' : 'dark';
+    } catch (error) {
+        stored = 'dark';
+    }
+    applyTheme(stored);
+
+    toggle.addEventListener('click', () => {
+        const next = document.documentElement.getAttribute('data-theme') === 'light' ? 'dark' : 'light';
+        applyTheme(next);
+        try {
+            localStorage.setItem(THEME_STORAGE_KEY, next);
+        } catch (error) {
+            // Stockage indisponible (navigation privée…) : le choix ne sera pas mémorisé.
+        }
+    });
+}
 
 const SERIES_POSSESSION_FILTERS = new Set(['all', 'owned', 'unowned', 'hors_serie']);
 
